@@ -229,14 +229,6 @@ class AIH_Bid {
     }
     
     /**
-     * Alias for get_bidder_bids_for_art_piece
-     */
-    public function get_bidder_bids_for_art($art_piece_id, $bidder_id) {
-        // Return only successful bids for display
-        return $this->get_successful_bids_for_art_piece($art_piece_id, $bidder_id);
-    }
-    
-    /**
      * Get all bids by bidder (confirmation_code)
      */
     public function get_bidder_bids($bidder_id) {
@@ -400,27 +392,6 @@ class AIH_Bid {
              WHERE b.is_winning = 1
              ORDER BY a.auction_end DESC",
             $now
-        ));
-    }
-    
-    /**
-     * Get all unsuccessful bids for an art piece
-     */
-    public function get_unsuccessful_bids($art_piece_id) {
-        global $wpdb;
-        
-        $bidders_table = AIH_Database::get_table('bidders');
-        
-        return $wpdb->get_results($wpdb->prepare(
-            "SELECT b.*, 
-                    CONCAT(bd.name_first, ' ', bd.name_last) as bidder_name, 
-                    bd.email_primary as bidder_email,
-                    bd.confirmation_code
-             FROM {$this->table} b
-             LEFT JOIN $bidders_table bd ON b.bidder_id = bd.confirmation_code
-             WHERE b.art_piece_id = %d AND b.is_winning = 0
-             ORDER BY b.bid_amount DESC",
-            $art_piece_id
         ));
     }
     

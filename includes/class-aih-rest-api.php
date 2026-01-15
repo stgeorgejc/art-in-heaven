@@ -500,37 +500,9 @@ class AIH_REST_API {
     
     /**
      * Format art piece for API response
+     * Uses consolidated AIH_Template_Helper::format_art_piece()
      */
     private function format_art_piece($piece, $bidder_id = null, $full = false) {
-        $secs = max(0, intval($piece->seconds_remaining ?? 0));
-        
-        $data = array(
-            'id' => intval($piece->id),
-            'art_id' => $piece->art_id,
-            'title' => $piece->title,
-            'artist' => $piece->artist,
-            'medium' => $piece->medium,
-            'starting_bid' => floatval($piece->starting_bid),
-            'current_bid' => floatval($piece->current_bid),
-            'image_url' => $piece->watermarked_url ?: $piece->image_url,
-            'auction_end' => $piece->auction_end,
-            'seconds_remaining' => $secs,
-            'status' => $piece->status,
-            'auction_ended' => $secs <= 0,
-        );
-        
-        if ($full) {
-            $data['dimensions'] = $piece->dimensions;
-            $data['description'] = $piece->description;
-            $data['auction_start'] = $piece->auction_start;
-        }
-        
-        if ($bidder_id) {
-            $bid_model = new AIH_Bid();
-            $data['is_winning'] = $bid_model->is_bidder_winning($piece->id, $bidder_id);
-            $data['is_favorite'] = isset($piece->is_favorite) ? (bool) $piece->is_favorite : false;
-        }
-        
-        return $data;
+        return AIH_Template_Helper::format_art_piece($piece, $bidder_id, $full, false);
     }
 }

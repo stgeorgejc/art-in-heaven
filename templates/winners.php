@@ -9,14 +9,8 @@ if (!AIH_Database::tables_exist()) {
     return;
 }
 
-global $wpdb;
-
-// Gallery URL - try settings first, then search for shortcode
-$gallery_page = get_option('aih_gallery_page', '');
-if (!$gallery_page) {
-    $gallery_page = $wpdb->get_var("SELECT ID FROM {$wpdb->posts} WHERE post_type = 'page' AND post_status = 'publish' AND post_content LIKE '%[art_in_heaven_gallery%' LIMIT 1");
-}
-$gallery_url = $gallery_page ? get_permalink($gallery_page) : home_url();
+// Use consolidated helper for page URLs
+$gallery_url = AIH_Template_Helper::get_gallery_url();
 
 $bid_model = new AIH_Bid();
 $all_winning_bids = $bid_model->get_all_winning_bids();

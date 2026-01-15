@@ -926,23 +926,13 @@ class AIH_Ajax {
     }
     
     // ========== HELPERS ==========
-    
+
+    /**
+     * Format art piece for AJAX response
+     * Uses consolidated AIH_Template_Helper::format_art_piece()
+     */
     private function format_art_piece($piece, $bidder_id = null, $full = false) {
-        $secs = max(0, intval($piece->seconds_remaining ?? 0));
-        $data = array(
-            'id' => $piece->id, 'art_id' => $piece->art_id, 'title' => $piece->title, 'artist' => $piece->artist, 'medium' => $piece->medium,
-            'starting_bid' => number_format($piece->starting_bid, 2), 'image_url' => $piece->watermarked_url ?: $piece->image_url,
-            'auction_end' => $piece->auction_end, 'seconds_remaining' => $secs, 'is_favorite' => isset($piece->is_favorite) ? (bool)$piece->is_favorite : false,
-            'status' => $piece->status, 'auction_ended' => $secs <= 0
-        );
-        
-        $d = floor($secs / 86400); $h = floor(($secs % 86400) / 3600); $m = floor(($secs % 3600) / 60);
-        $data['time_remaining'] = $secs > 0 ? ($d > 0 ? "{$d}d {$h}h" : ($h > 0 ? "{$h}h {$m}m" : "{$m}m")) : __('Ended', 'art-in-heaven');
-        
-        if ($full) { $data['dimensions'] = $piece->dimensions; $data['description'] = $piece->description; }
-        if ($bidder_id) $data['is_winning'] = (new AIH_Bid())->is_bidder_winning($piece->id, $bidder_id);
-        
-        return $data;
+        return AIH_Template_Helper::format_art_piece($piece, $bidder_id, $full, true);
     }
     
     // ========== MULTIPLE IMAGES ==========

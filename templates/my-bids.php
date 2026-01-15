@@ -4,30 +4,15 @@
  */
 if (!defined('ABSPATH')) exit;
 
-$auth = AIH_Auth::get_instance();
-$is_logged_in = $auth->is_logged_in();
-$bidder = $is_logged_in ? $auth->get_current_bidder() : null;
-$bidder_id = $is_logged_in ? $auth->get_current_bidder_id() : null;
+// Use consolidated helper for bidder info and page URLs
+$bidder_info = AIH_Template_Helper::get_current_bidder_info();
+$is_logged_in = $bidder_info['is_logged_in'];
+$bidder = $bidder_info['bidder'];
+$bidder_id = $bidder_info['id'];
+$bidder_name = $bidder_info['name'];
 
-$bidder_name = '';
-if ($bidder) {
-    $bidder_name = !empty($bidder->name_first) ? $bidder->name_first : 
-                   (!empty($bidder->individual_name) ? explode(' ', $bidder->individual_name)[0] : $bidder_id);
-}
-
-// Get page URLs
-global $wpdb;
-
-// Gallery URL - try settings first, then search for shortcode
-$gallery_page = get_option('aih_gallery_page', '');
-if (!$gallery_page) {
-    $gallery_page = $wpdb->get_var("SELECT ID FROM {$wpdb->posts} WHERE post_type = 'page' AND post_status = 'publish' AND post_content LIKE '%[art_in_heaven_gallery%' LIMIT 1");
-}
-$gallery_url = $gallery_page ? get_permalink($gallery_page) : home_url();
-
-$checkout_url = '';
-$checkout_page = $wpdb->get_var("SELECT ID FROM {$wpdb->posts} WHERE post_type = 'page' AND post_status = 'publish' AND post_content LIKE '%[art_in_heaven_checkout%' LIMIT 1");
-if ($checkout_page) $checkout_url = get_permalink($checkout_page);
+$gallery_url = AIH_Template_Helper::get_gallery_url();
+$checkout_url = AIH_Template_Helper::get_checkout_url();
 ?>
 <script>
 if (typeof aihAjax === 'undefined') {

@@ -22,7 +22,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('AIH_VERSION', '0.9.113');
+define('AIH_VERSION', '0.9.118');
 define('AIH_DB_VERSION', '0.9.0');
 define('AIH_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('AIH_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -89,6 +89,8 @@ class Art_In_Heaven {
         require_once AIH_PLUGIN_DIR . 'includes/class-aih-database.php';
         require_once AIH_PLUGIN_DIR . 'includes/class-aih-cache.php';
         require_once AIH_PLUGIN_DIR . 'includes/class-aih-security.php';
+        require_once AIH_PLUGIN_DIR . 'includes/class-aih-template-helper.php';
+        require_once AIH_PLUGIN_DIR . 'includes/class-aih-assets.php';
         require_once AIH_PLUGIN_DIR . 'includes/class-aih-roles.php';
         require_once AIH_PLUGIN_DIR . 'includes/class-aih-status.php';
         require_once AIH_PLUGIN_DIR . 'includes/class-aih-ccb-api.php';
@@ -242,6 +244,7 @@ class Art_In_Heaven {
         AIH_Ajax::get_instance();
         AIH_Shortcodes::get_instance();
         AIH_Checkout::get_instance();
+        AIH_Assets::get_instance();
         if (class_exists('AIH_Notifications')) AIH_Notifications::get_instance();
         
         if (is_admin()) {
