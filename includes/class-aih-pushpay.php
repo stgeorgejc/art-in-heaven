@@ -1,0 +1,589 @@
+<?php
+/**
+ * Pushpay API Integration
+ * 
+ * Handles OAuth authentication and API requests to Pushpay
+ */
+
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+class AIH_Pushpay_API {
+    
+    private static $instance = null;
+    
+    // API endpoints
+    const AUTH_URL = 'https://auth.pushpay.com/pushpay-sandbox/oauth/token'; // Sandbox
+    const AUTH_URL_PROD = 'https://auth.pushpay.com/pushpay/oauth/token'; // Production
+    const API_URL = 'https://sandbox-api.pushpay.com/v1'; // Sandbox
+    const API_URL_PROD = 'https://api.pushpay.com/v1'; // Production
+    
+    private $access_token = null;
+    private $token_expiry = null;
+    
+    public static function get_instance() {
+        if (null === self::$instance) {
+            self::$instance = new self();
+        }
+        return self::$instance;
+    }
+    
+    /**
+     * Get API settings
+     */
+    public function get_settings() {
+        $is_sandbox = get_option('aih_pushpay_sandbox', 0);
+        
+        if ($is_sandbox) {
+            // Sandbox credentials
+            return array(
+                'client_id' => get_option('aih_pushpay_sandbox_client_id', ''),
+                'client_secret' => get_option('aih_pushpay_sandbox_client_secret', ''),
+                'organization_key' => get_option('aih_pushpay_sandbox_organization_key', ''),
+                'merchant_key' => get_option('aih_pushpay_sandbox_merchant_key', ''),
+                'base_url' => get_option('aih_pushpay_base_url', 'https://pushpay.com/pay/'),
+                'fund' => get_option('aih_pushpay_fund', 'art-in-heaven'),
+                'sandbox_mode' => true,
+            );
+        } else {
+            // Production credentials
+            return array(
+                'client_id' => get_option('aih_pushpay_client_id', ''),
+                'client_secret' => get_option('aih_pushpay_client_secret', ''),
+                'organization_key' => get_option('aih_pushpay_organization_key', ''),
+                'merchant_key' => get_option('aih_pushpay_merchant_key', ''),
+                'base_url' => get_option('aih_pushpay_base_url', 'https://pushpay.com/pay/'),
+                'fund' => get_option('aih_pushpay_fund', 'art-in-heaven'),
+                'sandbox_mode' => false,
+            );
+        }
+    }
+    
+    /**
+     * Check if API is configured
+     */
+    public function is_configured() {
+        $settings = $this->get_settings();
+        return !empty($settings['client_id']) && !empty($settings['client_secret']) && !empty($settings['organization_key']);
+    }
+    
+    /**
+     * Get API base URL based on mode
+     */
+    private function get_api_url() {
+        $settings = $this->get_settings();
+        return $settings['sandbox_mode'] ? self::API_URL : self::API_URL_PROD;
+    }
+    
+    /**
+     * Get Auth URL based on mode
+     */
+    private function get_auth_url() {
+        $settings = $this->get_settings();
+        return $settings['sandbox_mode'] ? self::AUTH_URL : self::AUTH_URL_PROD;
+    }
+    
+    /**
+     * Get OAuth access token
+     */
+    public function get_access_token($force_refresh = false) {
+        // Check cached token
+        if (!$force_refresh) {
+            $cached = get_transient('aih_pushpay_token');
+            if ($cached) {
+                return $cached;
+            }
+        }
+        
+        $settings = $this->get_settings();
+        
+        if (empty($settings['client_id']) || empty($settings['client_secret'])) {
+            return new WP_Error('missing_credentials', 'Pushpay API credentials not configured.');
+        }
+        
+        $response = wp_remote_post($this->get_auth_url(), array(
+            'headers' => array(
+                'Content-Type' => 'application/x-www-form-urlencoded',
+                'Authorization' => 'Basic ' . base64_encode($settings['client_id'] . ':' . $settings['client_secret'])
+            ),
+            'body' => array(
+                'grant_type' => 'client_credentials',
+                'scope' => 'read'
+            ),
+            'timeout' => 30
+        ));
+        
+        if (is_wp_error($response)) {
+            error_log('Pushpay OAuth Error: ' . $response->get_error_message());
+            return $response;
+        }
+        
+        $code = wp_remote_retrieve_response_code($response);
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+        
+        if ($code !== 200) {
+            $error_msg = isset($body['error_description']) ? $body['error_description'] : 'Authentication failed';
+            error_log('Pushpay OAuth Error (' . $code . '): ' . $error_msg);
+            return new WP_Error('auth_failed', $error_msg);
+        }
+        
+        if (isset($body['access_token'])) {
+            $expires_in = isset($body['expires_in']) ? intval($body['expires_in']) - 60 : 3540; // Default 59 mins
+            set_transient('aih_pushpay_token', $body['access_token'], $expires_in);
+            return $body['access_token'];
+        }
+        
+        return new WP_Error('no_token', 'No access token received.');
+    }
+    
+    /**
+     * Make API request
+     */
+    public function api_request($endpoint, $method = 'GET', $data = null) {
+        $token = $this->get_access_token();
+        
+        if (is_wp_error($token)) {
+            return $token;
+        }
+        
+        $url = $this->get_api_url() . $endpoint;
+        
+        $args = array(
+            'headers' => array(
+                'Authorization' => 'Bearer ' . $token,
+                'Content-Type' => 'application/json',
+                'Accept' => 'application/json'
+            ),
+            'timeout' => 30,
+            'method' => $method
+        );
+        
+        if ($data && in_array($method, array('POST', 'PUT', 'PATCH'))) {
+            $args['body'] = json_encode($data);
+        }
+        
+        $response = wp_remote_request($url, $args);
+        
+        if (is_wp_error($response)) {
+            error_log('Pushpay API Error: ' . $response->get_error_message());
+            return $response;
+        }
+        
+        $code = wp_remote_retrieve_response_code($response);
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+        
+        if ($code === 401) {
+            // Token expired, try refreshing
+            delete_transient('aih_pushpay_token');
+            $token = $this->get_access_token(true);
+            if (!is_wp_error($token)) {
+                return $this->api_request($endpoint, $method, $data);
+            }
+            return new WP_Error('auth_expired', 'Authentication expired and refresh failed.');
+        }
+        
+        if ($code >= 400) {
+            $error_msg = isset($body['message']) ? $body['message'] : 'API request failed';
+            error_log('Pushpay API Error (' . $code . '): ' . $error_msg);
+            return new WP_Error('api_error', $error_msg, array('code' => $code, 'body' => $body));
+        }
+        
+        return $body;
+    }
+    
+    /**
+     * Test API connection
+     */
+    public function test_connection() {
+        if (!$this->is_configured()) {
+            return array(
+                'success' => false,
+                'message' => 'Pushpay API credentials not configured.'
+            );
+        }
+        
+        $settings = $this->get_settings();
+        
+        // Try to get organization info
+        $result = $this->api_request('/organization/' . $settings['organization_key']);
+        
+        if (is_wp_error($result)) {
+            return array(
+                'success' => false,
+                'message' => $result->get_error_message()
+            );
+        }
+        
+        return array(
+            'success' => true,
+            'message' => 'Connected to Pushpay successfully.',
+            'organization' => isset($result['name']) ? $result['name'] : 'Unknown'
+        );
+    }
+    
+    /**
+     * Get payments/transactions from Pushpay
+     */
+    public function get_payments($params = array()) {
+        $settings = $this->get_settings();
+        
+        if (empty($settings['organization_key'])) {
+            return new WP_Error('no_org', 'Organization key not configured.');
+        }
+        
+        $defaults = array(
+            'page' => 0,
+            'pageSize' => 100,
+            'from' => null, // ISO 8601 date
+            'to' => null,
+            'status' => null, // Success, Failed, Processing, etc.
+            'fund' => null
+        );
+        
+        $params = wp_parse_args($params, $defaults);
+        
+        // Build query string
+        $query = array(
+            'page' => $params['page'],
+            'pageSize' => $params['pageSize']
+        );
+        
+        if ($params['from']) {
+            $query['from'] = $params['from'];
+        }
+        if ($params['to']) {
+            $query['to'] = $params['to'];
+        }
+        if ($params['status']) {
+            $query['status'] = $params['status'];
+        }
+        
+        $endpoint = '/organization/' . $settings['organization_key'] . '/payments?' . http_build_query($query);
+        
+        return $this->api_request($endpoint);
+    }
+    
+    /**
+     * Get a specific payment by ID
+     */
+    public function get_payment($payment_id) {
+        $settings = $this->get_settings();
+        
+        if (empty($settings['organization_key'])) {
+            return new WP_Error('no_org', 'Organization key not configured.');
+        }
+        
+        return $this->api_request('/organization/' . $settings['organization_key'] . '/payment/' . $payment_id);
+    }
+    
+    /**
+     * Search payments by reference (order number)
+     */
+    public function search_by_reference($reference) {
+        $settings = $this->get_settings();
+        
+        if (empty($settings['organization_key'])) {
+            return new WP_Error('no_org', 'Organization key not configured.');
+        }
+        
+        $endpoint = '/organization/' . $settings['organization_key'] . '/payments?' . http_build_query(array(
+            'pageSize' => 10,
+            'q' => $reference
+        ));
+        
+        return $this->api_request($endpoint);
+    }
+    
+    /**
+     * Get fund/listing information
+     */
+    public function get_funds() {
+        $settings = $this->get_settings();
+        
+        if (empty($settings['organization_key'])) {
+            return new WP_Error('no_org', 'Organization key not configured.');
+        }
+        
+        return $this->api_request('/organization/' . $settings['organization_key'] . '/funds');
+    }
+    
+    /**
+     * Sync payments from Pushpay to local database
+     */
+    public function sync_payments($days_back = 30) {
+        global $wpdb;
+        
+        $settings = $this->get_settings();
+        $orders_table = AIH_Database::get_table('orders');
+        $transactions_table = AIH_Database::get_table('pushpay_transactions');
+        
+        // Calculate date range
+        $from = date('c', strtotime("-{$days_back} days"));
+        $to = date('c');
+        
+        $page = 0;
+        $total_synced = 0;
+        $total_matched = 0;
+        $has_more = true;
+        
+        while ($has_more) {
+            $result = $this->get_payments(array(
+                'page' => $page,
+                'pageSize' => 100,
+                'from' => $from,
+                'to' => $to,
+                'status' => 'Success'
+            ));
+            
+            if (is_wp_error($result)) {
+                return $result;
+            }
+            
+            $payments = isset($result['items']) ? $result['items'] : array();
+            
+            if (empty($payments)) {
+                break;
+            }
+            
+            foreach ($payments as $payment) {
+                // Store transaction
+                $transaction_data = array(
+                    'pushpay_id' => $payment['paymentToken'],
+                    'amount' => floatval($payment['amount']['amount']),
+                    'currency' => $payment['amount']['currency'],
+                    'status' => $payment['status'],
+                    'payer_name' => isset($payment['payer']['name']) ? $payment['payer']['name'] : '',
+                    'payer_email' => isset($payment['payer']['emailAddress']) ? $payment['payer']['emailAddress'] : '',
+                    'fund' => isset($payment['fund']['name']) ? $payment['fund']['name'] : '',
+                    'reference' => isset($payment['paymentMethodDetails']['reference']) ? $payment['paymentMethodDetails']['reference'] : '',
+                    'notes' => isset($payment['payerNote']) ? $payment['payerNote'] : '',
+                    'payment_date' => date('Y-m-d H:i:s', strtotime($payment['createdOn'])),
+                    'raw_data' => json_encode($payment),
+                    'synced_at' => current_time('mysql')
+                );
+                
+                // Check if transaction already exists
+                $existing = $wpdb->get_var($wpdb->prepare(
+                    "SELECT id FROM {$transactions_table} WHERE pushpay_id = %s",
+                    $payment['paymentToken']
+                ));
+                
+                if ($existing) {
+                    $wpdb->update($transactions_table, $transaction_data, array('id' => $existing));
+                } else {
+                    $wpdb->insert($transactions_table, $transaction_data);
+                    $total_synced++;
+                }
+                
+                // Try to match to an order by reference (order number in notes/reference)
+                $order_number = null;
+                
+                // Check notes field for order number (supports both SA- and AIH- prefixes)
+                if (!empty($payment['payerNote']) && preg_match('/(AIH|SA)-[A-Z0-9]+/i', $payment['payerNote'], $matches)) {
+                    $order_number = strtoupper($matches[0]);
+                }
+                
+                // Check reference field
+                if (!$order_number && !empty($transaction_data['reference']) && preg_match('/(AIH|SA)-[A-Z0-9]+/i', $transaction_data['reference'], $matches)) {
+                    $order_number = strtoupper($matches[0]);
+                }
+                
+                // Match by amount and name if no order number found
+                if (!$order_number && !empty($transaction_data['payer_email'])) {
+                    // Try to find a pending order with matching amount
+                    $matching_order = $wpdb->get_row($wpdb->prepare(
+                        "SELECT o.* FROM {$orders_table} o
+                         WHERE o.payment_status = 'pending' 
+                         AND ABS(o.total - %f) < 0.01
+                         ORDER BY o.created_at DESC
+                         LIMIT 1",
+                        $transaction_data['amount']
+                    ));
+                    
+                    if ($matching_order) {
+                        $order_number = $matching_order->order_number;
+                    }
+                }
+                
+                // Update order if matched
+                if ($order_number) {
+                    $order = $wpdb->get_row($wpdb->prepare(
+                        "SELECT * FROM {$orders_table} WHERE order_number = %s",
+                        $order_number
+                    ));
+                    
+                    if ($order && $order->payment_status !== 'paid') {
+                        $wpdb->update(
+                            $orders_table,
+                            array(
+                                'payment_status' => 'paid',
+                                'payment_method' => 'pushpay',
+                                'pushpay_payment_id' => $payment['paymentToken'],
+                                'pushpay_status' => $payment['status'],
+                                'payment_date' => date('Y-m-d H:i:s', strtotime($payment['createdOn'])),
+                                'updated_at' => current_time('mysql')
+                            ),
+                            array('id' => $order->id)
+                        );
+                        
+                        // Link transaction to order
+                        $wpdb->update(
+                            $transactions_table,
+                            array('order_id' => $order->id),
+                            array('pushpay_id' => $payment['paymentToken'])
+                        );
+                        
+                        $total_matched++;
+                    }
+                }
+            }
+            
+            // Check for more pages
+            $has_more = isset($result['page']) && isset($result['totalPages']) && $result['page'] < $result['totalPages'] - 1;
+            $page++;
+            
+            // Safety limit
+            if ($page > 50) break;
+        }
+        
+        // Store sync timestamp
+        update_option('aih_pushpay_last_sync', current_time('mysql'));
+        update_option('aih_pushpay_last_sync_count', $total_synced);
+        
+        return array(
+            'success' => true,
+            'synced' => $total_synced,
+            'matched' => $total_matched,
+            'message' => sprintf('Synced %d transactions, matched %d to orders.', $total_synced, $total_matched)
+        );
+    }
+    
+    /**
+     * Get all synced transactions
+     */
+    public function get_synced_transactions($args = array()) {
+        global $wpdb;
+        
+        $transactions_table = AIH_Database::get_table('pushpay_transactions');
+        $orders_table = AIH_Database::get_table('orders');
+        
+        $defaults = array(
+            'status' => '',
+            'matched' => '', // 'yes', 'no', or ''
+            'limit' => 100,
+            'offset' => 0,
+            'orderby' => 'payment_date',
+            'order' => 'DESC'
+        );
+        
+        $args = wp_parse_args($args, $defaults);
+        
+        $where = "1=1";
+        if ($args['status']) {
+            $where .= $wpdb->prepare(" AND t.status = %s", $args['status']);
+        }
+        if ($args['matched'] === 'yes') {
+            $where .= " AND t.order_id IS NOT NULL";
+        } elseif ($args['matched'] === 'no') {
+            $where .= " AND t.order_id IS NULL";
+        }
+        
+        return $wpdb->get_results($wpdb->prepare(
+            "SELECT t.*, o.order_number, o.bidder_id
+             FROM {$transactions_table} t
+             LEFT JOIN {$orders_table} o ON t.order_id = o.id
+             WHERE {$where}
+             ORDER BY {$args['orderby']} {$args['order']}
+             LIMIT %d OFFSET %d",
+            $args['limit'],
+            $args['offset']
+        ));
+    }
+    
+    /**
+     * Manually match a transaction to an order
+     */
+    public function match_transaction_to_order($transaction_id, $order_id) {
+        global $wpdb;
+        
+        $transactions_table = AIH_Database::get_table('pushpay_transactions');
+        $orders_table = AIH_Database::get_table('orders');
+        
+        // Get transaction
+        $transaction = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM {$transactions_table} WHERE id = %d",
+            $transaction_id
+        ));
+        
+        if (!$transaction) {
+            return new WP_Error('not_found', 'Transaction not found.');
+        }
+        
+        // Get order
+        $order = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM {$orders_table} WHERE id = %d",
+            $order_id
+        ));
+        
+        if (!$order) {
+            return new WP_Error('not_found', 'Order not found.');
+        }
+        
+        // Update transaction
+        $wpdb->update(
+            $transactions_table,
+            array('order_id' => $order_id),
+            array('id' => $transaction_id)
+        );
+        
+        // Update order
+        $wpdb->update(
+            $orders_table,
+            array(
+                'payment_status' => 'paid',
+                'payment_method' => 'pushpay',
+                'pushpay_payment_id' => $transaction->pushpay_id,
+                'pushpay_status' => $transaction->status,
+                'payment_date' => $transaction->payment_date,
+                'updated_at' => current_time('mysql')
+            ),
+            array('id' => $order_id)
+        );
+        
+        return array(
+            'success' => true,
+            'message' => 'Transaction matched to order.'
+        );
+    }
+    
+    /**
+     * Generate payment URL with pre-filled data
+     */
+    public function get_payment_url($order) {
+        $settings = $this->get_settings();
+        
+        if (empty($settings['merchant_key'])) {
+            return '';
+        }
+        
+        $auth = AIH_Auth::get_instance();
+        $bidder = $auth->get_bidder_by_email($order->bidder_id);
+        
+        $params = array(
+            'a' => number_format($order->total, 2, '.', ''),
+            'r' => 'false', // Not recurring
+            'fnd' => $settings['fund'],
+            'rcv' => $order->order_number, // Reference/receipt
+        );
+        
+        if ($bidder) {
+            if (!empty($bidder->email_primary)) $params['em'] = $bidder->email_primary;
+            if (!empty($bidder->name_first)) $params['fn'] = $bidder->name_first;
+            if (!empty($bidder->name_last)) $params['ln'] = $bidder->name_last;
+            if (!empty($bidder->phone_mobile)) $params['ph'] = $bidder->phone_mobile;
+        }
+        
+        return $settings['base_url'] . $settings['merchant_key'] . '?' . http_build_query($params);
+    }
+}
