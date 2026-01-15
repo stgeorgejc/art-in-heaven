@@ -1345,4 +1345,430 @@ body .type-page {
         font-size: 38px;
     }
 }
+
+/* ============================================
+   IMAGE CAROUSEL STYLES
+   ============================================ */
+.aih-image-carousel {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.aih-carousel-link {
+    display: block;
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.aih-carousel-img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.aih-carousel-img.active {
+    opacity: 1;
+    position: relative;
+}
+
+.aih-carousel-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: bold;
+    color: var(--color-primary);
+    z-index: 5;
+    opacity: 0;
+    transition: opacity 0.2s ease, background 0.2s ease;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+}
+
+.aih-card-image:hover .aih-carousel-arrow {
+    opacity: 1;
+}
+
+.aih-carousel-prev {
+    left: 8px;
+}
+
+.aih-carousel-next {
+    right: 8px;
+}
+
+.aih-carousel-arrow:hover {
+    background: var(--color-accent);
+    color: white;
+}
+
+.aih-carousel-dots {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 6px;
+    z-index: 5;
+}
+
+.aih-carousel-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.aih-carousel-dot:hover {
+    background: rgba(255, 255, 255, 0.8);
+}
+
+.aih-carousel-dot.active {
+    background: white;
+    transform: scale(1.2);
+}
+
+/* ============================================
+   PLACEHOLDER STYLES
+   ============================================ */
+.aih-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    min-height: 200px;
+    background: var(--color-bg-alt);
+    color: var(--color-muted);
+    text-decoration: none;
+}
+
+.aih-placeholder-link {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    text-decoration: none;
+}
+
+.aih-placeholder-id {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--color-accent);
+    margin-bottom: 8px;
+}
+
+.aih-placeholder-text {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* ============================================
+   TIME REMAINING STYLES
+   ============================================ */
+.aih-bid-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+    gap: 12px;
+}
+
+.aih-bid-info-left {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+}
+
+.aih-time-remaining {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.aih-time-label {
+    font-size: 9px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-muted);
+    margin-bottom: 2px;
+}
+
+.aih-time-value {
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-secondary);
+}
+
+.aih-time-remaining.urgent .aih-time-value {
+    color: var(--color-error);
+}
+
+.aih-time-remaining.ended .aih-time-value {
+    color: var(--color-muted);
+}
+
+/* ============================================
+   NARROWER FILTER DROPDOWNS
+   ============================================ */
+.aih-select-narrow {
+    min-width: 90px;
+    max-width: 130px;
+    padding: 8px 24px 8px 8px;
+    font-size: 12px;
+}
+
+@media (min-width: 600px) {
+    .aih-select-narrow {
+        min-width: 100px;
+        max-width: 140px;
+    }
+}
+
+/* ============================================
+   SMALLER VIEW TOGGLE ICONS
+   ============================================ */
+.aih-view-toggle .aih-view-btn {
+    padding: 5px 8px;
+}
+
+.aih-view-toggle .aih-view-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+@media (min-width: 600px) {
+    .aih-view-toggle .aih-view-btn {
+        padding: 6px 9px;
+    }
+
+    .aih-view-toggle .aih-view-btn svg {
+        width: 15px;
+        height: 15px;
+    }
+}
+
+/* ============================================
+   USER NAME LINK STYLES
+   ============================================ */
+.aih-user-name-link {
+    color: var(--color-secondary);
+    text-decoration: none;
+    transition: color var(--transition);
+}
+
+.aih-user-name-link:hover {
+    color: var(--color-accent);
+}
+
+/* ============================================
+   IMPROVED HEART/FAVORITE BUTTON MOBILE
+   ============================================ */
+.aih-fav-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+    touch-action: manipulation;
+}
+
+@media (min-width: 600px) {
+    .aih-fav-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 16px;
+    }
+}
+
+.aih-fav-btn .aih-fav-icon {
+    line-height: 1;
+}
+
+/* ============================================
+   ART ID BADGE MOBILE FIX
+   ============================================ */
+.aih-art-id-badge {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    padding: 3px 6px;
+    font-size: 9px;
+    z-index: 4;
+}
+
+@media (min-width: 600px) {
+    .aih-art-id-badge {
+        bottom: 10px;
+        left: 10px;
+        padding: 4px 8px;
+        font-size: 10px;
+    }
+}
+
+/* ============================================
+   SINGLE VIEW NAVIGATION FIX FOR MOBILE
+   ============================================ */
+.aih-single-nav {
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 12px;
+}
+
+.aih-single-nav button {
+    padding: 8px 14px;
+    font-size: 13px;
+    min-width: 80px;
+}
+
+@media (max-width: 480px) {
+    .aih-single-nav {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .aih-single-nav button {
+        width: 100%;
+    }
+
+    .aih-single-counter {
+        order: -1;
+        text-align: center;
+        width: 100%;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--color-border);
+        margin-bottom: 4px;
+    }
+}
+
+/* Hide single view on very small screens - force grid */
+@media (max-width: 400px) {
+    .aih-view-toggle {
+        display: none;
+    }
+
+    .aih-gallery-grid.single-view {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    .aih-gallery-grid.single-view .aih-card {
+        display: flex !important;
+    }
+
+    .aih-single-nav {
+        display: none !important;
+    }
+}
+
+/* ============================================
+   WIDER BID AMOUNT SECTION
+   ============================================ */
+.aih-card-footer {
+    padding: 12px 14px 14px;
+}
+
+.aih-bid-amount {
+    font-size: 20px;
+}
+
+@media (min-width: 600px) {
+    .aih-card-footer {
+        padding: 14px 16px 16px;
+    }
+
+    .aih-bid-amount {
+        font-size: 22px;
+    }
+}
+
+@media (min-width: 900px) {
+    .aih-bid-amount {
+        font-size: 24px;
+    }
+}
+
+/* Bid form improvements */
+.aih-bid-form {
+    display: flex;
+    gap: 6px;
+}
+
+.aih-bid-input {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 12px;
+    font-size: 15px;
+}
+
+.aih-bid-btn {
+    padding: 10px 14px;
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+@media (min-width: 600px) {
+    .aih-bid-form {
+        gap: 8px;
+    }
+
+    .aih-bid-input {
+        padding: 12px 14px;
+        font-size: 16px;
+    }
+
+    .aih-bid-btn {
+        padding: 12px 18px;
+        font-size: 12px;
+    }
+}
+
+/* ============================================
+   MOBILE CAROUSEL TOUCH IMPROVEMENTS
+   ============================================ */
+@media (max-width: 768px) {
+    .aih-carousel-arrow {
+        opacity: 1;
+        width: 26px;
+        height: 26px;
+        font-size: 16px;
+    }
+
+    .aih-carousel-prev {
+        left: 6px;
+    }
+
+    .aih-carousel-next {
+        right: 6px;
+    }
+
+    .aih-carousel-dot {
+        width: 7px;
+        height: 7px;
+    }
+}
 </style>

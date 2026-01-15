@@ -147,7 +147,11 @@ $cart_count = count($checkout->get_won_items($bidder_id));
                 </a>
                 <?php endif; ?>
                 <div class="aih-user-menu">
+                    <?php if ($my_bids_url): ?>
+                    <a href="<?php echo esc_url($my_bids_url); ?>" class="aih-user-name aih-user-name-link"><?php echo esc_html($bidder_name); ?></a>
+                    <?php else: ?>
                     <span class="aih-user-name"><?php echo esc_html($bidder_name); ?></span>
+                    <?php endif; ?>
                     <button type="button" class="aih-logout-btn" id="aih-logout">Sign Out</button>
                 </div>
             </div>
@@ -168,17 +172,31 @@ $cart_count = count($checkout->get_won_items($bidder_id));
             <div class="aih-single-content">
                 <div class="aih-single-image">
                     <?php if ($primary_image): ?>
-                    <img src="<?php echo esc_url($primary_image); ?>" alt="<?php echo esc_attr($art_piece->title); ?>">
+                    <img src="<?php echo esc_url($primary_image); ?>" alt="<?php echo esc_attr($art_piece->title); ?>" id="aih-main-image">
+                    <?php if (count($images) > 1): ?>
+                    <button type="button" class="aih-img-nav aih-img-nav-prev" aria-label="Previous image">‹</button>
+                    <button type="button" class="aih-img-nav aih-img-nav-next" aria-label="Next image">›</button>
                     <?php endif; ?>
-                    
+                    <?php else: ?>
+                    <div class="aih-single-placeholder">
+                        <span class="aih-placeholder-id"><?php echo esc_html($art_piece->art_id); ?></span>
+                        <span class="aih-placeholder-text">No Image Available</span>
+                    </div>
+                    <?php endif; ?>
+
                     <button type="button" class="aih-fav-btn <?php echo $is_favorite ? 'active' : ''; ?>" data-id="<?php echo $art_piece->id; ?>">
                         <span class="aih-fav-icon"><?php echo $is_favorite ? '♥' : '♡'; ?></span>
                     </button>
-                    
+
                     <?php if (count($images) > 1): ?>
+                    <div class="aih-image-dots">
+                        <?php foreach ($images as $i => $img): ?>
+                        <span class="aih-image-dot <?php echo $i === 0 ? 'active' : ''; ?>" data-index="<?php echo $i; ?>" data-src="<?php echo esc_url($img->watermarked_url); ?>"></span>
+                        <?php endforeach; ?>
+                    </div>
                     <div class="aih-thumbnails">
                         <?php foreach ($images as $i => $img): ?>
-                        <button class="aih-thumb <?php echo $i === 0 ? 'active' : ''; ?>" data-src="<?php echo esc_url($img->watermarked_url); ?>">
+                        <button class="aih-thumb <?php echo $i === 0 ? 'active' : ''; ?>" data-index="<?php echo $i; ?>" data-src="<?php echo esc_url($img->watermarked_url); ?>">
                             <img src="<?php echo esc_url($img->watermarked_url); ?>" alt="">
                         </button>
                         <?php endforeach; ?>
@@ -292,12 +310,45 @@ jQuery(document).ready(function($) {
         });
     });
     
+    // Image navigation - current index
+    var currentImgIndex = 0;
+    var totalImages = $('.aih-thumb').length || 1;
+
+    function showImage(index) {
+        if (index < 0) index = totalImages - 1;
+        if (index >= totalImages) index = 0;
+        currentImgIndex = index;
+
+        var $thumb = $('.aih-thumb[data-index="' + index + '"]');
+        var src = $thumb.data('src');
+        if (src) {
+            $('#aih-main-image').attr('src', src);
+            $('.aih-thumb').removeClass('active');
+            $thumb.addClass('active');
+            $('.aih-image-dot').removeClass('active');
+            $('.aih-image-dot[data-index="' + index + '"]').addClass('active');
+        }
+    }
+
     // Thumbnails
     $('.aih-thumb').on('click', function() {
-        var src = $(this).data('src');
-        $('.aih-single-image > img').attr('src', src);
-        $('.aih-thumb').removeClass('active');
-        $(this).addClass('active');
+        var index = parseInt($(this).data('index'));
+        showImage(index);
+    });
+
+    // Dot navigation
+    $('.aih-image-dot').on('click', function() {
+        var index = parseInt($(this).data('index'));
+        showImage(index);
+    });
+
+    // Arrow navigation
+    $('.aih-img-nav-prev').on('click', function() {
+        showImage(currentImgIndex - 1);
+    });
+
+    $('.aih-img-nav-next').on('click', function() {
+        showImage(currentImgIndex + 1);
     });
     
     // Place bid
@@ -676,35 +727,226 @@ jQuery(document).ready(function($) {
         align-items: stretch;
         text-align: center;
     }
-    
+
     .aih-single-content-wrapper {
         padding: 0;
     }
-    
+
     .aih-single-content-wrapper > .aih-nav-arrow {
         position: fixed;
         top: 50%;
         transform: translateY(-50%);
-        width: 40px;
-        height: 40px;
+        width: 36px;
+        height: 36px;
         font-size: 16px;
+        z-index: 100;
     }
-    
+
     .aih-single-content-wrapper > .aih-nav-prev {
-        left: 8px;
+        left: 4px;
     }
-    
+
     .aih-single-content-wrapper > .aih-nav-next {
-        right: 8px;
+        right: 4px;
     }
-    
+
     .aih-single-image {
         padding: 12px;
     }
-    
+
     .aih-single-image .aih-fav-btn {
-        top: 20px;
-        right: 20px;
+        top: 16px;
+        right: 16px;
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
+    }
+
+    .aih-single-meta {
+        flex-direction: row;
+        justify-content: flex-start;
+        gap: 8px;
+    }
+
+    .aih-single-details h1 {
+        font-size: 22px;
+    }
+
+    /* Bid section mobile scaling */
+    .aih-bid-section {
+        padding: 16px;
+    }
+
+    .aih-current-bid .aih-bid-amount {
+        font-size: 26px;
+    }
+
+    .aih-bid-form-single {
+        flex-direction: column;
+    }
+
+    .aih-bid-form-single .aih-btn {
+        width: 100%;
+    }
+}
+
+/* Single item image navigation arrows */
+.aih-img-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 22px;
+    font-weight: bold;
+    color: var(--color-primary);
+    z-index: 5;
+    opacity: 0;
+    transition: opacity 0.2s ease, background 0.2s ease;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.aih-single-image:hover .aih-img-nav {
+    opacity: 1;
+}
+
+.aih-img-nav-prev {
+    left: 12px;
+}
+
+.aih-img-nav-next {
+    right: 12px;
+}
+
+.aih-img-nav:hover {
+    background: var(--color-accent);
+    color: white;
+}
+
+/* Image dots for single item page */
+.aih-image-dots {
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    z-index: 5;
+}
+
+.aih-image-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.aih-image-dot:hover {
+    background: rgba(255, 255, 255, 0.8);
+}
+
+.aih-image-dot.active {
+    background: white;
+    transform: scale(1.3);
+}
+
+/* Single item placeholder */
+.aih-single-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    padding: 40px;
+    background: var(--color-bg-alt);
+    color: var(--color-muted);
+}
+
+.aih-single-placeholder .aih-placeholder-id {
+    font-family: var(--font-display);
+    font-size: 36px;
+    font-weight: 600;
+    color: var(--color-accent);
+    margin-bottom: 12px;
+}
+
+.aih-single-placeholder .aih-placeholder-text {
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Wider details section - improved grid */
+@media (min-width: 900px) {
+    .aih-single-content {
+        grid-template-columns: 1fr 1fr;
+        gap: 40px;
+    }
+
+    .aih-single-details {
+        max-width: 100%;
+    }
+
+    .aih-piece-info {
+        padding: 24px;
+    }
+
+    .aih-info-row span:last-child {
+        max-width: 60%;
+        text-align: right;
+    }
+
+    /* Better bid section scaling */
+    .aih-bid-section {
+        padding: 28px;
+    }
+
+    .aih-current-bid .aih-bid-amount {
+        font-size: 38px;
+    }
+}
+
+@media (min-width: 1100px) {
+    .aih-single-content {
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 48px;
+    }
+}
+
+/* Mobile image nav always visible */
+@media (max-width: 768px) {
+    .aih-img-nav {
+        opacity: 1;
+        width: 32px;
+        height: 32px;
+        font-size: 18px;
+    }
+
+    .aih-img-nav-prev {
+        left: 8px;
+    }
+
+    .aih-img-nav-next {
+        right: 8px;
+    }
+
+    .aih-image-dot {
+        width: 8px;
+        height: 8px;
+    }
+
+    .aih-thumbnails {
+        display: none;
     }
 }
 </style>

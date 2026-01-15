@@ -136,7 +136,11 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
                 </a>
                 <?php endif; ?>
                 <div class="aih-user-menu">
+                    <?php if ($my_bids_url): ?>
+                    <a href="<?php echo esc_url($my_bids_url); ?>" class="aih-user-name aih-user-name-link"><?php echo esc_html($bidder_name); ?></a>
+                    <?php else: ?>
                     <span class="aih-user-name"><?php echo esc_html($bidder_name); ?></span>
+                    <?php endif; ?>
                     <button type="button" class="aih-logout-btn" id="aih-logout">Sign Out</button>
                 </div>
             </div>
@@ -154,17 +158,21 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
                     <input type="text" id="aih-search" placeholder="Search collection..." class="aih-search-input">
                 </div>
                 <div class="aih-filter-group">
-                    <select id="aih-filter-artist" class="aih-select">
+                    <select id="aih-filter-artist" class="aih-select aih-select-narrow">
                         <option value="">All Artists</option>
                         <?php foreach ($artists as $a): ?>
                         <option value="<?php echo esc_attr($a); ?>"><?php echo esc_html($a); ?></option>
                         <?php endforeach; ?>
                     </select>
-                    <select id="aih-filter-medium" class="aih-select">
+                    <select id="aih-filter-medium" class="aih-select aih-select-narrow">
                         <option value="">All Mediums</option>
                         <?php foreach ($mediums as $m): ?>
                         <option value="<?php echo esc_attr($m); ?>"><?php echo esc_html($m); ?></option>
                         <?php endforeach; ?>
+                    </select>
+                    <select id="aih-filter-favorites" class="aih-select aih-select-narrow aih-filter-favorites-select" style="display: none;">
+                        <option value="">All Items</option>
+                        <option value="favorites">Favorites Only</option>
                     </select>
                 </div>
                 <div class="aih-view-toggle">
@@ -225,21 +233,45 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
                      data-artist="<?php echo esc_attr($piece->artist); ?>"
                      data-medium="<?php echo esc_attr($piece->medium); ?>">
                 
-                <div class="aih-card-image">
+                <div class="aih-card-image" data-favorite="<?php echo $is_favorite ? '1' : '0'; ?>">
+                    <?php if (!empty($images) && count($images) > 1): ?>
+                    <div class="aih-image-carousel" data-current="0">
+                        <a href="?art_id=<?php echo $piece->id; ?>" class="aih-carousel-link">
+                            <?php foreach ($images as $idx => $img): ?>
+                            <img src="<?php echo esc_url($img->watermarked_url); ?>"
+                                 alt="<?php echo esc_attr($piece->title); ?>"
+                                 class="aih-carousel-img <?php echo $idx === 0 ? 'active' : ''; ?>"
+                                 data-index="<?php echo $idx; ?>"
+                                 loading="lazy">
+                            <?php endforeach; ?>
+                        </a>
+                        <button type="button" class="aih-carousel-arrow aih-carousel-prev" aria-label="Previous image">‹</button>
+                        <button type="button" class="aih-carousel-arrow aih-carousel-next" aria-label="Next image">›</button>
+                        <div class="aih-carousel-dots">
+                            <?php foreach ($images as $idx => $img): ?>
+                            <span class="aih-carousel-dot <?php echo $idx === 0 ? 'active' : ''; ?>" data-index="<?php echo $idx; ?>"></span>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                    <?php elseif ($primary_image): ?>
                     <a href="?art_id=<?php echo $piece->id; ?>">
-                        <?php if ($primary_image): ?>
                         <img src="<?php echo esc_url($primary_image); ?>" alt="<?php echo esc_attr($piece->title); ?>" loading="lazy">
-                        <?php else: ?>
-                        <div class="aih-placeholder">No Image</div>
-                        <?php endif; ?>
                     </a>
-                    
+                    <?php else: ?>
+                    <a href="?art_id=<?php echo $piece->id; ?>" class="aih-placeholder-link">
+                        <div class="aih-placeholder">
+                            <span class="aih-placeholder-id"><?php echo esc_html($piece->art_id); ?></span>
+                            <span class="aih-placeholder-text">No Image</span>
+                        </div>
+                    </a>
+                    <?php endif; ?>
+
                     <span class="aih-art-id-badge"><?php echo esc_html($piece->art_id); ?></span>
-                    
+
                     <?php if ($status_text): ?>
                     <div class="aih-badge aih-badge-<?php echo $status_class; ?>"><?php echo $status_text; ?></div>
                     <?php endif; ?>
-                    
+
                     <button type="button" class="aih-fav-btn <?php echo $is_favorite ? 'active' : ''; ?>" data-id="<?php echo $piece->id; ?>">
                         <span class="aih-fav-icon"><?php echo $is_favorite ? '♥' : '♡'; ?></span>
                     </button>
@@ -254,15 +286,23 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
                 
                 <div class="aih-card-footer">
                     <div class="aih-bid-info">
-                        <?php if ($has_bids): ?>
-                        <span class="aih-bid-label">Bid Placed</span>
-                        <span class="aih-bid-amount aih-bid-hidden"></span>
-                        <?php else: ?>
-                        <span class="aih-bid-label">Starting Bid</span>
-                        <span class="aih-bid-amount">$<?php echo number_format($display_bid); ?></span>
+                        <div class="aih-bid-info-left">
+                            <?php if ($has_bids): ?>
+                            <span class="aih-bid-label">Bid Placed</span>
+                            <span class="aih-bid-amount aih-bid-hidden"></span>
+                            <?php else: ?>
+                            <span class="aih-bid-label">Starting Bid</span>
+                            <span class="aih-bid-amount">$<?php echo number_format($display_bid); ?></span>
+                            <?php endif; ?>
+                        </div>
+                        <?php if (!$is_ended && $piece->auction_end): ?>
+                        <div class="aih-time-remaining" data-end="<?php echo esc_attr($piece->auction_end); ?>">
+                            <span class="aih-time-label">Time Left</span>
+                            <span class="aih-time-value">--:--:--</span>
+                        </div>
                         <?php endif; ?>
                     </div>
-                    
+
                     <?php if (!$is_ended): ?>
                     <div class="aih-bid-form">
                         <input type="number" class="aih-bid-input" min="<?php echo $min_bid; ?>" step="1" placeholder="Enter bid">
@@ -300,19 +340,21 @@ jQuery(document).ready(function($) {
         var search = $('#aih-search').val().toLowerCase().trim();
         var artist = $('#aih-filter-artist').val();
         var medium = $('#aih-filter-medium').val();
-        
+        var favoritesOnly = $('#aih-filter-favorites').val() === 'favorites';
+
         var visibleCount = 0;
-        
+
         $('.aih-card').each(function() {
             var $card = $(this);
             var show = true;
-            
+
             // Get data attributes
             var cardArtId = ($card.attr('data-art-id') || '').toLowerCase();
             var cardTitle = ($card.attr('data-title') || '').toLowerCase();
             var cardArtist = ($card.attr('data-artist') || '');
             var cardMedium = ($card.attr('data-medium') || '');
-            
+            var isFavorite = $card.find('.aih-card-image').attr('data-favorite') === '1';
+
             // Search filter - check against art ID, title, and artist
             if (search) {
                 var searchText = cardArtId + ' ' + cardTitle + ' ' + cardArtist.toLowerCase();
@@ -320,21 +362,26 @@ jQuery(document).ready(function($) {
                     show = false;
                 }
             }
-            
+
             // Artist filter - exact match (case-insensitive)
             if (show && artist) {
                 if (cardArtist.toLowerCase() !== artist.toLowerCase()) {
                     show = false;
                 }
             }
-            
+
             // Medium filter - exact match (case-insensitive)
             if (show && medium) {
                 if (cardMedium.toLowerCase() !== medium.toLowerCase()) {
                     show = false;
                 }
             }
-            
+
+            // Favorites filter
+            if (show && favoritesOnly && !isFavorite) {
+                show = false;
+            }
+
             // Show or hide the card
             if (show) {
                 $card.css('display', '');
@@ -344,26 +391,45 @@ jQuery(document).ready(function($) {
             }
         });
     }
-    
+
+    // Check if any favorites exist and show/hide favorites filter
+    function updateFavoritesFilterVisibility() {
+        var hasFavorites = $('.aih-card-image[data-favorite="1"]').length > 0;
+        if (hasFavorites) {
+            $('.aih-filter-favorites-select').show();
+        } else {
+            $('.aih-filter-favorites-select').hide();
+            $('#aih-filter-favorites').val('');
+        }
+    }
+    updateFavoritesFilterVisibility();
+
     // Bind filter events
     $('#aih-search').on('input', function() {
         filterCards();
     });
-    
-    $('#aih-filter-artist, #aih-filter-medium').on('change', function() {
+
+    $('#aih-filter-artist, #aih-filter-medium, #aih-filter-favorites').on('change', function() {
         filterCards();
     });
     
     // Favorite toggle
     $('.aih-fav-btn').on('click', function(e) {
         e.preventDefault();
+        e.stopPropagation();
         var $btn = $(this);
         var id = $btn.data('id');
-        
+
         $.post(aihAjax.ajaxurl, {action:'aih_toggle_favorite', nonce:aihAjax.nonce, art_piece_id:id}, function(r) {
             if (r.success) {
                 $btn.toggleClass('active');
                 $btn.find('.aih-fav-icon').text($btn.hasClass('active') ? '♥' : '♡');
+                // Update data attribute for filtering
+                var $cardImage = $btn.closest('.aih-card-image');
+                $cardImage.attr('data-favorite', $btn.hasClass('active') ? '1' : '0');
+                // Update favorites filter visibility
+                updateFavoritesFilterVisibility();
+                filterCards();
             }
         });
     });
@@ -454,10 +520,92 @@ jQuery(document).ready(function($) {
     $(document).on('click', '.aih-nav-prev', function() {
         showSingleCard(currentIndex - 1);
     });
-    
+
     $(document).on('click', '.aih-nav-next', function() {
         showSingleCard(currentIndex + 1);
     });
+
+    // Image carousel functionality
+    $(document).on('click', '.aih-carousel-arrow', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var $carousel = $(this).closest('.aih-image-carousel');
+        var $imgs = $carousel.find('.aih-carousel-img');
+        var $dots = $carousel.find('.aih-carousel-dot');
+        var current = parseInt($carousel.attr('data-current') || 0);
+        var total = $imgs.length;
+
+        if ($(this).hasClass('aih-carousel-next')) {
+            current = (current + 1) % total;
+        } else {
+            current = (current - 1 + total) % total;
+        }
+
+        $carousel.attr('data-current', current);
+        $imgs.removeClass('active');
+        $imgs.filter('[data-index="' + current + '"]').addClass('active');
+        $dots.removeClass('active');
+        $dots.filter('[data-index="' + current + '"]').addClass('active');
+    });
+
+    $(document).on('click', '.aih-carousel-dot', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var $carousel = $(this).closest('.aih-image-carousel');
+        var $imgs = $carousel.find('.aih-carousel-img');
+        var $dots = $carousel.find('.aih-carousel-dot');
+        var index = parseInt($(this).attr('data-index'));
+
+        $carousel.attr('data-current', index);
+        $imgs.removeClass('active');
+        $imgs.filter('[data-index="' + index + '"]').addClass('active');
+        $dots.removeClass('active');
+        $(this).addClass('active');
+    });
+
+    // Countdown timer functionality
+    function updateCountdowns() {
+        $('.aih-time-remaining').each(function() {
+            var $el = $(this);
+            var endTime = $el.attr('data-end');
+            if (!endTime) return;
+
+            var end = new Date(endTime.replace(/-/g, '/')).getTime();
+            var now = new Date().getTime();
+            var diff = end - now;
+
+            if (diff <= 0) {
+                $el.find('.aih-time-value').text('Ended');
+                $el.addClass('ended');
+                return;
+            }
+
+            var days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            var hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            var minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            var seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+            var timeStr = '';
+            if (days > 0) {
+                timeStr = days + 'd ' + hours + 'h';
+            } else if (hours > 0) {
+                timeStr = hours + 'h ' + minutes + 'm';
+            } else {
+                timeStr = minutes + 'm ' + seconds + 's';
+            }
+
+            $el.find('.aih-time-value').text(timeStr);
+
+            // Add urgency class if less than 1 hour
+            if (diff < 3600000) {
+                $el.addClass('urgent');
+            }
+        });
+    }
+
+    // Update countdowns immediately and every second
+    updateCountdowns();
+    setInterval(updateCountdowns, 1000);
 });
 </script>
 

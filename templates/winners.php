@@ -84,7 +84,10 @@ $art_images = new AIH_Art_Images();
                             <?php if ($image_url): ?>
                             <img src="<?php echo esc_url($image_url); ?>" alt="<?php echo esc_attr($bid->title); ?>" loading="lazy">
                             <?php else: ?>
-                            <div class="aih-placeholder">No Image</div>
+                            <div class="aih-placeholder">
+                                <span class="aih-placeholder-id"><?php echo esc_html($bid->art_id); ?></span>
+                                <span class="aih-placeholder-text">No Image</span>
+                            </div>
                             <?php endif; ?>
                             <div class="aih-badge aih-badge-sold">Sold</div>
                         </div>
@@ -98,14 +101,10 @@ $art_images = new AIH_Art_Images();
                         </div>
                         
                         <div class="aih-card-footer">
-                            <div class="aih-winner-info">
-                                <div>
+                            <div class="aih-winner-info aih-winner-info-full">
+                                <div class="aih-winner-info-item">
                                     <span class="aih-bid-label">Winner</span>
-                                    <span class="aih-winner-code"><?php echo esc_html($winner_code); ?></span>
-                                </div>
-                                <div style="text-align: right;">
-                                    <span class="aih-bid-label">Final Bid</span>
-                                    <span class="aih-bid-amount">$<?php echo number_format($bid->bid_amount); ?></span>
+                                    <span class="aih-winner-code"><?php echo esc_html($bid->bidder_id); ?></span>
                                 </div>
                             </div>
                         </div>
@@ -177,16 +176,59 @@ $art_images = new AIH_Art_Images();
     align-items: flex-end;
 }
 
+.aih-winner-info-full {
+    justify-content: center;
+}
+
+.aih-winner-info-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
 .aih-winner-code {
     font-family: var(--font-body);
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 600;
+    letter-spacing: 1.5px;
+    color: var(--color-primary);
+}
+
+/* Placeholder for winners page */
+.aih-winner-card .aih-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    min-height: 200px;
+    background: var(--color-bg-alt);
+}
+
+.aih-winner-card .aih-placeholder-id {
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--color-accent);
+    margin-bottom: 6px;
+}
+
+.aih-winner-card .aih-placeholder-text {
+    font-size: 11px;
+    text-transform: uppercase;
     letter-spacing: 1px;
+    color: var(--color-muted);
 }
 
 @media (max-width: 600px) {
     .aih-winners-header h1 {
         font-size: 32px;
+    }
+
+    .aih-winner-code {
+        font-size: 13px;
     }
 }
 </style>
