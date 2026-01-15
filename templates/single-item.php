@@ -106,9 +106,7 @@ foreach ($all_pieces as $i => $p) {
 $prev_id = $current_index > 0 ? $all_pieces[$current_index - 1]->id : null;
 $next_id = $current_index < count($all_pieces) - 1 ? $all_pieces[$current_index + 1]->id : null;
 
-$checkout_url = '';
-$checkout_page = $wpdb->get_var("SELECT ID FROM {$wpdb->posts} WHERE post_type = 'page' AND post_status = 'publish' AND post_content LIKE '%[art_in_heaven_checkout%' LIMIT 1");
-if ($checkout_page) $checkout_url = get_permalink($checkout_page);
+$checkout_url = AIH_Template_Helper::get_checkout_url();
 
 $cart_count = 0;
 $checkout = AIH_Checkout::get_instance();
