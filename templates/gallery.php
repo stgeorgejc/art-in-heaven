@@ -465,38 +465,57 @@ jQuery(document).ready(function($) {
     
     // View toggle (grid vs single)
     var currentIndex = 0;
-    var $cards = $('.aih-card');
-    
+    var singleViewMode = false;
+    var filteredCards = []; // Store filtered card IDs for single view navigation
+
     $('.aih-view-btn').on('click', function() {
         var view = $(this).data('view');
         $('.aih-view-btn').removeClass('active');
         $(this).addClass('active');
 
         if (view === 'single') {
+            singleViewMode = true;
             $('#aih-gallery').addClass('single-view');
-            showSingleCard(currentIndex);
+            // Build list of currently visible cards before hiding
+            filteredCards = [];
+            $('.aih-card').each(function() {
+                var $card = $(this);
+                // Check if card passes current filters (not hidden by filterCards)
+                if ($card.css('display') !== 'none') {
+                    filteredCards.push($card.data('id'));
+                }
+            });
+            if (filteredCards.length > 0) {
+                currentIndex = 0;
+                showSingleCard(currentIndex);
+            }
             $('.aih-single-nav').show();
         } else {
+            singleViewMode = false;
             $('#aih-gallery').removeClass('single-view');
             $('.aih-single-nav').hide();
-            // Re-apply filters when switching back to grid view
+            // First show all cards, then re-apply filters
+            $('.aih-card').css('display', '');
             filterCards();
         }
     });
-    
+
     function showSingleCard(index) {
-        $cards = $('.aih-card:not([style*="display: none"])');
-        if ($cards.length === 0) return;
-        
-        if (index < 0) index = $cards.length - 1;
-        if (index >= $cards.length) index = 0;
+        if (filteredCards.length === 0) return;
+
+        if (index < 0) index = filteredCards.length - 1;
+        if (index >= filteredCards.length) index = 0;
         currentIndex = index;
-        
-        $cards.hide();
-        $cards.eq(index).show();
-        
+
+        // Hide all cards first
+        $('.aih-card').hide();
+
+        // Show only the card at current index
+        var cardId = filteredCards[index];
+        $('.aih-card[data-id="' + cardId + '"]').show();
+
         // Update counter
-        $('.aih-single-counter').text((index + 1) + ' / ' + $cards.length);
+        $('.aih-single-counter').text((index + 1) + ' / ' + filteredCards.length);
     }
     
     // Add navigation for single view if not exists

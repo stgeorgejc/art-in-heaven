@@ -1,7 +1,7 @@
 <style>
 /* ============================================
    ELEGANT AUCTION THEME - MOBILE FIRST
-   Version: 0.9.116
+   Version: 0.9.117
    ============================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap');
@@ -1933,6 +1933,40 @@ body .type-page {
 @media (min-width: 1600px) {
     .aih-gallery-grid {
         grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    }
+}
+
+/* ============================================
+   CHECKOUT PAGE - WIDER LAYOUT
+   ============================================ */
+.aih-checkout-page .aih-main {
+    max-width: 1400px;
+}
+
+@media (min-width: 1200px) {
+    .aih-checkout-page .aih-main {
+        max-width: 1600px;
+    }
+}
+
+@media (min-width: 1400px) {
+    .aih-checkout-page .aih-main {
+        max-width: 1800px;
+    }
+}
+
+/* ============================================
+   SINGLE ITEM PAGE - MOBILE TITLE PADDING
+   ============================================ */
+@media (max-width: 600px) {
+    .aih-single-page .aih-single-details {
+        padding-left: 8px;
+        padding-right: 8px;
+    }
+
+    .aih-single-page .aih-single-details h1 {
+        padding-left: 4px;
+        padding-right: 4px;
     }
 }
 </style>
