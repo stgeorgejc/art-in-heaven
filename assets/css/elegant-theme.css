@@ -1,6 +1,6 @@
 /* ============================================
    ELEGANT AUCTION THEME - MOBILE FIRST
-   Version: 0.9.118
+   Version: 0.9.119
 
    Note: Google Fonts are loaded via wp_enqueue_style
    in class-aih-assets.php for better performance.
@@ -449,29 +449,58 @@ body .type-page {
     height: 100%;
 }
 
+/* Placeholder for images - improved visibility */
 .aih-placeholder {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    width: 100%;
     height: 100%;
+    min-height: 200px;
+    background: linear-gradient(135deg, var(--color-bg-alt) 0%, var(--color-border) 100%);
     color: var(--color-muted);
     font-size: 14px;
+    padding: 20px;
+    text-align: center;
 }
 
-/* Art ID badge on image */
+.aih-placeholder-id {
+    font-family: var(--font-display);
+    font-size: 42px;
+    font-weight: 600;
+    color: var(--color-accent);
+    margin-bottom: 8px;
+    line-height: 1;
+}
+
+.aih-placeholder-text {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--color-muted);
+}
+
+.aih-placeholder-link {
+    display: flex;
+    width: 100%;
+    height: 100%;
+}
+
+/* Art ID badge on image - LARGER */
 .aih-art-id-badge {
     position: absolute;
-    bottom: 10px;
-    left: 10px;
-    padding: 4px 8px;
-    font-size: 10px;
-    font-weight: 600;
+    bottom: 12px;
+    left: 12px;
+    padding: 8px 14px;
+    font-size: 16px;
+    font-weight: 700;
+    font-family: var(--font-display);
     letter-spacing: 0.5px;
-    text-transform: uppercase;
     background: rgba(255, 255, 255, 0.95);
     color: var(--color-accent);
-    border-radius: 2px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border-radius: 3px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 }
 
 .aih-badge {
@@ -1960,12 +1989,230 @@ body .type-page {
    ============================================ */
 @media (max-width: 600px) {
     .aih-single-page .aih-single-details {
-        padding-left: 8px;
-        padding-right: 8px;
+        padding-left: 12px;
+        padding-right: 12px;
     }
 
     .aih-single-page .aih-single-details h1 {
         padding-left: 4px;
         padding-right: 4px;
     }
+}
+
+/* ============================================
+   SCROLL TO TOP BUTTON
+   ============================================ */
+.aih-scroll-top {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 48px;
+    height: 48px;
+    background: var(--color-accent);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    z-index: 999;
+}
+
+.aih-scroll-top.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.aih-scroll-top:hover {
+    background: var(--color-accent-dark);
+    transform: translateY(-3px);
+}
+
+@media (max-width: 600px) {
+    .aih-scroll-top {
+        width: 42px;
+        height: 42px;
+        font-size: 18px;
+        bottom: 16px;
+        right: 16px;
+    }
+}
+
+/* ============================================
+   CHECKOUT PAGE - IMPROVED LAYOUT
+   ============================================ */
+.aih-checkout-page .aih-checkout-layout {
+    grid-template-columns: 1fr minmax(320px, 420px);
+    gap: 32px;
+}
+
+.aih-checkout-page .aih-checkout-item-details {
+    min-width: 0;
+    overflow: hidden;
+}
+
+.aih-checkout-page .aih-checkout-item-details h4 {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@media (min-width: 1200px) {
+    .aih-checkout-page .aih-checkout-layout {
+        gap: 48px;
+    }
+}
+
+@media (max-width: 1000px) {
+    .aih-checkout-page .aih-checkout-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ============================================
+   HEART ICON AND NAV ARROWS - MOBILE SCALING
+   ============================================ */
+@media (max-width: 600px) {
+    .aih-fav-btn {
+        width: 36px !important;
+        height: 36px !important;
+        font-size: 16px !important;
+    }
+
+    .aih-card-image .aih-fav-btn {
+        top: 8px;
+        right: 8px;
+    }
+
+    .aih-art-id-badge {
+        padding: 6px 10px;
+        font-size: 14px;
+        bottom: 8px;
+        left: 8px;
+    }
+}
+
+/* ============================================
+   TIME REMAINING - ALWAYS VISIBLE
+   ============================================ */
+.aih-time-remaining {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+}
+
+.aih-time-remaining .aih-time-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-muted);
+}
+
+.aih-time-remaining .aih-time-value {
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-primary);
+}
+
+.aih-time-remaining.urgent .aih-time-value {
+    color: var(--color-error);
+}
+
+.aih-time-remaining.ended .aih-time-value {
+    color: var(--color-muted);
+}
+
+/* ============================================
+   GALLERY CARD - BID INFO HIDE WHEN PLACED
+   ============================================ */
+.aih-bid-info-left .aih-bid-hidden {
+    display: none !important;
+}
+
+/* Keep "Bid Placed" label visible but hide amount */
+.aih-card .aih-bid-info .aih-bid-label {
+    display: block;
+}
+
+/* ============================================
+   SINGLE PAGE - NAVIGATION & PAGE INDICATOR
+   ============================================ */
+.aih-single-nav-bar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.aih-single-nav-bar .aih-back-link {
+    flex-shrink: 0;
+}
+
+.aih-single-nav-bar .aih-piece-counter {
+    flex-shrink: 0;
+}
+
+/* Desktop: center the page indicator */
+@media (min-width: 900px) {
+    .aih-single-nav-bar {
+        justify-content: center;
+        position: relative;
+    }
+
+    .aih-single-nav-bar .aih-back-link {
+        position: absolute;
+        left: 0;
+    }
+
+    .aih-single-nav-bar .aih-piece-counter {
+        font-size: 14px;
+    }
+
+    .aih-single-nav-bar .aih-art-nav-arrows {
+        position: absolute;
+        right: 0;
+        display: flex;
+        gap: 8px;
+    }
+}
+
+/* Art piece navigation arrows in nav bar */
+.aih-art-nav-arrows {
+    display: flex;
+    gap: 8px;
+    margin-left: auto;
+}
+
+.aih-art-nav-arrows a {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 50%;
+    color: var(--color-primary);
+    text-decoration: none;
+    font-size: 16px;
+    transition: all 0.2s ease;
+}
+
+.aih-art-nav-arrows a:hover {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: white;
+}
+
+.aih-art-nav-arrows a.disabled {
+    opacity: 0.3;
+    pointer-events: none;
 }

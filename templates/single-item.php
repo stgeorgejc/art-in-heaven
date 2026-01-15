@@ -148,12 +148,21 @@ $cart_count = count($checkout->get_won_items($bidder_id));
         <div class="aih-single-nav-bar">
             <a href="<?php echo esc_url($gallery_url); ?>" class="aih-back-link">← Back to Gallery</a>
             <span class="aih-piece-counter"><?php echo $current_index + 1; ?> / <?php echo count($all_pieces); ?></span>
+            <div class="aih-art-nav-arrows">
+                <?php if ($prev_id): ?>
+                <a href="?art_id=<?php echo $prev_id; ?>" title="Previous">←</a>
+                <?php else: ?>
+                <a class="disabled">←</a>
+                <?php endif; ?>
+                <?php if ($next_id): ?>
+                <a href="?art_id=<?php echo $next_id; ?>" title="Next">→</a>
+                <?php else: ?>
+                <a class="disabled">→</a>
+                <?php endif; ?>
+            </div>
         </div>
 
         <div class="aih-single-content-wrapper">
-            <?php if ($prev_id): ?>
-            <a href="?art_id=<?php echo $prev_id; ?>" class="aih-nav-arrow aih-nav-prev">←</a>
-            <?php endif; ?>
             
             <div class="aih-single-content">
                 <div class="aih-single-image">
@@ -218,16 +227,20 @@ $cart_count = count($checkout->get_won_items($bidder_id));
                     <?php endif; ?>
                     
                     <div class="aih-bid-section">
+                        <?php if (!$is_ended && $art_piece->auction_end): ?>
+                        <div class="aih-time-remaining-single" data-end="<?php echo esc_attr($art_piece->auction_end); ?>">
+                            <span class="aih-time-label">Time Remaining</span>
+                            <span class="aih-time-value">--:--:--</span>
+                        </div>
+                        <?php endif; ?>
+
                         <div class="aih-current-bid">
-                            <?php if ($has_bids): ?>
-                            <span class="aih-bid-label">Bid Placed</span>
-                            <span class="aih-bid-amount aih-bid-hidden" id="current-bid"></span>
-                            <?php else: ?>
+                            <?php if (!$has_bids): ?>
                             <span class="aih-bid-label">Starting Bid</span>
                             <span class="aih-bid-amount" id="current-bid">$<?php echo number_format($display_bid); ?></span>
                             <?php endif; ?>
                         </div>
-                        
+
                         <?php if (!$is_ended): ?>
                         <div class="aih-bid-form-single">
                             <div class="aih-field">
@@ -260,10 +273,6 @@ $cart_count = count($checkout->get_won_items($bidder_id));
                     <?php endif; ?>
                 </div>
             </div>
-            
-            <?php if ($next_id): ?>
-            <a href="?art_id=<?php echo $next_id; ?>" class="aih-nav-arrow aih-nav-next">→</a>
-            <?php endif; ?>
         </div>
     </main>
 
@@ -271,6 +280,9 @@ $cart_count = count($checkout->get_won_items($bidder_id));
         <p>&copy; <?php echo date('Y'); ?> Art in Heaven. All rights reserved.</p>
     </footer>
 </div>
+
+<!-- Scroll to Top Button -->
+<button type="button" class="aih-scroll-top" id="aih-scroll-top" title="Scroll to top">↑</button>
 
 <script>
 jQuery(document).ready(function($) {
@@ -350,6 +362,62 @@ jQuery(document).ready(function($) {
     
     $('#bid-amount').on('keypress', function(e) {
         if (e.which === 13) $('#place-bid').click();
+    });
+
+    // Countdown timer for single item page
+    function updateCountdown() {
+        $('.aih-time-remaining-single').each(function() {
+            var $el = $(this);
+            var endTime = $el.attr('data-end');
+            if (!endTime) return;
+
+            var end = new Date(endTime.replace(/-/g, '/')).getTime();
+            var now = new Date().getTime();
+            var diff = end - now;
+
+            if (diff <= 0) {
+                $el.find('.aih-time-value').text('Ended');
+                $el.addClass('ended');
+                return;
+            }
+
+            var days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            var hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            var minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            var seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+            var timeStr = '';
+            if (days > 0) {
+                timeStr = days + 'd ' + hours + 'h ' + minutes + 'm';
+            } else if (hours > 0) {
+                timeStr = hours + 'h ' + minutes + 'm ' + seconds + 's';
+            } else {
+                timeStr = minutes + 'm ' + seconds + 's';
+            }
+
+            $el.find('.aih-time-value').text(timeStr);
+
+            if (diff < 3600000) {
+                $el.addClass('urgent');
+            }
+        });
+    }
+
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
+
+    // Scroll to Top functionality
+    var $scrollBtn = $('#aih-scroll-top');
+    $(window).on('scroll', function() {
+        if ($(this).scrollTop() > 300) {
+            $scrollBtn.addClass('visible');
+        } else {
+            $scrollBtn.removeClass('visible');
+        }
+    });
+
+    $scrollBtn.on('click', function() {
+        $('html, body').animate({ scrollTop: 0 }, 400);
     });
 });
 </script>
@@ -765,44 +833,76 @@ jQuery(document).ready(function($) {
     }
 }
 
-/* Single item image navigation arrows */
+/* Time remaining in single item page */
+.aih-time-remaining-single {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 16px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    margin-bottom: 16px;
+    text-align: center;
+}
+
+.aih-time-remaining-single .aih-time-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--color-muted);
+}
+
+.aih-time-remaining-single .aih-time-value {
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--color-primary);
+}
+
+.aih-time-remaining-single.urgent .aih-time-value {
+    color: var(--color-error);
+}
+
+.aih-time-remaining-single.ended .aih-time-value {
+    color: var(--color-muted);
+}
+
+/* Single item image navigation arrows - ALWAYS VISIBLE */
 .aih-img-nav {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.95);
     border: none;
     border-radius: 50%;
     cursor: pointer;
-    font-size: 22px;
+    font-size: 24px;
     font-weight: bold;
     color: var(--color-primary);
     z-index: 5;
-    opacity: 0;
-    transition: opacity 0.2s ease, background 0.2s ease;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-}
-
-.aih-single-image:hover .aih-img-nav {
     opacity: 1;
+    transition: background 0.2s ease, transform 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 
 .aih-img-nav-prev {
-    left: 12px;
+    left: 16px;
 }
 
 .aih-img-nav-next {
-    right: 12px;
+    right: 16px;
 }
 
 .aih-img-nav:hover {
     background: var(--color-accent);
     color: white;
+    transform: translateY(-50%) scale(1.1);
 }
 
 /* Image dots for single item page */

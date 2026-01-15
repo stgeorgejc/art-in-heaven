@@ -251,17 +251,12 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
                 <div class="aih-card-footer">
                     <div class="aih-bid-info">
                         <div class="aih-bid-info-left">
-                            <?php if ($has_bids): ?>
-                            <span class="aih-bid-label">Bid Placed</span>
-                            <span class="aih-bid-amount aih-bid-hidden"></span>
-                            <?php else: ?>
+                            <?php if (!$has_bids): ?>
                             <span class="aih-bid-label">Starting Bid</span>
                             <span class="aih-bid-amount">$<?php echo number_format($display_bid); ?></span>
                             <?php endif; ?>
                         </div>
-                        <?php
-                        $show_end_time = isset($piece->show_end_time) ? $piece->show_end_time : 0;
-                        if (!$is_ended && $piece->auction_end && $show_end_time): ?>
+                        <?php if (!$is_ended && $piece->auction_end): ?>
                         <div class="aih-time-remaining" data-end="<?php echo esc_attr($piece->auction_end); ?>">
                             <span class="aih-time-label">Time Left</span>
                             <span class="aih-time-value">--:--:--</span>
@@ -291,6 +286,9 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
 
 <!-- Toast -->
 <div id="aih-toast" class="aih-toast"></div>
+
+<!-- Scroll to Top Button -->
+<button type="button" class="aih-scroll-top" id="aih-scroll-top" title="Scroll to top">↑</button>
 
 <script>
 jQuery(document).ready(function($) {
@@ -557,6 +555,20 @@ jQuery(document).ready(function($) {
     // Update countdowns immediately and every second
     updateCountdowns();
     setInterval(updateCountdowns, 1000);
+
+    // Scroll to Top functionality
+    var $scrollBtn = $('#aih-scroll-top');
+    $(window).on('scroll', function() {
+        if ($(this).scrollTop() > 300) {
+            $scrollBtn.addClass('visible');
+        } else {
+            $scrollBtn.removeClass('visible');
+        }
+    });
+
+    $scrollBtn.on('click', function() {
+        $('html, body').animate({ scrollTop: 0 }, 400);
+    });
 });
 </script>
 
