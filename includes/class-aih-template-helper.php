@@ -232,15 +232,16 @@ class AIH_Template_Helper {
      */
     public static function get_current_bidder_info() {
         $auth = AIH_Auth::get_instance();
-        $bidder_id = $auth->get_current_bidder_id();
-        $bidder = $bidder_id ? $auth->get_bidder($bidder_id) : null;
+        $is_logged_in = $auth->is_logged_in();
+        $bidder = $is_logged_in ? $auth->get_current_bidder() : null;
+        $bidder_id = $is_logged_in ? $auth->get_current_bidder_id() : null;
         $name = self::get_bidder_display_name($bidder, $bidder_id);
 
         return array(
             'id' => $bidder_id,
             'bidder' => $bidder,
             'name' => $name,
-            'is_logged_in' => $auth->is_logged_in(),
+            'is_logged_in' => $is_logged_in,
         );
     }
 
