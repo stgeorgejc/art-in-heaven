@@ -164,13 +164,11 @@ $cart_count = count($checkout->get_won_items($bidder_id));
                         <div class="aih-placeholder">No Image</div>
                         <?php endif; ?>
                     </a>
+                    <span class="aih-art-id-badge"><?php echo esc_html(isset($bid->art_id) ? $bid->art_id : ''); ?></span>
                     <div class="aih-badge aih-badge-<?php echo $status_class; ?>"><?php echo $status_text; ?></div>
                 </div>
-                
+
                 <div class="aih-card-body">
-                    <div class="aih-card-meta">
-                        <span class="aih-art-id"><?php echo esc_html(isset($bid->art_id) ? $bid->art_id : ''); ?></span>
-                    </div>
                     <h3 class="aih-card-title">
                         <a href="<?php echo esc_url($gallery_url); ?>?art_id=<?php echo $bid->art_piece_id; ?>"><?php echo esc_html($bid_title); ?></a>
                     </h3>

@@ -1,7 +1,7 @@
 <style>
 /* ============================================
    ELEGANT AUCTION THEME - MOBILE FIRST
-   Version: 0.9.113
+   Version: 0.9.115
    ============================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap');
@@ -1534,22 +1534,7 @@ body .type-page {
     color: var(--color-muted);
 }
 
-/* ============================================
-   NARROWER FILTER DROPDOWNS
-   ============================================ */
-.aih-select-narrow {
-    min-width: 90px;
-    max-width: 130px;
-    padding: 8px 24px 8px 8px;
-    font-size: 12px;
-}
-
-@media (min-width: 600px) {
-    .aih-select-narrow {
-        min-width: 100px;
-        max-width: 140px;
-    }
-}
+/* NARROWER FILTER DROPDOWNS - see FIX FILTER/SEARCH OVERLAP section */
 
 /* ============================================
    SMALLER VIEW TOGGLE ICONS
@@ -1778,26 +1763,36 @@ body .type-page {
 .aih-gallery-controls {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 8px;
     align-items: center;
 }
 
 .aih-search-box {
-    flex: 0 1 auto;
-    min-width: 140px;
-    max-width: 200px;
+    flex: 0 0 auto;
+    width: 160px;
+}
+
+.aih-search-input {
+    width: 100%;
 }
 
 .aih-filter-group {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 6px;
-    flex: 1 1 auto;
-    min-width: 0;
+    flex: 0 1 auto;
+}
+
+.aih-select-narrow {
+    min-width: 80px;
+    max-width: 120px;
+    padding: 7px 22px 7px 8px;
+    font-size: 11px;
 }
 
 .aih-view-toggle {
     flex-shrink: 0;
+    margin-left: auto;
 }
 
 @media (max-width: 600px) {
@@ -1808,44 +1803,66 @@ body .type-page {
     }
 
     .aih-gallery-controls {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 8px;
-    }
-
-    .aih-search-box {
-        width: 100%;
-        max-width: none;
-    }
-
-    .aih-filter-group {
-        width: 100%;
-        justify-content: flex-start;
-    }
-
-    .aih-select-narrow {
-        flex: 1 1 calc(50% - 4px);
-        max-width: calc(50% - 4px);
-        min-width: 0;
-    }
-
-    .aih-view-toggle {
-        align-self: flex-start;
-    }
-}
-
-@media (min-width: 601px) and (max-width: 900px) {
-    .aih-gallery-controls {
+        flex-direction: row;
         flex-wrap: wrap;
         gap: 8px;
     }
 
     .aih-search-box {
-        flex: 0 0 180px;
+        flex: 1 1 100%;
+        width: 100%;
+        order: 1;
     }
 
     .aih-filter-group {
         flex: 1 1 auto;
+        flex-wrap: wrap;
+        order: 2;
+    }
+
+    .aih-select-narrow {
+        flex: 1 1 calc(33% - 4px);
+        max-width: calc(33% - 4px);
+        min-width: 70px;
+    }
+
+    .aih-view-toggle {
+        order: 3;
+        margin-left: 0;
+    }
+}
+
+@media (min-width: 601px) and (max-width: 900px) {
+    .aih-gallery-controls {
+        flex-wrap: nowrap;
+        gap: 8px;
+    }
+
+    .aih-search-box {
+        flex: 0 0 150px;
+    }
+
+    .aih-filter-group {
+        flex: 0 1 auto;
+        flex-wrap: nowrap;
+    }
+
+    .aih-select-narrow {
+        min-width: 85px;
+        max-width: 110px;
+    }
+}
+
+@media (min-width: 901px) {
+    .aih-search-box {
+        width: 180px;
+    }
+
+    .aih-select-narrow {
+        min-width: 90px;
+        max-width: 130px;
+        padding: 8px 24px 8px 10px;
+        font-size: 12px;
     }
 }
 

@@ -459,7 +459,7 @@ jQuery(document).ready(function($) {
     width: auto;
     max-width: 100%;
     height: auto;
-    max-height: 60vh;
+    max-height: 55vh;
     display: block;
     object-fit: contain;
     object-position: center;
@@ -535,10 +535,10 @@ jQuery(document).ready(function($) {
 }
 
 .aih-piece-info {
-    padding: 20px;
+    padding: 16px;
     background: var(--color-surface);
     border: 1px solid var(--color-border);
-    margin-bottom: 24px;
+    margin-bottom: 20px;
 }
 
 .aih-info-row {
@@ -568,18 +568,18 @@ jQuery(document).ready(function($) {
 
 .aih-description {
     color: var(--color-secondary);
-    line-height: 1.7;
-    margin-bottom: 24px;
-    font-size: clamp(13px, 3vw, 15px);
+    line-height: 1.6;
+    margin-bottom: 20px;
+    font-size: clamp(13px, 3vw, 14px);
     overflow-wrap: break-word;
     word-wrap: break-word;
 }
 
 .aih-bid-section {
     background: var(--color-bg);
-    padding: 24px;
+    padding: 20px;
     border: 1px solid var(--color-border);
-    margin-bottom: 24px;
+    margin-bottom: 20px;
 }
 
 .aih-current-bid {
@@ -676,28 +676,28 @@ jQuery(document).ready(function($) {
     .aih-single-content-wrapper {
         padding: 0 60px;
     }
-    
+
     .aih-single-content-wrapper > .aih-nav-prev {
         left: 0;
     }
-    
+
     .aih-single-content-wrapper > .aih-nav-next {
         right: 0;
     }
-    
+
     .aih-single-content {
-        grid-template-columns: 1.1fr 1fr;
-        gap: 48px;
+        grid-template-columns: 1fr 1fr;
+        gap: 32px;
     }
-    
+
     .aih-single-image > img {
-        max-height: 65vh;
+        max-height: 55vh;
     }
-    
+
     .aih-single-details h1 {
-        font-size: 32px;
+        font-size: 28px;
     }
-    
+
     .aih-info-row {
         flex-direction: row;
         justify-content: space-between;
@@ -875,7 +875,7 @@ jQuery(document).ready(function($) {
 @media (min-width: 900px) {
     .aih-single-content {
         grid-template-columns: 1fr 1fr;
-        gap: 40px;
+        gap: 32px;
     }
 
     .aih-single-details {
@@ -883,25 +883,44 @@ jQuery(document).ready(function($) {
     }
 
     .aih-piece-info {
-        padding: 24px;
+        padding: 20px;
     }
 
     .aih-info-row span:last-child {
-        max-width: 60%;
+        max-width: 65%;
         text-align: right;
     }
 
     /* Better bid section scaling */
     .aih-bid-section {
-        padding: 28px;
+        padding: 24px;
     }
 
     .aih-current-bid .aih-bid-amount {
-        font-size: 38px;
+        font-size: 32px;
+    }
+
+    .aih-single-details h1 {
+        font-size: 28px;
     }
 }
 
 @media (min-width: 1100px) {
+    .aih-single-content {
+        grid-template-columns: 1fr 1fr;
+        gap: 40px;
+    }
+
+    .aih-current-bid .aih-bid-amount {
+        font-size: 36px;
+    }
+
+    .aih-single-details h1 {
+        font-size: 32px;
+    }
+}
+
+@media (min-width: 1400px) {
     .aih-single-content {
         grid-template-columns: 1.1fr 0.9fr;
         gap: 48px;
