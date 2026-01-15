@@ -134,7 +134,7 @@ $cart_count = count($checkout->get_won_items($bidder_id));
         <div class="aih-header-inner">
             <a href="<?php echo esc_url($gallery_url); ?>" class="aih-logo">Art in Heaven</a>
             <nav class="aih-nav">
-                <a href="<?php echo esc_url($gallery_url); ?>" class="aih-nav-link aih-nav-active">Gallery</a>
+                <a href="<?php echo esc_url($gallery_url); ?>" class="aih-nav-link">Gallery</a>
                 <?php if ($my_bids_url): ?>
                 <a href="<?php echo esc_url($my_bids_url); ?>" class="aih-nav-link">My Bids</a>
                 <?php endif; ?>
@@ -469,6 +469,9 @@ jQuery(document).ready(function($) {
     position: absolute;
     top: 24px;
     right: 24px;
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
 }
 
 .aih-thumbnails {
@@ -513,6 +516,7 @@ jQuery(document).ready(function($) {
 .aih-single-meta {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 12px;
     margin-bottom: 16px;
     flex-wrap: wrap;
@@ -851,24 +855,25 @@ jQuery(document).ready(function($) {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: 300px;
-    padding: 40px;
+    min-height: 400px;
+    width: 100%;
+    padding: 60px 40px;
     background: var(--color-bg-alt);
     color: var(--color-muted);
 }
 
 .aih-single-placeholder .aih-placeholder-id {
     font-family: var(--font-display);
-    font-size: 36px;
+    font-size: 48px;
     font-weight: 600;
     color: var(--color-accent);
-    margin-bottom: 12px;
+    margin-bottom: 16px;
 }
 
 .aih-single-placeholder .aih-placeholder-text {
-    font-size: 14px;
+    font-size: 16px;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 1.5px;
 }
 
 /* Wider details section - improved grid */

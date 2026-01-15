@@ -178,7 +178,7 @@ $art_pieces = $art_model->get_all_with_stats($filter_args);
             <?php if (empty($art_pieces)): ?>
                 <tr><td colspan="<?php echo $can_view_bids ? '13' : '11'; ?>"><?php _e('No art pieces found.', 'art-in-heaven'); ?> <a href="<?php echo admin_url('admin.php?page=art-in-heaven-add'); ?>"><?php _e('Add your first art piece', 'art-in-heaven'); ?></a></td></tr>
             <?php else: ?>
-                <?php foreach ($art_pieces as $piece): 
+                <?php foreach ($art_pieces as $piece):
                     // Get current bid from bids table (since we removed current_bid column)
                     global $wpdb;
                     $bids_table = AIH_Database::get_table('bids');
@@ -187,13 +187,26 @@ $art_pieces = $art_model->get_all_with_stats($filter_args);
                         $piece->id
                     ));
                     $current_bid = $highest_bid ?: $piece->starting_bid;
-                    
+
                     // Get unique bidder count
                     $unique_bidders = $wpdb->get_var($wpdb->prepare(
                         "SELECT COUNT(DISTINCT bidder_id) FROM $bids_table WHERE art_piece_id = %d",
                         $piece->id
                     ));
-                    
+
+                    // Get primary image from art_images table if not set directly
+                    $image_url = $piece->watermarked_url ?: $piece->image_url;
+                    if (empty($image_url)) {
+                        $art_images_table = AIH_Database::get_table('art_images');
+                        $primary_img = $wpdb->get_row($wpdb->prepare(
+                            "SELECT watermarked_url, image_url FROM $art_images_table WHERE art_piece_id = %d ORDER BY is_primary DESC, sort_order ASC LIMIT 1",
+                            $piece->id
+                        ));
+                        if ($primary_img) {
+                            $image_url = $primary_img->watermarked_url ?: $primary_img->image_url;
+                        }
+                    }
+
                     // Format dates for datetime-local input
                     $auction_start_value = !empty($piece->auction_start) ? date('Y-m-d\TH:i', strtotime($piece->auction_start)) : '';
                     $auction_end_value = !empty($piece->auction_end) ? date('Y-m-d\TH:i', strtotime($piece->auction_end)) : '';
@@ -210,8 +223,8 @@ $art_pieces = $art_model->get_all_with_stats($filter_args);
                         <td class="aih-check-column" data-label=""><input type="checkbox" class="aih-art-checkbox" value="<?php echo esc_attr($piece->id); ?>"></td>
                         
                         <td class="aih-col-image" data-label="">
-                            <?php if ($piece->watermarked_url || $piece->image_url): ?>
-                                <img src="<?php echo esc_url($piece->watermarked_url ?: $piece->image_url); ?>" class="aih-thumb" alt="">
+                            <?php if ($image_url): ?>
+                                <img src="<?php echo esc_url($image_url); ?>" class="aih-thumb" alt="">
                             <?php else: ?>
                                 <span class="aih-no-image"><?php _e('No img', 'art-in-heaven'); ?></span>
                             <?php endif; ?>

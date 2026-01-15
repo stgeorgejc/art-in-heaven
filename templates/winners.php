@@ -48,7 +48,7 @@ $art_images = new AIH_Art_Images();
     <main class="aih-main">
         <div class="aih-winners-header">
             <div class="aih-ornament">✦</div>
-            <h1>Auction Winners</h1>
+            <h1>Art Piece Winners</h1>
             <p class="aih-subtitle"><?php echo count($winning_bids); ?> pieces sold</p>
         </div>
 

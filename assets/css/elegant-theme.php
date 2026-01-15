@@ -1,7 +1,7 @@
 <style>
 /* ============================================
    ELEGANT AUCTION THEME - MOBILE FIRST
-   Version: 0.9.115
+   Version: 0.9.116
    ============================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap');
@@ -1457,10 +1457,11 @@ body .type-page {
     justify-content: center;
     width: 100%;
     height: 100%;
-    min-height: 200px;
+    min-height: 250px;
     background: var(--color-bg-alt);
     color: var(--color-muted);
     text-decoration: none;
+    padding: 40px 20px;
 }
 
 .aih-placeholder-link {
@@ -1472,16 +1473,16 @@ body .type-page {
 
 .aih-placeholder-id {
     font-family: var(--font-display);
-    font-size: 28px;
+    font-size: 36px;
     font-weight: 600;
     color: var(--color-accent);
-    margin-bottom: 8px;
+    margin-bottom: 10px;
 }
 
 .aih-placeholder-text {
-    font-size: 12px;
+    font-size: 13px;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 1.5px;
 }
 
 /* ============================================
@@ -1573,25 +1574,39 @@ body .type-page {
 }
 
 /* ============================================
-   IMPROVED HEART/FAVORITE BUTTON MOBILE
+   IMPROVED HEART/FAVORITE BUTTON
    ============================================ */
 .aih-fav-btn {
-    width: 32px;
-    height: 32px;
-    font-size: 14px;
+    width: 34px;
+    height: 34px;
+    font-size: 15px;
     touch-action: manipulation;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 @media (min-width: 600px) {
     .aih-fav-btn {
-        width: 36px;
-        height: 36px;
-        font-size: 16px;
+        width: 38px;
+        height: 38px;
+        font-size: 17px;
+    }
+}
+
+@media (min-width: 900px) {
+    .aih-fav-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
     }
 }
 
 .aih-fav-btn .aih-fav-icon {
     line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* ============================================
@@ -1867,14 +1882,42 @@ body .type-page {
 }
 
 /* ============================================
-   WIDER PAGES
+   WIDER PAGES WITH EDGE PADDING
    ============================================ */
 .aih-main {
     max-width: 1800px;
+    padding-left: 24px;
+    padding-right: 24px;
 }
 
 .aih-header-inner {
     max-width: 1800px;
+    padding-left: 24px;
+    padding-right: 24px;
+}
+
+@media (min-width: 600px) {
+    .aih-main {
+        padding-left: 32px;
+        padding-right: 32px;
+    }
+
+    .aih-header-inner {
+        padding-left: 32px;
+        padding-right: 32px;
+    }
+}
+
+@media (min-width: 900px) {
+    .aih-main {
+        padding-left: 48px;
+        padding-right: 48px;
+    }
+
+    .aih-header-inner {
+        padding-left: 48px;
+        padding-right: 48px;
+    }
 }
 
 @media (min-width: 1400px) {
