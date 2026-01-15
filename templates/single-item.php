@@ -194,13 +194,6 @@ $cart_count = count($checkout->get_won_items($bidder_id));
                         <span class="aih-image-dot <?php echo $i === 0 ? 'active' : ''; ?>" data-index="<?php echo $i; ?>" data-src="<?php echo esc_url($img->watermarked_url); ?>"></span>
                         <?php endforeach; ?>
                     </div>
-                    <div class="aih-thumbnails">
-                        <?php foreach ($images as $i => $img): ?>
-                        <button class="aih-thumb <?php echo $i === 0 ? 'active' : ''; ?>" data-index="<?php echo $i; ?>" data-src="<?php echo esc_url($img->watermarked_url); ?>">
-                            <img src="<?php echo esc_url($img->watermarked_url); ?>" alt="">
-                        </button>
-                        <?php endforeach; ?>
-                    </div>
                     <?php endif; ?>
                 </div>
 
@@ -312,29 +305,21 @@ jQuery(document).ready(function($) {
     
     // Image navigation - current index
     var currentImgIndex = 0;
-    var totalImages = $('.aih-thumb').length || 1;
+    var totalImages = $('.aih-image-dot').length || 1;
 
     function showImage(index) {
         if (index < 0) index = totalImages - 1;
         if (index >= totalImages) index = 0;
         currentImgIndex = index;
 
-        var $thumb = $('.aih-thumb[data-index="' + index + '"]');
-        var src = $thumb.data('src');
+        var $dot = $('.aih-image-dot[data-index="' + index + '"]');
+        var src = $dot.data('src');
         if (src) {
             $('#aih-main-image').attr('src', src);
-            $('.aih-thumb').removeClass('active');
-            $thumb.addClass('active');
             $('.aih-image-dot').removeClass('active');
-            $('.aih-image-dot[data-index="' + index + '"]').addClass('active');
+            $dot.addClass('active');
         }
     }
-
-    // Thumbnails
-    $('.aih-thumb').on('click', function() {
-        var index = parseInt($(this).data('index'));
-        showImage(index);
-    });
 
     // Dot navigation
     $('.aih-image-dot').on('click', function() {

@@ -76,8 +76,9 @@ $art_images = new AIH_Art_Images();
                 <div class="aih-gallery-grid">
                     <?php foreach ($bids as $bid):
                         $images = $art_images->get_images($bid->art_piece_id);
-                        $image_url = !empty($images) ? $images[0]->watermarked_url : ($bid->watermarked_url ?: $bid->image_url);
-                        $winner_code = substr($bid->bidder_id, 0, 4) . '****';
+                        $watermarked = isset($bid->watermarked_url) ? $bid->watermarked_url : '';
+                        $original = isset($bid->image_url) ? $bid->image_url : '';
+                        $image_url = !empty($images) ? $images[0]->watermarked_url : ($watermarked ?: $original);
                     ?>
                     <article class="aih-card aih-winner-card">
                         <div class="aih-card-image">

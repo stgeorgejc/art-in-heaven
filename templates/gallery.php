@@ -234,26 +234,7 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
                      data-medium="<?php echo esc_attr($piece->medium); ?>">
                 
                 <div class="aih-card-image" data-favorite="<?php echo $is_favorite ? '1' : '0'; ?>">
-                    <?php if (!empty($images) && count($images) > 1): ?>
-                    <div class="aih-image-carousel" data-current="0">
-                        <a href="?art_id=<?php echo $piece->id; ?>" class="aih-carousel-link">
-                            <?php foreach ($images as $idx => $img): ?>
-                            <img src="<?php echo esc_url($img->watermarked_url); ?>"
-                                 alt="<?php echo esc_attr($piece->title); ?>"
-                                 class="aih-carousel-img <?php echo $idx === 0 ? 'active' : ''; ?>"
-                                 data-index="<?php echo $idx; ?>"
-                                 loading="lazy">
-                            <?php endforeach; ?>
-                        </a>
-                        <button type="button" class="aih-carousel-arrow aih-carousel-prev" aria-label="Previous image">‹</button>
-                        <button type="button" class="aih-carousel-arrow aih-carousel-next" aria-label="Next image">›</button>
-                        <div class="aih-carousel-dots">
-                            <?php foreach ($images as $idx => $img): ?>
-                            <span class="aih-carousel-dot <?php echo $idx === 0 ? 'active' : ''; ?>" data-index="<?php echo $idx; ?>"></span>
-                            <?php endforeach; ?>
-                        </div>
-                    </div>
-                    <?php elseif ($primary_image): ?>
+                    <?php if ($primary_image): ?>
                     <a href="?art_id=<?php echo $piece->id; ?>">
                         <img src="<?php echo esc_url($primary_image); ?>" alt="<?php echo esc_attr($piece->title); ?>" loading="lazy">
                     </a>
@@ -525,44 +506,6 @@ jQuery(document).ready(function($) {
 
     $(document).on('click', '.aih-nav-next', function() {
         showSingleCard(currentIndex + 1);
-    });
-
-    // Image carousel functionality
-    $(document).on('click', '.aih-carousel-arrow', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        var $carousel = $(this).closest('.aih-image-carousel');
-        var $imgs = $carousel.find('.aih-carousel-img');
-        var $dots = $carousel.find('.aih-carousel-dot');
-        var current = parseInt($carousel.attr('data-current') || 0);
-        var total = $imgs.length;
-
-        if ($(this).hasClass('aih-carousel-next')) {
-            current = (current + 1) % total;
-        } else {
-            current = (current - 1 + total) % total;
-        }
-
-        $carousel.attr('data-current', current);
-        $imgs.removeClass('active');
-        $imgs.filter('[data-index="' + current + '"]').addClass('active');
-        $dots.removeClass('active');
-        $dots.filter('[data-index="' + current + '"]').addClass('active');
-    });
-
-    $(document).on('click', '.aih-carousel-dot', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        var $carousel = $(this).closest('.aih-image-carousel');
-        var $imgs = $carousel.find('.aih-carousel-img');
-        var $dots = $carousel.find('.aih-carousel-dot');
-        var index = parseInt($(this).attr('data-index'));
-
-        $carousel.attr('data-current', index);
-        $imgs.removeClass('active');
-        $imgs.filter('[data-index="' + index + '"]').addClass('active');
-        $dots.removeClass('active');
-        $(this).addClass('active');
     });
 
     // Countdown timer functionality
