@@ -387,14 +387,17 @@ jQuery(document).ready(function($) {
     }
     updateFavoritesFilterVisibility();
 
-    // Bind filter events
-    $('#aih-search').on('input', function() {
+    // Bind filter events - using multiple event types for better compatibility
+    $('#aih-search').on('input keyup change', function() {
         filterCards();
     });
 
     $('#aih-filter-artist, #aih-filter-medium, #aih-filter-favorites').on('change', function() {
         filterCards();
     });
+
+    // Also run filter on page load in case there's a cached value
+    filterCards();
     
     // Favorite toggle
     $('.aih-fav-btn').on('click', function(e) {
@@ -468,15 +471,16 @@ jQuery(document).ready(function($) {
         var view = $(this).data('view');
         $('.aih-view-btn').removeClass('active');
         $(this).addClass('active');
-        
+
         if (view === 'single') {
             $('#aih-gallery').addClass('single-view');
             showSingleCard(currentIndex);
             $('.aih-single-nav').show();
         } else {
             $('#aih-gallery').removeClass('single-view');
-            $('.aih-card').show();
             $('.aih-single-nav').hide();
+            // Re-apply filters when switching back to grid view
+            filterCards();
         }
     });
     
