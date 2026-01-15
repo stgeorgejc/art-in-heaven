@@ -295,7 +295,9 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
                             <span class="aih-bid-amount">$<?php echo number_format($display_bid); ?></span>
                             <?php endif; ?>
                         </div>
-                        <?php if (!$is_ended && $piece->auction_end): ?>
+                        <?php
+                        $show_end_time = isset($piece->show_end_time) ? $piece->show_end_time : 0;
+                        if (!$is_ended && $piece->auction_end && $show_end_time): ?>
                         <div class="aih-time-remaining" data-end="<?php echo esc_attr($piece->auction_end); ?>">
                             <span class="aih-time-label">Time Left</span>
                             <span class="aih-time-value">--:--:--</span>

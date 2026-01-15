@@ -81,12 +81,21 @@ jQuery(document).ready(function($) {
 </script>
 <?php include(dirname(__FILE__) . '/../assets/css/elegant-theme.php'); return; endif;
 
-// Get user's bids
+// Get user's bids - only show successful (valid) bids
 $bid_model = new AIH_Bid();
 $favorites = new AIH_Favorites();
 $art_images = new AIH_Art_Images();
-$my_bids = $bid_model->get_bidder_bids($bidder_id);
+$all_bids = $bid_model->get_bidder_bids($bidder_id);
 $bid_increment = floatval(get_option('aih_bid_increment', 1));
+
+// Filter to only show valid bids (exclude failed bids like 'too_low')
+$my_bids = array();
+foreach ($all_bids as $bid) {
+    $status = isset($bid->bid_status) ? $bid->bid_status : 'valid';
+    if ($status === 'valid') {
+        $my_bids[] = $bid;
+    }
+}
 
 $cart_count = 0;
 $checkout = AIH_Checkout::get_instance();
@@ -140,9 +149,9 @@ $cart_count = count($checkout->get_won_items($bidder_id));
                 $images = $art_images->get_images($bid->art_piece_id);
                 $bid_title = isset($bid->title) ? $bid->title : (isset($bid->art_title) ? $bid->art_title : '');
                 $image_url = !empty($images) ? $images[0]->watermarked_url : (isset($bid->watermarked_url) ? $bid->watermarked_url : (isset($bid->image_url) ? $bid->image_url : ''));
-                $current_bid = $bid_model->get_highest_bid_amount($bid->art_piece_id);
-                $min_bid = $current_bid + $bid_increment;
-                
+                $highest_bid = $bid_model->get_highest_bid_amount($bid->art_piece_id);
+                $min_bid = $highest_bid + $bid_increment;
+
                 $status_class = $is_ended ? 'ended' : ($is_winning ? 'winning' : 'outbid');
                 $status_text = $is_ended ? ($is_winning ? 'Won' : 'Sold') : ($is_winning ? 'Winning' : 'Outbid');
             ?>
@@ -169,17 +178,13 @@ $cart_count = count($checkout->get_won_items($bidder_id));
                 </div>
                 
                 <div class="aih-card-footer">
-                    <div class="aih-bid-info">
+                    <div class="aih-bid-info aih-bid-info-centered">
                         <div>
                             <span class="aih-bid-label">Your Bid</span>
                             <span class="aih-bid-amount">$<?php echo number_format($bid->bid_amount); ?></span>
                         </div>
-                        <div style="text-align: right;">
-                            <span class="aih-bid-label">Current</span>
-                            <span class="aih-bid-amount" style="font-size: 18px;">$<?php echo number_format($current_bid); ?></span>
-                        </div>
                     </div>
-                    
+
                     <?php if (!$is_ended && !$is_winning): ?>
                     <div class="aih-bid-form">
                         <input type="number" class="aih-bid-input" min="<?php echo $min_bid; ?>" step="1" placeholder="Enter bid">
@@ -237,4 +242,11 @@ jQuery(document).ready(function($) {
 <style>
 .aih-card.outbid { border-color: var(--color-error); }
 .aih-badge-outbid { background: var(--color-error); color: white; }
+.aih-bid-info-centered {
+    justify-content: center;
+    text-align: center;
+}
+.aih-bid-info-centered > div {
+    text-align: center;
+}
 </style>

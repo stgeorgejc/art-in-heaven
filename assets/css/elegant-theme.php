@@ -1,7 +1,7 @@
 <style>
 /* ============================================
    ELEGANT AUCTION THEME - MOBILE FIRST
-   Version: 0.9.112
+   Version: 0.9.113
    ============================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap');
@@ -1769,6 +1769,110 @@ body .type-page {
     .aih-carousel-dot {
         width: 7px;
         height: 7px;
+    }
+}
+
+/* ============================================
+   FIX FILTER/SEARCH OVERLAP
+   ============================================ */
+.aih-gallery-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+
+.aih-search-box {
+    flex: 0 1 auto;
+    min-width: 140px;
+    max-width: 200px;
+}
+
+.aih-filter-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.aih-view-toggle {
+    flex-shrink: 0;
+}
+
+@media (max-width: 600px) {
+    .aih-gallery-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+
+    .aih-gallery-controls {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+
+    .aih-search-box {
+        width: 100%;
+        max-width: none;
+    }
+
+    .aih-filter-group {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .aih-select-narrow {
+        flex: 1 1 calc(50% - 4px);
+        max-width: calc(50% - 4px);
+        min-width: 0;
+    }
+
+    .aih-view-toggle {
+        align-self: flex-start;
+    }
+}
+
+@media (min-width: 601px) and (max-width: 900px) {
+    .aih-gallery-controls {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .aih-search-box {
+        flex: 0 0 180px;
+    }
+
+    .aih-filter-group {
+        flex: 1 1 auto;
+    }
+}
+
+/* ============================================
+   WIDER PAGES
+   ============================================ */
+.aih-main {
+    max-width: 1800px;
+}
+
+.aih-header-inner {
+    max-width: 1800px;
+}
+
+@media (min-width: 1400px) {
+    .aih-main {
+        padding: 32px 64px;
+    }
+
+    .aih-header-inner {
+        padding: 16px 64px;
+    }
+}
+
+@media (min-width: 1600px) {
+    .aih-gallery-grid {
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     }
 }
 </style>
