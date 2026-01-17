@@ -204,7 +204,7 @@ body .type-page {
 .aih-main {
     flex: 1 1 auto;
     width: 100%;
-    padding: 16px;
+    padding: 20px 24px;
     background: var(--color-bg);
     min-height: 0;
     min-width: 0;
@@ -314,10 +314,10 @@ body .type-page {
 /* View Toggle */
 .aih-view-toggle {
     display: flex;
-    gap: 2px;
+    gap: 6px;
     border: 1px solid var(--color-border);
     border-radius: var(--radius);
-    padding: 3px;
+    padding: 4px;
     background: var(--color-surface);
 }
 

@@ -231,7 +231,7 @@ jQuery(document).ready(function($) {
 <style>
 .aih-checkout-layout {
     display: grid;
-    grid-template-columns: 1fr 380px;
+    grid-template-columns: 1fr 420px;
     gap: 48px;
     align-items: start;
 }
@@ -317,6 +317,7 @@ jQuery(document).ready(function($) {
     padding: 32px;
     position: sticky;
     top: 100px;
+    min-width: 320px;
 }
 
 .aih-checkout-summary h3 {
