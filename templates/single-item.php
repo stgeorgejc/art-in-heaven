@@ -425,10 +425,13 @@ jQuery(document).ready(function($) {
 <style>
 /* Single Item Page Overrides */
 .aih-single-nav-bar {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
+    gap: 12px;
     margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--color-border);
 }
 
 .aih-back-link {
@@ -436,6 +439,7 @@ jQuery(document).ready(function($) {
     color: var(--color-accent);
     text-decoration: none;
     font-weight: 500;
+    justify-self: start;
 }
 
 .aih-back-link:hover {
@@ -445,6 +449,12 @@ jQuery(document).ready(function($) {
 .aih-piece-counter {
     font-size: 13px;
     color: var(--color-muted);
+    text-align: center;
+    justify-self: center;
+}
+
+.aih-art-nav-arrows {
+    justify-self: end;
 }
 
 /* Content wrapper with navigation arrows at edges */
@@ -763,10 +773,8 @@ jQuery(document).ready(function($) {
 
 @media (max-width: 600px) {
     .aih-single-nav-bar {
-        flex-direction: column;
-        gap: 12px;
-        align-items: stretch;
-        text-align: center;
+        grid-template-columns: 1fr auto 1fr;
+        gap: 8px;
     }
 
     .aih-single-content-wrapper {
