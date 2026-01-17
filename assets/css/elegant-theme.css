@@ -204,14 +204,15 @@ body .type-page {
 .aih-main {
     flex: 1 1 auto;
     width: 100%;
-    padding: 16px 20px;
+    padding: 16px;
     background: var(--color-bg);
     min-height: 0;
     min-width: 0;
     overflow-wrap: break-word;
     word-wrap: break-word;
-    max-width: 1600px;
+    max-width: 100%;
     margin: 0 auto;
+    box-sizing: border-box;
 }
 
 /* Centered main for login pages */
@@ -348,18 +349,26 @@ body .type-page {
 .aih-gallery-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 24px;
+    gap: 20px;
+    width: 100%;
+}
+
+/* Ensure all cards have same dimensions */
+.aih-gallery-grid .aih-card {
+    width: 100%;
+    min-width: 0;
 }
 
 /* Single Column View Mode - shows all items in one column */
 .aih-gallery-grid.single-view {
     grid-template-columns: 1fr;
-    max-width: 500px;
+    max-width: 450px;
     margin: 0 auto;
-    gap: 24px;
+    gap: 20px;
 }
 
 .aih-gallery-grid.single-view .aih-card {
+    width: 100%;
     max-width: 100%;
 }
 
@@ -377,13 +386,18 @@ body .type-page {
 @media (max-width: 600px) {
     .aih-gallery-grid {
         grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
+        gap: 12px;
+        width: 100%;
+    }
+
+    .aih-gallery-grid .aih-card {
+        width: 100%;
     }
 
     .aih-gallery-grid.single-view {
         grid-template-columns: 1fr;
         max-width: 100%;
-        gap: 14px;
+        gap: 16px;
     }
 
     /* Mobile card body - smaller fixed height */
@@ -433,29 +447,29 @@ body .type-page {
         font-size: 12px;
     }
 
-    /* Mobile art ID badge */
+    /* Mobile art ID badge - larger for visibility */
     .aih-art-id-badge {
-        bottom: 6px;
-        left: 6px;
-        padding: 3px 6px;
-        font-size: 10px;
+        bottom: 8px;
+        left: 8px;
+        padding: 5px 10px;
+        font-size: 14px;
     }
 
     /* Mobile status badge */
     .aih-badge {
-        top: 6px;
-        left: 6px;
-        padding: 3px 6px;
-        font-size: 8px;
+        top: 8px;
+        left: 8px;
+        padding: 4px 8px;
+        font-size: 9px;
     }
 
-    /* Mobile favorite button */
+    /* Mobile favorite button - proper spacing */
     .aih-fav-btn {
-        top: 6px;
-        right: 6px;
-        width: 28px;
-        height: 28px;
-        font-size: 12px;
+        top: 8px;
+        right: 8px;
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
     }
 
     /* Single view - larger art ID badge since card is bigger */
@@ -549,12 +563,13 @@ body .type-page {
     aspect-ratio: 1/1;
     overflow: hidden;
     background: var(--color-bg-alt);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    width: 100%;
 }
 
 .aih-card-image img {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -562,21 +577,22 @@ body .type-page {
 }
 
 .aih-card-image a {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: block;
     width: 100%;
     height: 100%;
 }
 
 /* Placeholder for images - improved visibility */
 .aih-placeholder {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    width: 100%;
-    height: 100%;
     background: linear-gradient(135deg, var(--color-bg-alt) 0%, var(--color-border) 100%);
     color: var(--color-muted);
     padding: 15px;
@@ -608,20 +624,20 @@ body .type-page {
     height: 100%;
 }
 
-/* Art ID badge on image */
+/* Art ID badge on image - LARGER for visibility */
 .aih-art-id-badge {
     position: absolute;
-    bottom: 8px;
-    left: 8px;
-    padding: 5px 10px;
-    font-size: 13px;
+    bottom: 10px;
+    left: 10px;
+    padding: 8px 14px;
+    font-size: 18px;
     font-weight: 700;
     font-family: var(--font-display);
     letter-spacing: 0.5px;
     background: rgba(255, 255, 255, 0.95);
     color: var(--color-accent);
-    border-radius: 3px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 
 .aih-badge {
