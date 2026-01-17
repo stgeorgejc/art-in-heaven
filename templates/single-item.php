@@ -225,7 +225,7 @@ $cart_count = count($checkout->get_won_items($bidder_id));
                     <?php endif; ?>
                     
                     <div class="aih-bid-section">
-                        <?php if (!$is_ended && $art_piece->auction_end): ?>
+                        <?php if (!$is_ended && $art_piece->auction_end && !empty($art_piece->show_end_time)): ?>
                         <div class="aih-time-remaining-single" data-end="<?php echo esc_attr($art_piece->auction_end); ?>">
                             <span class="aih-time-label">Time Remaining</span>
                             <span class="aih-time-value">--:--:--</span>
