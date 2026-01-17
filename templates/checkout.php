@@ -133,6 +133,10 @@ $total = $subtotal + $tax;
                     <div class="aih-checkout-item-image">
                         <?php if ($image_url): ?>
                         <img src="<?php echo esc_url($image_url); ?>" alt="<?php echo esc_attr(isset($item->title) ? $item->title : ''); ?>">
+                        <?php else: ?>
+                        <div class="aih-checkout-placeholder">
+                            <span><?php echo esc_html(isset($item->art_id) ? $item->art_id : ''); ?></span>
+                        </div>
                         <?php endif; ?>
                     </div>
                     <div class="aih-checkout-item-details">
@@ -246,12 +250,31 @@ jQuery(document).ready(function($) {
     height: 100px;
     flex-shrink: 0;
     background: var(--color-bg-alt);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .aih-checkout-item-image img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+}
+
+.aih-checkout-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, var(--color-bg-alt) 0%, var(--color-border) 100%);
+}
+
+.aih-checkout-placeholder span {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--color-accent);
 }
 
 .aih-checkout-item-details {
@@ -307,8 +330,20 @@ jQuery(document).ready(function($) {
 .aih-summary-row {
     display: flex;
     justify-content: space-between;
+    align-items: baseline;
     padding: 12px 0;
     font-size: 15px;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.aih-summary-row span:first-child {
+    flex-shrink: 0;
+}
+
+.aih-summary-row span:last-child {
+    text-align: right;
+    word-break: break-word;
 }
 
 .aih-summary-total {
@@ -317,6 +352,10 @@ jQuery(document).ready(function($) {
     border-top: 1px solid var(--color-border);
     margin-top: 12px;
     padding-top: 16px;
+}
+
+.aih-summary-total span:last-child {
+    font-family: var(--font-display);
 }
 
 .aih-checkout-note {
@@ -370,26 +409,76 @@ jQuery(document).ready(function($) {
 @media (max-width: 900px) {
     .aih-checkout-layout {
         grid-template-columns: 1fr;
+        gap: 32px;
     }
-    
+
     .aih-checkout-summary {
         position: static;
+        max-width: 100%;
     }
 }
 
 @media (max-width: 600px) {
+    .aih-checkout-page .aih-main {
+        padding: 16px;
+    }
+
     .aih-checkout-item {
         flex-direction: column;
+        padding: 16px;
     }
-    
+
     .aih-checkout-item-image {
         width: 100%;
-        height: 200px;
+        height: 180px;
     }
-    
+
+    .aih-checkout-item-details {
+        padding: 12px 0;
+    }
+
+    .aih-checkout-item-details h4 {
+        font-size: 16px;
+    }
+
     .aih-checkout-item-price {
         text-align: left;
-        margin-top: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        padding-top: 12px;
+        border-top: 1px solid var(--color-border);
+    }
+
+    .aih-checkout-item-price span {
+        margin-bottom: 0;
+    }
+
+    .aih-checkout-item-price strong {
+        font-size: 20px;
+    }
+
+    .aih-checkout-summary {
+        padding: 20px;
+    }
+
+    .aih-checkout-summary h3 {
+        font-size: 18px;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+    }
+
+    .aih-summary-row {
+        font-size: 14px;
+        padding: 10px 0;
+    }
+
+    .aih-summary-total {
+        font-size: 16px;
+    }
+
+    .aih-checkout-layout {
+        gap: 24px;
     }
 }
 </style>

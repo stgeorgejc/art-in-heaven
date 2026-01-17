@@ -142,14 +142,21 @@ $cart_count = count($checkout->get_won_items($bidder_id));
             ?>
             <article class="aih-card <?php echo $status_class; ?>" data-id="<?php echo $bid->art_piece_id; ?>">
                 <div class="aih-card-image">
+                    <?php if ($image_url): ?>
                     <a href="<?php echo esc_url($gallery_url); ?>?art_id=<?php echo $bid->art_piece_id; ?>">
-                        <?php if ($image_url): ?>
                         <img src="<?php echo esc_url($image_url); ?>" alt="<?php echo esc_attr($bid_title); ?>" loading="lazy">
-                        <?php else: ?>
-                        <div class="aih-placeholder">No Image</div>
-                        <?php endif; ?>
                     </a>
+                    <?php else: ?>
+                    <a href="<?php echo esc_url($gallery_url); ?>?art_id=<?php echo $bid->art_piece_id; ?>" class="aih-placeholder-link">
+                        <div class="aih-placeholder">
+                            <span class="aih-placeholder-id"><?php echo esc_html(isset($bid->art_id) ? $bid->art_id : ''); ?></span>
+                            <span class="aih-placeholder-text">No Image</span>
+                        </div>
+                    </a>
+                    <?php endif; ?>
+                    <?php if ($image_url): ?>
                     <span class="aih-art-id-badge"><?php echo esc_html(isset($bid->art_id) ? $bid->art_id : ''); ?></span>
+                    <?php endif; ?>
                     <div class="aih-badge aih-badge-<?php echo $status_class; ?>"><?php echo $status_text; ?></div>
                 </div>
 
@@ -223,13 +230,148 @@ jQuery(document).ready(function($) {
 <?php include(dirname(__FILE__) . '/../assets/css/elegant-theme.php'); ?>
 
 <style>
-.aih-card.outbid { border-color: var(--color-error); }
-.aih-badge-outbid { background: var(--color-error); color: white; }
-.aih-bid-info-centered {
+/* My Bids Page Specific Styles */
+.aih-mybids-page .aih-card.outbid {
+    border-color: var(--color-error);
+}
+
+.aih-badge-outbid {
+    background: var(--color-error);
+    color: white;
+}
+
+.aih-mybids-page .aih-bid-info-centered {
     justify-content: center;
     text-align: center;
 }
-.aih-bid-info-centered > div {
+
+.aih-mybids-page .aih-bid-info-centered > div {
     text-align: center;
+}
+
+/* Ensure card image displays properly */
+.aih-mybids-page .aih-card-image {
+    position: relative;
+    aspect-ratio: 1/1;
+    overflow: hidden;
+    background: var(--color-bg-alt);
+}
+
+.aih-mybids-page .aih-card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
+.aih-mybids-page .aih-card-image a {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+/* Card body and details */
+.aih-mybids-page .aih-card-body {
+    padding: 12px 14px;
+    flex: 1;
+    min-width: 0;
+}
+
+.aih-mybids-page .aih-card-title {
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.3;
+    margin-bottom: 4px;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+}
+
+.aih-mybids-page .aih-card-title a {
+    color: var(--color-primary);
+    text-decoration: none;
+}
+
+.aih-mybids-page .aih-card-artist {
+    font-size: 12px;
+    color: var(--color-muted);
+}
+
+/* Card footer */
+.aih-mybids-page .aih-card-footer {
+    padding: 12px 14px 14px;
+    border-top: 1px solid var(--color-border);
+    background: var(--color-bg);
+}
+
+/* Mobile adjustments */
+@media (max-width: 600px) {
+    .aih-mybids-page .aih-gallery-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+
+    .aih-mybids-page .aih-card-body {
+        padding: 10px 12px;
+    }
+
+    .aih-mybids-page .aih-card-title {
+        font-size: 14px;
+    }
+
+    .aih-mybids-page .aih-card-footer {
+        padding: 10px 12px 12px;
+    }
+
+    .aih-mybids-page .aih-bid-info {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .aih-mybids-page .aih-bid-info .aih-bid-label {
+        font-size: 9px;
+    }
+
+    .aih-mybids-page .aih-bid-info .aih-bid-amount {
+        font-size: 16px;
+    }
+
+    .aih-mybids-page .aih-bid-form {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .aih-mybids-page .aih-bid-input {
+        width: 100%;
+        font-size: 14px;
+        padding: 8px 10px;
+    }
+
+    .aih-mybids-page .aih-bid-btn {
+        width: 100%;
+        padding: 10px;
+        font-size: 12px;
+    }
+
+    /* Art ID badge mobile position - don't overlap with badge */
+    .aih-mybids-page .aih-art-id-badge {
+        bottom: 6px;
+        left: 6px;
+        padding: 4px 8px;
+        font-size: 11px;
+    }
+
+    .aih-mybids-page .aih-badge {
+        top: 6px;
+        left: 6px;
+        padding: 3px 6px;
+        font-size: 8px;
+    }
+}
+
+@media (max-width: 400px) {
+    .aih-mybids-page .aih-gallery-grid {
+        grid-template-columns: 1fr;
+    }
 }
 </style>
