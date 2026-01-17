@@ -377,13 +377,155 @@ body .type-page {
 @media (max-width: 600px) {
     .aih-gallery-grid {
         grid-template-columns: repeat(2, 1fr);
-        gap: 12px;
+        gap: 10px;
     }
 
     .aih-gallery-grid.single-view {
         grid-template-columns: 1fr;
         max-width: 100%;
-        gap: 16px;
+        gap: 14px;
+    }
+
+    /* Mobile card body - smaller fixed height */
+    .aih-card-body {
+        height: 58px;
+        padding: 8px 10px;
+    }
+
+    .aih-card-title {
+        font-size: 13px;
+        -webkit-line-clamp: 2;
+    }
+
+    .aih-card-artist {
+        font-size: 10px;
+    }
+
+    /* Mobile card footer */
+    .aih-card-footer {
+        padding: 8px 10px 10px;
+    }
+
+    .aih-bid-info {
+        margin-bottom: 8px;
+    }
+
+    .aih-bid-label {
+        font-size: 8px;
+    }
+
+    .aih-bid-amount {
+        font-size: 15px;
+    }
+
+    .aih-bid-form {
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .aih-bid-input {
+        padding: 10px;
+        font-size: 14px;
+    }
+
+    .aih-bid-btn {
+        padding: 10px;
+        font-size: 12px;
+    }
+
+    /* Mobile art ID badge */
+    .aih-art-id-badge {
+        bottom: 6px;
+        left: 6px;
+        padding: 3px 6px;
+        font-size: 10px;
+    }
+
+    /* Mobile status badge */
+    .aih-badge {
+        top: 6px;
+        left: 6px;
+        padding: 3px 6px;
+        font-size: 8px;
+    }
+
+    /* Mobile favorite button */
+    .aih-fav-btn {
+        top: 6px;
+        right: 6px;
+        width: 28px;
+        height: 28px;
+        font-size: 12px;
+    }
+
+    /* Single view - larger art ID badge since card is bigger */
+    .aih-gallery-grid.single-view .aih-art-id-badge {
+        bottom: 10px;
+        left: 10px;
+        padding: 6px 12px;
+        font-size: 14px;
+    }
+
+    .aih-gallery-grid.single-view .aih-badge {
+        top: 10px;
+        left: 10px;
+        padding: 4px 8px;
+        font-size: 10px;
+    }
+
+    .aih-gallery-grid.single-view .aih-fav-btn {
+        top: 10px;
+        right: 10px;
+        width: 36px;
+        height: 36px;
+        font-size: 16px;
+    }
+
+    .aih-gallery-grid.single-view .aih-card-body {
+        height: auto;
+        min-height: 70px;
+        padding: 12px 14px;
+    }
+
+    .aih-gallery-grid.single-view .aih-card-title {
+        font-size: 16px;
+    }
+
+    .aih-gallery-grid.single-view .aih-card-artist {
+        font-size: 12px;
+    }
+
+    .aih-gallery-grid.single-view .aih-card-footer {
+        padding: 12px 14px 14px;
+    }
+
+    .aih-gallery-grid.single-view .aih-bid-amount {
+        font-size: 20px;
+    }
+
+    /* Mobile placeholder */
+    .aih-placeholder {
+        padding: 8px;
+    }
+
+    .aih-placeholder-id {
+        font-size: 18px;
+        margin-bottom: 3px;
+    }
+
+    .aih-placeholder-text {
+        font-size: 7px;
+        letter-spacing: 0.3px;
+    }
+
+    /* Single view placeholder - larger */
+    .aih-gallery-grid.single-view .aih-placeholder-id {
+        font-size: 32px;
+        margin-bottom: 6px;
+    }
+
+    .aih-gallery-grid.single-view .aih-placeholder-text {
+        font-size: 10px;
     }
 }
 
@@ -466,30 +608,13 @@ body .type-page {
     height: 100%;
 }
 
-/* Mobile placeholder adjustments */
-@media (max-width: 600px) {
-    .aih-placeholder {
-        padding: 10px;
-    }
-
-    .aih-placeholder-id {
-        font-size: 22px;
-        margin-bottom: 4px;
-    }
-
-    .aih-placeholder-text {
-        font-size: 8px;
-        letter-spacing: 0.5px;
-    }
-}
-
-/* Art ID badge on image - LARGER */
+/* Art ID badge on image */
 .aih-art-id-badge {
     position: absolute;
-    bottom: 12px;
-    left: 12px;
-    padding: 8px 14px;
-    font-size: 16px;
+    bottom: 8px;
+    left: 8px;
+    padding: 5px 10px;
+    font-size: 13px;
     font-weight: 700;
     font-family: var(--font-display);
     letter-spacing: 0.5px;
@@ -553,11 +678,13 @@ body .type-page {
 }
 
 .aih-card-body {
-    padding: 12px 14px;
-    flex: 1;
-    min-width: 0; /* Allow flex item to shrink */
-    overflow-wrap: break-word;
-    word-wrap: break-word;
+    padding: 10px 12px;
+    min-width: 0;
+    /* Fixed height for uniform cards */
+    height: 70px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .aih-card-meta {
@@ -574,13 +701,16 @@ body .type-page {
 
 .aih-card-title {
     font-family: var(--font-display);
-    font-size: 18px;
+    font-size: 15px;
     font-weight: 500;
     line-height: 1.3;
-    margin-bottom: 4px;
-    overflow-wrap: break-word;
-    word-wrap: break-word;
-    hyphens: auto;
+    margin-bottom: 2px;
+    /* Ellipsis for long titles - 2 lines max */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .aih-card-title a {
@@ -589,14 +719,16 @@ body .type-page {
 }
 
 .aih-card-artist {
-    font-size: 12px;
+    font-size: 11px;
     color: var(--color-muted);
-    overflow-wrap: break-word;
-    word-wrap: break-word;
+    /* Ellipsis for long artist names - 1 line */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .aih-card-footer {
-    padding: 14px 16px 16px;
+    padding: 10px 12px 12px;
     border-top: 1px solid var(--color-border);
     background: var(--color-bg);
     min-width: 0;
@@ -606,20 +738,21 @@ body .type-page {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
+    gap: 8px;
 }
 
 .aih-bid-label {
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 500;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
     color: var(--color-muted);
 }
 
 .aih-bid-amount {
     font-family: var(--font-display);
-    font-size: 24px;
+    font-size: 18px;
     font-weight: 600;
     color: var(--color-primary);
 }
