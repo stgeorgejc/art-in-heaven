@@ -433,17 +433,17 @@ body .type-page {
     }
 
     .aih-bid-form {
-        flex-direction: column;
+        flex-direction: row;
         gap: 6px;
     }
 
     .aih-bid-input {
-        padding: 10px;
-        font-size: 14px;
+        padding: 8px 10px;
+        font-size: 16px;
     }
 
     .aih-bid-btn {
-        padding: 10px;
+        padding: 8px 12px;
         font-size: 12px;
     }
 
@@ -515,6 +515,20 @@ body .type-page {
 
     .aih-gallery-grid.single-view .aih-bid-amount {
         font-size: 20px;
+    }
+
+    .aih-gallery-grid.single-view .aih-bid-form {
+        flex-direction: row;
+    }
+
+    .aih-gallery-grid.single-view .aih-bid-input {
+        padding: 10px 12px;
+        font-size: 16px;
+    }
+
+    .aih-gallery-grid.single-view .aih-bid-btn {
+        padding: 10px 16px;
+        font-size: 14px;
     }
 
     /* Mobile placeholder */
@@ -776,11 +790,12 @@ body .type-page {
 .aih-bid-form {
     display: flex;
     gap: 8px;
+    align-items: stretch;
 }
 
 .aih-bid-input {
     flex: 1;
-    padding: 12px 14px;
+    padding: 10px 12px;
     font-family: var(--font-body);
     font-size: 16px; /* Prevents iOS zoom */
     color: var(--color-primary);
@@ -801,12 +816,12 @@ body .type-page {
 }
 
 .aih-bid-btn {
-    padding: 12px 20px;
+    padding: 10px 16px;
     font-family: var(--font-body);
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
     color: var(--color-surface);
     background: var(--color-primary);
     border: none;
@@ -2255,16 +2270,26 @@ body .type-page {
 .aih-single-nav-bar {
     display: flex;
     align-items: center;
-    gap: 16px;
+    justify-content: space-between;
+    gap: 12px;
     margin-bottom: 24px;
+    flex-wrap: wrap;
 }
 
 .aih-single-nav-bar .aih-back-link {
     flex-shrink: 0;
+    order: 1;
 }
 
 .aih-single-nav-bar .aih-piece-counter {
     flex-shrink: 0;
+    order: 2;
+    font-size: 13px;
+    color: var(--color-muted);
+}
+
+.aih-single-nav-bar .aih-art-nav-arrows {
+    order: 3;
 }
 
 /* Desktop: center the page indicator */
@@ -2272,6 +2297,7 @@ body .type-page {
     .aih-single-nav-bar {
         justify-content: center;
         position: relative;
+        flex-wrap: nowrap;
     }
 
     .aih-single-nav-bar .aih-back-link {
