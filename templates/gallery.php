@@ -444,72 +444,17 @@ jQuery(document).ready(function($) {
         if (e.which === 13) $(this).closest('.aih-card').find('.aih-bid-btn').click();
     });
     
-    // View toggle (grid vs single)
-    var currentIndex = 0;
-    var singleViewMode = false;
-    var filteredCards = []; // Store filtered card IDs for single view navigation
-
+    // View toggle (grid vs single column)
     $('.aih-view-btn').on('click', function() {
         var view = $(this).data('view');
         $('.aih-view-btn').removeClass('active');
         $(this).addClass('active');
 
         if (view === 'single') {
-            singleViewMode = true;
             $('#aih-gallery').addClass('single-view');
-            // Build list of currently visible cards before hiding
-            filteredCards = [];
-            $('.aih-card').each(function() {
-                var $card = $(this);
-                // Check if card passes current filters (not hidden by filterCards)
-                if ($card.css('display') !== 'none') {
-                    filteredCards.push($card.data('id'));
-                }
-            });
-            if (filteredCards.length > 0) {
-                currentIndex = 0;
-                showSingleCard(currentIndex);
-            }
-            $('.aih-single-nav').show();
         } else {
-            singleViewMode = false;
             $('#aih-gallery').removeClass('single-view');
-            $('.aih-single-nav').hide();
-            // First show all cards, then re-apply filters
-            $('.aih-card').css('display', '');
-            filterCards();
         }
-    });
-
-    function showSingleCard(index) {
-        if (filteredCards.length === 0) return;
-
-        if (index < 0) index = filteredCards.length - 1;
-        if (index >= filteredCards.length) index = 0;
-        currentIndex = index;
-
-        // Hide all cards first
-        $('.aih-card').hide();
-
-        // Show only the card at current index
-        var cardId = filteredCards[index];
-        $('.aih-card[data-id="' + cardId + '"]').show();
-
-        // Update counter
-        $('.aih-single-counter').text((index + 1) + ' / ' + filteredCards.length);
-    }
-    
-    // Add navigation for single view if not exists
-    if ($('.aih-single-nav').length === 0) {
-        $('#aih-gallery').after('<div class="aih-single-nav" style="display:none;"><button type="button" class="aih-nav-prev">← Previous</button><span class="aih-single-counter"></span><button type="button" class="aih-nav-next">Next →</button></div>');
-    }
-    
-    $(document).on('click', '.aih-nav-prev', function() {
-        showSingleCard(currentIndex - 1);
-    });
-
-    $(document).on('click', '.aih-nav-next', function() {
-        showSingleCard(currentIndex + 1);
     });
 
     // Countdown timer functionality
