@@ -85,13 +85,13 @@ body .type-page {
 }
 
 .aih-header-inner {
-    padding: 12px 20px;
+    padding: 12px 24px;
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
     gap: 12px;
-    max-width: 1600px;
+    max-width: 1800px;
     margin: 0 auto;
     width: 100%;
 }
@@ -210,7 +210,7 @@ body .type-page {
     min-width: 0;
     overflow-wrap: break-word;
     word-wrap: break-word;
-    max-width: 100%;
+    max-width: 1800px;
     margin: 0 auto;
     box-sizing: border-box;
 }
@@ -255,9 +255,8 @@ body .type-page {
 }
 
 .aih-search-box {
-    flex: 1;
-    min-width: 150px;
-    max-width: 220px;
+    flex: 0 0 auto;
+    width: 160px;
 }
 
 .aih-search-input {
@@ -284,8 +283,9 @@ body .type-page {
 
 .aih-filter-group {
     display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    gap: 6px;
+    flex: 0 1 auto;
 }
 
 .aih-select {
@@ -775,7 +775,7 @@ body .type-page {
 }
 
 .aih-card-footer {
-    padding: 10px 12px 12px;
+    padding: 12px 14px 14px;
     border-top: 1px solid var(--color-border);
     background: var(--color-bg);
     min-width: 0;
@@ -799,7 +799,7 @@ body .type-page {
 
 .aih-bid-amount {
     font-family: var(--font-display);
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 600;
     color: var(--color-primary);
 }
@@ -1480,11 +1480,11 @@ body .type-page {
     .aih-card-footer {
         padding: 12px 16px 14px;
     }
-    
+
     .aih-bid-amount {
-        font-size: 22px;
+        font-size: 24px;
     }
-    
+
     /* Single item desktop */
     .aih-single-content {
         grid-template-columns: 1.2fr 1fr;
@@ -1653,6 +1653,7 @@ body .type-page {
     align-items: flex-end;
     text-align: right;
     flex-shrink: 0;
+    gap: 2px;
 }
 
 .aih-time-label {
@@ -1796,16 +1797,8 @@ body .type-page {
 }
 
 /* ============================================
-   WIDER BID AMOUNT SECTION
+   RESPONSIVE BID AMOUNT SIZING
    ============================================ */
-.aih-card-footer {
-    padding: 12px 14px 14px;
-}
-
-.aih-bid-amount {
-    font-size: 20px;
-}
-
 @media (min-width: 600px) {
     .aih-card-footer {
         padding: 14px 16px 16px;
@@ -1813,12 +1806,6 @@ body .type-page {
 
     .aih-bid-amount {
         font-size: 22px;
-    }
-}
-
-@media (min-width: 900px) {
-    .aih-bid-amount {
-        font-size: 24px;
     }
 }
 
@@ -1851,29 +1838,6 @@ body .type-page {
 /* ============================================
    FIX FILTER/SEARCH OVERLAP
    ============================================ */
-.aih-gallery-controls {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    align-items: center;
-}
-
-.aih-search-box {
-    flex: 0 0 auto;
-    width: 160px;
-}
-
-.aih-search-input {
-    width: 100%;
-}
-
-.aih-filter-group {
-    display: flex;
-    flex-wrap: nowrap;
-    gap: 6px;
-    flex: 0 1 auto;
-}
-
 .aih-select-narrow {
     min-width: 80px;
     max-width: 120px;
@@ -1953,20 +1917,8 @@ body .type-page {
 }
 
 /* ============================================
-   WIDER PAGES WITH EDGE PADDING
+   RESPONSIVE EDGE PADDING
    ============================================ */
-.aih-main {
-    max-width: 1800px;
-    padding-left: 24px;
-    padding-right: 24px;
-}
-
-.aih-header-inner {
-    max-width: 1800px;
-    padding-left: 24px;
-    padding-right: 24px;
-}
-
 @media (min-width: 600px) {
     .aih-main {
         padding-left: 32px;
@@ -1976,18 +1928,6 @@ body .type-page {
     .aih-header-inner {
         padding-left: 32px;
         padding-right: 32px;
-    }
-}
-
-@media (min-width: 900px) {
-    .aih-main {
-        padding-left: 48px;
-        padding-right: 48px;
-    }
-
-    .aih-header-inner {
-        padding-left: 48px;
-        padding-right: 48px;
     }
 }
 
@@ -2115,38 +2055,6 @@ body .type-page {
 }
 
 /* Mobile styles consolidated - see above sections */
-
-/* ============================================
-   TIME REMAINING - ALWAYS VISIBLE
-   ============================================ */
-.aih-time-remaining {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 2px;
-}
-
-.aih-time-remaining .aih-time-label {
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--color-muted);
-}
-
-.aih-time-remaining .aih-time-value {
-    font-family: var(--font-display);
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--color-primary);
-}
-
-.aih-time-remaining.urgent .aih-time-value {
-    color: var(--color-error);
-}
-
-.aih-time-remaining.ended .aih-time-value {
-    color: var(--color-muted);
-}
 
 /* ============================================
    GALLERY CARD - BID INFO HIDE WHEN PLACED
