@@ -636,7 +636,7 @@ body .type-page {
     position: absolute;
     bottom: 10px;
     left: 10px;
-    padding: 6px 10px;
+    padding: 8px 12px;
     font-size: clamp(18px, 5vw, 24px);
     font-weight: 700;
     font-family: var(--font-display);
@@ -649,6 +649,7 @@ body .type-page {
     display: flex;
     align-items: center;
     justify-content: center;
+    text-align: center;
 }
 
 .aih-badge {
