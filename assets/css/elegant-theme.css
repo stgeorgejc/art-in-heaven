@@ -1987,6 +1987,22 @@ body .type-page {
 }
 
 /* ============================================
+   GALLERY PAGE - FULL WIDTH LAYOUT
+   ============================================ */
+.aih-gallery-page .aih-main {
+    max-width: 100% !important;
+    width: 100% !important;
+}
+
+/* ============================================
+   MY BIDS PAGE - FULL WIDTH LAYOUT
+   ============================================ */
+.aih-mybids-page .aih-main {
+    max-width: 100% !important;
+    width: 100% !important;
+}
+
+/* ============================================
    SCROLL TO TOP BUTTON
    ============================================ */
 .aih-scroll-top {
