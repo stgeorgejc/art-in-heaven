@@ -91,7 +91,7 @@ body .type-page {
     justify-content: space-between;
     align-items: center;
     gap: 12px;
-    max-width: 2200px;
+    max-width: 100%;
     margin: 0 auto;
     width: 100%;
 }
@@ -210,7 +210,7 @@ body .type-page {
     min-width: 0;
     overflow-wrap: break-word;
     word-wrap: break-word;
-    max-width: 2200px;
+    max-width: 100%;
     margin: 0 auto;
     box-sizing: border-box;
 }
@@ -1944,6 +1944,12 @@ body .type-page {
 @media (min-width: 1600px) {
     .aih-gallery-grid {
         grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    }
+
+    /* Ensure single-view still works at large screens */
+    .aih-gallery-grid.single-view {
+        grid-template-columns: 1fr;
+        max-width: 500px;
     }
 }
 
