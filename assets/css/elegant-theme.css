@@ -319,6 +319,8 @@ body .type-page {
     border-radius: var(--radius);
     padding: 4px;
     background: var(--color-surface);
+    flex-shrink: 0;
+    margin-left: auto;
 }
 
 .aih-view-toggle .aih-view-btn {
@@ -660,6 +662,7 @@ body .type-page {
     align-items: center;
     justify-content: center;
     text-align: center;
+    z-index: 4;
 }
 
 .aih-badge {
@@ -809,7 +812,7 @@ body .type-page {
 }
 
 .aih-bid-input {
-    flex: 2;
+    flex: 3;
     padding: 12px 14px;
     font-family: var(--font-body);
     font-size: 16px; /* Prevents iOS zoom */
@@ -831,6 +834,7 @@ body .type-page {
 }
 
 .aih-bid-btn {
+    flex: 1;
     padding: 12px 18px;
     font-family: var(--font-body);
     font-size: 13px;
@@ -1736,11 +1740,6 @@ body .type-page {
     }
 }
 
-/* Art ID badge z-index only - main styles above */
-.aih-art-id-badge {
-    z-index: 4;
-}
-
 /* ============================================
    SINGLE VIEW NAVIGATION FIX FOR MOBILE
    ============================================ */
@@ -1823,43 +1822,6 @@ body .type-page {
     }
 }
 
-/* Bid form improvements */
-.aih-bid-form {
-    display: flex;
-    gap: 6px;
-}
-
-.aih-bid-input {
-    flex: 3;
-    min-width: 80px;
-    padding: 10px 12px;
-    font-size: 15px;
-}
-
-.aih-bid-btn {
-    flex: 1;
-    padding: 10px 14px;
-    font-size: 11px;
-    white-space: nowrap;
-}
-
-@media (min-width: 600px) {
-    .aih-bid-form {
-        gap: 8px;
-    }
-
-    .aih-bid-input {
-        flex: 3;
-        padding: 12px 14px;
-        font-size: 16px;
-    }
-
-    .aih-bid-btn {
-        flex: 1;
-        padding: 12px 18px;
-        font-size: 12px;
-    }
-}
 
 /* ============================================
    MOBILE CAROUSEL TOUCH IMPROVEMENTS
@@ -1917,11 +1879,6 @@ body .type-page {
     max-width: 120px;
     padding: 7px 22px 7px 8px;
     font-size: 11px;
-}
-
-.aih-view-toggle {
-    flex-shrink: 0;
-    margin-left: auto;
 }
 
 @media (max-width: 600px) {
