@@ -3,7 +3,7 @@
  * Plugin Name: Art in Heaven
  * Plugin URI: https://example.com/art-in-heaven
  * Description: A comprehensive silent auction system for art pieces with bid management, favorites, and admin controls
- * Version: 0.9.119
+ * Version: 0.9.120
  * Author: Art in Heaven Team
  * Author URI: https://example.com
  * License: GPL v2 or later
@@ -22,7 +22,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('AIH_VERSION', '0.9.119');
+define('AIH_VERSION', '0.9.120');
 define('AIH_DB_VERSION', '0.9.0');
 define('AIH_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('AIH_PLUGIN_URL', plugin_dir_url(__FILE__));
