@@ -37,34 +37,17 @@ html body {
     padding: 0 !important;
 }
 
-/* Hide WordPress theme wrapper backgrounds and reset containers */
-body .site-content,
-body .content-area,
-body .site-main,
-body .entry-content,
-body main,
-body article,
-body .wp-block-post-content,
-body .page-content,
-body .hentry,
-body .type-page,
-body .container,
-body .wrapper,
-body .page-wrapper,
-body .site-wrapper,
-body .main-content,
-body .content-wrapper,
-body #content,
-body #main,
-body #primary,
-body .alignwide,
-body .alignfull,
-body .wp-site-blocks,
-body .is-layout-constrained,
-body .is-layout-flow,
-body .has-global-padding,
-body .wp-block-group,
-body .wp-block-template-part {
+/* Reset only containers that wrap our auction content - scoped to not affect theme header */
+.aih-page,
+.aih-page .site-content,
+.aih-page .content-area,
+.aih-page .site-main,
+.aih-page .entry-content,
+.aih-page .wp-block-post-content,
+.aih-page .page-content,
+.aih-page .is-layout-constrained,
+.aih-page .is-layout-flow,
+.aih-page .has-global-padding {
     background: transparent !important;
     padding-left: 0 !important;
     padding-right: 0 !important;
