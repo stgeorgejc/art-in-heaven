@@ -675,6 +675,10 @@ body .type-page {
     right: 8px;
     width: 36px;
     height: 36px;
+    min-width: 36px;
+    min-height: 36px;
+    aspect-ratio: 1/1;
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -687,6 +691,7 @@ body .type-page {
     color: var(--color-muted);
     -webkit-tap-highlight-color: transparent;
     z-index: 5;
+    box-sizing: border-box;
 }
 
 .aih-fav-btn:hover,
