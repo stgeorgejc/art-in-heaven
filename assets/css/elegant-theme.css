@@ -434,17 +434,19 @@ body .type-page {
 
     .aih-bid-form {
         flex-direction: row;
-        gap: 6px;
+        gap: 4px;
     }
 
     .aih-bid-input {
         padding: 8px 10px;
         font-size: 16px;
+        min-width: 60px;
     }
 
     .aih-bid-btn {
-        padding: 8px 12px;
-        font-size: 12px;
+        padding: 8px 10px;
+        font-size: 10px;
+        letter-spacing: 0.3px;
     }
 
     /* Mobile art ID badge - scales with card */
@@ -514,16 +516,18 @@ body .type-page {
 
     .aih-gallery-grid.single-view .aih-bid-form {
         flex-direction: row;
+        gap: 6px;
     }
 
     .aih-gallery-grid.single-view .aih-bid-input {
-        padding: 10px 12px;
+        padding: 10px 14px;
         font-size: 16px;
     }
 
     .aih-gallery-grid.single-view .aih-bid-btn {
-        padding: 10px 16px;
-        font-size: 14px;
+        padding: 10px 14px;
+        font-size: 12px;
+        letter-spacing: 0.4px;
     }
 
     /* Mobile placeholder */
@@ -795,13 +799,14 @@ body .type-page {
 
 .aih-bid-form {
     display: flex;
-    gap: 8px;
+    gap: 6px;
     align-items: stretch;
+    width: 100%;
 }
 
 .aih-bid-input {
     flex: 1;
-    padding: 10px 12px;
+    padding: 12px 14px;
     font-family: var(--font-body);
     font-size: 16px; /* Prevents iOS zoom */
     color: var(--color-primary);
@@ -822,9 +827,9 @@ body .type-page {
 }
 
 .aih-bid-btn {
-    padding: 10px 16px;
+    padding: 12px 18px;
     font-family: var(--font-body);
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
