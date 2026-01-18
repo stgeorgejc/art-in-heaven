@@ -91,7 +91,7 @@ body .type-page {
     justify-content: space-between;
     align-items: center;
     gap: 12px;
-    max-width: 1800px;
+    max-width: 2200px;
     margin: 0 auto;
     width: 100%;
 }
@@ -210,7 +210,7 @@ body .type-page {
     min-width: 0;
     overflow-wrap: break-word;
     word-wrap: break-word;
-    max-width: 1800px;
+    max-width: 2200px;
     margin: 0 auto;
     box-sizing: border-box;
 }
@@ -1933,11 +1933,11 @@ body .type-page {
 
 @media (min-width: 1400px) {
     .aih-main {
-        padding: 32px 64px;
+        padding: 32px 48px;
     }
 
     .aih-header-inner {
-        padding: 16px 64px;
+        padding: 16px 48px;
     }
 }
 
@@ -2027,7 +2027,7 @@ body .type-page {
    CHECKOUT PAGE - IMPROVED LAYOUT
    ============================================ */
 .aih-checkout-page .aih-checkout-layout {
-    grid-template-columns: 1fr minmax(320px, 420px);
+    grid-template-columns: 1fr minmax(350px, 500px);
     gap: 32px;
 }
 
