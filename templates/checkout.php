@@ -231,9 +231,16 @@ jQuery(document).ready(function($) {
 <style>
 .aih-checkout-layout {
     display: grid;
-    grid-template-columns: 1fr 420px;
+    grid-template-columns: 1fr minmax(350px, 450px);
     gap: 48px;
     align-items: start;
+    width: 100%;
+}
+
+@media (max-width: 900px) {
+    .aih-checkout-layout {
+        grid-template-columns: 1fr;
+    }
 }
 
 .aih-checkout-item {

@@ -145,19 +145,20 @@ $cart_count = count($checkout->get_won_items($bidder_id));
     <main class="aih-main">
         <div class="aih-single-nav-bar">
             <a href="<?php echo esc_url($gallery_url); ?>" class="aih-back-link">← Back to Gallery</a>
-            <span class="aih-piece-counter"><?php echo $current_index + 1; ?> / <?php echo count($all_pieces); ?></span>
-            <div class="aih-art-nav-arrows">
+            <div class="aih-nav-center">
                 <?php if ($prev_id): ?>
-                <a href="?art_id=<?php echo $prev_id; ?>" title="Previous">←</a>
+                <a href="?art_id=<?php echo $prev_id; ?>" class="aih-nav-arrow" title="Previous">←</a>
                 <?php else: ?>
-                <a class="disabled">←</a>
+                <span class="aih-nav-arrow disabled">←</span>
                 <?php endif; ?>
+                <span class="aih-piece-counter"><?php echo $current_index + 1; ?> / <?php echo count($all_pieces); ?></span>
                 <?php if ($next_id): ?>
-                <a href="?art_id=<?php echo $next_id; ?>" title="Next">→</a>
+                <a href="?art_id=<?php echo $next_id; ?>" class="aih-nav-arrow" title="Next">→</a>
                 <?php else: ?>
-                <a class="disabled">→</a>
+                <span class="aih-nav-arrow disabled">→</span>
                 <?php endif; ?>
             </div>
+            <div class="aih-nav-spacer"></div>
         </div>
 
         <div class="aih-single-content-wrapper">
@@ -425,10 +426,10 @@ jQuery(document).ready(function($) {
 <style>
 /* Single Item Page Overrides */
 .aih-single-nav-bar {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
+    display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 12px;
+    gap: 16px;
     margin-bottom: 24px;
     padding-bottom: 16px;
     border-bottom: 1px solid var(--color-border);
@@ -439,22 +440,53 @@ jQuery(document).ready(function($) {
     color: var(--color-accent);
     text-decoration: none;
     font-weight: 500;
-    justify-self: start;
 }
 
 .aih-back-link:hover {
     text-decoration: underline;
 }
 
-.aih-piece-counter {
-    font-size: 13px;
-    color: var(--color-muted);
-    text-align: center;
-    justify-self: center;
+.aih-nav-center {
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
-.aih-art-nav-arrows {
-    justify-self: end;
+.aih-nav-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--color-border);
+    border-radius: 50%;
+    color: var(--color-primary);
+    text-decoration: none;
+    font-size: 14px;
+    transition: all var(--transition);
+    background: var(--color-surface);
+}
+
+.aih-nav-arrow:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+}
+
+.aih-nav-arrow.disabled {
+    opacity: 0.3;
+    cursor: default;
+    pointer-events: none;
+}
+
+.aih-piece-counter {
+    font-size: 14px;
+    color: var(--color-muted);
+    min-width: 50px;
+    text-align: center;
+}
+
+.aih-nav-spacer {
+    width: 100px; /* Balance the back link */
 }
 
 /* Content wrapper with navigation arrows at edges */
@@ -578,10 +610,19 @@ jQuery(document).ready(function($) {
 .aih-single-meta {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     gap: 12px;
     margin-bottom: 16px;
     flex-wrap: wrap;
+}
+
+.aih-single-meta .aih-art-id {
+    font-size: 16px;
+    font-weight: 700;
+    padding: 6px 12px;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 4px;
+    color: var(--color-accent);
 }
 
 .aih-single-details h1 {
@@ -773,8 +814,24 @@ jQuery(document).ready(function($) {
 
 @media (max-width: 600px) {
     .aih-single-nav-bar {
-        grid-template-columns: 1fr auto 1fr;
-        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 12px;
+    }
+
+    .aih-back-link {
+        width: 100%;
+        text-align: center;
+        order: 2;
+        font-size: 13px;
+    }
+
+    .aih-nav-center {
+        order: 1;
+    }
+
+    .aih-nav-spacer {
+        display: none;
     }
 
     .aih-single-content-wrapper {
