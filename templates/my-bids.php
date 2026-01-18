@@ -270,6 +270,41 @@ jQuery(document).ready(function($) {
     height: 100%;
 }
 
+/* Art ID badge - match gallery exactly */
+.aih-mybids-page .aih-art-id-badge {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    padding: 5px 8px;
+    font-size: clamp(14px, 4vw, 18px);
+    font-weight: 700;
+    font-family: var(--font-display);
+    letter-spacing: 0.5px;
+    background: rgba(255, 255, 255, 0.95);
+    color: var(--color-accent);
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    z-index: 4;
+}
+
+/* Status badge - match gallery exactly */
+.aih-mybids-page .aih-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    padding: 5px 10px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-radius: 2px;
+}
+
 /* Card body and details */
 .aih-mybids-page .aih-card-body {
     padding: 12px 14px;
