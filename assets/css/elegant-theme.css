@@ -47,7 +47,18 @@ body article,
 body .wp-block-post-content,
 body .page-content,
 body .hentry,
-body .type-page {
+body .type-page,
+body .container,
+body .wrapper,
+body .page-wrapper,
+body .site-wrapper,
+body .main-content,
+body .content-wrapper,
+body #content,
+body #main,
+body #primary,
+body .alignwide,
+body .alignfull {
     background: transparent !important;
     padding: 0 !important;
     margin: 0 !important;

@@ -445,16 +445,21 @@ jQuery(document).ready(function($) {
     });
     
     // View toggle (grid vs single column)
+    console.log('View toggle initialized, buttons found:', $('.aih-view-btn').length);
     $('.aih-view-btn').on('click', function() {
         var view = $(this).data('view');
+        console.log('View toggle clicked:', view);
         $('.aih-view-btn').removeClass('active');
         $(this).addClass('active');
 
         if (view === 'single') {
             $('#aih-gallery').addClass('single-view');
+            console.log('Added single-view class');
         } else {
             $('#aih-gallery').removeClass('single-view');
+            console.log('Removed single-view class');
         }
+        console.log('Gallery classes:', $('#aih-gallery').attr('class'));
     });
 
     // Countdown timer functionality
