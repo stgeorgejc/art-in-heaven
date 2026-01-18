@@ -51,6 +51,8 @@ body .type-page {
     background: transparent !important;
     padding: 0 !important;
     margin: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
 }
 
 /* Remove any theme padding/margins around our content */
@@ -363,7 +365,7 @@ body .type-page {
 
 /* Single Column View Mode - shows all items in one column */
 .aih-gallery-grid.single-view {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
     max-width: 450px;
     margin: 0 auto;
     gap: 20px;
@@ -1948,7 +1950,7 @@ body .type-page {
 
     /* Ensure single-view still works at large screens */
     .aih-gallery-grid.single-view {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr !important;
         max-width: 500px;
     }
 }
