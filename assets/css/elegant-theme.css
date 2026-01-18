@@ -452,7 +452,7 @@ body .type-page {
         bottom: 8px;
         left: 8px;
         padding: 4px 8px;
-        font-size: clamp(12px, 3.5vw, 16px);
+        font-size: clamp(16px, 4.5vw, 20px);
     }
 
     /* Mobile status badge */
@@ -470,7 +470,7 @@ body .type-page {
         bottom: 10px;
         left: 10px;
         padding: 6px 12px;
-        font-size: clamp(14px, 4vw, 20px);
+        font-size: clamp(18px, 5vw, 26px);
     }
 
     .aih-gallery-grid.single-view .aih-badge {
@@ -637,7 +637,7 @@ body .type-page {
     bottom: 10px;
     left: 10px;
     padding: 6px 10px;
-    font-size: clamp(14px, 4vw, 18px);
+    font-size: clamp(18px, 5vw, 24px);
     font-weight: 700;
     font-family: var(--font-display);
     letter-spacing: 0.5px;
