@@ -353,19 +353,19 @@ jQuery(document).ready(function($) {
         font-size: 12px;
     }
 
-    /* Art ID badge mobile position - don't overlap with badge */
+    /* Art ID badge mobile - match gallery styles */
     .aih-mybids-page .aih-art-id-badge {
-        bottom: 6px;
-        left: 6px;
-        padding: 4px 8px;
-        font-size: 11px;
+        bottom: 8px;
+        left: 8px;
+        padding: 4px 6px;
+        font-size: clamp(12px, 3.5vw, 16px);
     }
 
     .aih-mybids-page .aih-badge {
-        top: 6px;
-        left: 6px;
-        padding: 3px 6px;
-        font-size: 8px;
+        top: 8px;
+        left: 8px;
+        padding: 4px 8px;
+        font-size: 9px;
     }
 }
 
