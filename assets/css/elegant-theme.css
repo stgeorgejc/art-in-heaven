@@ -438,13 +438,15 @@ body .type-page {
     }
 
     .aih-bid-input {
+        flex: 3;
         padding: 8px 10px;
         font-size: 16px;
-        min-width: 60px;
+        min-width: 80px;
     }
 
     .aih-bid-btn {
-        padding: 8px 10px;
+        flex: 1;
+        padding: 8px 8px;
         font-size: 10px;
         letter-spacing: 0.3px;
     }
@@ -520,12 +522,14 @@ body .type-page {
     }
 
     .aih-gallery-grid.single-view .aih-bid-input {
+        flex: 3;
         padding: 10px 14px;
         font-size: 16px;
     }
 
     .aih-gallery-grid.single-view .aih-bid-btn {
-        padding: 10px 14px;
+        flex: 1;
+        padding: 10px 12px;
         font-size: 12px;
         letter-spacing: 0.4px;
     }
