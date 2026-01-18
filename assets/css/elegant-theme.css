@@ -58,9 +58,16 @@ body #content,
 body #main,
 body #primary,
 body .alignwide,
-body .alignfull {
+body .alignfull,
+body .wp-site-blocks,
+body .is-layout-constrained,
+body .is-layout-flow,
+body .has-global-padding,
+body .wp-block-group,
+body .wp-block-template-part {
     background: transparent !important;
-    padding: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
     margin: 0 !important;
     max-width: 100% !important;
     width: 100% !important;
