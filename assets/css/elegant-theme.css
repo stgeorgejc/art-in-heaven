@@ -1,6 +1,6 @@
 /* ============================================
    ELEGANT AUCTION THEME - MOBILE FIRST
-   Version: 0.9.122
+   Version: 0.9.124
 
    Note: Google Fonts are loaded via wp_enqueue_style
    in class-aih-assets.php for better performance.
@@ -446,15 +446,15 @@ html body {
 
     .aih-bid-input {
         flex: 3;
-        padding: 10px 12px;
+        padding: 8px 10px;
         font-size: 16px;
-        min-width: 80px;
+        min-width: 70px;
     }
 
     .aih-bid-btn {
         flex: 1;
-        padding: 10px 10px;
-        font-size: 11px;
+        padding: 8px 6px;
+        font-size: 10px;
         letter-spacing: 0.3px;
     }
 
@@ -1915,8 +1915,18 @@ html body {
 }
 
 @media (min-width: 901px) {
+    .aih-gallery-controls {
+        flex-wrap: nowrap;
+    }
+
     .aih-search-box {
         width: 180px;
+        flex-shrink: 0;
+    }
+
+    .aih-filter-group {
+        flex-wrap: nowrap;
+        flex-shrink: 0;
     }
 
     .aih-select-narrow {

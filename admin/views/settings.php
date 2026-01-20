@@ -294,6 +294,7 @@ $event_date = get_option('aih_event_date', '');
                 <tr><th><?php _e('Login Page', 'art-in-heaven'); ?></th><td><code>[art_in_heaven_login]</code></td></tr>
                 <tr><th><?php _e('My Bids', 'art-in-heaven'); ?></th><td><code>[art_in_heaven_my_bids]</code></td></tr>
                 <tr><th><?php _e('Checkout', 'art-in-heaven'); ?></th><td><code>[art_in_heaven_checkout]</code></td></tr>
+                <tr><th><?php _e('My Wins/Collection', 'art-in-heaven'); ?></th><td><code>[art_in_heaven_my_wins]</code></td></tr>
                 <tr><th><?php _e('Winners/Sold', 'art-in-heaven'); ?></th><td><code>[art_in_heaven_winners]</code></td></tr>
                 <tr><th><?php _e('Single Item', 'art-in-heaven'); ?></th><td><code>[art_in_heaven_item id="123"]</code></td></tr>
             </table>
