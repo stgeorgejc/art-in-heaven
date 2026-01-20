@@ -1676,13 +1676,7 @@ html body {
 /* ============================================
    TIME REMAINING STYLES
    ============================================ */
-.aih-bid-info {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 12px;
-    gap: 12px;
-}
+/* Note: .aih-bid-info base styles are defined in CARD section above */
 
 .aih-bid-info-left {
     display: flex;
@@ -1835,9 +1829,10 @@ html body {
 }
 
 /* ============================================
-   RESPONSIVE BID AMOUNT SIZING
+   RESPONSIVE BID AMOUNT SIZING (Tablet only - 600-899px)
+   Desktop styles (900px+) are in DESKTOP STYLES section above
    ============================================ */
-@media (min-width: 600px) {
+@media (min-width: 600px) and (max-width: 899px) {
     .aih-card-footer {
         padding: 14px 16px 16px;
     }
@@ -1966,19 +1961,9 @@ html body {
 
 /* ============================================
    RESPONSIVE EDGE PADDING
+   Note: Base padding is set in TABLET (600px+) and DESKTOP (900px+) sections above.
+   These rules add larger padding for very wide screens.
    ============================================ */
-@media (min-width: 600px) {
-    .aih-main {
-        padding-left: 32px;
-        padding-right: 32px;
-    }
-
-    .aih-header-inner {
-        padding-left: 32px;
-        padding-right: 32px;
-    }
-}
-
 @media (min-width: 1400px) {
     .aih-main {
         padding: 32px 48px;
