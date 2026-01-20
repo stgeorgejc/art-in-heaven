@@ -178,6 +178,9 @@ $cart_count = count($checkout->get_won_items($bidder_id));
                     </div>
                     <?php endif; ?>
 
+                    <!-- Art ID Badge on image -->
+                    <span class="aih-art-id-badge-single"><?php echo esc_html($art_piece->art_id); ?></span>
+
                     <button type="button" class="aih-fav-btn <?php echo $is_favorite ? 'active' : ''; ?>" data-id="<?php echo $art_piece->id; ?>">
                         <span class="aih-fav-icon"><?php echo $is_favorite ? '♥' : '♡'; ?></span>
                     </button>
@@ -568,6 +571,24 @@ jQuery(document).ready(function($) {
     font-size: 18px;
 }
 
+/* Art ID Badge on single image - like gallery cards */
+.aih-art-id-badge-single {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    padding: 8px 14px;
+    font-size: 20px;
+    font-weight: 700;
+    font-family: var(--font-display);
+    letter-spacing: 0.5px;
+    background: rgba(255, 255, 255, 0.95);
+    color: var(--color-accent);
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    line-height: 1;
+    z-index: 4;
+}
+
 .aih-thumbnails {
     display: flex;
     gap: 12px;
@@ -616,13 +637,9 @@ jQuery(document).ready(function($) {
     flex-wrap: wrap;
 }
 
+/* Hide art ID from meta since it's now on the image */
 .aih-single-meta .aih-art-id {
-    font-size: 16px;
-    font-weight: 700;
-    padding: 6px 12px;
-    background: rgba(0, 0, 0, 0.05);
-    border-radius: 4px;
-    color: var(--color-accent);
+    display: none;
 }
 
 .aih-single-details h1 {
@@ -714,15 +731,35 @@ jQuery(document).ready(function($) {
     display: none !important;
 }
 
+/* Bid form - horizontal compact layout */
+.aih-bid-form-single {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-end;
+    gap: 12px;
+}
+
 .aih-bid-form-single .aih-field {
-    margin-bottom: 16px;
+    flex: 1;
+    margin-bottom: 0;
+}
+
+.aih-bid-form-single .aih-field label {
+    font-size: 10px;
+    margin-bottom: 6px;
 }
 
 .aih-bid-form-single input {
     width: 100%;
-    padding: 14px 16px;
-    font-size: 16px;
+    padding: 10px 12px;
+    font-size: 15px;
     text-align: center;
+}
+
+.aih-bid-form-single .aih-btn {
+    flex-shrink: 0;
+    padding: 10px 20px;
+    white-space: nowrap;
 }
 
 /* Bid History Section */
@@ -878,21 +915,46 @@ jQuery(document).ready(function($) {
         font-size: 22px;
     }
 
+    /* Art ID badge mobile */
+    .aih-art-id-badge-single {
+        bottom: 12px;
+        left: 12px;
+        padding: 6px 10px;
+        font-size: 16px;
+    }
+
     /* Bid section mobile scaling */
     .aih-bid-section {
-        padding: 16px;
+        padding: 14px;
+    }
+
+    .aih-current-bid {
+        margin-bottom: 14px;
     }
 
     .aih-current-bid .aih-bid-amount {
-        font-size: 26px;
+        font-size: 24px;
     }
 
+    /* Keep bid form horizontal on mobile but smaller */
     .aih-bid-form-single {
-        flex-direction: column;
+        flex-direction: row;
+        gap: 8px;
+    }
+
+    .aih-bid-form-single .aih-field label {
+        font-size: 9px;
+        margin-bottom: 4px;
+    }
+
+    .aih-bid-form-single input {
+        padding: 8px 10px;
+        font-size: 14px;
     }
 
     .aih-bid-form-single .aih-btn {
-        width: 100%;
+        padding: 8px 12px;
+        font-size: 10px;
     }
 }
 
