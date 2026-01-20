@@ -736,11 +736,11 @@ jQuery(document).ready(function($) {
     display: flex;
     flex-direction: row;
     align-items: flex-end;
-    gap: 12px;
+    gap: 10px;
 }
 
 .aih-bid-form-single .aih-field {
-    flex: 1;
+    flex: 3;
     margin-bottom: 0;
 }
 
@@ -757,8 +757,10 @@ jQuery(document).ready(function($) {
 }
 
 .aih-bid-form-single .aih-btn {
-    flex-shrink: 0;
-    padding: 10px 20px;
+    flex: 1;
+    max-width: 100px;
+    padding: 10px 10px;
+    font-size: 10px;
     white-space: nowrap;
 }
 
@@ -939,7 +941,11 @@ jQuery(document).ready(function($) {
     /* Keep bid form horizontal on mobile but smaller */
     .aih-bid-form-single {
         flex-direction: row;
-        gap: 8px;
+        gap: 6px;
+    }
+
+    .aih-bid-form-single .aih-field {
+        flex: 3;
     }
 
     .aih-bid-form-single .aih-field label {
@@ -953,8 +959,10 @@ jQuery(document).ready(function($) {
     }
 
     .aih-bid-form-single .aih-btn {
-        padding: 8px 12px;
-        font-size: 10px;
+        flex: 1;
+        max-width: 80px;
+        padding: 8px 6px;
+        font-size: 9px;
     }
 }
 
