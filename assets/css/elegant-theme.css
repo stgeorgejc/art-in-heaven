@@ -409,17 +409,19 @@ html body {
     }
 
     .aih-view-toggle {
-        padding: 2px !important;
-        gap: 2px !important;
+        padding: 1px !important;
+        gap: 1px !important;
+        border-width: 1px !important;
     }
 
     .aih-view-toggle .aih-view-btn {
-        padding: 4px 6px !important;
+        padding: 2px 3px !important;
+        border-radius: 2px !important;
     }
 
     .aih-view-toggle .aih-view-btn svg {
-        width: 12px !important;
-        height: 12px !important;
+        width: 10px !important;
+        height: 10px !important;
     }
 
     .aih-gallery-grid {
@@ -1727,24 +1729,7 @@ html body {
 /* ============================================
    VIEW TOGGLE SIZES
    ============================================ */
-/* Mobile: smaller container and icons */
-@media (max-width: 600px) {
-    .aih-view-toggle {
-        padding: 2px !important;
-        gap: 1px !important;
-        border-width: 1px !important;
-    }
-
-    .aih-view-toggle .aih-view-btn {
-        padding: 3px 4px !important;
-        border-radius: 2px !important;
-    }
-
-    .aih-view-toggle .aih-view-btn svg {
-        width: 10px !important;
-        height: 10px !important;
-    }
-}
+/* Mobile view toggle styles are defined in the main mobile section above */
 
 /* Tablet/Desktop */
 @media (min-width: 601px) {
