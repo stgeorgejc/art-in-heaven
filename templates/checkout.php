@@ -133,6 +133,7 @@ $total = $subtotal + $tax;
                     <div class="aih-checkout-item-image">
                         <?php if ($image_url): ?>
                         <img src="<?php echo esc_url($image_url); ?>" alt="<?php echo esc_attr(isset($item->title) ? $item->title : ''); ?>">
+                        <span class="aih-art-id-badge"><?php echo esc_html(isset($item->art_id) ? $item->art_id : ''); ?></span>
                         <?php else: ?>
                         <div class="aih-checkout-placeholder">
                             <span><?php echo esc_html(isset($item->art_id) ? $item->art_id : ''); ?></span>
@@ -140,7 +141,6 @@ $total = $subtotal + $tax;
                         <?php endif; ?>
                     </div>
                     <div class="aih-checkout-item-details">
-                        <span class="aih-art-id"><?php echo esc_html(isset($item->art_id) ? $item->art_id : ''); ?></span>
                         <h4><?php echo esc_html(isset($item->title) ? $item->title : ''); ?></h4>
                         <p><?php echo esc_html(isset($item->artist) ? $item->artist : ''); ?></p>
                     </div>
@@ -253,6 +253,7 @@ jQuery(document).ready(function($) {
 }
 
 .aih-checkout-item-image {
+    position: relative;
     width: 100px;
     height: 100px;
     flex-shrink: 0;
@@ -260,6 +261,23 @@ jQuery(document).ready(function($) {
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.aih-checkout-item-image .aih-art-id-badge {
+    position: absolute;
+    bottom: 6px;
+    left: 6px;
+    padding: 3px 6px;
+    font-size: 12px;
+    font-weight: 700;
+    font-family: var(--font-display);
+    letter-spacing: 0.5px;
+    background: rgba(255, 255, 255, 0.95);
+    color: var(--color-accent);
+    border-radius: 3px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+    line-height: 1;
+    z-index: 2;
 }
 
 .aih-checkout-item-image img {
@@ -439,6 +457,13 @@ jQuery(document).ready(function($) {
     .aih-checkout-item-image {
         width: 100%;
         height: 180px;
+    }
+
+    .aih-checkout-item-image .aih-art-id-badge {
+        bottom: 8px;
+        left: 8px;
+        padding: 4px 8px;
+        font-size: 14px;
     }
 
     .aih-checkout-item-details {
