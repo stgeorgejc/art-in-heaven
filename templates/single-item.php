@@ -938,31 +938,31 @@ jQuery(document).ready(function($) {
         font-size: 24px;
     }
 
-    /* Keep bid form horizontal on mobile but smaller */
+    /* Keep bid form horizontal on mobile - properly sized for touch */
     .aih-bid-form-single {
         flex-direction: row;
-        gap: 6px;
+        gap: 8px;
     }
 
     .aih-bid-form-single .aih-field {
-        flex: 3;
+        flex: 2;
     }
 
     .aih-bid-form-single .aih-field label {
-        font-size: 9px;
+        font-size: 10px;
         margin-bottom: 4px;
     }
 
     .aih-bid-form-single input {
-        padding: 8px 10px;
-        font-size: 14px;
+        padding: 12px 10px;
+        font-size: 16px;
     }
 
     .aih-bid-form-single .aih-btn {
         flex: 1;
-        max-width: 80px;
-        padding: 8px 6px;
-        font-size: 9px;
+        max-width: 100px;
+        padding: 12px 10px;
+        font-size: 11px;
     }
 }
 
