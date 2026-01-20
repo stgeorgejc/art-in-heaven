@@ -48,6 +48,10 @@ class AIH_Ajax {
         add_action('wp_ajax_nopriv_aih_create_order', array($this, 'create_order'));
         add_action('wp_ajax_aih_get_pushpay_link', array($this, 'get_pushpay_link'));
         add_action('wp_ajax_nopriv_aih_get_pushpay_link', array($this, 'get_pushpay_link'));
+        add_action('wp_ajax_aih_get_order_details', array($this, 'get_order_details'));
+        add_action('wp_ajax_nopriv_aih_get_order_details', array($this, 'get_order_details'));
+        add_action('wp_ajax_aih_get_my_purchases', array($this, 'get_my_purchases'));
+        add_action('wp_ajax_nopriv_aih_get_my_purchases', array($this, 'get_my_purchases'));
         
         // Admin
         add_action('wp_ajax_aih_admin_save_art', array($this, 'admin_save_art'));
@@ -226,13 +230,127 @@ class AIH_Ajax {
         check_ajax_referer('aih_nonce', 'nonce');
         $auth = AIH_Auth::get_instance();
         if (!$auth->is_logged_in()) wp_send_json_error(array('login_required' => true));
-        
+
         $checkout = AIH_Checkout::get_instance();
         $order = $checkout->get_order_by_number(sanitize_text_field($_POST['order_number'] ?? ''));
         if (!$order) wp_send_json_error(array('message' => 'Order not found.'));
         wp_send_json_success(array('pushpay_url' => $checkout->get_pushpay_payment_url($order)));
     }
-    
+
+    /**
+     * Get order details for frontend display
+     */
+    public function get_order_details() {
+        check_ajax_referer('aih_nonce', 'nonce');
+        $auth = AIH_Auth::get_instance();
+        if (!$auth->is_logged_in()) wp_send_json_error(array('login_required' => true));
+
+        $order_number = sanitize_text_field($_POST['order_number'] ?? '');
+        if (empty($order_number)) wp_send_json_error(array('message' => 'Order number required.'));
+
+        $checkout = AIH_Checkout::get_instance();
+        $order = $checkout->get_order_by_number($order_number);
+
+        if (!$order) wp_send_json_error(array('message' => 'Order not found.'));
+
+        // Verify this order belongs to the current bidder
+        if ($order->bidder_id !== $auth->get_current_bidder_id()) {
+            wp_send_json_error(array('message' => 'Order not found.'));
+        }
+
+        // Format items for response
+        $items = array();
+        if (!empty($order->items)) {
+            foreach ($order->items as $item) {
+                $items[] = array(
+                    'art_id' => $item->art_id ?? '',
+                    'title' => $item->title ?? '',
+                    'artist' => $item->artist ?? '',
+                    'image_url' => $item->watermarked_url ?: ($item->image_url ?? ''),
+                    'winning_bid' => floatval($item->winning_bid)
+                );
+            }
+        }
+
+        wp_send_json_success(array(
+            'order_number' => $order->order_number,
+            'created_at' => date_i18n('M j, Y g:i a', strtotime($order->created_at)),
+            'payment_status' => $order->payment_status,
+            'payment_method' => $order->payment_method ?? '',
+            'subtotal' => floatval($order->subtotal),
+            'tax' => floatval($order->tax),
+            'total' => floatval($order->total),
+            'pickup_status' => $order->pickup_status ?? 'pending',
+            'items' => $items
+        ));
+    }
+
+    /**
+     * Get all purchased items for My Wins page
+     */
+    public function get_my_purchases() {
+        check_ajax_referer('aih_nonce', 'nonce');
+        $auth = AIH_Auth::get_instance();
+        if (!$auth->is_logged_in()) wp_send_json_error(array('login_required' => true));
+
+        $bidder_id = $auth->get_current_bidder_id();
+        $checkout = AIH_Checkout::get_instance();
+
+        // Get all paid orders for this bidder
+        global $wpdb;
+        $orders_table = AIH_Database::get_table('orders');
+        $items_table = AIH_Database::get_table('order_items');
+        $art_table = AIH_Database::get_table('art_pieces');
+        $images_table = AIH_Database::get_table('art_images');
+
+        $purchases = $wpdb->get_results($wpdb->prepare(
+            "SELECT
+                oi.id as item_id,
+                oi.winning_bid,
+                o.order_number,
+                o.payment_status,
+                o.pickup_status,
+                o.created_at as order_date,
+                ap.id as art_piece_id,
+                ap.art_id,
+                ap.title,
+                ap.artist,
+                ap.medium,
+                ap.dimensions,
+                ap.description,
+                COALESCE(ai.watermarked_url, ap.watermarked_url, ap.image_url) as image_url
+            FROM {$items_table} oi
+            JOIN {$orders_table} o ON oi.order_id = o.id
+            JOIN {$art_table} ap ON oi.art_piece_id = ap.id
+            LEFT JOIN {$images_table} ai ON ap.id = ai.art_piece_id AND ai.is_primary = 1
+            WHERE o.bidder_id = %s
+            AND o.payment_status = 'paid'
+            ORDER BY o.created_at DESC",
+            $bidder_id
+        ));
+
+        $items = array();
+        foreach ($purchases as $p) {
+            $items[] = array(
+                'item_id' => $p->item_id,
+                'art_piece_id' => $p->art_piece_id,
+                'art_id' => $p->art_id,
+                'title' => $p->title,
+                'artist' => $p->artist,
+                'medium' => $p->medium,
+                'dimensions' => $p->dimensions,
+                'description' => $p->description,
+                'image_url' => $p->image_url,
+                'winning_bid' => floatval($p->winning_bid),
+                'order_number' => $p->order_number,
+                'order_date' => date_i18n('M j, Y', strtotime($p->order_date)),
+                'pickup_status' => $p->pickup_status
+            );
+        }
+
+        wp_send_json_success(array('items' => $items));
+    }
+
     // ========== ADMIN ==========
     
     public function admin_save_art() {

@@ -181,7 +181,7 @@ $total = $subtotal + $tax;
             <h2 style="font-family: var(--font-display); font-size: 24px; margin: 48px 0 24px;">Previous Orders</h2>
             <div class="aih-orders-grid">
                 <?php foreach ($orders as $order): ?>
-                <div class="aih-order-card">
+                <div class="aih-order-card aih-order-clickable" data-order="<?php echo esc_attr($order->order_number); ?>">
                     <div class="aih-order-header">
                         <strong><?php echo esc_html($order->order_number); ?></strong>
                         <span class="aih-order-status aih-status-<?php echo $order->payment_status; ?>">
@@ -192,11 +192,28 @@ $total = $subtotal + $tax;
                         <p><?php echo $order->item_count; ?> items • $<?php echo number_format($order->total); ?></p>
                         <p class="aih-order-date"><?php echo date('M j, Y', strtotime($order->created_at)); ?></p>
                     </div>
+                    <div class="aih-order-view-link">
+                        <span>View Details →</span>
+                    </div>
                 </div>
                 <?php endforeach; ?>
             </div>
         </div>
         <?php endif; ?>
+
+        <!-- Order Details Modal -->
+        <div id="aih-order-modal" class="aih-modal" style="display: none;">
+            <div class="aih-modal-backdrop"></div>
+            <div class="aih-modal-content">
+                <div class="aih-modal-header">
+                    <h3 id="aih-modal-title">Order Details</h3>
+                    <button type="button" class="aih-modal-close">&times;</button>
+                </div>
+                <div class="aih-modal-body" id="aih-modal-body">
+                    <div class="aih-loading">Loading...</div>
+                </div>
+            </div>
+        </div>
     </main>
 
     <footer class="aih-footer">
@@ -209,7 +226,7 @@ jQuery(document).ready(function($) {
     $('#aih-logout').on('click', function() {
         $.post(aihAjax.ajaxurl, {action:'aih_logout', nonce:aihAjax.nonce}, function() { location.reload(); });
     });
-    
+
     $('#aih-create-order').on('click', function() {
         var $btn = $(this).prop('disabled', true).addClass('loading');
         $.post(aihAjax.ajaxurl, {action:'aih_create_order', nonce:aihAjax.nonce}, function(r) {
@@ -222,6 +239,85 @@ jQuery(document).ready(function($) {
                 $btn.prop('disabled', false).removeClass('loading');
             }
         });
+    });
+
+    // Order details modal
+    $('.aih-order-clickable').on('click', function() {
+        var orderNumber = $(this).data('order');
+        var $modal = $('#aih-order-modal');
+        var $body = $('#aih-modal-body');
+
+        $modal.show();
+        $body.html('<div class="aih-loading">Loading order details...</div>');
+        $('#aih-modal-title').text('Order ' + orderNumber);
+
+        $.post(aihAjax.ajaxurl, {
+            action: 'aih_get_order_details',
+            nonce: aihAjax.nonce,
+            order_number: orderNumber
+        }, function(r) {
+            if (r.success) {
+                var data = r.data;
+                var html = '<div class="aih-order-modal-info">';
+                html += '<div class="aih-order-meta">';
+                html += '<span class="aih-order-status aih-status-' + data.payment_status + '">' + data.payment_status.charAt(0).toUpperCase() + data.payment_status.slice(1) + '</span>';
+                if (data.pickup_status === 'picked_up') {
+                    html += ' <span class="aih-pickup-badge">Picked Up</span>';
+                }
+                html += '<span class="aih-order-date">' + data.created_at + '</span>';
+                html += '</div>';
+                html += '</div>';
+
+                html += '<div class="aih-order-items-list">';
+                html += '<h4>Items Purchased</h4>';
+
+                if (data.items && data.items.length > 0) {
+                    data.items.forEach(function(item) {
+                        html += '<div class="aih-order-item-row">';
+                        html += '<div class="aih-order-item-image">';
+                        if (item.image_url) {
+                            html += '<img src="' + item.image_url + '" alt="' + (item.title || '') + '">';
+                        }
+                        if (item.art_id) {
+                            html += '<span class="aih-art-id-badge">' + item.art_id + '</span>';
+                        }
+                        html += '</div>';
+                        html += '<div class="aih-order-item-info">';
+                        html += '<h5>' + (item.title || 'Untitled') + '</h5>';
+                        html += '<p>' + (item.artist || '') + '</p>';
+                        html += '</div>';
+                        html += '<div class="aih-order-item-price">$' + item.winning_bid.toLocaleString() + '</div>';
+                        html += '</div>';
+                    });
+                }
+
+                html += '</div>';
+
+                html += '<div class="aih-order-totals">';
+                html += '<div class="aih-order-total-row"><span>Subtotal</span><span>$' + data.subtotal.toLocaleString() + '</span></div>';
+                if (data.tax > 0) {
+                    html += '<div class="aih-order-total-row"><span>Tax</span><span>$' + data.tax.toFixed(2) + '</span></div>';
+                }
+                html += '<div class="aih-order-total-row aih-order-total-final"><span>Total</span><span>$' + data.total.toFixed(2) + '</span></div>';
+                html += '</div>';
+
+                $body.html(html);
+            } else {
+                $body.html('<p class="aih-error">Error loading order details.</p>');
+            }
+        });
+    });
+
+    // Close modal
+    $('.aih-modal-close, .aih-modal-backdrop').on('click', function() {
+        $('#aih-order-modal').hide();
+    });
+
+    // Close on escape key
+    $(document).on('keydown', function(e) {
+        if (e.key === 'Escape') {
+            $('#aih-order-modal').hide();
+        }
     });
 });
 </script>
@@ -512,6 +608,288 @@ jQuery(document).ready(function($) {
 
     .aih-checkout-layout {
         gap: 24px;
+    }
+}
+
+/* Clickable Order Cards */
+.aih-order-clickable {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.aih-order-clickable:hover {
+    border-color: var(--color-accent);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.aih-order-view-link {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--color-border);
+}
+
+.aih-order-view-link span {
+    font-size: 13px;
+    color: var(--color-accent);
+    font-weight: 500;
+}
+
+/* Modal Styles */
+.aih-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.aih-modal-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+}
+
+.aih-modal-content {
+    position: relative;
+    background: var(--color-surface);
+    border-radius: 8px;
+    max-width: 600px;
+    width: 100%;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+
+.aih-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.aih-modal-header h3 {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 500;
+    margin: 0;
+}
+
+.aih-modal-close {
+    background: none;
+    border: none;
+    font-size: 28px;
+    cursor: pointer;
+    color: var(--color-muted);
+    padding: 0;
+    line-height: 1;
+}
+
+.aih-modal-close:hover {
+    color: var(--color-primary);
+}
+
+.aih-modal-body {
+    padding: 24px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.aih-loading {
+    text-align: center;
+    padding: 40px;
+    color: var(--color-muted);
+}
+
+.aih-order-modal-info {
+    margin-bottom: 20px;
+}
+
+.aih-order-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.aih-order-meta .aih-order-date {
+    color: var(--color-muted);
+    font-size: 13px;
+    margin: 0 !important;
+}
+
+.aih-pickup-badge {
+    background: #e3f2fd;
+    color: #1565c0;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 4px 10px;
+    border-radius: 2px;
+}
+
+.aih-order-items-list {
+    margin-bottom: 20px;
+}
+
+.aih-order-items-list h4 {
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 500;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.aih-order-item-row {
+    display: flex;
+    gap: 16px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--color-border);
+    align-items: center;
+}
+
+.aih-order-item-row:last-child {
+    border-bottom: none;
+}
+
+.aih-order-item-image {
+    position: relative;
+    width: 70px;
+    height: 70px;
+    flex-shrink: 0;
+    background: var(--color-bg-alt);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.aih-order-item-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.aih-order-item-image .aih-art-id-badge {
+    position: absolute;
+    bottom: 4px;
+    left: 4px;
+    padding: 2px 4px;
+    font-size: 10px;
+    font-weight: 700;
+    font-family: var(--font-display);
+    background: rgba(255, 255, 255, 0.95);
+    color: var(--color-accent);
+    border-radius: 2px;
+    line-height: 1;
+}
+
+.aih-order-item-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.aih-order-item-info h5 {
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 500;
+    margin: 0 0 4px 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.aih-order-item-info p {
+    font-size: 13px;
+    color: var(--color-muted);
+    margin: 0;
+}
+
+.aih-order-item-price {
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--color-primary);
+    flex-shrink: 0;
+}
+
+.aih-order-totals {
+    background: var(--color-bg);
+    padding: 16px;
+    border-radius: 4px;
+}
+
+.aih-order-total-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    font-size: 14px;
+}
+
+.aih-order-total-final {
+    border-top: 1px solid var(--color-border);
+    margin-top: 8px;
+    padding-top: 12px;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.aih-order-total-final span:last-child {
+    font-family: var(--font-display);
+}
+
+.aih-error {
+    color: var(--color-error);
+    text-align: center;
+    padding: 20px;
+}
+
+@media (max-width: 600px) {
+    .aih-modal {
+        padding: 10px;
+    }
+
+    .aih-modal-content {
+        max-height: 95vh;
+    }
+
+    .aih-modal-header {
+        padding: 16px 20px;
+    }
+
+    .aih-modal-header h3 {
+        font-size: 18px;
+    }
+
+    .aih-modal-body {
+        padding: 16px;
+    }
+
+    .aih-order-item-row {
+        gap: 12px;
+    }
+
+    .aih-order-item-image {
+        width: 60px;
+        height: 60px;
+    }
+
+    .aih-order-item-info h5 {
+        font-size: 14px;
+    }
+
+    .aih-order-item-price {
+        font-size: 14px;
     }
 }
 </style>

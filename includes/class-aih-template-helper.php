@@ -118,6 +118,14 @@ class AIH_Template_Helper {
     }
 
     /**
+     * Get my wins/collection page URL
+     * @return string
+     */
+    public static function get_my_wins_url() {
+        return self::get_page_url('art_in_heaven_my_wins', 'aih_my_wins_page');
+    }
+
+    /**
      * Get bidder display name
      *
      * Consolidates duplicate name extraction logic used in:

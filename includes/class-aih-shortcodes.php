@@ -26,6 +26,7 @@ class AIH_Shortcodes {
         add_shortcode('art_in_heaven_checkout', array($this, 'checkout_shortcode'));
         add_shortcode('art_in_heaven_login', array($this, 'login_shortcode'));
         add_shortcode('art_in_heaven_winners', array($this, 'winners_shortcode'));
+        add_shortcode('art_in_heaven_my_wins', array($this, 'my_wins_shortcode'));
         
         // Handle login redirect
         add_action('template_redirect', array($this, 'check_login_required'));
@@ -49,8 +50,7 @@ class AIH_Shortcodes {
         $requires_login = array(
             'art_in_heaven_my_bids',
             'art_in_heaven_checkout',
-            'art_in_heaven_my_bids',
-            'art_in_heaven_checkout'
+            'art_in_heaven_my_wins'
         );
         
         foreach ($requires_login as $shortcode) {
@@ -149,6 +149,12 @@ class AIH_Shortcodes {
     public function winners_shortcode($atts) {
         ob_start();
         include AIH_PLUGIN_DIR . 'templates/winners.php';
+        return ob_get_clean();
+    }
+
+    public function my_wins_shortcode($atts) {
+        ob_start();
+        include AIH_PLUGIN_DIR . 'templates/my-wins.php';
         return ob_get_clean();
     }
 }
