@@ -1725,12 +1725,19 @@ html body {
 /* NARROWER FILTER DROPDOWNS - see FIX FILTER/SEARCH OVERLAP section */
 
 /* ============================================
-   VIEW TOGGLE ICON SIZES
+   VIEW TOGGLE SIZES
    ============================================ */
-/* Mobile: smaller icons */
+/* Mobile: smaller container and icons */
 @media (max-width: 600px) {
+    .aih-view-toggle {
+        padding: 2px !important;
+        gap: 1px !important;
+        border-width: 1px !important;
+    }
+
     .aih-view-toggle .aih-view-btn {
-        padding: 3px 5px !important;
+        padding: 3px 4px !important;
+        border-radius: 2px !important;
     }
 
     .aih-view-toggle .aih-view-btn svg {
