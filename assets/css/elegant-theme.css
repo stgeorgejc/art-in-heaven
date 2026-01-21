@@ -457,38 +457,38 @@ html body {
 
     /* Mobile card footer */
     .aih-card-footer {
-        padding: 8px 10px 10px;
+        padding: 6px 8px 8px;
     }
 
     .aih-bid-info {
-        margin-bottom: 8px;
+        margin-bottom: 6px;
     }
 
     .aih-bid-label {
-        font-size: 9px;
+        font-size: 8px;
     }
 
     .aih-bid-amount {
-        font-size: clamp(16px, 4vw, 18px);
+        font-size: clamp(14px, 4vw, 16px);
     }
 
     .aih-bid-form {
         flex-direction: row;
-        gap: 4px !important;
+        gap: 3px !important;
     }
 
     .aih-bid-input {
         flex: 1 1 auto !important;
-        padding: 10px 8px !important;
-        font-size: 14px !important;
+        padding: 6px 6px !important;
+        font-size: 12px !important;
         min-width: 0 !important;
     }
 
     .aih-bid-btn {
-        flex: 0 0 60px !important;
-        width: 60px !important;
-        padding: 10px 4px !important;
-        font-size: 9px !important;
+        flex: 0 0 50px !important;
+        width: 50px !important;
+        padding: 6px 2px !important;
+        font-size: 8px !important;
         letter-spacing: 0 !important;
     }
 
