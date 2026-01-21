@@ -481,18 +481,20 @@ html body {
     }
 
     .aih-bid-form {
-        display: grid !important;
-        grid-template-columns: 1fr 36px !important;
+        display: flex !important;
+        flex-direction: row !important;
         gap: 3px !important;
         width: 100% !important;
+        min-width: 100% !important;
+        max-width: 100% !important;
         box-sizing: border-box !important;
     }
 
     .aih-bid-input {
-        width: 100% !important;
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
         padding: 3px 6px !important;
         font-size: 12px !important;
-        min-width: 0 !important;
         -webkit-appearance: none !important;
         -moz-appearance: textfield !important;
     }
@@ -505,7 +507,10 @@ html body {
     }
 
     .aih-bid-btn {
+        flex: 0 0 36px !important;
         width: 36px !important;
+        min-width: 36px !important;
+        max-width: 36px !important;
         padding: 2px 1px !important;
         font-size: 8px !important;
         letter-spacing: 0 !important;
@@ -577,18 +582,23 @@ html body {
     }
 
     .aih-gallery-grid.single-view .aih-bid-form {
-        flex-direction: row;
-        gap: 6px;
+        display: flex !important;
+        flex-direction: row !important;
+        gap: 6px !important;
     }
 
     .aih-gallery-grid.single-view .aih-bid-input {
-        flex: 3;
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
         padding: 10px 14px;
         font-size: 16px;
     }
 
     .aih-gallery-grid.single-view .aih-bid-btn {
-        flex: 1;
+        flex: 0 0 50px !important;
+        width: 50px !important;
+        min-width: 50px !important;
+        max-width: 50px !important;
         padding: 10px 12px;
         font-size: 12px;
         letter-spacing: 0.4px;
@@ -837,6 +847,9 @@ html body {
     border-top: 1px solid var(--color-border);
     background: var(--color-bg);
     min-width: 0;
+    width: 100%;
+    align-self: stretch;
+    box-sizing: border-box;
 }
 
 .aih-bid-info {
@@ -863,15 +876,18 @@ html body {
 }
 
 .aih-bid-form {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 4px;
-    width: 100%;
-    box-sizing: border-box;
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 4px !important;
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
 }
 
 .aih-bid-input {
-    width: 100%;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
     padding: 8px 10px;
     font-family: var(--font-body);
     font-size: 14px;
@@ -879,8 +895,7 @@ html body {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: var(--radius);
-    min-width: 0;
-    box-sizing: border-box;
+    box-sizing: border-box !important;
     -webkit-appearance: none;
 }
 
@@ -894,8 +909,10 @@ html body {
 }
 
 .aih-bid-btn {
-    flex: 0 0 auto;
-    width: 50px;
+    flex: 0 0 40px !important;
+    width: 40px !important;
+    min-width: 40px !important;
+    max-width: 40px !important;
     padding: 8px 4px;
     font-family: var(--font-body);
     font-size: 10px;
