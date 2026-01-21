@@ -176,7 +176,7 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
             <p>Art pieces will be available here when the auction begins.</p>
         </div>
         <?php else: ?>
-        <div class="aih-gallery-grid" id="aih-gallery" style="display:grid;grid-template-columns:repeat(2,1fr);width:100%;box-sizing:border-box;">
+        <div class="aih-gallery-grid" id="aih-gallery" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;width:100%;">
             <?php foreach ($art_pieces as $piece): 
                 $is_favorite = $favorites->is_favorite($bidder_id, $piece->id);
                 $is_winning = $bid_model->is_bidder_winning($piece->id, $bidder_id);

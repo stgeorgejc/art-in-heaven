@@ -355,7 +355,7 @@ html body {
    ============================================ */
 .aih-gallery-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 20px;
     width: 100%;
 }
@@ -368,7 +368,7 @@ html body {
 
 /* Single Column View Mode - shows all items in one column */
 .aih-gallery-grid.single-view {
-    grid-template-columns: 1fr !important;
+    grid-template-columns: minmax(0, 1fr) !important;
     max-width: 450px;
     margin: 0 auto;
     gap: 20px;
@@ -425,17 +425,18 @@ html body {
     }
 
     .aih-gallery-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 14px;
         width: 100%;
     }
 
     .aih-gallery-grid .aih-card {
         width: 100%;
+        min-width: 0;
     }
 
     .aih-gallery-grid.single-view {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
         max-width: 100%;
         gap: 16px;
     }
