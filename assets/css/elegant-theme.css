@@ -473,20 +473,26 @@ html body {
     }
 
     .aih-bid-form {
-        flex-direction: row;
+        display: flex !important;
+        flex-direction: row !important;
         gap: 3px !important;
+        width: 100% !important;
     }
 
     .aih-bid-input {
-        flex: 1 1 auto !important;
+        flex: 1 1 0% !important;
+        width: 100% !important;
         padding: 3px 6px !important;
         font-size: 12px !important;
         min-width: 0 !important;
+        max-width: none !important;
     }
 
     .aih-bid-btn {
-        flex: 0 0 36px !important;
+        flex: 0 0 auto !important;
         width: 36px !important;
+        min-width: 36px !important;
+        max-width: 36px !important;
         padding: 2px 1px !important;
         font-size: 8px !important;
         letter-spacing: 0 !important;
