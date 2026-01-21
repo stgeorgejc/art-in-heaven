@@ -176,8 +176,8 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
             <p>Art pieces will be available here when the auction begins.</p>
         </div>
         <?php else: ?>
-        <div class="aih-gallery-grid" id="aih-gallery" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;width:100%;">
-            <?php foreach ($art_pieces as $piece): 
+        <div class="aih-gallery-grid" id="aih-gallery">
+            <?php foreach ($art_pieces as $piece):
                 $is_favorite = $favorites->is_favorite($bidder_id, $piece->id);
                 $is_winning = $bid_model->is_bidder_winning($piece->id, $bidder_id);
                 $current_bid = $bid_model->get_highest_bid_amount($piece->id);
@@ -186,7 +186,7 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
                 $min_bid = $has_bids ? $current_bid + $bid_increment : $piece->starting_bid;
                 $images = $art_images->get_images($piece->id);
                 $primary_image = !empty($images) ? $images[0]->watermarked_url : ($piece->watermarked_url ?: $piece->image_url);
-                
+
                 // Proper status calculation - check computed_status first, then calculate from dates
                 $computed_status = isset($piece->computed_status) ? $piece->computed_status : null;
                 if ($computed_status === 'ended') {
@@ -197,10 +197,10 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
                     // Fallback: calculate from status and dates
                     $is_ended = $piece->status === 'ended' || ($piece->auction_end && strtotime($piece->auction_end) <= time());
                 }
-                
+
                 $status_class = '';
                 $status_text = '';
-                
+
                 if ($is_ended) {
                     $status_class = 'ended';
                     $status_text = $is_winning ? 'Won' : 'Sold';
@@ -210,14 +210,13 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
                 }
             ?>
             <article class="aih-card <?php echo $status_class; ?>"
-                     style="width:100%;min-width:0;box-sizing:border-box;"
                      data-id="<?php echo $piece->id; ?>"
                      data-art-id="<?php echo esc_attr($piece->art_id); ?>"
                      data-title="<?php echo esc_attr($piece->title); ?>"
                      data-artist="<?php echo esc_attr($piece->artist); ?>"
                      data-medium="<?php echo esc_attr($piece->medium); ?>">
 
-                <div class="aih-card-image" style="width:100%;min-width:0;" data-favorite="<?php echo $is_favorite ? '1' : '0'; ?>">
+                <div class="aih-card-image" data-favorite="<?php echo $is_favorite ? '1' : '0'; ?>">
                     <?php if ($primary_image): ?>
                     <a href="?art_id=<?php echo $piece->id; ?>">
                         <img src="<?php echo esc_url($primary_image); ?>" alt="<?php echo esc_attr($piece->title); ?>" loading="lazy">
@@ -242,14 +241,14 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
                     </button>
                 </div>
                 
-                <div class="aih-card-body" style="width:100%;min-width:0;box-sizing:border-box;">
-                    <h3 class="aih-card-title" style="width:100%;min-width:0;">
+                <div class="aih-card-body">
+                    <h3 class="aih-card-title">
                         <a href="?art_id=<?php echo $piece->id; ?>"><?php echo esc_html($piece->title); ?></a>
                     </h3>
                     <p class="aih-card-artist"><?php echo esc_html($piece->artist); ?></p>
                 </div>
 
-                <div class="aih-card-footer" style="width:100%;min-width:0;box-sizing:border-box;">
+                <div class="aih-card-footer">
                     <div class="aih-bid-info">
                         <div class="aih-bid-info-left">
                             <?php if (!$has_bids): ?>
@@ -266,9 +265,9 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
                     </div>
 
                     <?php if (!$is_ended): ?>
-                    <div class="aih-bid-form" style="display:flex;width:100%;box-sizing:border-box;">
-                        <input type="number" class="aih-bid-input" style="flex:1 1 auto;min-width:0;" min="<?php echo $min_bid; ?>" step="1" placeholder="Enter bid">
-                        <button type="button" class="aih-bid-btn" style="flex:0 0 36px;width:36px;" data-id="<?php echo $piece->id; ?>">Bid</button>
+                    <div class="aih-bid-form">
+                        <input type="number" class="aih-bid-input" min="<?php echo $min_bid; ?>" step="1" placeholder="Enter bid">
+                        <button type="button" class="aih-bid-btn" data-id="<?php echo $piece->id; ?>">Bid</button>
                     </div>
                     <?php endif; ?>
                 </div>

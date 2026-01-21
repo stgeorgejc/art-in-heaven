@@ -482,22 +482,20 @@ html body {
     }
 
     .aih-card-footer .aih-bid-form {
-        display: flex !important;
-        flex-direction: row !important;
-        gap: 3px !important;
+        display: table !important;
         width: 100% !important;
-        min-width: 100% !important;
-        max-width: 100% !important;
+        table-layout: fixed !important;
         box-sizing: border-box !important;
     }
 
     .aih-card-footer .aih-bid-input {
-        flex: 1 1 auto !important;
-        min-width: 0 !important;
+        display: table-cell !important;
+        width: calc(100% - 39px) !important;
         padding: 3px 6px !important;
         font-size: 12px !important;
         -webkit-appearance: none !important;
         -moz-appearance: textfield !important;
+        box-sizing: border-box !important;
     }
 
     /* Hide number input spinners */
@@ -508,13 +506,12 @@ html body {
     }
 
     .aih-card-footer .aih-bid-btn {
-        flex: 0 0 36px !important;
+        display: table-cell !important;
         width: 36px !important;
-        min-width: 36px !important;
-        max-width: 36px !important;
         padding: 2px 1px !important;
         font-size: 8px !important;
         letter-spacing: 0 !important;
+        vertical-align: middle !important;
     }
 
     /* Mobile art ID badge - larger and more prominent */
@@ -877,18 +874,15 @@ html body {
 }
 
 .aih-bid-form {
-    display: flex !important;
-    flex-direction: row !important;
-    gap: 4px !important;
-    width: 100% !important;
-    min-width: 100% !important;
-    max-width: 100% !important;
-    box-sizing: border-box !important;
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+    box-sizing: border-box;
 }
 
 .aih-bid-input {
-    flex: 1 1 auto !important;
-    min-width: 0 !important;
+    display: table-cell;
+    width: calc(100% - 44px);
     padding: 8px 10px;
     font-family: var(--font-body);
     font-size: 14px;
@@ -896,7 +890,7 @@ html body {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: var(--radius);
-    box-sizing: border-box !important;
+    box-sizing: border-box;
     -webkit-appearance: none;
 }
 
@@ -910,10 +904,8 @@ html body {
 }
 
 .aih-bid-btn {
-    flex: 0 0 40px !important;
-    width: 40px !important;
-    min-width: 40px !important;
-    max-width: 40px !important;
+    display: table-cell;
+    width: 40px;
     padding: 8px 4px;
     font-family: var(--font-body);
     font-size: 10px;
@@ -928,6 +920,7 @@ html body {
     transition: all var(--transition);
     white-space: nowrap;
     box-sizing: border-box;
+    vertical-align: middle;
     -webkit-tap-highlight-color: transparent;
 }
 
