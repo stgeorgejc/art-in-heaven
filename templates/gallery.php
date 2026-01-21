@@ -265,9 +265,9 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
                     </div>
 
                     <?php if (!$is_ended): ?>
-                    <div class="aih-bid-form">
-                        <input type="number" class="aih-bid-input" min="<?php echo $min_bid; ?>" step="1" placeholder="Enter bid">
-                        <button type="button" class="aih-bid-btn" data-id="<?php echo $piece->id; ?>">Bid</button>
+                    <div class="aih-bid-form" style="display:flex;width:100%;box-sizing:border-box;">
+                        <input type="number" class="aih-bid-input" style="flex:1 1 auto;min-width:0;" min="<?php echo $min_bid; ?>" step="1" placeholder="Enter bid">
+                        <button type="button" class="aih-bid-btn" style="flex:0 0 36px;width:36px;" data-id="<?php echo $piece->id; ?>">Bid</button>
                     </div>
                     <?php endif; ?>
                 </div>
