@@ -477,25 +477,30 @@ html body {
         flex-direction: row !important;
         gap: 3px !important;
         width: 100% !important;
+        box-sizing: border-box !important;
     }
 
     .aih-bid-input {
         flex: 1 1 0% !important;
-        width: 100% !important;
+        width: calc(100% - 39px) !important;
         padding: 3px 6px !important;
         font-size: 12px !important;
         min-width: 0 !important;
         max-width: none !important;
+        box-sizing: border-box !important;
+        -webkit-appearance: none !important;
+        -moz-appearance: textfield !important;
     }
 
     .aih-bid-btn {
-        flex: 0 0 auto !important;
+        flex: 0 0 36px !important;
         width: 36px !important;
         min-width: 36px !important;
         max-width: 36px !important;
         padding: 2px 1px !important;
         font-size: 8px !important;
         letter-spacing: 0 !important;
+        box-sizing: border-box !important;
     }
 
     /* Mobile art ID badge - larger and more prominent */
