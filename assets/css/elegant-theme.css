@@ -870,10 +870,12 @@ html body {
     gap: 4px;
     align-items: stretch;
     width: 100%;
+    box-sizing: border-box;
 }
 
 .aih-bid-input {
-    flex: 3;
+    flex: 1;
+    width: 100%;
     padding: 8px 10px;
     font-family: var(--font-body);
     font-size: 14px;
@@ -881,7 +883,8 @@ html body {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: var(--radius);
-    min-width: 60px;
+    min-width: 0;
+    box-sizing: border-box;
     -webkit-appearance: none;
 }
 
@@ -895,9 +898,9 @@ html body {
 }
 
 .aih-bid-btn {
-    flex: 1;
-    max-width: 70px;
-    padding: 8px 8px;
+    flex: 0 0 auto;
+    width: 50px;
+    padding: 8px 4px;
     font-family: var(--font-body);
     font-size: 10px;
     font-weight: 600;
@@ -910,6 +913,7 @@ html body {
     cursor: pointer;
     transition: all var(--transition);
     white-space: nowrap;
+    box-sizing: border-box;
     -webkit-tap-highlight-color: transparent;
 }
 
