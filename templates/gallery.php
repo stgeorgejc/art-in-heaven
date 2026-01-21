@@ -176,7 +176,7 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
             <p>Art pieces will be available here when the auction begins.</p>
         </div>
         <?php else: ?>
-        <div class="aih-gallery-grid" id="aih-gallery">
+        <div class="aih-gallery-grid" id="aih-gallery" style="display:grid;grid-template-columns:repeat(2,1fr);width:100%;box-sizing:border-box;">
             <?php foreach ($art_pieces as $piece): 
                 $is_favorite = $favorites->is_favorite($bidder_id, $piece->id);
                 $is_winning = $bid_model->is_bidder_winning($piece->id, $bidder_id);
@@ -209,14 +209,15 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
                     $status_text = 'Winning';
                 }
             ?>
-            <article class="aih-card <?php echo $status_class; ?>" 
+            <article class="aih-card <?php echo $status_class; ?>"
+                     style="width:100%;min-width:0;box-sizing:border-box;"
                      data-id="<?php echo $piece->id; ?>"
                      data-art-id="<?php echo esc_attr($piece->art_id); ?>"
                      data-title="<?php echo esc_attr($piece->title); ?>"
                      data-artist="<?php echo esc_attr($piece->artist); ?>"
                      data-medium="<?php echo esc_attr($piece->medium); ?>">
-                
-                <div class="aih-card-image" data-favorite="<?php echo $is_favorite ? '1' : '0'; ?>">
+
+                <div class="aih-card-image" style="width:100%;min-width:0;" data-favorite="<?php echo $is_favorite ? '1' : '0'; ?>">
                     <?php if ($primary_image): ?>
                     <a href="?art_id=<?php echo $piece->id; ?>">
                         <img src="<?php echo esc_url($primary_image); ?>" alt="<?php echo esc_attr($piece->title); ?>" loading="lazy">
@@ -241,14 +242,14 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
                     </button>
                 </div>
                 
-                <div class="aih-card-body">
-                    <h3 class="aih-card-title">
+                <div class="aih-card-body" style="width:100%;min-width:0;box-sizing:border-box;">
+                    <h3 class="aih-card-title" style="width:100%;min-width:0;">
                         <a href="?art_id=<?php echo $piece->id; ?>"><?php echo esc_html($piece->title); ?></a>
                     </h3>
                     <p class="aih-card-artist"><?php echo esc_html($piece->artist); ?></p>
                 </div>
-                
-                <div class="aih-card-footer">
+
+                <div class="aih-card-footer" style="width:100%;min-width:0;box-sizing:border-box;">
                     <div class="aih-bid-info">
                         <div class="aih-bid-info-left">
                             <?php if (!$has_bids): ?>
