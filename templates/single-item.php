@@ -945,7 +945,7 @@ jQuery(document).ready(function($) {
     }
 
     .aih-bid-form-single .aih-field {
-        flex: 2;
+        flex: 1 1 auto;
     }
 
     .aih-bid-form-single .aih-field label {
@@ -959,10 +959,10 @@ jQuery(document).ready(function($) {
     }
 
     .aih-bid-form-single .aih-btn {
-        flex: 1;
-        max-width: 100px;
-        padding: 12px 10px;
-        font-size: 11px;
+        flex: 0 0 80px;
+        width: 80px;
+        padding: 12px 6px;
+        font-size: 10px;
     }
 }
 
