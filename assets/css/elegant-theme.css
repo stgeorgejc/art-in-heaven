@@ -460,6 +460,12 @@ html body {
         padding: 4px 4px 6px;
         width: 100% !important;
         box-sizing: border-box !important;
+        align-self: stretch !important;
+    }
+
+    /* Force card to stretch children */
+    .aih-card {
+        align-items: stretch !important;
     }
 
     .aih-bid-info {
