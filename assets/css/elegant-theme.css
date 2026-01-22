@@ -986,6 +986,17 @@ html body {
     gap: 8px;
 }
 
+/* Hide empty bid info containers */
+.aih-bid-info-left:empty {
+    display: none;
+}
+
+/* Hide entire bid info row when left is empty and no time remaining */
+.aih-bid-info:has(.aih-bid-info-left:empty):not(:has(.aih-time-remaining)) {
+    display: none;
+    margin-bottom: 0;
+}
+
 .aih-bid-label {
     font-size: 9px;
     font-weight: 500;
