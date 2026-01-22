@@ -156,8 +156,15 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
             </div>
         </div>
 
-        <!-- Collapsible Sort & Filter Panel -->
+        <!-- Bottom Sheet Sort & Filter Panel -->
+        <div class="aih-filter-overlay" id="aih-filter-overlay"></div>
         <div class="aih-filter-panel" id="aih-filter-panel">
+            <div class="aih-filter-panel-header">
+                <span class="aih-filter-panel-title">Sort & Filter</span>
+                <button type="button" class="aih-filter-panel-close" id="aih-filter-close">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
             <div class="aih-filter-panel-content">
                 <div class="aih-filter-section">
                     <label class="aih-filter-label">Sort By</label>
@@ -397,9 +404,30 @@ jQuery(document).ready(function($) {
     updateFavoritesFilterVisibility();
 
     // Sort & Filter Panel Toggle
+    function openFilterPanel() {
+        $('#aih-filter-toggle').addClass('active');
+        $('#aih-filter-overlay').addClass('open');
+        $('#aih-filter-panel').addClass('open');
+        $('body').addClass('filter-open');
+    }
+
+    function closeFilterPanel() {
+        $('#aih-filter-toggle').removeClass('active');
+        $('#aih-filter-overlay').removeClass('open');
+        $('#aih-filter-panel').removeClass('open');
+        $('body').removeClass('filter-open');
+    }
+
     $('#aih-filter-toggle').on('click', function() {
-        $(this).toggleClass('active');
-        $('#aih-filter-panel').toggleClass('open');
+        if ($('#aih-filter-panel').hasClass('open')) {
+            closeFilterPanel();
+        } else {
+            openFilterPanel();
+        }
+    });
+
+    $('#aih-filter-close, #aih-filter-overlay').on('click', function() {
+        closeFilterPanel();
     });
 
     // Sort gallery cards
