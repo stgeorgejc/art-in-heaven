@@ -381,15 +381,15 @@ class Art_In_Heaven {
      * Generate custom color CSS from settings
      */
     public function get_custom_color_css() {
-        $primary = get_option('aih_color_primary', '#c9a227');
-        $secondary = get_option('aih_color_secondary', '#1a1a2e');
-        $success = get_option('aih_color_success', '#059669');
-        $error = get_option('aih_color_error', '#dc2626');
-        $text = get_option('aih_color_text', '#374151');
-        $muted = get_option('aih_color_muted', '#6b7280');
-        
+        $primary = get_option('aih_color_primary', '#b8956b');
+        $secondary = get_option('aih_color_secondary', '#1c1c1c');
+        $success = get_option('aih_color_success', '#4a7c59');
+        $error = get_option('aih_color_error', '#a63d40');
+        $text = get_option('aih_color_text', '#1c1c1c');
+        $muted = get_option('aih_color_muted', '#8a8a8a');
+
         // Only generate if colors differ from defaults
-        $defaults = array('#c9a227', '#1a1a2e', '#059669', '#dc2626', '#374151', '#6b7280');
+        $defaults = array('#b8956b', '#1c1c1c', '#4a7c59', '#a63d40', '#1c1c1c', '#8a8a8a');
         $current = array($primary, $secondary, $success, $error, $text, $muted);
         
         if ($defaults === $current) {

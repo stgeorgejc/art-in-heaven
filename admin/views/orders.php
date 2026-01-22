@@ -146,7 +146,7 @@ if (!defined('ABSPATH')) {
                                     <?php _e('Picked Up', 'art-in-heaven'); ?>
                                 </span>
                                 <?php if ($pickup_date): ?>
-                                    <p style="margin-top: 10px; color: #6b7280; font-size: 13px;">
+                                    <p style="margin-top: 10px; color: #8a8a8a; font-size: 13px;">
                                         <?php echo date_i18n(get_option('date_format') . ' ' . get_option('time_format'), strtotime($pickup_date)); ?>
                                     </p>
                                 <?php endif; ?>
@@ -156,7 +156,7 @@ if (!defined('ABSPATH')) {
                                     </p>
                                 <?php endif; ?>
                                 <?php if ($pickup_notes): ?>
-                                    <p style="margin-top: 5px; color: #6b7280; font-size: 13px; font-style: italic;">
+                                    <p style="margin-top: 5px; color: #8a8a8a; font-size: 13px; font-style: italic;">
                                         <?php echo esc_html($pickup_notes); ?>
                                     </p>
                                 <?php endif; ?>
@@ -196,7 +196,7 @@ if (!defined('ABSPATH')) {
                     <form id="aih-pickup-form">
                         <input type="hidden" name="order_id" id="pickup-order-id" value="">
                         <div class="aih-form-row">
-                            <label for="pickup-by"><?php _e('Your Name', 'art-in-heaven'); ?> <span style="color: #dc2626;">*</span></label>
+                            <label for="pickup-by"><?php _e('Your Name', 'art-in-heaven'); ?> <span style="color: #a63d40;">*</span></label>
                             <input type="text" id="pickup-by" name="pickup_by" required placeholder="<?php esc_attr_e('Enter your name', 'art-in-heaven'); ?>" style="width: 100%; padding: 8px 10px;">
                         </div>
                         <div class="aih-form-row">
@@ -247,7 +247,7 @@ if (!defined('ABSPATH')) {
             background: none;
             border: none;
             font-size: 24px;
-            color: #6b7280;
+            color: #8a8a8a;
             cursor: pointer;
             padding: 0;
             line-height: 1;

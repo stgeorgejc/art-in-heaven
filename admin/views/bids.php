@@ -239,12 +239,12 @@ $total_bid_value = $wpdb->get_var("SELECT SUM(bid_amount) FROM {$bids_table}");
 .aih-stat-number {
     font-size: 28px;
     font-weight: 700;
-    color: #1a1a2e;
+    color: #1c1c1c;
 }
 
 .aih-stat-label {
     font-size: 13px;
-    color: #6b7280;
+    color: #8a8a8a;
     margin-top: 5px;
 }
 
@@ -274,7 +274,7 @@ $total_bid_value = $wpdb->get_var("SELECT SUM(bid_amount) FROM {$bids_table}");
 }
 
 .aih-toolbar-info {
-    color: #6b7280;
+    color: #8a8a8a;
     font-size: 13px;
 }
 
@@ -317,7 +317,7 @@ $total_bid_value = $wpdb->get_var("SELECT SUM(bid_amount) FROM {$bids_table}");
 .aih-bid-time {
     display: block;
     font-size: 12px;
-    color: #6b7280;
+    color: #8a8a8a;
 }
 
 .aih-bid-meta {
@@ -333,12 +333,12 @@ $total_bid_value = $wpdb->get_var("SELECT SUM(bid_amount) FROM {$bids_table}");
 }
 
 .aih-bid-meta .aih-artist {
-    color: #6b7280;
+    color: #8a8a8a;
     margin-left: 8px;
 }
 
 .aih-bid-amount {
-    color: #059669;
+    color: #4a7c59;
     font-size: 16px;
 }
 
@@ -362,12 +362,12 @@ $total_bid_value = $wpdb->get_var("SELECT SUM(bid_amount) FROM {$bids_table}");
 }
 
 .aih-delete-bid {
-    color: #dc2626 !important;
+    color: #a63d40 !important;
 }
 
 .aih-delete-bid:hover {
     background: #fee2e2 !important;
-    border-color: #dc2626 !important;
+    border-color: #a63d40 !important;
 }
 
 .aih-delete-bid .dashicons {
@@ -380,7 +380,7 @@ $total_bid_value = $wpdb->get_var("SELECT SUM(bid_amount) FROM {$bids_table}");
 .aih-no-results {
     text-align: center;
     padding: 40px 20px;
-    color: #6b7280;
+    color: #8a8a8a;
 }
 
 .aih-pagination {
@@ -393,7 +393,7 @@ $total_bid_value = $wpdb->get_var("SELECT SUM(bid_amount) FROM {$bids_table}");
 }
 
 .aih-page-info {
-    color: #6b7280;
+    color: #8a8a8a;
 }
 
 @media (max-width: 782px) {

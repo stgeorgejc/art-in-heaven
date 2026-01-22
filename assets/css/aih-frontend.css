@@ -6,13 +6,13 @@
  */
 
 :root {
-    --sa-primary: #1a1a2e;
-    --sa-accent: #c9a227;
-    --sa-accent-hover: #ddb82f;
-    --sa-success: #2d6a4f;
-    --sa-error: #9e2a2b;
-    --sa-text: #333;
-    --sa-text-muted: #999;
+    --sa-primary: #1c1c1c;
+    --sa-accent: #b8956b;
+    --sa-accent-hover: #c7a67e;
+    --sa-success: #4a7c59;
+    --sa-error: #a63d40;
+    --sa-text: #1c1c1c;
+    --sa-text-muted: #8a8a8a;
     --sa-bg: #fafafa;
     --sa-bg-card: #fff;
     --sa-border: #e0e0e0;

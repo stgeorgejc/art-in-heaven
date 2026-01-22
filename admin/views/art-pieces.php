@@ -362,7 +362,7 @@ $art_pieces = $art_model->get_all_with_stats($filter_args);
     transform: translateY(-50%);
     z-index: 100;
     background: #fff;
-    border: 2px solid #c9a227;
+    border: 2px solid #b8956b;
     border-radius: 8px;
     box-shadow: 0 8px 24px rgba(0,0,0,0.2), 0 2px 8px rgba(0,0,0,0.1);
     padding: 8px;
@@ -385,9 +385,9 @@ $art_pieces = $art_model->get_all_with_stats($filter_args);
 }
 .aih-inline-editable .aih-edit-input:focus {
     outline: none;
-    border-color: #c9a227;
+    border-color: #b8956b;
     background: #fff;
-    box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.15);
+    box-shadow: 0 0 0 3px rgba(184, 149, 107, 0.15);
 }
 .aih-edit-actions {
     display: flex;
@@ -414,7 +414,7 @@ $art_pieces = $art_model->get_all_with_stats($filter_args);
     color: #fff !important;
 }
 .aih-edit-confirm:hover {
-    background: #059669 !important;
+    background: #4a7c59 !important;
     transform: scale(1.05);
 }
 .aih-edit-cancel {
@@ -422,7 +422,7 @@ $art_pieces = $art_model->get_all_with_stats($filter_args);
     color: #fff !important;
 }
 .aih-edit-cancel:hover {
-    background: #dc2626 !important;
+    background: #a63d40 !important;
     transform: scale(1.05);
 }
 .aih-vis-icon {

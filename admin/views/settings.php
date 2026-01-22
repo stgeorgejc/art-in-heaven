@@ -277,11 +277,11 @@ $event_date = get_option('aih_event_date', '');
             <div class="aih-color-preview" style="margin-top: 20px; padding: 20px; background: #f9fafb; border-radius: 8px;">
                 <h4 style="margin-top: 0;"><?php _e('Preview', 'art-in-heaven'); ?></h4>
                 <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center;">
-                    <button type="button" class="button" id="aih-preview-btn" style="background: var(--aih-preview-primary, #c9a227); color: var(--aih-preview-secondary, #1a1a2e); border: none; padding: 10px 20px; font-weight: 600;"><?php _e('Place Bid', 'art-in-heaven'); ?></button>
-                    <span id="aih-preview-success" style="color: var(--aih-preview-success, #059669); font-weight: 600;"><?php _e('Winning!', 'art-in-heaven'); ?></span>
-                    <span id="aih-preview-error" style="color: var(--aih-preview-error, #dc2626); font-weight: 600;"><?php _e('Outbid', 'art-in-heaven'); ?></span>
-                    <span id="aih-preview-text" style="color: var(--aih-preview-text, #374151);"><?php _e('Body text', 'art-in-heaven'); ?></span>
-                    <span id="aih-preview-muted" style="color: var(--aih-preview-muted, #6b7280);"><?php _e('Muted text', 'art-in-heaven'); ?></span>
+                    <button type="button" class="button" id="aih-preview-btn" style="background: var(--aih-preview-primary, #b8956b); color: var(--aih-preview-secondary, #1c1c1c); border: none; padding: 10px 20px; font-weight: 600;"><?php _e('Place Bid', 'art-in-heaven'); ?></button>
+                    <span id="aih-preview-success" style="color: var(--aih-preview-success, #4a7c59); font-weight: 600;"><?php _e('Winning!', 'art-in-heaven'); ?></span>
+                    <span id="aih-preview-error" style="color: var(--aih-preview-error, #a63d40); font-weight: 600;"><?php _e('Outbid', 'art-in-heaven'); ?></span>
+                    <span id="aih-preview-text" style="color: var(--aih-preview-text, #1c1c1c);"><?php _e('Body text', 'art-in-heaven'); ?></span>
+                    <span id="aih-preview-muted" style="color: var(--aih-preview-muted, #8a8a8a);"><?php _e('Muted text', 'art-in-heaven'); ?></span>
                 </div>
             </div>
         </div>

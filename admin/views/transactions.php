@@ -340,7 +340,7 @@ $pending_orders = $wpdb->get_results(
 .aih-mode-badge { padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: 600; }
 .aih-mode-badge.sandbox { background: #fef3c7; color: #92400e; }
 .aih-mode-badge.production { background: #d1fae5; color: #065f46; }
-.aih-last-sync { color: #6b7280; font-size: 13px; }
+.aih-last-sync { color: #8a8a8a; font-size: 13px; }
 .aih-sync-actions { display: flex; gap: 10px; }
 .aih-sync-actions .dashicons { margin-right: 5px; line-height: 1.4; }
 
@@ -348,8 +348,8 @@ $pending_orders = $wpdb->get_results(
 .aih-stat-card { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); text-align: center; }
 .aih-stat-card.success { border-left: 4px solid #10b981; }
 .aih-stat-card.warning { border-left: 4px solid #f59e0b; }
-.aih-stat-number { font-size: 28px; font-weight: 700; color: #1a1a2e; margin-bottom: 5px; }
-.aih-stat-label { font-size: 13px; color: #6b7280; }
+.aih-stat-number { font-size: 28px; font-weight: 700; color: #1c1c1c; margin-bottom: 5px; }
+.aih-stat-label { font-size: 13px; color: #8a8a8a; }
 
 .aih-filters-bar { background: #fff; padding: 15px 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 20px; }
 .aih-filters-bar form { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
@@ -357,13 +357,13 @@ $pending_orders = $wpdb->get_results(
 .aih-filters-bar input[type="search"] { min-width: 200px; }
 
 .aih-transactions-table .aih-pushpay-id { font-size: 11px; background: #f3f4f6; padding: 2px 6px; border-radius: 3px; }
-.aih-transactions-table .aih-time { color: #6b7280; }
-.aih-transactions-table .aih-amount { color: #059669; font-size: 15px; }
+.aih-transactions-table .aih-time { color: #8a8a8a; }
+.aih-transactions-table .aih-amount { color: #4a7c59; font-size: 15px; }
 .aih-transactions-table .aih-status-badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
 .aih-status-badge.success { background: #d1fae5; color: #065f46; }
 .aih-status-badge.processing { background: #dbeafe; color: #1e40af; }
 .aih-status-badge.failed { background: #fee2e2; color: #991b1b; }
-.aih-transactions-table .aih-order-link { font-weight: 600; color: #c9a227; text-decoration: none; }
+.aih-transactions-table .aih-order-link { font-weight: 600; color: #b8956b; text-decoration: none; }
 .aih-transactions-table .aih-order-link:hover { text-decoration: underline; }
 .aih-matched-badge { color: #10b981; margin-left: 5px; }
 .aih-unmatched { color: #9ca3af; }
@@ -376,17 +376,17 @@ $pending_orders = $wpdb->get_results(
 .aih-modal-lg { max-width: 700px; }
 .aih-modal-header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-bottom: 1px solid #e5e7eb; }
 .aih-modal-header h2 { margin: 0; font-size: 18px; }
-.aih-modal-close { background: none; border: none; font-size: 24px; cursor: pointer; color: #6b7280; line-height: 1; }
+.aih-modal-close { background: none; border: none; font-size: 24px; cursor: pointer; color: #8a8a8a; line-height: 1; }
 .aih-modal-body { padding: 20px; }
 .aih-modal-footer { padding: 15px 20px; border-top: 1px solid #e5e7eb; display: flex; justify-content: flex-end; gap: 10px; }
 
 /* Transaction details */
 .aih-txn-detail { margin-bottom: 15px; }
-.aih-txn-detail label { display: block; font-size: 11px; font-weight: 600; color: #6b7280; text-transform: uppercase; margin-bottom: 3px; }
-.aih-txn-detail .value { font-size: 14px; color: #1a1a2e; }
+.aih-txn-detail label { display: block; font-size: 11px; font-weight: 600; color: #8a8a8a; text-transform: uppercase; margin-bottom: 3px; }
+.aih-txn-detail .value { font-size: 14px; color: #1c1c1c; }
 .aih-txn-raw { background: #f9fafb; padding: 15px; border-radius: 6px; max-height: 200px; overflow: auto; font-family: monospace; font-size: 11px; white-space: pre-wrap; word-break: break-all; }
 
-.aih-loading { text-align: center; padding: 40px; color: #6b7280; }
+.aih-loading { text-align: center; padding: 40px; color: #8a8a8a; }
 </style>
 
 <script>

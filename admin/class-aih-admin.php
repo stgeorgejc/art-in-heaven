@@ -247,32 +247,32 @@ class AIH_Admin {
         // Color/Theme settings
         register_setting('aih_settings', 'aih_color_primary', array(
             'type' => 'string',
-            'default' => '#c9a227',
+            'default' => '#b8956b',
             'sanitize_callback' => 'sanitize_hex_color'
         ));
         register_setting('aih_settings', 'aih_color_secondary', array(
             'type' => 'string',
-            'default' => '#1a1a2e',
+            'default' => '#1c1c1c',
             'sanitize_callback' => 'sanitize_hex_color'
         ));
         register_setting('aih_settings', 'aih_color_success', array(
             'type' => 'string',
-            'default' => '#059669',
+            'default' => '#4a7c59',
             'sanitize_callback' => 'sanitize_hex_color'
         ));
         register_setting('aih_settings', 'aih_color_error', array(
             'type' => 'string',
-            'default' => '#dc2626',
+            'default' => '#a63d40',
             'sanitize_callback' => 'sanitize_hex_color'
         ));
         register_setting('aih_settings', 'aih_color_text', array(
             'type' => 'string',
-            'default' => '#374151',
+            'default' => '#1c1c1c',
             'sanitize_callback' => 'sanitize_hex_color'
         ));
         register_setting('aih_settings', 'aih_color_muted', array(
             'type' => 'string',
-            'default' => '#6b7280',
+            'default' => '#8a8a8a',
             'sanitize_callback' => 'sanitize_hex_color'
         ));
         

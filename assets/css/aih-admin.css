@@ -16,15 +16,15 @@
    ============================================ */
 :root {
     /* Colors */
-    --aih-primary: #1a1a2e;
-    --aih-accent: #c9a227;
-    --aih-accent-hover: #b8922a;
-    --aih-success: #059669;
-    --aih-error: #dc2626;
-    --aih-warning: #d97706;
-    --aih-info: #2563eb;
-    --aih-text: #374151;
-    --aih-text-muted: #6b7280;
+    --aih-primary: #1c1c1c;
+    --aih-accent: #b8956b;
+    --aih-accent-hover: #a6845c;
+    --aih-success: #4a7c59;
+    --aih-error: #a63d40;
+    --aih-warning: #c4873a;
+    --aih-info: #4a6fa5;
+    --aih-text: #1c1c1c;
+    --aih-text-muted: #8a8a8a;
     --aih-border: #e5e7eb;
     --aih-bg: #f9fafb;
     --aih-bg-white: #ffffff;
@@ -775,8 +775,8 @@ button.aih-action-btn .dashicons {
 
 .aih-status-badge.active { background: #d1fae5; color: #065f46; }
 .aih-status-badge.upcoming { background: #dbeafe; color: #1e40af; }
-.aih-status-badge.draft { background: #f3f4f6; color: #374151; }
-.aih-status-badge.ended { background: #f3f4f6; color: #6b7280; }
+.aih-status-badge.draft { background: #f3f4f6; color: #1c1c1c; }
+.aih-status-badge.ended { background: #f3f4f6; color: #8a8a8a; }
 .aih-status-badge.sold { background: #fef3c7; color: #92400e; }
 .aih-status-badge.not_sold { background: #fee2e2; color: #991b1b; }
 .aih-status-badge.paid { background: #d1fae5; color: #065f46; }
@@ -796,7 +796,7 @@ button.aih-action-btn .dashicons {
 .aih-badge-warning { background: #fef3c7; color: #92400e; }
 .aih-badge-error { background: #fee2e2; color: #991b1b; }
 .aih-badge-info { background: #dbeafe; color: #1e40af; }
-.aih-badge-secondary { background: #f3f4f6; color: #374151; }
+.aih-badge-secondary { background: #f3f4f6; color: #1c1c1c; }
 
 /* Bid count badges */
 .aih-bid-count {
@@ -808,7 +808,7 @@ button.aih-action-btn .dashicons {
 }
 
 .aih-bid-count.has-bids { background: #d1fae5; color: #065f46; }
-.aih-bid-count.no-bids { background: #f3f4f6; color: #6b7280; }
+.aih-bid-count.no-bids { background: #f3f4f6; color: #8a8a8a; }
 
 /* Visibility badges */
 .aih-visibility-badge {
@@ -1159,8 +1159,8 @@ button.aih-action-btn .dashicons {
 }
 
 .aih-remove-image:hover {
-    background: #fee2e2;
-    color: #dc2626;
+    background: #f5e0e0;
+    color: #a63d40;
 }
 
 .aih-primary-badge {

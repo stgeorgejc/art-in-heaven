@@ -122,7 +122,7 @@ if (!defined('ABSPATH')) {
                 data-current_bid="<?php echo floatval($piece->current_bid ?: $piece->starting_bid); ?>">
                 <td>
                     <?php if ($show_tier): ?>
-                    <strong style="color: #1a1a2e;"><?php echo esc_html($tier); ?></strong>
+                    <strong style="color: #1c1c1c;"><?php echo esc_html($tier); ?></strong>
                     <?php endif; ?>
                 </td>
                 <td><code><?php echo esc_html($piece->art_id); ?></code></td>
@@ -133,15 +133,15 @@ if (!defined('ABSPATH')) {
                 </td>
                 <td><small><?php echo esc_html($piece->artist); ?></small></td>
                 <td>
-                    <span style="font-weight: 600; color: <?php echo $piece->total_bids > 0 ? '#059669' : '#6b7280'; ?>;">
+                    <span style="font-weight: 600; color: <?php echo $piece->total_bids > 0 ? '#4a7c59' : '#8a8a8a'; ?>;">
                         <?php echo intval($piece->total_bids); ?>
                     </span>
                 </td>
                 <td>
                     <?php if ($piece->total_bids > 0): ?>
-                        <span style="color: #059669; font-weight: 600;"><?php _e('Yes', 'art-in-heaven'); ?></span>
+                        <span style="color: #4a7c59; font-weight: 600;"><?php _e('Yes', 'art-in-heaven'); ?></span>
                     <?php else: ?>
-                        <span style="color: #dc2626;"><?php _e('No', 'art-in-heaven'); ?></span>
+                        <span style="color: #a63d40;"><?php _e('No', 'art-in-heaven'); ?></span>
                     <?php endif; ?>
                 </td>
                 <td>
@@ -191,9 +191,9 @@ if (!defined('ABSPATH')) {
                 <td><?php echo $stats['count']; ?></td>
                 <td>
                     <?php if ($stats['with_bids'] > 0): ?>
-                        <span style="color: #059669; font-weight: 600;"><?php echo $stats['with_bids']; ?> <?php _e('Yes', 'art-in-heaven'); ?></span>
+                        <span style="color: #4a7c59; font-weight: 600;"><?php echo $stats['with_bids']; ?> <?php _e('Yes', 'art-in-heaven'); ?></span>
                     <?php else: ?>
-                        <span style="color: #dc2626;"><?php _e('No', 'art-in-heaven'); ?></span>
+                        <span style="color: #a63d40;"><?php _e('No', 'art-in-heaven'); ?></span>
                     <?php endif; ?>
                     <span style="color: #9ca3af;"> / <?php echo $stats['count'] - $stats['with_bids']; ?> <?php _e('No', 'art-in-heaven'); ?></span>
                 </td>
@@ -201,7 +201,7 @@ if (!defined('ABSPATH')) {
                 <td>
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <div style="flex: 1; max-width: 100px; height: 8px; background: #e5e7eb; border-radius: 4px; overflow: hidden;">
-                            <div style="width: <?php echo $tier_bid_rate; ?>%; height: 100%; background: #c9a227;"></div>
+                            <div style="width: <?php echo $tier_bid_rate; ?>%; height: 100%; background: #b8956b;"></div>
                         </div>
                         <span style="min-width: 45px;"><?php echo $tier_bid_rate; ?>%</span>
                     </div>
@@ -267,9 +267,9 @@ if (!defined('ABSPATH')) {
                         </td>
                         <td class="aih-col-stat">
                             <?php if ($piece->total_bids > 0): ?>
-                                <span style="color: #059669; font-weight: 600;"><?php _e('Yes', 'art-in-heaven'); ?></span>
+                                <span style="color: #4a7c59; font-weight: 600;"><?php _e('Yes', 'art-in-heaven'); ?></span>
                             <?php else: ?>
-                                <span style="color: #dc2626;"><?php _e('No', 'art-in-heaven'); ?></span>
+                                <span style="color: #a63d40;"><?php _e('No', 'art-in-heaven'); ?></span>
                             <?php endif; ?>
                         </td>
                         <td class="aih-col-stat">

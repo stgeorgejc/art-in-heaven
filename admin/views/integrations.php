@@ -40,9 +40,9 @@ $is_sandbox = get_option('aih_pushpay_sandbox', 0);
                         <td><strong><?php _e('API Configured:', 'art-in-heaven'); ?></strong></td>
                         <td>
                             <?php if (get_option('aih_api_base_url') && get_option('aih_api_username') && get_option('aih_api_password')): ?>
-                            <span style="color: #059669;">✓ <?php _e('Yes', 'art-in-heaven'); ?></span>
+                            <span style="color: #4a7c59;">✓ <?php _e('Yes', 'art-in-heaven'); ?></span>
                             <?php else: ?>
-                            <span style="color: #dc2626;">✗ <?php _e('No - Enter credentials below', 'art-in-heaven'); ?></span>
+                            <span style="color: #a63d40;">✗ <?php _e('No - Enter credentials below', 'art-in-heaven'); ?></span>
                             <?php endif; ?>
                         </td>
                     </tr>
@@ -142,9 +142,9 @@ $is_sandbox = get_option('aih_pushpay_sandbox', 0);
                         <td><strong><?php _e('API Configured:', 'art-in-heaven'); ?></strong></td>
                         <td>
                             <?php if ($pushpay->is_configured()): ?>
-                            <span style="color: #059669;">✓ <?php _e('Yes', 'art-in-heaven'); ?></span>
+                            <span style="color: #4a7c59;">✓ <?php _e('Yes', 'art-in-heaven'); ?></span>
                             <?php else: ?>
-                            <span style="color: #dc2626;">✗ <?php _e('No - Enter credentials below', 'art-in-heaven'); ?></span>
+                            <span style="color: #a63d40;">✗ <?php _e('No - Enter credentials below', 'art-in-heaven'); ?></span>
                             <?php endif; ?>
                         </td>
                     </tr>

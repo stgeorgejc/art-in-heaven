@@ -1372,7 +1372,7 @@ class AIH_Ajax {
         
         $html .= '<div class="aih-txn-detail"><label>' . __('Status', 'art-in-heaven') . '</label><div class="value"><span class="aih-status-badge ' . strtolower($txn->status) . '">' . esc_html($txn->status) . '</span></div></div>';
         
-        $html .= '<div class="aih-txn-detail"><label>' . __('Amount', 'art-in-heaven') . '</label><div class="value"><strong style="font-size: 18px; color: #059669;">$' . number_format($txn->amount, 2) . '</strong> ' . esc_html($txn->currency) . '</div></div>';
+        $html .= '<div class="aih-txn-detail"><label>' . __('Amount', 'art-in-heaven') . '</label><div class="value"><strong style="font-size: 18px; color: #4a7c59;">$' . number_format($txn->amount, 2) . '</strong> ' . esc_html($txn->currency) . '</div></div>';
         
         $html .= '<div class="aih-txn-detail"><label>' . __('Payment Date', 'art-in-heaven') . '</label><div class="value">' . ($txn->payment_date ? date_i18n(get_option('date_format') . ' ' . get_option('time_format'), strtotime($txn->payment_date)) : '—') . '</div></div>';
         
@@ -1385,7 +1385,7 @@ class AIH_Ajax {
         $html .= '<div class="aih-txn-detail"><label>' . __('Reference', 'art-in-heaven') . '</label><div class="value">' . esc_html($txn->reference ?: '—') . '</div></div>';
         
         if ($txn->order_number) {
-            $html .= '<div class="aih-txn-detail"><label>' . __('Matched Order', 'art-in-heaven') . '</label><div class="value"><a href="' . admin_url('admin.php?page=art-in-heaven-orders&search=' . urlencode($txn->order_number)) . '" style="color: #c9a227; font-weight: 600;">' . esc_html($txn->order_number) . '</a></div></div>';
+            $html .= '<div class="aih-txn-detail"><label>' . __('Matched Order', 'art-in-heaven') . '</label><div class="value"><a href="' . admin_url('admin.php?page=art-in-heaven-orders&search=' . urlencode($txn->order_number)) . '" style="color: #b8956b; font-weight: 600;">' . esc_html($txn->order_number) . '</a></div></div>';
         }
         
         $html .= '<div class="aih-txn-detail"><label>' . __('Synced At', 'art-in-heaven') . '</label><div class="value">' . ($txn->synced_at ? date_i18n(get_option('date_format') . ' ' . get_option('time_format'), strtotime($txn->synced_at)) : '—') . '</div></div>';

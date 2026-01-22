@@ -319,7 +319,7 @@ $won_without_orders = $wpdb->get_results(
                 <td data-label="<?php esc_attr_e('Date', 'art-in-heaven'); ?>">
                     <?php echo date_i18n('M j, Y g:i a', strtotime($order->created_at)); ?>
                     <?php if ($order->payment_date && $order->payment_status === 'paid'): ?>
-                    <br><small style="color: #059669;"><?php _e('Paid:', 'art-in-heaven'); ?> <?php echo date_i18n('M j', strtotime($order->payment_date)); ?></small>
+                    <br><small style="color: #4a7c59;"><?php _e('Paid:', 'art-in-heaven'); ?> <?php echo date_i18n('M j', strtotime($order->payment_date)); ?></small>
                     <?php endif; ?>
                 </td>
                 <td class="aih-col-actions" data-label="">
@@ -438,7 +438,7 @@ $won_without_orders = $wpdb->get_results(
                             <?php _e('Match to Order', 'art-in-heaven'); ?>
                         </button>
                         <?php else: ?>
-                        <span style="color: #059669;">✓ <?php _e('Matched', 'art-in-heaven'); ?></span>
+                        <span style="color: #4a7c59;">✓ <?php _e('Matched', 'art-in-heaven'); ?></span>
                         <?php endif; ?>
                     </td>
                 </tr>

@@ -93,7 +93,7 @@ foreach ($orders as $order) {
             </div>
         </div>
         <div class="aih-stat-card">
-            <div class="aih-stat-icon" style="background: #d1fae5; color: #059669;">
+            <div class="aih-stat-icon" style="background: #d1fae5; color: #4a7c59;">
                 <span class="dashicons dashicons-yes-alt"></span>
             </div>
             <div class="aih-stat-content">
@@ -309,7 +309,7 @@ foreach ($orders as $order) {
 
 .aih-stat-label {
     font-size: 13px;
-    color: #6b7280;
+    color: #8a8a8a;
     margin-top: 2px;
 }
 
@@ -341,13 +341,13 @@ foreach ($orders as $order) {
 .aih-empty-message {
     font-size: 18px;
     font-weight: 600;
-    color: #374151;
+    color: #1c1c1c;
     margin: 0 0 8px;
 }
 
 .aih-empty-submessage {
     font-size: 14px;
-    color: #6b7280;
+    color: #8a8a8a;
     margin: 0;
 }
 
@@ -355,7 +355,7 @@ foreach ($orders as $order) {
 .aih-tab-count {
     display: inline-block;
     background: #e5e7eb;
-    color: #374151;
+    color: #1c1c1c;
     padding: 2px 8px;
     border-radius: 10px;
     font-size: 12px;
@@ -363,7 +363,7 @@ foreach ($orders as $order) {
 }
 
 .nav-tab-active .aih-tab-count {
-    background: #c9a227;
+    background: #b8956b;
     color: #fff;
 }
 
@@ -420,12 +420,12 @@ foreach ($orders as $order) {
 
 .aih-pickup-status.picked-up {
     background: #d1fae5;
-    color: #059669;
+    color: #4a7c59;
 }
 
 .aih-pickup-total {
     font-size: 18px;
-    color: #059669;
+    color: #4a7c59;
 }
 
 .aih-pickup-bidder {
@@ -457,7 +457,7 @@ foreach ($orders as $order) {
     flex-wrap: wrap;
     gap: 15px;
     font-size: 13px;
-    color: #6b7280;
+    color: #8a8a8a;
 }
 
 .aih-bidder-contact > span {
@@ -480,7 +480,7 @@ foreach ($orders as $order) {
 
 .aih-items-header {
     font-size: 13px;
-    color: #6b7280;
+    color: #8a8a8a;
     margin-bottom: 10px;
 }
 
@@ -516,7 +516,7 @@ foreach ($orders as $order) {
 }
 
 .aih-item-artist {
-    color: #6b7280;
+    color: #8a8a8a;
     font-style: italic;
 }
 
@@ -534,7 +534,7 @@ foreach ($orders as $order) {
     flex-wrap: wrap;
     gap: 20px;
     font-size: 12px;
-    color: #6b7280;
+    color: #8a8a8a;
 }
 
 .aih-pickup-dates > span {
@@ -628,7 +628,7 @@ foreach ($orders as $order) {
     background: none;
     border: none;
     font-size: 24px;
-    color: #6b7280;
+    color: #8a8a8a;
     cursor: pointer;
     padding: 0;
     line-height: 1;
@@ -648,7 +648,7 @@ foreach ($orders as $order) {
     border-radius: 8px;
     margin-bottom: 20px;
     font-size: 14px;
-    color: #374151;
+    color: #1c1c1c;
 }
 
 .aih-form-row {
@@ -659,11 +659,11 @@ foreach ($orders as $order) {
     display: block;
     margin-bottom: 6px;
     font-weight: 500;
-    color: #374151;
+    color: #1c1c1c;
 }
 
 .aih-form-row label .required {
-    color: #dc2626;
+    color: #a63d40;
 }
 
 .aih-form-row label .optional {
@@ -683,7 +683,7 @@ foreach ($orders as $order) {
 .aih-form-row input[type="text"]:focus,
 .aih-form-row textarea:focus {
     outline: none;
-    border-color: #c9a227;
+    border-color: #b8956b;
     box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.1);
 }
 
