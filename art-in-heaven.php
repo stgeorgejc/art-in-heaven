@@ -290,18 +290,30 @@ class Art_In_Heaven {
             
             $now = current_time('mysql');
             
+            // Activate draft auctions whose start time has passed
+            $activated = $wpdb->query($wpdb->prepare(
+                "UPDATE $table
+                 SET status = 'active'
+                 WHERE status = 'draft'
+                 AND auction_start IS NOT NULL
+                 AND auction_start <= %s
+                 AND (auction_end IS NULL OR auction_end > %s)",
+                $now,
+                $now
+            ));
+
             // Mark active auctions as ended if their end time has passed
-            $updated = $wpdb->query($wpdb->prepare(
-                "UPDATE $table 
-                 SET status = 'ended' 
-                 WHERE status = 'active' 
-                 AND auction_end IS NOT NULL 
+            $ended = $wpdb->query($wpdb->prepare(
+                "UPDATE $table
+                 SET status = 'ended'
+                 WHERE status = 'active'
+                 AND auction_end IS NOT NULL
                  AND auction_end <= %s",
                 $now
             ));
-            
+
             // Clear cache if any records were updated
-            if ($updated > 0 && class_exists('AIH_Cache')) {
+            if (($activated > 0 || $ended > 0) && class_exists('AIH_Cache')) {
                 AIH_Cache::flush_all();
             }
         } catch (Exception $e) {

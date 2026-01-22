@@ -496,7 +496,20 @@ class AIH_Art_Piece {
         if (empty($ids)) return false;
         $ids = array_map('intval', $ids);
         $placeholders = implode(',', array_fill(0, count($ids), '%d'));
-        return $wpdb->query($wpdb->prepare("UPDATE {$this->table} SET auction_start = %s WHERE id IN ($placeholders)", array_merge(array($new_start_time), $ids)));
+        $now = current_time('mysql');
+
+        // Update the start time
+        $result = $wpdb->query($wpdb->prepare("UPDATE {$this->table} SET auction_start = %s WHERE id IN ($placeholders)", array_merge(array($new_start_time), $ids)));
+
+        // If start time is in the future, move active pieces to draft
+        if ($new_start_time > $now) {
+            $wpdb->query($wpdb->prepare(
+                "UPDATE {$this->table} SET status = 'draft' WHERE status = 'active' AND id IN ($placeholders)",
+                $ids
+            ));
+        }
+
+        return $result;
     }
     
     /**
