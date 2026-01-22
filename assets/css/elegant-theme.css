@@ -418,17 +418,17 @@ html body {
 /* View Toggle */
 .aih-view-toggle {
     display: flex;
-    gap: 6px;
+    gap: 4px;
     border: 1px solid var(--color-border);
     border-radius: var(--radius);
-    padding: 4px;
+    padding: 3px;
     background: var(--color-surface);
     flex-shrink: 0;
     margin-left: auto;
 }
 
 .aih-view-toggle .aih-view-btn {
-    padding: 6px 10px;
+    padding: 4px 6px;
     background: transparent;
     border: none;
     border-radius: 2px;
@@ -1923,15 +1923,6 @@ html body {
 
 /* Tablet/Desktop */
 @media (min-width: 601px) {
-    .aih-view-toggle {
-        padding: 3px;
-        gap: 4px;
-    }
-
-    .aih-view-toggle .aih-view-btn {
-        padding: 4px 6px;
-    }
-
     .aih-view-toggle .aih-view-btn svg {
         width: 15px;
         height: 15px;
