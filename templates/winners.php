@@ -218,6 +218,17 @@ $art_images = new AIH_Art_Images();
     color: var(--color-muted);
 }
 
+/* Fix descender cutoff on card text */
+.aih-winner-card .aih-card-title {
+    line-height: 1.6;
+    padding-bottom: 3px;
+}
+
+.aih-winner-card .aih-card-artist {
+    line-height: 1.4;
+    padding-bottom: 2px;
+}
+
 @media (max-width: 600px) {
     .aih-winners-header h1 {
         font-size: 32px;
