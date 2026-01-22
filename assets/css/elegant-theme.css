@@ -2373,8 +2373,7 @@ html body {
 @media (pointer: coarse) {
     .aih-bid-btn,
     .aih-view-btn,
-    .aih-filter-toggle,
-    .aih-fav-btn {
+    .aih-filter-toggle {
         min-height: 44px;
         min-width: 44px;
     }
