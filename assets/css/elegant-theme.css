@@ -26,6 +26,29 @@
     --shadow-lg: 0 10px 40px rgba(0,0,0,0.08);
     --radius: 4px;
     --transition: 0.25s ease;
+    /* Safe area insets for notched devices (iPhone X+) */
+    --safe-area-top: env(safe-area-inset-top, 0px);
+    --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-area-left: env(safe-area-inset-left, 0px);
+    --safe-area-right: env(safe-area-inset-right, 0px);
+}
+
+/* ============================================
+   CROSS-BROWSER COMPATIBILITY
+   Supports: iPhone 14-17, Samsung S20-S25, Pixel 7-10
+   ============================================ */
+
+/* Ensure smooth scrolling on iOS */
+@supports (-webkit-overflow-scrolling: touch) {
+    html {
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* Touch action for better mobile interaction */
+*, *::before, *::after {
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+    -webkit-touch-callout: none;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -731,10 +754,21 @@ html body {
 
 .aih-card-image {
     position: relative;
-    aspect-ratio: 1/1;
+    /* Fallback for browsers without aspect-ratio support */
+    padding-bottom: 100%; /* 1:1 ratio fallback */
+    height: 0;
     overflow: hidden;
     background: var(--color-bg-alt);
     width: 100%;
+}
+
+/* Modern browsers with aspect-ratio support */
+@supports (aspect-ratio: 1/1) {
+    .aih-card-image {
+        aspect-ratio: 1/1;
+        padding-bottom: 0;
+        height: auto;
+    }
 }
 
 .aih-card-image img {
@@ -2266,4 +2300,120 @@ html body {
 
 .aih-back-link:hover {
     color: var(--color-primary);
+}
+
+/* ============================================
+   DEVICE-SPECIFIC OPTIMIZATIONS
+   iPhone 14-17, Samsung S20-S25, Pixel 7-10
+   ============================================ */
+
+/* Small phones: Samsung S20-S25 base (360px width) */
+@media screen and (max-width: 379px) {
+    .aih-card-title {
+        font-size: 13px;
+    }
+
+    .aih-card-artist {
+        font-size: 10px;
+    }
+
+    .aih-card-body {
+        height: 58px;
+        padding: 6px 5px;
+    }
+
+    .aih-gallery-grid {
+        gap: 10px;
+    }
+
+    .aih-bid-input {
+        font-size: 14px;
+        padding: 6px 8px;
+    }
+
+    .aih-bid-btn {
+        font-size: 10px;
+        padding: 6px 10px;
+    }
+}
+
+/* Medium phones: iPhone 14/15/16, Pixel 7-9 (390-412px width) */
+@media screen and (min-width: 380px) and (max-width: 427px) {
+    .aih-card-title {
+        font-size: 14px;
+    }
+
+    .aih-card-body {
+        height: 62px;
+        padding: 8px 6px;
+    }
+
+    .aih-gallery-grid {
+        gap: 12px;
+    }
+}
+
+/* Large phones: iPhone Plus/Pro Max, Pixel Pro (428-448px width) */
+@media screen and (min-width: 428px) and (max-width: 599px) {
+    .aih-card-title {
+        font-size: 15px;
+    }
+
+    .aih-card-body {
+        height: 66px;
+        padding: 8px 8px;
+    }
+
+    .aih-gallery-grid {
+        gap: 14px;
+    }
+}
+
+/* Ensure touch targets are at least 44px for iOS accessibility */
+@media (pointer: coarse) {
+    .aih-bid-btn,
+    .aih-view-btn,
+    .aih-filter-toggle,
+    .aih-fav-btn {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    .aih-select {
+        min-height: 44px;
+    }
+}
+
+/* High DPI displays (Retina, Samsung AMOLED, etc.) */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .aih-card {
+        /* Ensure crisp borders on high DPI */
+        border-width: 0.5px;
+    }
+}
+
+/* Safe area padding for notched devices */
+@supports (padding: env(safe-area-inset-bottom)) {
+    .aih-footer {
+        padding-bottom: calc(16px + env(safe-area-inset-bottom));
+    }
+
+    .aih-header {
+        padding-top: env(safe-area-inset-top);
+    }
+}
+
+/* Prevent text size adjustment on orientation change (iOS) */
+html {
+    -webkit-text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+
+/* Improve font rendering on all devices */
+body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
 }
