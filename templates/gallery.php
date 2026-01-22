@@ -132,75 +132,39 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
 
     <main class="aih-main">
         <div class="aih-gallery-header">
-            <div class="aih-gallery-header-top">
-                <div class="aih-gallery-title">
-                    <h1>Collection</h1>
-                    <p class="aih-subtitle"><?php echo count($art_pieces); ?> pieces available</p>
-                </div>
-                <div class="aih-gallery-controls">
-                    <div class="aih-search-box">
-                        <input type="text" id="aih-search" placeholder="Search collection..." class="aih-search-input">
-                    </div>
-                    <button type="button" class="aih-filter-toggle" id="aih-filter-toggle">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="4" y1="6" x2="20" y2="6"></line>
-                            <line x1="8" y1="12" x2="16" y2="12"></line>
-                            <line x1="11" y1="18" x2="13" y2="18"></line>
-                        </svg>
-                        <span>Sort & Filter</span>
-                        <svg class="aih-filter-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="6 9 12 15 18 9"></polyline>
-                        </svg>
-                    </button>
-                    <div class="aih-view-toggle">
-                        <button type="button" class="aih-view-btn active" data-view="grid" title="Grid View">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-                        </button>
-                        <button type="button" class="aih-view-btn" data-view="single" title="Single View">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
-                        </button>
-                    </div>
-                </div>
+            <div class="aih-gallery-title">
+                <h1>Collection</h1>
+                <p class="aih-subtitle"><?php echo count($art_pieces); ?> pieces available</p>
             </div>
-
-            <!-- Collapsible Sort & Filter Panel -->
-            <div class="aih-filter-panel" id="aih-filter-panel">
-                <div class="aih-filter-panel-content">
-                    <div class="aih-filter-section">
-                        <label class="aih-filter-label">Sort By</label>
-                        <select id="aih-sort" class="aih-select">
-                            <option value="time-asc">Time Remaining</option>
-                            <option value="price-desc">Price: High to Low</option>
-                            <option value="price-asc">Price: Low to High</option>
-                            <option value="title-asc">Title: A to Z</option>
-                            <option value="title-desc">Title: Z to A</option>
-                        </select>
-                    </div>
-                    <div class="aih-filter-section">
-                        <label class="aih-filter-label">Artist</label>
-                        <select id="aih-filter-artist" class="aih-select">
-                            <option value="">All Artists</option>
-                            <?php foreach ($artists as $a): ?>
-                            <option value="<?php echo esc_attr($a); ?>"><?php echo esc_html($a); ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <div class="aih-filter-section">
-                        <label class="aih-filter-label">Medium</label>
-                        <select id="aih-filter-medium" class="aih-select">
-                            <option value="">All Mediums</option>
-                            <?php foreach ($mediums as $m): ?>
-                            <option value="<?php echo esc_attr($m); ?>"><?php echo esc_html($m); ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <div class="aih-filter-section aih-filter-favorites-section" style="display: none;">
-                        <label class="aih-filter-label">Favorites</label>
-                        <select id="aih-filter-favorites" class="aih-select">
-                            <option value="">All Items</option>
-                            <option value="favorites">Favorites Only</option>
-                        </select>
-                    </div>
+            <div class="aih-gallery-controls">
+                <div class="aih-search-box">
+                    <input type="text" id="aih-search" placeholder="Search collection..." class="aih-search-input">
+                </div>
+                <div class="aih-filter-group">
+                    <select id="aih-filter-artist" class="aih-select aih-select-narrow">
+                        <option value="">All Artists</option>
+                        <?php foreach ($artists as $a): ?>
+                        <option value="<?php echo esc_attr($a); ?>"><?php echo esc_html($a); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <select id="aih-filter-medium" class="aih-select aih-select-narrow">
+                        <option value="">All Mediums</option>
+                        <?php foreach ($mediums as $m): ?>
+                        <option value="<?php echo esc_attr($m); ?>"><?php echo esc_html($m); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <select id="aih-filter-favorites" class="aih-select aih-select-narrow aih-filter-favorites-select" style="display: none;">
+                        <option value="">All Items</option>
+                        <option value="favorites">Favorites Only</option>
+                    </select>
+                </div>
+                <div class="aih-view-toggle">
+                    <button type="button" class="aih-view-btn active" data-view="grid" title="Grid View">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                    </button>
+                    <button type="button" class="aih-view-btn" data-view="single" title="Single View">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+                    </button>
                 </div>
             </div>
         </div>
@@ -244,16 +208,14 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
                     $status_class = 'winning';
                     $status_text = 'Winning';
                 }
-
-                // Calculate seconds remaining for sorting
-                $seconds_remaining = 999999999;
-                if ($piece->auction_end && !$is_ended) {
-                    $seconds_remaining = max(0, strtotime($piece->auction_end) - time());
-                } elseif ($is_ended) {
-                    $seconds_remaining = 999999999; // Ended items go to bottom when sorting by time
-                }
             ?>
-            <article class="aih-card <?php echo $status_class; ?>" data-id="<?php echo $piece->id; ?>" data-art-id="<?php echo esc_attr($piece->art_id); ?>" data-title="<?php echo esc_attr($piece->title); ?>" data-artist="<?php echo esc_attr($piece->artist); ?>" data-medium="<?php echo esc_attr($piece->medium); ?>" data-price="<?php echo esc_attr($display_bid); ?>" data-seconds="<?php echo esc_attr($seconds_remaining); ?>">
+            <article class="aih-card <?php echo $status_class; ?>"
+                     data-id="<?php echo $piece->id; ?>"
+                     data-art-id="<?php echo esc_attr($piece->art_id); ?>"
+                     data-title="<?php echo esc_attr($piece->title); ?>"
+                     data-artist="<?php echo esc_attr($piece->artist); ?>"
+                     data-medium="<?php echo esc_attr($piece->medium); ?>">
+
                 <div class="aih-card-image" data-favorite="<?php echo $is_favorite ? '1' : '0'; ?>">
                     <?php if ($primary_image): ?>
                     <a href="?art_id=<?php echo $piece->id; ?>">
@@ -337,12 +299,6 @@ jQuery(document).ready(function($) {
         });
     });
     
-    // Sort & Filter Panel Toggle
-    $('#aih-filter-toggle').on('click', function() {
-        $(this).toggleClass('active');
-        $('#aih-filter-panel').toggleClass('open');
-    });
-
     // Search & Filter
     function filterCards() {
         var search = $('#aih-search').val().toLowerCase().trim();
@@ -400,57 +356,13 @@ jQuery(document).ready(function($) {
         });
     }
 
-    // Sort gallery cards
-    function sortCards() {
-        var sortBy = $('#aih-sort').val();
-        var $grid = $('#aih-gallery');
-        var $cards = $grid.children('.aih-card');
-
-        $cards.sort(function(a, b) {
-            var $a = $(a);
-            var $b = $(b);
-
-            // Always show favorites first
-            var aFav = $a.find('.aih-card-image').attr('data-favorite') === '1' ? 0 : 1;
-            var bFav = $b.find('.aih-card-image').attr('data-favorite') === '1' ? 0 : 1;
-            if (aFav !== bFav) return aFav - bFav;
-
-            switch (sortBy) {
-                case 'time-asc':
-                    var aSeconds = parseInt($a.attr('data-seconds'), 10) || 999999999;
-                    var bSeconds = parseInt($b.attr('data-seconds'), 10) || 999999999;
-                    return aSeconds - bSeconds;
-                case 'price-desc':
-                    var aPrice = parseFloat($a.attr('data-price')) || 0;
-                    var bPrice = parseFloat($b.attr('data-price')) || 0;
-                    return bPrice - aPrice;
-                case 'price-asc':
-                    var aPrice = parseFloat($a.attr('data-price')) || 0;
-                    var bPrice = parseFloat($b.attr('data-price')) || 0;
-                    return aPrice - bPrice;
-                case 'title-asc':
-                    var aTitle = ($a.attr('data-title') || '').toLowerCase();
-                    var bTitle = ($b.attr('data-title') || '').toLowerCase();
-                    return aTitle.localeCompare(bTitle);
-                case 'title-desc':
-                    var aTitle = ($a.attr('data-title') || '').toLowerCase();
-                    var bTitle = ($b.attr('data-title') || '').toLowerCase();
-                    return bTitle.localeCompare(aTitle);
-                default:
-                    return 0;
-            }
-        });
-
-        $grid.append($cards);
-    }
-
-    // Check if any favorites exist and show/hide favorites filter section
+    // Check if any favorites exist and show/hide favorites filter
     function updateFavoritesFilterVisibility() {
         var hasFavorites = $('.aih-card-image[data-favorite="1"]').length > 0;
         if (hasFavorites) {
-            $('.aih-filter-favorites-section').show();
+            $('.aih-filter-favorites-select').show();
         } else {
-            $('.aih-filter-favorites-section').hide();
+            $('.aih-filter-favorites-select').hide();
             $('#aih-filter-favorites').val('');
         }
     }
@@ -465,14 +377,8 @@ jQuery(document).ready(function($) {
         filterCards();
     });
 
-    // Bind sort event
-    $('#aih-sort').on('change', function() {
-        sortCards();
-    });
-
-    // Also run filter and sort on page load
+    // Also run filter on page load in case there's a cached value
     filterCards();
-    sortCards();
     
     // Favorite toggle
     $('.aih-fav-btn').on('click', function(e) {
