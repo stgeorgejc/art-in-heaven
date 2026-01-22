@@ -355,9 +355,9 @@ html body {
     transform: rotate(180deg);
 }
 
-/* Filter Panel - Desktop (inline collapsible) */
+/* Filter Panel - Base styles */
 .aih-filter-overlay {
-    display: none;
+    display: none !important;
 }
 
 .aih-filter-panel {
@@ -366,6 +366,8 @@ html body {
     border: 1px solid var(--color-border);
     border-radius: var(--radius);
     margin-bottom: 20px;
+    position: static;
+    transform: none;
 }
 
 .aih-filter-panel.open {
@@ -373,7 +375,7 @@ html body {
 }
 
 .aih-filter-panel-header {
-    display: none;
+    display: none !important;
 }
 
 .aih-filter-panel-content {
@@ -386,7 +388,7 @@ html body {
 /* Filter Panel - Mobile (bottom sheet overlay) */
 @media (max-width: 600px) {
     .aih-filter-overlay {
-        display: block;
+        display: none !important;
         position: fixed;
         inset: 0;
         background: rgba(0, 0, 0, 0.5);
@@ -397,13 +399,14 @@ html body {
     }
 
     .aih-filter-overlay.open {
+        display: block !important;
         opacity: 1;
         visibility: visible;
     }
 
     .aih-filter-panel {
-        display: block;
-        position: fixed;
+        display: block !important;
+        position: fixed !important;
         bottom: 0;
         left: 0;
         right: 0;
@@ -423,7 +426,7 @@ html body {
     }
 
     .aih-filter-panel-header {
-        display: flex;
+        display: flex !important;
         align-items: center;
         justify-content: space-between;
         padding: 16px 20px;
