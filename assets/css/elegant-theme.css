@@ -521,6 +521,9 @@ html body {
     .aih-card-body {
         height: 62px;
         padding: 8px 6px;
+        min-width: 0;
+        max-width: 100%;
+        overflow: hidden;
     }
 
     .aih-card-title {
@@ -528,10 +531,15 @@ html body {
         line-height: 1.6;
         padding-bottom: 3px;
         -webkit-line-clamp: 1;
+        min-width: 0;
+        max-width: 100%;
+        width: 100%;
     }
 
     .aih-card-artist {
         font-size: 11px;
+        min-width: 0;
+        max-width: 100%;
     }
 
     /* Mobile card footer */
@@ -871,11 +879,13 @@ html body {
 .aih-card-body {
     padding: 10px 12px;
     min-width: 0;
+    max-width: 100%;
     /* Fixed height for uniform cards */
     height: 82px;
     display: flex;
     flex-direction: column;
     justify-content: center;
+    overflow: hidden;
 }
 
 .aih-card-meta {
@@ -903,6 +913,11 @@ html body {
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
+    /* Ensure width constraints for ellipsis to work */
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
+    word-break: break-word;
 }
 
 .aih-card-title a {
