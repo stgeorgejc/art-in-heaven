@@ -253,15 +253,7 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
                     $seconds_remaining = 999999999; // Ended items go to bottom when sorting by time
                 }
             ?>
-            <article class="aih-card <?php echo $status_class; ?>"
-                     data-id="<?php echo $piece->id; ?>"
-                     data-art-id="<?php echo esc_attr($piece->art_id); ?>"
-                     data-title="<?php echo esc_attr($piece->title); ?>"
-                     data-artist="<?php echo esc_attr($piece->artist); ?>"
-                     data-medium="<?php echo esc_attr($piece->medium); ?>"
-                     data-price="<?php echo esc_attr($display_bid); ?>"
-                     data-seconds="<?php echo esc_attr($seconds_remaining); ?>">
-
+            <article class="aih-card <?php echo $status_class; ?>" data-id="<?php echo $piece->id; ?>" data-art-id="<?php echo esc_attr($piece->art_id); ?>" data-title="<?php echo esc_attr($piece->title); ?>" data-artist="<?php echo esc_attr($piece->artist); ?>" data-medium="<?php echo esc_attr($piece->medium); ?>" data-price="<?php echo esc_attr($display_bid); ?>" data-seconds="<?php echo esc_attr($seconds_remaining); ?>">
                 <div class="aih-card-image" data-favorite="<?php echo $is_favorite ? '1' : '0'; ?>">
                     <?php if ($primary_image): ?>
                     <a href="?art_id=<?php echo $piece->id; ?>">
