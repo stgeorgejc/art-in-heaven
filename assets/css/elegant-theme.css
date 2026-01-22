@@ -621,8 +621,8 @@ html body {
 
     .aih-card-footer .aih-bid-btn {
         flex-shrink: 0 !important;
-        width: 40px !important;
-        padding: 6px 4px !important;
+        width: 32px !important;
+        padding: 6px 2px !important;
         font-size: 10px !important;
         letter-spacing: 0 !important;
     }
@@ -711,13 +711,13 @@ html body {
     }
 
     .aih-gallery-grid.single-view .aih-bid-btn {
-        flex: 0 0 50px !important;
-        width: 50px !important;
-        min-width: 50px !important;
-        max-width: 50px !important;
-        padding: 10px 12px;
-        font-size: 12px;
-        letter-spacing: 0.4px;
+        flex: 0 0 40px !important;
+        width: 40px !important;
+        min-width: 40px !important;
+        max-width: 40px !important;
+        padding: 10px 8px;
+        font-size: 11px;
+        letter-spacing: 0.3px;
     }
 
     /* Mobile placeholder */
@@ -1058,8 +1058,8 @@ html body {
 
 .aih-bid-btn {
     flex-shrink: 0;
-    width: 40px;
-    padding: 8px 4px;
+    width: 32px;
+    padding: 8px 2px;
     font-family: var(--font-body);
     font-size: 10px;
     font-weight: 600;
