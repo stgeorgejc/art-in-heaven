@@ -154,11 +154,8 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
                     </button>
                 </div>
             </div>
-        </div>
-
-        <!-- Bottom Sheet Sort & Filter Panel -->
-        <div class="aih-filter-overlay" id="aih-filter-overlay"></div>
-        <div class="aih-filter-panel" id="aih-filter-panel">
+            <!-- Desktop: inline panel appears here in the header flow -->
+            <div class="aih-filter-panel" id="aih-filter-panel">
             <div class="aih-filter-panel-header">
                 <span class="aih-filter-panel-title">Sort & Filter</span>
                 <button type="button" class="aih-filter-panel-close" id="aih-filter-close">
@@ -202,7 +199,11 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
                     </select>
                 </div>
             </div>
+            </div>
         </div>
+
+        <!-- Mobile: overlay backdrop -->
+        <div class="aih-filter-overlay" id="aih-filter-overlay"></div>
 
         <?php if (empty($art_pieces)): ?>
         <div class="aih-empty-state">
