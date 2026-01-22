@@ -286,11 +286,78 @@ html body {
     color: var(--color-muted);
 }
 
-.aih-filter-group {
+/* Sort & Filter Toggle Button */
+.aih-filter-toggle {
     display: flex;
-    flex-wrap: nowrap;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-primary);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all var(--transition);
+}
+
+.aih-filter-toggle:hover {
+    border-color: var(--color-accent);
+}
+
+.aih-filter-toggle.active {
+    border-color: var(--color-accent);
+    background: var(--color-bg);
+}
+
+.aih-filter-chevron {
+    transition: transform var(--transition);
+}
+
+.aih-filter-toggle.active .aih-filter-chevron {
+    transform: rotate(180deg);
+}
+
+/* Collapsible Filter Panel */
+.aih-filter-panel {
+    display: none;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    margin-top: 12px;
+    overflow: hidden;
+}
+
+.aih-filter-panel.open {
+    display: block;
+}
+
+.aih-filter-panel-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    padding: 16px;
+}
+
+.aih-filter-section {
+    display: flex;
+    flex-direction: column;
     gap: 6px;
-    flex: 0 1 auto;
+}
+
+.aih-filter-label {
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-muted);
+}
+
+.aih-filter-section .aih-select {
+    width: 100%;
 }
 
 .aih-select {
@@ -404,8 +471,25 @@ html body {
         background-position: right 4px center !important;
     }
 
-    .aih-filter-group {
-        gap: 4px !important;
+    .aih-filter-toggle {
+        padding: 6px 10px;
+        font-size: 11px;
+        gap: 6px;
+    }
+
+    .aih-filter-toggle svg:first-child {
+        width: 14px;
+        height: 14px;
+    }
+
+    .aih-filter-panel-content {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        padding: 12px;
+    }
+
+    .aih-filter-label {
+        font-size: 10px;
     }
 
     .aih-view-toggle {
