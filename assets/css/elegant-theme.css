@@ -750,6 +750,8 @@ html body {
     background: var(--color-bg-alt);
     width: 100%;
     min-height: 150px; /* Fallback for browsers without aspect-ratio support */
+    display: block !important;
+    visibility: visible !important;
 }
 
 @supports (aspect-ratio: 1/1) {
@@ -902,9 +904,10 @@ html body {
     min-width: 0;
     /* Fixed height for uniform cards */
     height: 70px;
-    display: flex;
+    display: flex !important;
     flex-direction: column;
     justify-content: center;
+    visibility: visible !important;
 }
 
 .aih-card-meta {
@@ -926,25 +929,30 @@ html body {
     line-height: 1.3;
     margin-bottom: 2px;
     /* Ellipsis for long titles - 2 lines max */
-    display: -webkit-box;
+    display: -webkit-box !important;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
+    visibility: visible !important;
+    color: #1c1c1c;
 }
 
 .aih-card-title a {
-    color: var(--color-primary);
+    color: #1c1c1c !important;
     text-decoration: none;
+    visibility: visible !important;
 }
 
 .aih-card-artist {
     font-size: 11px;
-    color: var(--color-muted);
+    color: #8a8a8a !important;
     /* Ellipsis for long artist names - 1 line */
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    visibility: visible !important;
+    display: block !important;
 }
 
 .aih-card-footer {
