@@ -558,6 +558,13 @@ html {
     padding: 15px;
     font-size: 18px;
     outline: none;
+    -moz-appearance: textfield;
+}
+
+.aih-bid-input-wrapper input::-webkit-outer-spin-button,
+.aih-bid-input-wrapper input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
 }
 
 .aih-submit-bid-btn {
@@ -847,6 +854,13 @@ html {
     border-radius: 0;
     font-size: 18px;
     outline: none;
+    -moz-appearance: textfield;
+}
+
+.aih-bid-input-group input::-webkit-outer-spin-button,
+.aih-bid-input-group input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
 }
 
 .aih-bid-input-group input:focus { border-color: var(--sa-accent); }

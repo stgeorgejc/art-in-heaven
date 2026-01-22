@@ -1153,6 +1153,14 @@ html body {
     border-radius: var(--radius);
     box-sizing: border-box;
     -webkit-appearance: none;
+    -moz-appearance: textfield;
+}
+
+/* Hide number input spinners */
+.aih-bid-input::-webkit-outer-spin-button,
+.aih-bid-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
 }
 
 .aih-bid-input:focus {
@@ -1670,6 +1678,13 @@ html body {
     border-radius: var(--radius);
     transition: all var(--transition);
     -webkit-appearance: none;
+    -moz-appearance: textfield;
+}
+
+.aih-bid-form-single .aih-field input::-webkit-outer-spin-button,
+.aih-bid-form-single .aih-field input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
 }
 
 .aih-bid-form-single .aih-field input:focus {
