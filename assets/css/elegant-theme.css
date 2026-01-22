@@ -2499,6 +2499,12 @@ html body {
         min-width: 30px;
     }
 
+    .aih-view-btn svg,
+    .aih-filter-toggle > svg:first-child {
+        width: 20px;
+        height: 20px;
+    }
+
     .aih-select {
         min-height: 44px;
     }
