@@ -2172,6 +2172,10 @@ html body {
     .aih-search-box {
         flex: 1 1 100%;
         width: 100%;
+        order: 0;
+    }
+
+    .aih-filter-toggle {
         order: 1;
     }
 
@@ -2189,7 +2193,7 @@ html body {
 
     .aih-view-toggle {
         order: 3;
-        margin-left: 0;
+        margin-left: auto;
     }
 }
 
