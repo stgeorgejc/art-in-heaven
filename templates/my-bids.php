@@ -318,8 +318,12 @@ jQuery(document).ready(function($) {
     font-weight: 500;
     line-height: 1.3;
     margin-bottom: 4px;
-    overflow-wrap: break-word;
-    word-wrap: break-word;
+    /* Ellipsis for long titles - 2 lines max */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .aih-mybids-page .aih-card-title a {
@@ -330,6 +334,10 @@ jQuery(document).ready(function($) {
 .aih-mybids-page .aih-card-artist {
     font-size: 12px;
     color: var(--color-muted);
+    /* Ellipsis for long artist names - 1 line */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* Card footer */

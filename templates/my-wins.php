@@ -319,6 +319,12 @@ jQuery(document).ready(function($) {
     font-weight: 500;
     line-height: 1.3;
     margin-bottom: 4px;
+    /* Ellipsis for long titles - 2 lines max */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .aih-win-title a {
@@ -334,6 +340,10 @@ jQuery(document).ready(function($) {
     font-size: 14px;
     color: var(--color-muted);
     margin-bottom: 8px;
+    /* Ellipsis for long artist names - 1 line */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .aih-win-details {
