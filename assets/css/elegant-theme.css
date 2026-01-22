@@ -433,10 +433,12 @@ html body {
    GALLERY GRID - DYNAMIC
    ============================================ */
 .aih-gallery-grid {
-    display: grid;
+    display: grid !important;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 20px;
     width: 100%;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
 /* Ensure all cards have same dimensions */
@@ -731,8 +733,10 @@ html body {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     transition: all var(--transition);
-    display: flex;
+    display: flex !important;
     flex-direction: column;
+    visibility: visible !important;
+    opacity: 1;
 }
 
 .aih-card.ended {
@@ -745,6 +749,13 @@ html body {
     overflow: hidden;
     background: var(--color-bg-alt);
     width: 100%;
+    min-height: 150px; /* Fallback for browsers without aspect-ratio support */
+}
+
+@supports (aspect-ratio: 1/1) {
+    .aih-card-image {
+        min-height: auto;
+    }
 }
 
 .aih-card-image img {
