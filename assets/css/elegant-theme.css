@@ -594,7 +594,11 @@ html body {
         display: flex !important;
         flex-direction: row !important;
         gap: 4px !important;
-        width: 100% !important;
+        width: calc(100% + 8px) !important;
+        margin-left: -4px !important;
+        margin-right: -4px !important;
+        padding-left: 4px !important;
+        padding-right: 4px !important;
         box-sizing: border-box !important;
     }
 
@@ -692,6 +696,11 @@ html body {
         display: flex !important;
         flex-direction: row !important;
         gap: 6px !important;
+        width: calc(100% + 28px) !important;
+        margin-left: -14px !important;
+        margin-right: -14px !important;
+        padding-left: 14px !important;
+        padding-right: 14px !important;
     }
 
     .aih-gallery-grid.single-view .aih-bid-input {
@@ -1016,7 +1025,11 @@ html body {
     display: flex;
     flex-direction: row;
     gap: 4px;
-    width: 100%;
+    width: calc(100% + 24px);
+    margin-left: -12px;
+    margin-right: -12px;
+    padding-left: 12px;
+    padding-right: 12px;
     box-sizing: border-box;
 }
 
@@ -1700,6 +1713,14 @@ html body {
         padding: 10px 14px 12px;
     }
 
+    .aih-bid-form {
+        width: calc(100% + 28px);
+        margin-left: -14px;
+        margin-right: -14px;
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+
     .aih-bid-amount {
         font-size: 24px;
     }
@@ -2010,6 +2031,14 @@ html body {
 @media (min-width: 600px) and (max-width: 899px) {
     .aih-card-footer {
         padding: 10px 14px 12px;
+    }
+
+    .aih-bid-form {
+        width: calc(100% + 28px);
+        margin-left: -14px;
+        margin-right: -14px;
+        padding-left: 14px;
+        padding-right: 14px;
     }
 
     .aih-bid-amount {

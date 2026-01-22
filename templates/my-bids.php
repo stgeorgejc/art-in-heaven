@@ -347,6 +347,14 @@ jQuery(document).ready(function($) {
     background: var(--color-bg);
 }
 
+.aih-mybids-page .aih-bid-form {
+    width: calc(100% + 28px);
+    margin-left: -14px;
+    margin-right: -14px;
+    padding-left: 14px;
+    padding-right: 14px;
+}
+
 /* Mobile adjustments */
 @media (max-width: 600px) {
     .aih-mybids-page .aih-gallery-grid {
@@ -383,6 +391,11 @@ jQuery(document).ready(function($) {
     .aih-mybids-page .aih-bid-form {
         flex-direction: column;
         gap: 8px;
+        width: calc(100% + 24px);
+        margin-left: -12px;
+        margin-right: -12px;
+        padding-left: 12px;
+        padding-right: 12px;
     }
 
     .aih-mybids-page .aih-bid-input {
