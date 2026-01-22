@@ -292,7 +292,8 @@ html body {
 
 .aih-search-input {
     width: 100%;
-    padding: 8px 12px;
+    height: 36px;
+    padding: 0 12px;
     font-family: var(--font-body);
     font-size: 13px;
     color: var(--color-primary);
@@ -301,6 +302,7 @@ html body {
     border-radius: var(--radius);
     transition: all var(--transition);
     -webkit-appearance: none;
+    box-sizing: border-box;
 }
 
 .aih-search-input:focus {
@@ -323,8 +325,10 @@ html body {
 .aih-filter-toggle {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
-    padding: 7px 12px;
+    height: 36px;
+    padding: 0 12px;
     font-family: var(--font-body);
     font-size: 12px;
     font-weight: 500;
@@ -335,6 +339,7 @@ html body {
     cursor: pointer;
     transition: all var(--transition);
     white-space: nowrap;
+    box-sizing: border-box;
 }
 
 .aih-filter-toggle:hover {
@@ -518,17 +523,20 @@ html body {
 /* View Toggle */
 .aih-view-toggle {
     display: flex;
+    align-items: center;
     gap: 4px;
+    height: 36px;
     border: 1px solid var(--color-border);
     border-radius: var(--radius);
-    padding: 3px;
+    padding: 0 4px;
     background: var(--color-surface);
     flex-shrink: 0;
     margin-left: auto;
+    box-sizing: border-box;
 }
 
 .aih-view-toggle .aih-view-btn {
-    padding: 4px 6px;
+    padding: 6px 8px;
     background: transparent;
     border: none;
     border-radius: 2px;
