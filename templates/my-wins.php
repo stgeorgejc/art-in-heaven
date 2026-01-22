@@ -419,6 +419,7 @@ jQuery(document).ready(function($) {
 
     .aih-win-title {
         font-size: 14px;
+        -webkit-line-clamp: 1;
     }
 
     .aih-win-artist {

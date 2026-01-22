@@ -360,6 +360,7 @@ jQuery(document).ready(function($) {
 
     .aih-mybids-page .aih-card-title {
         font-size: 14px;
+        -webkit-line-clamp: 1;
     }
 
     .aih-mybids-page .aih-card-footer {

@@ -449,7 +449,7 @@ html body {
 
     .aih-card-title {
         font-size: 14px;
-        -webkit-line-clamp: 2;
+        -webkit-line-clamp: 1;
     }
 
     .aih-card-artist {
