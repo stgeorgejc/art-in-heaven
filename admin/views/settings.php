@@ -197,79 +197,79 @@ $event_date = get_option('aih_event_date', '');
                 <tr>
                     <th scope="row"><label for="aih_color_primary"><?php _e('Primary/Accent Color', 'art-in-heaven'); ?></label></th>
                     <td>
-                        <input type="color" id="aih_color_primary" name="aih_color_primary" 
-                               value="<?php echo esc_attr(get_option('aih_color_primary', '#c9a227')); ?>" 
+                        <input type="color" id="aih_color_primary" name="aih_color_primary"
+                               value="<?php echo esc_attr(get_option('aih_color_primary', '#b8956b')); ?>"
                                class="aih-color-picker">
-                        <input type="text" id="aih_color_primary_text" 
-                               value="<?php echo esc_attr(get_option('aih_color_primary', '#c9a227')); ?>" 
+                        <input type="text" id="aih_color_primary_text"
+                               value="<?php echo esc_attr(get_option('aih_color_primary', '#b8956b')); ?>"
                                class="small-text aih-color-text" data-target="aih_color_primary">
-                        <button type="button" class="button aih-color-reset" data-target="aih_color_primary" data-default="#c9a227"><?php _e('Reset', 'art-in-heaven'); ?></button>
-                        <p class="description"><?php _e('Used for buttons, links, badges, and highlights. Default: Gold (#c9a227)', 'art-in-heaven'); ?></p>
+                        <button type="button" class="button aih-color-reset" data-target="aih_color_primary" data-default="#b8956b"><?php _e('Reset', 'art-in-heaven'); ?></button>
+                        <p class="description"><?php _e('Used for buttons, links, badges, and highlights. Default: Warm Bronze (#b8956b)', 'art-in-heaven'); ?></p>
                     </td>
                 </tr>
                 <tr>
                     <th scope="row"><label for="aih_color_secondary"><?php _e('Secondary/Dark Color', 'art-in-heaven'); ?></label></th>
                     <td>
-                        <input type="color" id="aih_color_secondary" name="aih_color_secondary" 
-                               value="<?php echo esc_attr(get_option('aih_color_secondary', '#1a1a2e')); ?>" 
+                        <input type="color" id="aih_color_secondary" name="aih_color_secondary"
+                               value="<?php echo esc_attr(get_option('aih_color_secondary', '#1c1c1c')); ?>"
                                class="aih-color-picker">
-                        <input type="text" id="aih_color_secondary_text" 
-                               value="<?php echo esc_attr(get_option('aih_color_secondary', '#1a1a2e')); ?>" 
+                        <input type="text" id="aih_color_secondary_text"
+                               value="<?php echo esc_attr(get_option('aih_color_secondary', '#1c1c1c')); ?>"
                                class="small-text aih-color-text" data-target="aih_color_secondary">
-                        <button type="button" class="button aih-color-reset" data-target="aih_color_secondary" data-default="#1a1a2e"><?php _e('Reset', 'art-in-heaven'); ?></button>
-                        <p class="description"><?php _e('Used for headings, button text, and dark backgrounds. Default: Navy (#1a1a2e)', 'art-in-heaven'); ?></p>
+                        <button type="button" class="button aih-color-reset" data-target="aih_color_secondary" data-default="#1c1c1c"><?php _e('Reset', 'art-in-heaven'); ?></button>
+                        <p class="description"><?php _e('Used for headings, button text, and dark backgrounds. Default: Near Black (#1c1c1c)', 'art-in-heaven'); ?></p>
                     </td>
                 </tr>
                 <tr>
                     <th scope="row"><label for="aih_color_success"><?php _e('Success Color', 'art-in-heaven'); ?></label></th>
                     <td>
-                        <input type="color" id="aih_color_success" name="aih_color_success" 
-                               value="<?php echo esc_attr(get_option('aih_color_success', '#059669')); ?>" 
+                        <input type="color" id="aih_color_success" name="aih_color_success"
+                               value="<?php echo esc_attr(get_option('aih_color_success', '#4a7c59')); ?>"
                                class="aih-color-picker">
-                        <input type="text" id="aih_color_success_text" 
-                               value="<?php echo esc_attr(get_option('aih_color_success', '#059669')); ?>" 
+                        <input type="text" id="aih_color_success_text"
+                               value="<?php echo esc_attr(get_option('aih_color_success', '#4a7c59')); ?>"
                                class="small-text aih-color-text" data-target="aih_color_success">
-                        <button type="button" class="button aih-color-reset" data-target="aih_color_success" data-default="#059669"><?php _e('Reset', 'art-in-heaven'); ?></button>
-                        <p class="description"><?php _e('Used for winning bids, success messages, and positive status. Default: Green (#059669)', 'art-in-heaven'); ?></p>
+                        <button type="button" class="button aih-color-reset" data-target="aih_color_success" data-default="#4a7c59"><?php _e('Reset', 'art-in-heaven'); ?></button>
+                        <p class="description"><?php _e('Used for winning bids, success messages, and positive status. Default: Forest Green (#4a7c59)', 'art-in-heaven'); ?></p>
                     </td>
                 </tr>
                 <tr>
                     <th scope="row"><label for="aih_color_error"><?php _e('Error/Warning Color', 'art-in-heaven'); ?></label></th>
                     <td>
-                        <input type="color" id="aih_color_error" name="aih_color_error" 
-                               value="<?php echo esc_attr(get_option('aih_color_error', '#dc2626')); ?>" 
+                        <input type="color" id="aih_color_error" name="aih_color_error"
+                               value="<?php echo esc_attr(get_option('aih_color_error', '#a63d40')); ?>"
                                class="aih-color-picker">
-                        <input type="text" id="aih_color_error_text" 
-                               value="<?php echo esc_attr(get_option('aih_color_error', '#dc2626')); ?>" 
+                        <input type="text" id="aih_color_error_text"
+                               value="<?php echo esc_attr(get_option('aih_color_error', '#a63d40')); ?>"
                                class="small-text aih-color-text" data-target="aih_color_error">
-                        <button type="button" class="button aih-color-reset" data-target="aih_color_error" data-default="#dc2626"><?php _e('Reset', 'art-in-heaven'); ?></button>
-                        <p class="description"><?php _e('Used for errors, outbid notices, and urgent countdowns. Default: Red (#dc2626)', 'art-in-heaven'); ?></p>
+                        <button type="button" class="button aih-color-reset" data-target="aih_color_error" data-default="#a63d40"><?php _e('Reset', 'art-in-heaven'); ?></button>
+                        <p class="description"><?php _e('Used for errors, outbid notices, and urgent countdowns. Default: Muted Red (#a63d40)', 'art-in-heaven'); ?></p>
                     </td>
                 </tr>
                 <tr>
                     <th scope="row"><label for="aih_color_text"><?php _e('Text Color', 'art-in-heaven'); ?></label></th>
                     <td>
-                        <input type="color" id="aih_color_text" name="aih_color_text" 
-                               value="<?php echo esc_attr(get_option('aih_color_text', '#374151')); ?>" 
+                        <input type="color" id="aih_color_text" name="aih_color_text"
+                               value="<?php echo esc_attr(get_option('aih_color_text', '#1c1c1c')); ?>"
                                class="aih-color-picker">
-                        <input type="text" id="aih_color_text_text" 
-                               value="<?php echo esc_attr(get_option('aih_color_text', '#374151')); ?>" 
+                        <input type="text" id="aih_color_text_text"
+                               value="<?php echo esc_attr(get_option('aih_color_text', '#1c1c1c')); ?>"
                                class="small-text aih-color-text" data-target="aih_color_text">
-                        <button type="button" class="button aih-color-reset" data-target="aih_color_text" data-default="#374151"><?php _e('Reset', 'art-in-heaven'); ?></button>
-                        <p class="description"><?php _e('Main body text color. Default: Dark Gray (#374151)', 'art-in-heaven'); ?></p>
+                        <button type="button" class="button aih-color-reset" data-target="aih_color_text" data-default="#1c1c1c"><?php _e('Reset', 'art-in-heaven'); ?></button>
+                        <p class="description"><?php _e('Main body text color. Default: Near Black (#1c1c1c)', 'art-in-heaven'); ?></p>
                     </td>
                 </tr>
                 <tr>
                     <th scope="row"><label for="aih_color_muted"><?php _e('Muted Text Color', 'art-in-heaven'); ?></label></th>
                     <td>
-                        <input type="color" id="aih_color_muted" name="aih_color_muted" 
-                               value="<?php echo esc_attr(get_option('aih_color_muted', '#6b7280')); ?>" 
+                        <input type="color" id="aih_color_muted" name="aih_color_muted"
+                               value="<?php echo esc_attr(get_option('aih_color_muted', '#8a8a8a')); ?>"
                                class="aih-color-picker">
-                        <input type="text" id="aih_color_muted_text" 
-                               value="<?php echo esc_attr(get_option('aih_color_muted', '#6b7280')); ?>" 
+                        <input type="text" id="aih_color_muted_text"
+                               value="<?php echo esc_attr(get_option('aih_color_muted', '#8a8a8a')); ?>"
                                class="small-text aih-color-text" data-target="aih_color_muted">
-                        <button type="button" class="button aih-color-reset" data-target="aih_color_muted" data-default="#6b7280"><?php _e('Reset', 'art-in-heaven'); ?></button>
-                        <p class="description"><?php _e('Secondary/muted text like descriptions and labels. Default: Gray (#6b7280)', 'art-in-heaven'); ?></p>
+                        <button type="button" class="button aih-color-reset" data-target="aih_color_muted" data-default="#8a8a8a"><?php _e('Reset', 'art-in-heaven'); ?></button>
+                        <p class="description"><?php _e('Secondary/muted text like descriptions and labels. Default: Medium Gray (#8a8a8a)', 'art-in-heaven'); ?></p>
                     </td>
                 </tr>
             </table>
