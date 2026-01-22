@@ -248,6 +248,7 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
                     <p class="aih-card-artist"><?php echo esc_html($piece->artist); ?></p>
                 </div>
 
+                <?php if (!$is_ended): ?>
                 <div class="aih-card-footer">
                     <div class="aih-bid-info">
                         <div class="aih-bid-info-left">
@@ -256,7 +257,7 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
                             <span class="aih-bid-amount">$<?php echo number_format($display_bid); ?></span>
                             <?php endif; ?>
                         </div>
-                        <?php if (!$is_ended && $piece->auction_end && !empty($piece->show_end_time)): ?>
+                        <?php if ($piece->auction_end && !empty($piece->show_end_time)): ?>
                         <div class="aih-time-remaining" data-end="<?php echo esc_attr($piece->auction_end); ?>">
                             <span class="aih-time-label">Time Left</span>
                             <span class="aih-time-value">--:--:--</span>
@@ -264,13 +265,12 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
                         <?php endif; ?>
                     </div>
 
-                    <?php if (!$is_ended): ?>
                     <div class="aih-bid-form">
                         <input type="number" class="aih-bid-input" min="<?php echo $min_bid; ?>" step="1" placeholder="Enter bid">
                         <button type="button" class="aih-bid-btn" data-id="<?php echo $piece->id; ?>">Bid</button>
                     </div>
-                    <?php endif; ?>
                 </div>
+                <?php endif; ?>
                 
                 <div class="aih-bid-message"></div>
             </article>
