@@ -1923,8 +1923,13 @@ html body {
 
 /* Tablet/Desktop */
 @media (min-width: 601px) {
+    .aih-view-toggle {
+        padding: 3px;
+        gap: 4px;
+    }
+
     .aih-view-toggle .aih-view-btn {
-        padding: 6px 9px;
+        padding: 4px 6px;
     }
 
     .aih-view-toggle .aih-view-btn svg {
