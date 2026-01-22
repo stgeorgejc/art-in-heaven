@@ -84,13 +84,11 @@ $art_images = new AIH_Art_Images();
                                 <span class="aih-placeholder-text">No Image</span>
                             </div>
                             <?php endif; ?>
+                            <span class="aih-art-id-badge"><?php echo esc_html($bid->art_id); ?></span>
                             <div class="aih-badge aih-badge-sold">Sold</div>
                         </div>
-                        
+
                         <div class="aih-card-body">
-                            <div class="aih-card-meta">
-                                <span class="aih-art-id"><?php echo esc_html($bid->art_id); ?></span>
-                            </div>
                             <h3 class="aih-card-title"><?php echo esc_html($bid->title); ?></h3>
                             <p class="aih-card-artist"><?php echo esc_html($bid->artist); ?></p>
                         </div>
