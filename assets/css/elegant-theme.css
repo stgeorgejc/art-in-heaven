@@ -235,6 +235,14 @@ html body {
     border-bottom: 1px solid var(--color-border);
 }
 
+.aih-gallery-header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
 .aih-gallery-title h1 {
     font-family: var(--font-display);
     font-size: 24px;
@@ -253,10 +261,14 @@ html body {
 
 .aih-gallery-controls {
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+    flex-wrap: nowrap;
+    gap: 10px;
     margin-top: 12px;
     align-items: center;
+}
+
+.aih-gallery-controls > * {
+    flex-shrink: 0;
 }
 
 .aih-search-box {
@@ -1517,30 +1529,29 @@ html body {
     }
     
     .aih-gallery-header {
+        margin-bottom: 28px;
+    }
+
+    .aih-gallery-header-top {
         display: flex;
         justify-content: space-between;
         align-items: flex-end;
         flex-wrap: wrap;
         gap: 20px;
-        margin-bottom: 28px;
     }
-    
+
     .aih-gallery-controls {
         flex-direction: row;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
         margin-top: 0;
     }
-    
+
     .aih-search-box {
         width: auto;
     }
-    
+
     .aih-search-input {
-        width: 240px;
-    }
-    
-    .aih-filter-group {
-        width: auto;
+        width: 200px;
     }
     
     .aih-select {
@@ -1604,14 +1615,14 @@ html body {
         padding: 32px 48px;
     }
     
-    .aih-gallery-header {
+    .aih-gallery-header-top {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
         gap: 16px;
     }
-    
+
     .aih-gallery-controls {
         margin-top: 0;
     }
@@ -1999,7 +2010,7 @@ html body {
 }
 
 @media (max-width: 600px) {
-    .aih-gallery-header {
+    .aih-gallery-header-top {
         flex-direction: column;
         align-items: stretch;
         gap: 12px;
@@ -2007,31 +2018,27 @@ html body {
 
     .aih-gallery-controls {
         flex-direction: row;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
         gap: 8px;
+        width: 100%;
     }
 
     .aih-search-box {
-        flex: 1 1 100%;
-        width: 100%;
-        order: 1;
-    }
-
-    .aih-filter-group {
         flex: 1 1 auto;
-        flex-wrap: wrap;
-        order: 2;
+        min-width: 0;
     }
 
-    .aih-select-narrow {
-        flex: 1 1 calc(33% - 4px);
-        max-width: calc(33% - 4px);
-        min-width: 70px;
+    .aih-filter-toggle {
+        flex-shrink: 0;
     }
 
     .aih-view-toggle {
-        order: 3;
-        margin-left: 0;
+        flex-shrink: 0;
+        margin-left: auto;
+    }
+
+    .aih-filter-panel-content {
+        grid-template-columns: 1fr 1fr;
     }
 }
 

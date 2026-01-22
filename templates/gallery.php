@@ -132,32 +132,34 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
 
     <main class="aih-main">
         <div class="aih-gallery-header">
-            <div class="aih-gallery-title">
-                <h1>Collection</h1>
-                <p class="aih-subtitle"><?php echo count($art_pieces); ?> pieces available</p>
-            </div>
-            <div class="aih-gallery-controls">
-                <div class="aih-search-box">
-                    <input type="text" id="aih-search" placeholder="Search collection..." class="aih-search-input">
+            <div class="aih-gallery-header-top">
+                <div class="aih-gallery-title">
+                    <h1>Collection</h1>
+                    <p class="aih-subtitle"><?php echo count($art_pieces); ?> pieces available</p>
                 </div>
-                <button type="button" class="aih-filter-toggle" id="aih-filter-toggle">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="4" y1="6" x2="20" y2="6"></line>
-                        <line x1="8" y1="12" x2="16" y2="12"></line>
-                        <line x1="11" y1="18" x2="13" y2="18"></line>
-                    </svg>
-                    <span>Sort & Filter</span>
-                    <svg class="aih-filter-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="6 9 12 15 18 9"></polyline>
-                    </svg>
-                </button>
-                <div class="aih-view-toggle">
-                    <button type="button" class="aih-view-btn active" data-view="grid" title="Grid View">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                <div class="aih-gallery-controls">
+                    <div class="aih-search-box">
+                        <input type="text" id="aih-search" placeholder="Search collection..." class="aih-search-input">
+                    </div>
+                    <button type="button" class="aih-filter-toggle" id="aih-filter-toggle">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="4" y1="6" x2="20" y2="6"></line>
+                            <line x1="8" y1="12" x2="16" y2="12"></line>
+                            <line x1="11" y1="18" x2="13" y2="18"></line>
+                        </svg>
+                        <span>Sort & Filter</span>
+                        <svg class="aih-filter-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
                     </button>
-                    <button type="button" class="aih-view-btn" data-view="single" title="Single View">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
-                    </button>
+                    <div class="aih-view-toggle">
+                        <button type="button" class="aih-view-btn active" data-view="grid" title="Grid View">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                        </button>
+                        <button type="button" class="aih-view-btn" data-view="single" title="Single View">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+                        </button>
+                    </div>
                 </div>
             </div>
 
