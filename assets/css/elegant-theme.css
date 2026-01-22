@@ -293,6 +293,82 @@ html body {
     flex: 0 1 auto;
 }
 
+/* Sort & Filter Toggle Button */
+.aih-filter-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 12px;
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--color-primary);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all var(--transition);
+    white-space: nowrap;
+}
+
+.aih-filter-toggle:hover {
+    border-color: var(--color-accent);
+}
+
+.aih-filter-toggle.active {
+    border-color: var(--color-accent);
+    background: var(--color-bg);
+}
+
+.aih-filter-chevron {
+    transition: transform var(--transition);
+    flex-shrink: 0;
+}
+
+.aih-filter-toggle.active .aih-filter-chevron {
+    transform: rotate(180deg);
+}
+
+/* Collapsible Filter Panel */
+.aih-filter-panel {
+    display: none;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    margin-bottom: 20px;
+}
+
+.aih-filter-panel.open {
+    display: block;
+}
+
+.aih-filter-panel-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 16px;
+    padding: 16px;
+}
+
+.aih-filter-section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.aih-filter-label {
+    font-family: var(--font-body);
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-muted);
+}
+
+.aih-filter-section .aih-select {
+    width: 100%;
+    min-width: auto;
+}
+
 .aih-select {
     padding: 8px 28px 8px 10px;
     font-family: var(--font-body);
