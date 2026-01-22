@@ -404,17 +404,23 @@ jQuery(document).ready(function($) {
     updateFavoritesFilterVisibility();
 
     // Sort & Filter Panel Toggle
+    function isMobile() {
+        return window.innerWidth <= 600;
+    }
+
     function openFilterPanel() {
         $('#aih-filter-toggle').addClass('active');
-        $('#aih-filter-overlay').addClass('open');
         $('#aih-filter-panel').addClass('open');
-        $('body').addClass('filter-open');
+        if (isMobile()) {
+            $('#aih-filter-overlay').addClass('open');
+            $('body').addClass('filter-open');
+        }
     }
 
     function closeFilterPanel() {
         $('#aih-filter-toggle').removeClass('active');
-        $('#aih-filter-overlay').removeClass('open');
         $('#aih-filter-panel').removeClass('open');
+        $('#aih-filter-overlay').removeClass('open');
         $('body').removeClass('filter-open');
     }
 

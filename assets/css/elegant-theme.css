@@ -355,87 +355,118 @@ html body {
     transform: rotate(180deg);
 }
 
-/* Bottom Sheet Filter Panel */
+/* Filter Panel - Desktop (inline collapsible) */
 .aih-filter-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 999;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.3s ease, visibility 0.3s ease;
-}
-
-.aih-filter-overlay.open {
-    opacity: 1;
-    visibility: visible;
+    display: none;
 }
 
 .aih-filter-panel {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    display: none;
     background: var(--color-surface);
-    border-radius: 16px 16px 0 0;
-    z-index: 1000;
-    transform: translateY(100%);
-    transition: transform 0.3s ease;
-    max-height: 80vh;
-    overflow-y: auto;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    margin-bottom: 20px;
 }
 
 .aih-filter-panel.open {
-    transform: translateY(0);
+    display: block;
 }
 
 .aih-filter-panel-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px 20px;
-    border-bottom: 1px solid var(--color-border);
-    position: sticky;
-    top: 0;
-    background: var(--color-surface);
-    z-index: 1;
-}
-
-.aih-filter-panel-title {
-    font-family: var(--font-display);
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--color-primary);
-}
-
-.aih-filter-panel-close {
-    width: 32px;
-    height: 32px;
-    border: none;
-    background: var(--color-bg);
-    border-radius: 50%;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--color-muted);
-    transition: all var(--transition);
-}
-
-.aih-filter-panel-close:hover {
-    background: var(--color-border);
-    color: var(--color-primary);
+    display: none;
 }
 
 .aih-filter-panel-content {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: 16px;
-    padding: 20px;
+    padding: 16px;
 }
 
-body.filter-open {
-    overflow: hidden;
+/* Filter Panel - Mobile (bottom sheet overlay) */
+@media (max-width: 600px) {
+    .aih-filter-overlay {
+        display: block;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+    .aih-filter-overlay.open {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .aih-filter-panel {
+        display: block;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: var(--color-surface);
+        border: none;
+        border-radius: 16px 16px 0 0;
+        z-index: 1000;
+        transform: translateY(100%);
+        transition: transform 0.3s ease;
+        max-height: 80vh;
+        overflow-y: auto;
+        margin-bottom: 0;
+    }
+
+    .aih-filter-panel.open {
+        transform: translateY(0);
+    }
+
+    .aih-filter-panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--color-border);
+        position: sticky;
+        top: 0;
+        background: var(--color-surface);
+        z-index: 1;
+    }
+
+    .aih-filter-panel-title {
+        font-family: var(--font-display);
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--color-primary);
+    }
+
+    .aih-filter-panel-close {
+        width: 32px;
+        height: 32px;
+        border: none;
+        background: var(--color-bg);
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--color-muted);
+        transition: all var(--transition);
+    }
+
+    .aih-filter-panel-close:hover {
+        background: var(--color-border);
+        color: var(--color-primary);
+    }
+
+    .aih-filter-panel-content {
+        padding: 20px;
+    }
+
+    body.filter-open {
+        overflow: hidden;
+    }
 }
 
 .aih-filter-section {
