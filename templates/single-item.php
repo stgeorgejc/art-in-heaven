@@ -1052,6 +1052,10 @@ jQuery(document).ready(function($) {
 .aih-image-dot {
     width: 10px;
     height: 10px;
+    min-width: 10px;
+    min-height: 10px;
+    aspect-ratio: 1;
+    flex-shrink: 0;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.5);
     cursor: pointer;
@@ -1171,6 +1175,8 @@ jQuery(document).ready(function($) {
     .aih-image-dot {
         width: 8px;
         height: 8px;
+        min-width: 8px;
+        min-height: 8px;
     }
 
     .aih-thumbnails {
