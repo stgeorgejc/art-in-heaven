@@ -275,6 +275,12 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
                     <button type="button" class="aih-fav-btn <?php echo $is_favorite ? 'active' : ''; ?>" data-id="<?php echo $piece->id; ?>">
                         <span class="aih-fav-icon">♥</span>
                     </button>
+
+                    <?php if (!$is_ended && $piece->auction_end && !empty($piece->show_end_time)): ?>
+                    <div class="aih-time-remaining" data-end="<?php echo esc_attr($piece->auction_end); ?>">
+                        <span class="aih-time-value">--:--:--</span>
+                    </div>
+                    <?php endif; ?>
                 </div>
                 
                 <div class="aih-card-body">
@@ -293,12 +299,6 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
                             <span class="aih-bid-amount">$<?php echo number_format($display_bid); ?></span>
                             <?php endif; ?>
                         </div>
-                        <?php if ($piece->auction_end && !empty($piece->show_end_time)): ?>
-                        <div class="aih-time-remaining" data-end="<?php echo esc_attr($piece->auction_end); ?>">
-                            <span class="aih-time-label">Time Left</span>
-                            <span class="aih-time-value">--:--:--</span>
-                        </div>
-                        <?php endif; ?>
                     </div>
 
                     <div class="aih-bid-form">
