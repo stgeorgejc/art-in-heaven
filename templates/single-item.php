@@ -286,6 +286,19 @@ $cart_count = count($checkout->get_won_items($bidder_id));
 <!-- Scroll to Top Button -->
 <button type="button" class="aih-scroll-top" id="aih-scroll-top" title="Scroll to top">↑</button>
 
+<!-- Lightbox for image viewing -->
+<div class="aih-lightbox" id="aih-lightbox">
+    <button type="button" class="aih-lightbox-close" aria-label="Close">&times;</button>
+    <div class="aih-lightbox-content">
+        <img src="" alt="" class="aih-lightbox-image" id="aih-lightbox-img">
+        <?php if (count($images) > 1): ?>
+        <button type="button" class="aih-lightbox-nav aih-lightbox-prev" aria-label="Previous image">‹</button>
+        <button type="button" class="aih-lightbox-nav aih-lightbox-next" aria-label="Next image">›</button>
+        <div class="aih-lightbox-counter"><span id="aih-lb-current">1</span> / <?php echo count($images); ?></div>
+        <?php endif; ?>
+    </div>
+</div>
+
 <script>
 jQuery(document).ready(function($) {
     $('#aih-logout').on('click', function() {
@@ -335,7 +348,72 @@ jQuery(document).ready(function($) {
     $('.aih-img-nav-next').on('click', function() {
         showImage(currentImgIndex + 1);
     });
-    
+
+    // Lightbox functionality
+    var $lightbox = $('#aih-lightbox');
+    var $lightboxImg = $('#aih-lightbox-img');
+    var lightboxIndex = 0;
+
+    // Collect all image sources
+    var allImages = [];
+    $('.aih-image-dot').each(function() {
+        allImages.push($(this).data('src'));
+    });
+    // If no dots, use the main image
+    if (allImages.length === 0) {
+        var mainSrc = $('#aih-main-image').attr('src');
+        if (mainSrc) allImages.push(mainSrc);
+    }
+
+    function openLightbox(index) {
+        if (allImages.length === 0) return;
+        lightboxIndex = index;
+        $lightboxImg.attr('src', allImages[index]);
+        $('#aih-lb-current').text(index + 1);
+        $lightbox.addClass('active');
+        $('body').css('overflow', 'hidden');
+    }
+
+    function closeLightbox() {
+        $lightbox.removeClass('active');
+        $('body').css('overflow', '');
+    }
+
+    function lightboxNav(direction) {
+        lightboxIndex += direction;
+        if (lightboxIndex < 0) lightboxIndex = allImages.length - 1;
+        if (lightboxIndex >= allImages.length) lightboxIndex = 0;
+        $lightboxImg.attr('src', allImages[lightboxIndex]);
+        $('#aih-lb-current').text(lightboxIndex + 1);
+    }
+
+    // Open lightbox on main image click
+    $('#aih-main-image').on('click', function() {
+        openLightbox(currentImgIndex);
+    });
+
+    // Close lightbox
+    $('.aih-lightbox-close').on('click', closeLightbox);
+    $lightbox.on('click', function(e) {
+        if (e.target === this) closeLightbox();
+    });
+
+    // Lightbox navigation
+    $('.aih-lightbox-prev').on('click', function() {
+        lightboxNav(-1);
+    });
+    $('.aih-lightbox-next').on('click', function() {
+        lightboxNav(1);
+    });
+
+    // Keyboard navigation
+    $(document).on('keydown', function(e) {
+        if (!$lightbox.hasClass('active')) return;
+        if (e.key === 'Escape') closeLightbox();
+        if (e.key === 'ArrowLeft') lightboxNav(-1);
+        if (e.key === 'ArrowRight') lightboxNav(1);
+    });
+
     // Place bid
     $('#place-bid').on('click', function() {
         var $btn = $(this);
@@ -559,6 +637,7 @@ jQuery(document).ready(function($) {
     max-height: 55vh;
     display: block;
     object-fit: contain;
+    cursor: zoom-in;
     object-position: center;
 }
 
