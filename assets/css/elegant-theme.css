@@ -2060,6 +2060,19 @@ html body {
     display: flex;
     align-items: center;
     justify-content: center;
+    /* Outline heart for unpressed state */
+    -webkit-text-stroke: 1.5px var(--color-muted);
+    color: transparent;
+}
+
+.aih-fav-btn:hover .aih-fav-icon {
+    -webkit-text-stroke-color: var(--color-accent);
+}
+
+.aih-fav-btn.active .aih-fav-icon {
+    /* Filled heart for pressed state */
+    -webkit-text-stroke: 0;
+    color: white;
 }
 
 /* Desktop favorite button - matches badge size */
