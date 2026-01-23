@@ -273,7 +273,7 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
                     <?php endif; ?>
 
                     <button type="button" class="aih-fav-btn <?php echo $is_favorite ? 'active' : ''; ?>" data-id="<?php echo $piece->id; ?>">
-                        <span class="aih-fav-icon">♥</span>
+                        <span class="aih-fav-icon"><?php echo $is_favorite ? '♥' : '♡'; ?></span>
                     </button>
                 </div>
                 
@@ -502,7 +502,7 @@ jQuery(document).ready(function($) {
         $.post(aihAjax.ajaxurl, {action:'aih_toggle_favorite', nonce:aihAjax.nonce, art_piece_id:id}, function(r) {
             if (r.success) {
                 $btn.toggleClass('active');
-                $btn.find('.aih-fav-icon').text('♥');
+                $btn.find('.aih-fav-icon').text($btn.hasClass('active') ? '♥' : '♡');
                 // Update data attribute for filtering
                 var $cardImage = $btn.closest('.aih-card-image');
                 $cardImage.attr('data-favorite', $btn.hasClass('active') ? '1' : '0');

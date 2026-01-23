@@ -182,7 +182,7 @@ $cart_count = count($checkout->get_won_items($bidder_id));
                     <span class="aih-art-id-badge-single"><?php echo esc_html($art_piece->art_id); ?></span>
 
                     <button type="button" class="aih-fav-btn <?php echo $is_favorite ? 'active' : ''; ?>" data-id="<?php echo $art_piece->id; ?>">
-                        <span class="aih-fav-icon">♥</span>
+                        <span class="aih-fav-icon"><?php echo $is_favorite ? '♥' : '♡'; ?></span>
                     </button>
 
                     <?php if (count($images) > 1): ?>
@@ -298,7 +298,7 @@ jQuery(document).ready(function($) {
         $.post(aihAjax.ajaxurl, {action:'aih_toggle_favorite', nonce:aihAjax.nonce, art_piece_id:$btn.data('id')}, function(r) {
             if (r.success) {
                 $btn.toggleClass('active');
-                $btn.find('.aih-fav-icon').text('♥');
+                $btn.find('.aih-fav-icon').text($btn.hasClass('active') ? '♥' : '♡');
             }
         });
     });

@@ -1022,7 +1022,9 @@ html body {
 }
 
 .aih-fav-btn.active {
-    /* Same as unpressed state */
+    background: var(--color-error);
+    border-color: var(--color-error);
+    color: white;
 }
 
 .aih-card-body {

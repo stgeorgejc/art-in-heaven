@@ -438,7 +438,9 @@ class Art_In_Heaven {
         
         /* Error color overrides */
         .aih-gallery-wrap .aih-fav-btn:hover,
-        .aih-single-image .aih-fav-btn:hover { color: {$error}; }
+        .aih-gallery-wrap .aih-fav-btn.active,
+        .aih-single-image .aih-fav-btn:hover,
+        .aih-single-image .aih-fav-btn.active { color: {$error}; }
         
         .aih-gallery-wrap .aih-time.urgent { background: {$error}; }
         
