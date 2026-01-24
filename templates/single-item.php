@@ -849,8 +849,10 @@ jQuery(document).ready(function($) {
 }
 
 .aih-bid-form-single .aih-btn {
+    flex-shrink: 0;
+    width: 50px;
     height: 38px;
-    padding: 0 12px;
+    padding: 0;
     font-size: 10px;
     white-space: nowrap;
     display: flex;
@@ -1071,8 +1073,8 @@ jQuery(document).ready(function($) {
 
     .aih-bid-form-single .aih-btn {
         height: 44px;
-        width: 80px;
-        padding: 0 6px;
+        width: 60px;
+        padding: 0;
         font-size: 10px;
     }
 }
