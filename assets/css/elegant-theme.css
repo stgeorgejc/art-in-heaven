@@ -1708,6 +1708,10 @@ html body {
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0;
+    color: var(--color-surface);
+    background: var(--color-primary);
+    border: none;
+    border-radius: var(--radius);
     white-space: nowrap;
 }
 
