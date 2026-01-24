@@ -291,11 +291,13 @@ $cart_count = count($checkout->get_won_items($bidder_id));
 <!-- Lightbox for image viewing -->
 <div class="aih-lightbox" id="aih-lightbox">
     <button type="button" class="aih-lightbox-close" aria-label="Close">&times;</button>
+    <?php if (count($images) > 1): ?>
+    <button type="button" class="aih-lightbox-nav aih-lightbox-prev" aria-label="Previous image">‹</button>
+    <button type="button" class="aih-lightbox-nav aih-lightbox-next" aria-label="Next image">›</button>
+    <?php endif; ?>
     <div class="aih-lightbox-content">
         <img src="" alt="" class="aih-lightbox-image" id="aih-lightbox-img">
         <?php if (count($images) > 1): ?>
-        <button type="button" class="aih-lightbox-nav aih-lightbox-prev" aria-label="Previous image">‹</button>
-        <button type="button" class="aih-lightbox-nav aih-lightbox-next" aria-label="Next image">›</button>
         <div class="aih-lightbox-counter"><span id="aih-lb-current">1</span> / <?php echo count($images); ?></div>
         <?php endif; ?>
     </div>
