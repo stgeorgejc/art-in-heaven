@@ -176,17 +176,19 @@ class AIH_Bid {
      */
     public function get_bidder_bids_for_art_piece($art_piece_id, $bidder_id, $successful_only = false) {
         global $wpdb;
-        
+
         // Get the current highest bid to determine which bids were "successful" (higher than previous)
         if ($successful_only) {
             // Get bids that were winning at some point (is_winning = 1) OR are currently the highest for this bidder
             // A successful bid is one that was the highest bid at the time it was placed
+            // Only include valid bids (exclude 'too_low' bids)
             return $wpdb->get_results($wpdb->prepare(
                 "SELECT b.* FROM {$this->table} b
                  WHERE b.art_piece_id = %d AND b.bidder_id = %s
+                 AND b.bid_status = 'valid'
                  AND (b.is_winning = 1 OR b.bid_amount = (
-                     SELECT MAX(b2.bid_amount) FROM {$this->table} b2 
-                     WHERE b2.art_piece_id = b.art_piece_id AND b2.bidder_id = b.bidder_id
+                     SELECT MAX(b2.bid_amount) FROM {$this->table} b2
+                     WHERE b2.art_piece_id = b.art_piece_id AND b2.bidder_id = b.bidder_id AND b2.bid_status = 'valid'
                  ))
                  ORDER BY b.bid_time DESC",
                 $art_piece_id,
@@ -208,23 +210,14 @@ class AIH_Bid {
      */
     public function get_successful_bids_for_art_piece($art_piece_id, $bidder_id) {
         global $wpdb;
-        
-        // Get the starting bid for this art piece
-        $art_table = AIH_Database::get_table('art_pieces');
-        $starting_bid = $wpdb->get_var($wpdb->prepare(
-            "SELECT starting_bid FROM $art_table WHERE id = %d",
-            $art_piece_id
-        ));
-        
-        // A successful bid is one that was accepted (higher than starting bid and higher than previous bids at time of placement)
-        // We identify these by checking if is_winning was ever 1, or if it's the current highest
+
+        // Only return valid bids - those that were accepted when placed
         return $wpdb->get_results($wpdb->prepare(
             "SELECT * FROM {$this->table}
-             WHERE art_piece_id = %d AND bidder_id = %s AND bid_amount > %f
+             WHERE art_piece_id = %d AND bidder_id = %s AND bid_status = 'valid'
              ORDER BY bid_time DESC",
             $art_piece_id,
-            $bidder_id,
-            floatval($starting_bid) - 0.01 // Include bids at or above starting bid
+            $bidder_id
         ));
     }
     
