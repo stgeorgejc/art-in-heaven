@@ -1182,12 +1182,11 @@ jQuery(document).ready(function($) {
 .aih-lightbox {
     display: none;
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.95);
-    z-index: 9999;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.98);
+    z-index: 999999;
     overflow: hidden;
 }
 
@@ -1199,15 +1198,15 @@ jQuery(document).ready(function($) {
 }
 
 .aih-lightbox-close {
-    position: absolute;
+    position: fixed;
     top: 20px;
-    right: 25px;
+    right: 20px;
     font-size: 40px;
     color: #fff;
-    background: none;
+    background: rgba(0, 0, 0, 0.5);
     border: none;
     cursor: pointer;
-    z-index: 10001;
+    z-index: 1000001;
     width: 50px;
     height: 50px;
     display: flex;
@@ -1245,7 +1244,7 @@ jQuery(document).ready(function($) {
     transform: translateY(-50%);
     width: 50px;
     height: 50px;
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.2);
     border: none;
     border-radius: 50%;
     color: #fff;
@@ -1255,7 +1254,7 @@ jQuery(document).ready(function($) {
     align-items: center;
     justify-content: center;
     transition: background 0.2s ease;
-    z-index: 10000;
+    z-index: 1000000;
 }
 
 .aih-lightbox-nav:hover {
