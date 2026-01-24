@@ -1673,6 +1673,7 @@ html body {
     padding: 0 10px;
     font-family: var(--font-body);
     font-size: 14px;
+    line-height: 34px;
     color: var(--color-primary);
     background: var(--color-surface);
     border: 1px solid var(--color-border);
@@ -1704,6 +1705,7 @@ html body {
     font-family: var(--font-body);
     font-size: 10px;
     font-weight: 600;
+    line-height: 36px;
     text-transform: uppercase;
     letter-spacing: 0;
     color: var(--color-surface);
@@ -1711,6 +1713,7 @@ html body {
     border: none;
     border-radius: var(--radius);
     white-space: nowrap;
+    box-sizing: border-box;
 }
 
 /* ============================================
