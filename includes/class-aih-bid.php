@@ -230,18 +230,22 @@ class AIH_Bid {
     
     /**
      * Get all bids by bidder (confirmation_code)
+     * Returns only the bidder's highest bid per art piece to avoid duplicates
      */
     public function get_bidder_bids($bidder_id) {
         global $wpdb;
-        
+
         $art_table = AIH_Database::get_table('art_pieces');
         $now = current_time('mysql');
-        
+
+        // Get the bidder's highest bid per art piece, avoiding duplicates
+        // Uses a subquery to find the max bid amount per art piece for this bidder,
+        // then joins to get full details of that specific bid
         return $wpdb->get_results($wpdb->prepare(
             "SELECT b.*, a.title, a.title as art_title, a.artist, a.art_id, a.auction_end, a.status as auction_status,
                     a.watermarked_url, a.watermarked_url as image_url, a.image_url as original_image_url,
                     a.starting_bid,
-                    CASE 
+                    CASE
                         WHEN a.status = 'ended' THEN 'ended'
                         WHEN a.auction_end IS NOT NULL AND a.auction_end <= %s THEN 'ended'
                         WHEN a.auction_start IS NOT NULL AND a.auction_start > %s THEN 'upcoming'
@@ -249,9 +253,18 @@ class AIH_Bid {
                     END as computed_status
              FROM {$this->table} b
              JOIN $art_table a ON b.art_piece_id = a.id
-             WHERE b.bidder_id = %s
+             INNER JOIN (
+                 SELECT art_piece_id, MAX(bid_amount) as max_bid
+                 FROM {$this->table}
+                 WHERE bidder_id = %s AND bid_status = 'valid'
+                 GROUP BY art_piece_id
+             ) max_bids ON b.art_piece_id = max_bids.art_piece_id
+                       AND b.bid_amount = max_bids.max_bid
+                       AND b.bidder_id = %s
+             WHERE b.bidder_id = %s AND b.bid_status = 'valid'
+             GROUP BY b.art_piece_id
              ORDER BY b.bid_time DESC",
-            $now, $now, $bidder_id
+            $now, $now, $bidder_id, $bidder_id, $bidder_id
         ));
     }
     

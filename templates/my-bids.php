@@ -66,21 +66,12 @@ jQuery(document).ready(function($) {
 </script>
 <?php include(dirname(__FILE__) . '/../assets/css/elegant-theme.php'); return; endif;
 
-// Get user's bids - only show successful (valid) bids
+// Get user's bids - returns only the highest valid bid per art piece
 $bid_model = new AIH_Bid();
 $favorites = new AIH_Favorites();
 $art_images = new AIH_Art_Images();
-$all_bids = $bid_model->get_bidder_bids($bidder_id);
+$my_bids = $bid_model->get_bidder_bids($bidder_id);
 $bid_increment = floatval(get_option('aih_bid_increment', 1));
-
-// Filter to only show valid bids (exclude failed bids like 'too_low')
-$my_bids = array();
-foreach ($all_bids as $bid) {
-    $status = isset($bid->bid_status) ? $bid->bid_status : 'valid';
-    if ($status === 'valid') {
-        $my_bids[] = $bid;
-    }
-}
 
 $cart_count = 0;
 $checkout = AIH_Checkout::get_instance();
