@@ -1648,15 +1648,13 @@ html body {
 .aih-bid-form-single {
     display: flex;
     flex-direction: row;
-    align-items: stretch;
+    align-items: flex-end;
     gap: 8px;
 }
 
 .aih-bid-form-single .aih-field {
     flex: 1;
     margin-bottom: 0;
-    display: flex;
-    flex-direction: column;
 }
 
 .aih-bid-form-single .aih-field label {
@@ -1670,9 +1668,9 @@ html body {
 }
 
 .aih-bid-form-single .aih-field input {
-    flex: 1;
     width: 100%;
-    padding: 8px 10px;
+    height: 36px;
+    padding: 0 10px;
     font-family: var(--font-body);
     font-size: 14px;
     color: var(--color-primary);
@@ -1701,8 +1699,8 @@ html body {
 }
 
 .aih-bid-form-single .aih-btn {
-    align-self: flex-end;
-    padding: 8px 12px;
+    height: 36px;
+    padding: 0 12px;
     font-family: var(--font-body);
     font-size: 10px;
     font-weight: 600;
