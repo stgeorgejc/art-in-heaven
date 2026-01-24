@@ -655,8 +655,8 @@ jQuery(document).ready(function($) {
 /* Art ID Badge on single image - like gallery cards */
 .aih-art-id-badge-single {
     position: absolute;
-    bottom: 20px;
-    left: 20px;
+    bottom: 24px;
+    left: 24px;
     padding: 8px 14px;
     font-size: 20px;
     font-weight: 700;
@@ -1008,8 +1008,8 @@ jQuery(document).ready(function($) {
 
     /* Art ID badge mobile */
     .aih-art-id-badge-single {
-        bottom: 12px;
-        left: 12px;
+        bottom: 16px;
+        left: 16px;
         padding: 6px 10px;
         font-size: 16px;
     }
@@ -1018,6 +1018,15 @@ jQuery(document).ready(function($) {
     .aih-badge-single {
         top: 16px;
         left: 16px;
+    }
+
+    /* Nav arrows mobile - consistent with other elements */
+    .aih-img-nav-prev {
+        left: 16px;
+    }
+
+    .aih-img-nav-next {
+        right: 16px;
     }
 
     /* Bid section mobile scaling */
@@ -1120,11 +1129,11 @@ jQuery(document).ready(function($) {
 }
 
 .aih-img-nav-prev {
-    left: 16px;
+    left: 24px;
 }
 
 .aih-img-nav-next {
-    right: 16px;
+    right: 24px;
 }
 
 .aih-img-nav:hover {
@@ -1359,11 +1368,11 @@ jQuery(document).ready(function($) {
     }
 
     .aih-img-nav-prev {
-        left: 8px;
+        left: 16px;
     }
 
     .aih-img-nav-next {
-        right: 8px;
+        right: 16px;
     }
 
     .aih-image-dot {
