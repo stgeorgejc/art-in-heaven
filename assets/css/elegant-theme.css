@@ -1647,12 +1647,16 @@ html body {
 
 .aih-bid-form-single {
     display: flex;
-    flex-direction: column;
-    gap: 12px;
+    flex-direction: row;
+    align-items: stretch;
+    gap: 8px;
 }
 
 .aih-bid-form-single .aih-field {
+    flex: 1;
     margin-bottom: 0;
+    display: flex;
+    flex-direction: column;
 }
 
 .aih-bid-form-single .aih-field label {
@@ -1662,23 +1666,25 @@ html body {
     text-transform: uppercase;
     letter-spacing: 1px;
     color: var(--color-secondary);
-    margin-bottom: 8px;
+    margin-bottom: 6px;
 }
 
 .aih-bid-form-single .aih-field input {
+    flex: 1;
     width: 100%;
-    padding: 14px 16px;
+    padding: 10px 12px;
     font-family: var(--font-body);
-    font-size: 18px;
+    font-size: 14px;
     font-weight: 500;
     text-align: center;
     color: var(--color-primary);
-    background: var(--color-bg);
+    background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: var(--radius);
     transition: all var(--transition);
     -webkit-appearance: none;
     -moz-appearance: textfield;
+    box-sizing: border-box;
 }
 
 .aih-bid-form-single .aih-field input::-webkit-outer-spin-button,
@@ -1690,7 +1696,13 @@ html body {
 .aih-bid-form-single .aih-field input:focus {
     outline: none;
     border-color: var(--color-accent);
-    background: var(--color-surface);
+}
+
+.aih-bid-form-single .aih-btn {
+    align-self: flex-end;
+    padding: 10px 16px;
+    font-size: 12px;
+    white-space: nowrap;
 }
 
 /* ============================================
