@@ -150,7 +150,11 @@ class Art_In_Heaven {
      * Add custom cron schedules
      */
     public function add_cron_schedules($schedules) {
-        // No custom schedules needed currently
+        // Add 5-minute schedule for auction status checks
+        $schedules['every_five_minutes'] = array(
+            'interval' => 300, // 5 minutes in seconds
+            'display'  => __('Every 5 Minutes', 'art-in-heaven')
+        );
         return $schedules;
     }
     
@@ -196,8 +200,12 @@ class Art_In_Heaven {
         if (!wp_next_scheduled('aih_hourly_cleanup')) {
             wp_schedule_event(time(), 'hourly', 'aih_hourly_cleanup');
         }
+
+        // Schedule auction status check every 5 minutes for timely draft->active transitions
+        // Clear any existing hourly schedule and reschedule at 5-minute interval
+        wp_clear_scheduled_hook('aih_check_expired_auctions');
         if (!wp_next_scheduled('aih_check_expired_auctions')) {
-            wp_schedule_event(time(), 'hourly', 'aih_check_expired_auctions');
+            wp_schedule_event(time(), 'every_five_minutes', 'aih_check_expired_auctions');
         }
         
         // Clean up deprecated five-minute check (removed in v0.9.89)
