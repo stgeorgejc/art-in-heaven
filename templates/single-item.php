@@ -178,6 +178,13 @@ $cart_count = count($checkout->get_won_items($bidder_id));
                     </div>
                     <?php endif; ?>
 
+                    <!-- Status Badge on image -->
+                    <?php if ($is_winning && !$is_ended): ?>
+                    <span class="aih-badge aih-badge-winning aih-badge-single">Winning</span>
+                    <?php elseif ($is_ended): ?>
+                    <span class="aih-badge aih-badge-ended aih-badge-single"><?php echo $is_winning ? 'Won' : 'Sold'; ?></span>
+                    <?php endif; ?>
+
                     <!-- Art ID Badge on image -->
                     <span class="aih-art-id-badge-single"><?php echo esc_html($art_piece->art_id); ?></span>
 
@@ -197,11 +204,6 @@ $cart_count = count($checkout->get_won_items($bidder_id));
                 <div class="aih-single-details">
                     <div class="aih-single-meta">
                         <span class="aih-art-id"><?php echo esc_html($art_piece->art_id); ?></span>
-                        <?php if ($is_winning && !$is_ended): ?>
-                        <span class="aih-badge aih-badge-winning">Winning</span>
-                        <?php elseif ($is_ended): ?>
-                        <span class="aih-badge aih-badge-ended"><?php echo $is_winning ? 'Won' : 'Sold'; ?></span>
-                        <?php endif; ?>
                     </div>
                     
                     <h1><?php echo esc_html($art_piece->title); ?></h1>
@@ -430,8 +432,8 @@ jQuery(document).ready(function($) {
                 $msg.removeClass('error').addClass('success').text('Bid placed successfully!').show();
                 $('#current-bid').text('').addClass('aih-bid-hidden');
                 $('.aih-current-bid .aih-bid-label').text('Bid Placed');
-                $('.aih-single-meta').find('.aih-badge').remove();
-                $('.aih-single-meta').append('<span class="aih-badge aih-badge-winning">Winning</span>');
+                $('.aih-single-image').find('.aih-badge').remove();
+                $('.aih-single-image').prepend('<span class="aih-badge aih-badge-winning aih-badge-single">Winning</span>');
                 $('#bid-amount').val('').attr('placeholder', 'Enter bid');
             } else {
                 $msg.removeClass('success').addClass('error').text(r.data.message || 'Failed').show();
@@ -665,6 +667,14 @@ jQuery(document).ready(function($) {
     border-radius: 4px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     line-height: 1;
+    z-index: 4;
+}
+
+/* Status Badge on single image - top left corner */
+.aih-badge-single {
+    position: absolute;
+    top: 24px;
+    left: 24px;
     z-index: 4;
 }
 
@@ -1002,6 +1012,12 @@ jQuery(document).ready(function($) {
         left: 12px;
         padding: 6px 10px;
         font-size: 16px;
+    }
+
+    /* Status badge mobile */
+    .aih-badge-single {
+        top: 16px;
+        left: 16px;
     }
 
     /* Bid section mobile scaling */
