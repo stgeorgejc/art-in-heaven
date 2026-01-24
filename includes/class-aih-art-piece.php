@@ -478,6 +478,10 @@ class AIH_Art_Piece {
     
     public function delete($id) {
         global $wpdb;
+
+        // Fire action before deletion so listeners can clean up
+        do_action('aih_art_deleted', $id);
+
         $wpdb->delete(AIH_Database::get_table('bids'), array('art_piece_id' => $id), array('%d'));
         $wpdb->delete(AIH_Database::get_table('favorites'), array('art_piece_id' => $id), array('%d'));
         return $wpdb->delete($this->table, array('id' => $id), array('%d'));

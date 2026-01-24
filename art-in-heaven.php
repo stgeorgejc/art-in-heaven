@@ -3,7 +3,7 @@
  * Plugin Name: Art in Heaven
  * Plugin URI: https://example.com/art-in-heaven
  * Description: A comprehensive silent auction system for art pieces with bid management, favorites, and admin controls
- * Version: 0.9.155
+ * Version: 0.9.156
  * Author: Art in Heaven Team
  * Author URI: https://example.com
  * License: GPL v2 or later
@@ -22,7 +22,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('AIH_VERSION', '0.9.148');
+define('AIH_VERSION', '0.9.156');
 define('AIH_DB_VERSION', '0.9.0');
 define('AIH_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('AIH_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -107,7 +107,8 @@ class Art_In_Heaven {
         require_once AIH_PLUGIN_DIR . 'includes/class-aih-notifications.php';
         require_once AIH_PLUGIN_DIR . 'includes/class-aih-export.php';
         require_once AIH_PLUGIN_DIR . 'includes/class-aih-rest-api.php';
-        
+        require_once AIH_PLUGIN_DIR . 'includes/class-aih-cron-scheduler.php';
+
         if (is_admin()) {
             require_once AIH_PLUGIN_DIR . 'admin/class-aih-admin.php';
         }
@@ -215,7 +216,12 @@ class Art_In_Heaven {
         if (get_option('aih_auto_sync_enabled', false)) {
             AIH_Auth::schedule_auto_sync();
         }
-        
+
+        // Schedule precise cron events for all existing art pieces
+        if (class_exists('AIH_Cron_Scheduler')) {
+            AIH_Cron_Scheduler::schedule_all_existing_pieces();
+        }
+
         $this->create_upload_directories();
         $this->set_default_options();
         flush_rewrite_rules();
@@ -231,6 +237,12 @@ class Art_In_Heaven {
         wp_clear_scheduled_hook('aih_check_expired_auctions');
         wp_clear_scheduled_hook('aih_five_minute_check');
         AIH_Auth::unschedule_auto_sync();
+
+        // Clear all scheduled piece-specific cron events
+        if (class_exists('AIH_Cron_Scheduler')) {
+            AIH_Cron_Scheduler::clear_all_scheduled_events();
+        }
+
         flush_rewrite_rules();
         if (class_exists('AIH_Cache')) AIH_Cache::flush_all();
         AIH_Database::deactivate();
@@ -254,6 +266,7 @@ class Art_In_Heaven {
         AIH_Checkout::get_instance();
         AIH_Assets::get_instance();
         if (class_exists('AIH_Notifications')) AIH_Notifications::get_instance();
+        if (class_exists('AIH_Cron_Scheduler')) AIH_Cron_Scheduler::get_instance();
         
         if (is_admin()) {
             AIH_Admin::get_instance();
