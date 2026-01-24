@@ -1167,6 +1167,105 @@ jQuery(document).ready(function($) {
     transform: scale(1.3);
 }
 
+/* Lightbox styles */
+.aih-lightbox {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.95);
+    z-index: 9999;
+    overflow: hidden;
+}
+
+.aih-lightbox.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.aih-lightbox-close {
+    position: absolute;
+    top: 20px;
+    right: 25px;
+    font-size: 40px;
+    color: #fff;
+    background: none;
+    border: none;
+    cursor: pointer;
+    z-index: 10001;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.aih-lightbox-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
+}
+
+.aih-lightbox-content {
+    position: relative;
+    max-width: 90vw;
+    max-height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.aih-lightbox-image {
+    max-width: 100%;
+    max-height: 80vh;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 10px 50px rgba(0, 0, 0, 0.5);
+}
+
+.aih-lightbox-nav {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 50px;
+    height: 50px;
+    background: rgba(255, 255, 255, 0.15);
+    border: none;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 28px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease;
+    z-index: 10000;
+}
+
+.aih-lightbox-nav:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.aih-lightbox-prev {
+    left: 20px;
+}
+
+.aih-lightbox-next {
+    right: 20px;
+}
+
+.aih-lightbox-counter {
+    color: #fff;
+    font-size: 14px;
+    margin-top: 20px;
+    opacity: 0.8;
+}
+
 /* Single item placeholder */
 .aih-single-placeholder {
     display: flex;
