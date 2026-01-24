@@ -827,11 +827,11 @@ jQuery(document).ready(function($) {
     display: flex;
     flex-direction: row;
     align-items: flex-end;
-    gap: 10px;
+    gap: 8px;
 }
 
 .aih-bid-form-single .aih-field {
-    flex: 3;
+    flex: 1;
     margin-bottom: 0;
 }
 
@@ -842,17 +842,21 @@ jQuery(document).ready(function($) {
 
 .aih-bid-form-single input {
     width: 100%;
-    padding: 10px 12px;
-    font-size: 15px;
-    text-align: center;
+    height: 38px;
+    padding: 0 10px;
+    font-size: 14px;
+    box-sizing: border-box;
 }
 
 .aih-bid-form-single .aih-btn {
-    flex: 1;
-    max-width: 100px;
-    padding: 10px 10px;
+    height: 38px;
+    padding: 0 12px;
     font-size: 10px;
     white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
 }
 
 /* Bid History Section */
@@ -1060,14 +1064,15 @@ jQuery(document).ready(function($) {
     }
 
     .aih-bid-form-single input {
-        padding: 12px 10px;
+        height: 44px;
+        padding: 0 10px;
         font-size: 16px;
     }
 
     .aih-bid-form-single .aih-btn {
-        flex: 0 0 80px;
+        height: 44px;
         width: 80px;
-        padding: 12px 6px;
+        padding: 0 6px;
         font-size: 10px;
     }
 }
