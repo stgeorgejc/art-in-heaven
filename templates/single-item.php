@@ -249,10 +249,10 @@ $cart_count = count($checkout->get_won_items($bidder_id));
                         <div class="aih-bid-form-single">
                             <div class="aih-field">
                                 <label>Your Bid</label>
-                                <input type="text" inputmode="numeric" pattern="[0-9]*" id="bid-amount" data-min="<?php echo $min_bid; ?>" placeholder="Enter bid amount">
+                                <input type="text" inputmode="numeric" pattern="[0-9]*" id="bid-amount" data-min="<?php echo $min_bid; ?>" placeholder="Enter bid">
                             </div>
                             <button type="button" id="place-bid" class="aih-btn" data-id="<?php echo $art_piece->id; ?>">
-                                Place Bid
+                                Bid
                             </button>
                         </div>
                         <div id="bid-message" class="aih-message"></div>
