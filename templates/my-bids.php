@@ -168,7 +168,7 @@ $cart_count = count($checkout->get_won_items($bidder_id));
 
                     <?php if (!$is_ended && !$is_winning): ?>
                     <div class="aih-bid-form">
-                        <input type="text" inputmode="numeric" pattern="[0-9]*" class="aih-bid-input" data-min="<?php echo $min_bid; ?>" placeholder="Enter bid">
+                        <input type="text" inputmode="numeric" pattern="[0-9]*" class="aih-bid-input" data-min="<?php echo $min_bid; ?>" placeholder="$<?php echo number_format($min_bid); ?>+">
                         <button type="button" class="aih-bid-btn" data-id="<?php echo $bid->art_piece_id; ?>">Bid</button>
                     </div>
                     <?php endif; ?>
@@ -229,15 +229,6 @@ jQuery(document).ready(function($) {
 .aih-badge-outbid {
     background: var(--color-error);
     color: white;
-}
-
-.aih-mybids-page .aih-bid-info-centered {
-    justify-content: center;
-    text-align: center;
-}
-
-.aih-mybids-page .aih-bid-info-centered > div {
-    text-align: center;
 }
 
 /* Ensure card image displays properly */
@@ -380,25 +371,31 @@ jQuery(document).ready(function($) {
     }
 
     .aih-mybids-page .aih-bid-form {
-        flex-direction: column;
-        gap: 8px;
-        width: calc(100% + 24px);
-        margin-left: -12px;
-        margin-right: -12px;
-        padding-left: 12px;
-        padding-right: 12px;
+        display: flex !important;
+        flex-direction: row !important;
+        gap: 4px !important;
+        width: calc(100% + 24px) !important;
+        margin-left: -12px !important;
+        margin-right: -12px !important;
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+        box-sizing: border-box !important;
     }
 
     .aih-mybids-page .aih-bid-input {
-        width: 100%;
-        font-size: 14px;
-        padding: 8px 10px;
+        flex: 1 !important;
+        min-width: 0 !important;
+        padding: 6px 8px !important;
+        font-size: 14px !important;
+        box-sizing: border-box !important;
     }
 
     .aih-mybids-page .aih-bid-btn {
-        width: 100%;
-        padding: 10px;
-        font-size: 12px;
+        flex-shrink: 0 !important;
+        width: 32px !important;
+        padding: 6px 2px !important;
+        font-size: 10px !important;
+        letter-spacing: 0 !important;
     }
 
     /* Art ID badge mobile - match gallery styles */

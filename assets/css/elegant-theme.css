@@ -1114,6 +1114,16 @@ html body {
     margin-bottom: 0;
 }
 
+/* Centered bid info (for ended items and my-bids) */
+.aih-bid-info-centered {
+    justify-content: center;
+    text-align: center;
+}
+
+.aih-bid-info-centered > div {
+    text-align: center;
+}
+
 .aih-bid-label {
     font-size: 9px;
     font-weight: 500;

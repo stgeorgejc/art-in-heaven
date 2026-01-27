@@ -239,7 +239,10 @@ $cart_count = count($checkout->get_won_items($bidder_id));
                         <?php endif; ?>
 
                         <div class="aih-current-bid">
-                            <?php if (!$has_bids): ?>
+                            <?php if ($has_bids): ?>
+                            <span class="aih-bid-label">Current Bid</span>
+                            <span class="aih-bid-amount" id="current-bid">$<?php echo number_format($current_bid); ?></span>
+                            <?php else: ?>
                             <span class="aih-bid-label">Starting Bid</span>
                             <span class="aih-bid-amount" id="current-bid">$<?php echo number_format($display_bid); ?></span>
                             <?php endif; ?>
@@ -249,7 +252,7 @@ $cart_count = count($checkout->get_won_items($bidder_id));
                         <div class="aih-bid-form-single">
                             <div class="aih-field">
                                 <label>Your Bid</label>
-                                <input type="text" inputmode="numeric" pattern="[0-9]*" id="bid-amount" data-min="<?php echo $min_bid; ?>" placeholder="Enter bid">
+                                <input type="text" inputmode="numeric" pattern="[0-9]*" id="bid-amount" data-min="<?php echo $min_bid; ?>" placeholder="$<?php echo number_format($min_bid); ?>+">
                             </div>
                             <button type="button" id="place-bid" class="aih-btn" data-id="<?php echo $art_piece->id; ?>">
                                 Bid
