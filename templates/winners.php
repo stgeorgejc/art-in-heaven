@@ -85,7 +85,7 @@ $art_images = new AIH_Art_Images();
                             </div>
                             <?php endif; ?>
                             <span class="aih-art-id-badge"><?php echo esc_html($bid->art_id); ?></span>
-                            <div class="aih-badge aih-badge-sold">Sold</div>
+                            <div class="aih-badge aih-badge-ended">Ended</div>
                         </div>
 
                         <div class="aih-card-body">

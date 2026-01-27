@@ -712,11 +712,7 @@ class AIH_Ajax {
                     $status_html = '<span class="aih-status-badge active">' . __('Active', 'art-in-heaven') . '</span>';
                 } else {
                     // Ended
-                    if ($total_bids > 0) {
-                        $status_html = '<span class="aih-status-badge sold">' . __('Sold', 'art-in-heaven') . '</span>';
-                    } else {
-                        $status_html = '<span class="aih-status-badge not_sold">' . __('Unsold', 'art-in-heaven') . '</span>';
-                    }
+                    $status_html = '<span class="aih-status-badge ended">' . __('Ended', 'art-in-heaven') . '</span>';
                 }
             }
         }

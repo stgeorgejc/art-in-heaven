@@ -182,7 +182,7 @@ $cart_count = count($checkout->get_won_items($bidder_id));
                     <?php if ($is_winning && !$is_ended): ?>
                     <span class="aih-badge aih-badge-winning aih-badge-single">Winning</span>
                     <?php elseif ($is_ended): ?>
-                    <span class="aih-badge aih-badge-ended aih-badge-single"><?php echo $is_winning ? 'Won' : 'Sold'; ?></span>
+                    <span class="aih-badge aih-badge-ended aih-badge-single"><?php echo $is_winning ? 'Won' : 'Ended'; ?></span>
                     <?php endif; ?>
 
                     <!-- Art ID Badge on image -->

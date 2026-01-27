@@ -129,7 +129,7 @@ $cart_count = count($checkout->get_won_items($bidder_id));
                 $min_bid = $highest_bid + $bid_increment;
 
                 $status_class = $is_ended ? 'ended' : ($is_winning ? 'winning' : 'outbid');
-                $status_text = $is_ended ? ($is_winning ? 'Won' : 'Sold') : ($is_winning ? 'Winning' : 'Outbid');
+                $status_text = $is_ended ? ($is_winning ? 'Won' : 'Ended') : ($is_winning ? 'Winning' : 'Outbid');
             ?>
             <article class="aih-card <?php echo $status_class; ?>" data-id="<?php echo $bid->art_piece_id; ?>">
                 <div class="aih-card-image">
