@@ -582,18 +582,18 @@ class AIH_Art_Piece {
         elseif ($args['has_favorites'] === true) $having = "HAVING favorites_count > 0";
         
         return $wpdb->get_results($wpdb->prepare(
-            "SELECT a.*, 
+            "SELECT a.*,
                     COUNT(DISTINCT b.bidder_id) as unique_bidders,
-                    COUNT(b.id) as total_bids,
+                    COUNT(DISTINCT b.id) as total_bids,
                     MAX(b.bid_time) as last_bid_time,
                     COALESCE(MAX(b.bid_amount), a.starting_bid) as current_bid,
-                    (SELECT COUNT(*) FROM $favorites_table WHERE art_piece_id = a.id) as favorites_count,
+                    COUNT(DISTINCT fv.id) as favorites_count,
                     TIMESTAMPDIFF(SECOND, %s, a.auction_end) as seconds_remaining,
                     TIMESTAMPDIFF(SECOND, %s, a.auction_start) as seconds_until_start,
                     o.payment_status,
                     o.pickup_status,
                     o.pickup_date,
-                    CASE 
+                    CASE
                         WHEN a.status = 'draft' THEN 'draft'
                         WHEN a.status = 'ended' THEN 'ended'
                         WHEN a.auction_end <= %s THEN 'ended'
@@ -602,6 +602,7 @@ class AIH_Art_Piece {
                     END as computed_status
              FROM {$this->table} a
              LEFT JOIN $bids_table b ON a.id = b.art_piece_id
+             LEFT JOIN $favorites_table fv ON a.id = fv.art_piece_id
              LEFT JOIN $order_items_table oi ON a.id = oi.art_piece_id
              LEFT JOIN $orders_table o ON oi.order_id = o.id
              WHERE $where
@@ -622,58 +623,72 @@ class AIH_Art_Piece {
      */
     public function get_counts() {
         global $wpdb;
+
+        // Check cache first
+        if (class_exists('AIH_Cache')) {
+            $cached = AIH_Cache::get('art_piece_counts');
+            if ($cached !== null) {
+                return $cached;
+            }
+        }
+
         $bids_table = AIH_Database::get_table('bids');
-        $now = current_time('mysql');
-        
-        $counts = new stdClass();
-        $counts->total = $wpdb->get_var("SELECT COUNT(*) FROM {$this->table}");
-        
-        // Active = started AND not ended (handles NULL dates)
-        $counts->active = $wpdb->get_var($wpdb->prepare(
-            "SELECT COUNT(*) FROM {$this->table} WHERE status = 'active' AND (auction_start IS NULL OR auction_start <= %s) AND (auction_end IS NULL OR auction_end > %s)", $now, $now
-        ));
-        
-        // Upcoming = not started yet (only if auction_start is set and in future)
-        $counts->upcoming = $wpdb->get_var($wpdb->prepare(
-            "SELECT COUNT(*) FROM {$this->table} WHERE status = 'active' AND auction_start IS NOT NULL AND auction_start > %s", $now
-        ));
-        
-        $counts->draft = $wpdb->get_var("SELECT COUNT(*) FROM {$this->table} WHERE status = 'draft'");
-        
-        // Ended = status ended OR auction_end has passed (but not if auction_end is NULL)
-        $counts->ended = $wpdb->get_var($wpdb->prepare(
-            "SELECT COUNT(*) FROM {$this->table} WHERE status = 'ended' OR (status = 'active' AND auction_end IS NOT NULL AND auction_end <= %s)", $now
-        ));
-        
-        // Active with bids (handles NULL dates)
-        $counts->active_with_bids = $wpdb->get_var($wpdb->prepare(
-            "SELECT COUNT(DISTINCT a.id) FROM {$this->table} a 
-             INNER JOIN $bids_table b ON a.id = b.art_piece_id 
-             WHERE a.status = 'active' AND (a.auction_start IS NULL OR a.auction_start <= %s) AND (a.auction_end IS NULL OR a.auction_end > %s)", $now, $now
-        ));
-        
-        // Active without bids (handles NULL dates)
-        $counts->active_no_bids = $wpdb->get_var($wpdb->prepare(
-            "SELECT COUNT(DISTINCT a.id) FROM {$this->table} a 
-             LEFT JOIN $bids_table b ON a.id = b.art_piece_id 
-             WHERE a.status = 'active' AND (a.auction_start IS NULL OR a.auction_start <= %s) AND (a.auction_end IS NULL OR a.auction_end > %s) AND b.id IS NULL", $now, $now
-        ));
-        
-        // All pieces with bids (regardless of status)
-        $counts->pieces_with_bids = $wpdb->get_var(
-            "SELECT COUNT(DISTINCT art_piece_id) FROM $bids_table"
-        );
-        
-        // Bid rate percentage (pieces with at least one bid / total pieces)
-        $counts->bid_rate_percent = $counts->total > 0 ? round(($counts->pieces_with_bids / $counts->total) * 100) : 0;
-        
-        // Items with favorites
         $favorites_table = AIH_Database::get_table('favorites');
-        $counts->with_favorites = $wpdb->get_var(
-            "SELECT COUNT(DISTINCT f.art_piece_id) FROM $favorites_table f
-             INNER JOIN {$this->table} a ON f.art_piece_id = a.id"
+        $now = current_time('mysql');
+
+        $counts = new stdClass();
+
+        // Query 1: All status counts in a single query (replaces 5 separate queries)
+        $status_row = $wpdb->get_row($wpdb->prepare(
+            "SELECT
+                COUNT(*) as total,
+                COUNT(CASE WHEN status = 'active' AND (auction_start IS NULL OR auction_start <= %s) AND (auction_end IS NULL OR auction_end > %s) THEN 1 END) as active,
+                COUNT(CASE WHEN status = 'active' AND auction_start IS NOT NULL AND auction_start > %s THEN 1 END) as upcoming,
+                COUNT(CASE WHEN status = 'draft' THEN 1 END) as draft,
+                COUNT(CASE WHEN status = 'ended' OR (status = 'active' AND auction_end IS NOT NULL AND auction_end <= %s) THEN 1 END) as ended
+            FROM {$this->table}",
+            $now, $now, $now, $now
+        ));
+
+        $counts->total = (int) ($status_row->total ?? 0);
+        $counts->active = (int) ($status_row->active ?? 0);
+        $counts->upcoming = (int) ($status_row->upcoming ?? 0);
+        $counts->draft = (int) ($status_row->draft ?? 0);
+        $counts->ended = (int) ($status_row->ended ?? 0);
+
+        // Query 2: Active bid counts in a single query (replaces 2 separate queries)
+        $bid_row = $wpdb->get_row($wpdb->prepare(
+            "SELECT
+                COUNT(DISTINCT CASE WHEN b.id IS NOT NULL THEN a.id END) as active_with_bids,
+                COUNT(DISTINCT CASE WHEN b.id IS NULL THEN a.id END) as active_no_bids
+            FROM {$this->table} a
+            LEFT JOIN $bids_table b ON a.id = b.art_piece_id
+            WHERE a.status = 'active'
+              AND (a.auction_start IS NULL OR a.auction_start <= %s)
+              AND (a.auction_end IS NULL OR a.auction_end > %s)",
+            $now, $now
+        ));
+
+        $counts->active_with_bids = (int) ($bid_row->active_with_bids ?? 0);
+        $counts->active_no_bids = (int) ($bid_row->active_no_bids ?? 0);
+
+        // Query 3: Global bid/favorites counts (replaces 2 separate queries)
+        $global_row = $wpdb->get_row(
+            "SELECT
+                (SELECT COUNT(DISTINCT art_piece_id) FROM $bids_table) as pieces_with_bids,
+                (SELECT COUNT(DISTINCT f.art_piece_id) FROM $favorites_table f
+                 INNER JOIN {$this->table} a ON f.art_piece_id = a.id) as with_favorites"
         );
-        
+
+        $counts->pieces_with_bids = (int) ($global_row->pieces_with_bids ?? 0);
+        $counts->bid_rate_percent = $counts->total > 0 ? round(($counts->pieces_with_bids / $counts->total) * 100) : 0;
+        $counts->with_favorites = (int) ($global_row->with_favorites ?? 0);
+
+        // Cache for 2 minutes
+        if (class_exists('AIH_Cache')) {
+            AIH_Cache::set('art_piece_counts', $counts, 2 * MINUTE_IN_SECONDS, 'art_pieces');
+        }
+
         return $counts;
     }
     

@@ -105,9 +105,12 @@ class Art_In_Heaven {
         require_once AIH_PLUGIN_DIR . 'includes/class-aih-ajax.php';
         require_once AIH_PLUGIN_DIR . 'includes/class-aih-shortcodes.php';
         require_once AIH_PLUGIN_DIR . 'includes/class-aih-notifications.php';
-        require_once AIH_PLUGIN_DIR . 'includes/class-aih-export.php';
-        require_once AIH_PLUGIN_DIR . 'includes/class-aih-rest-api.php';
         require_once AIH_PLUGIN_DIR . 'includes/class-aih-cron-scheduler.php';
+
+        // Defer loading of classes only needed in specific contexts
+        // REST API class loaded on rest_api_init (see init_rest_api())
+        // Export class loaded on demand (referenced by class name in callbacks)
+        require_once AIH_PLUGIN_DIR . 'includes/class-aih-export.php';
 
         if (is_admin()) {
             require_once AIH_PLUGIN_DIR . 'admin/class-aih-admin.php';
@@ -277,6 +280,11 @@ class Art_In_Heaven {
     }
     
     public function init_rest_api() {
+        // Load REST API class only when REST requests are made
+        $rest_file = AIH_PLUGIN_DIR . 'includes/class-aih-rest-api.php';
+        if (file_exists($rest_file)) {
+            require_once $rest_file;
+        }
         if (class_exists('AIH_REST_API')) {
             $rest_api = new AIH_REST_API();
             $rest_api->register_routes();
@@ -601,7 +609,11 @@ class Art_In_Heaven {
     }
     
     public function invalidate_bid_cache($bid_id = null) {
-        if (class_exists('AIH_Cache')) AIH_Cache::delete_group('bids');
+        if (class_exists('AIH_Cache')) {
+            AIH_Cache::delete_group('bids');
+            // Also clear art piece counts since they include bid-related stats
+            AIH_Cache::delete('art_piece_counts');
+        }
     }
 }
 

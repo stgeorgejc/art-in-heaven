@@ -734,18 +734,17 @@ class AIH_Ajax {
         // Compute new status if date fields were changed
         $status_html = '';
         if (in_array($field, array('auction_start', 'auction_end'))) {
-            // Get updated piece data
-            $piece = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE id = %d", $id));
+            // Get updated piece data (only the fields needed for status computation)
+            $piece = $wpdb->get_row($wpdb->prepare(
+                "SELECT status, auction_start, auction_end FROM $table WHERE id = %d",
+                $id
+            ));
             if ($piece) {
                 $now = current_time('timestamp');
                 $start = strtotime($piece->auction_start);
                 $end = strtotime($piece->auction_end);
-                
-                // Get bid count
-                $bids_table = AIH_Database::get_table('bids');
-                $total_bids = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $bids_table WHERE art_piece_id = %d", $id));
-                
-                // Compute status
+
+                // Compute status (bid count not needed for status determination)
                 if ($piece->status === 'draft') {
                     $status_html = '<span class="aih-status-badge draft">' . __('Draft', 'art-in-heaven') . '</span>';
                 } elseif ($start && $start > $now) {
@@ -753,7 +752,6 @@ class AIH_Ajax {
                 } elseif ($end && $end > $now) {
                     $status_html = '<span class="aih-status-badge active">' . __('Active', 'art-in-heaven') . '</span>';
                 } else {
-                    // Ended
                     $status_html = '<span class="aih-status-badge ended">' . __('Ended', 'art-in-heaven') . '</span>';
                 }
             }
@@ -1481,7 +1479,11 @@ class AIH_Ajax {
         $skipped_count = 0;
         $error_details = array();
         $upload_dir = wp_upload_dir();
-        
+
+        // Collect batch updates to reduce individual DB writes
+        $batch_images_updates = array(); // id => watermarked_url
+        $batch_art_updates = array();    // art_piece_id => watermarked_url
+
         // Process art_images table
         if ($images) {
             foreach ($images as $image) {
@@ -1489,15 +1491,15 @@ class AIH_Ajax {
                 if (function_exists('gc_collect_cycles')) {
                     gc_collect_cycles();
                 }
-                
+
                 $file_path = get_attached_file($image->image_id);
-                
+
                 if (!$file_path || !file_exists($file_path)) {
                     $error_count++;
                     $error_details[] = "Image ID {$image->image_id}: File not found";
                     continue;
                 }
-                
+
                 // Check file size - skip very large files (over 10MB)
                 $file_size = @filesize($file_path);
                 if ($file_size > 10 * 1024 * 1024) {
@@ -1505,7 +1507,7 @@ class AIH_Ajax {
                     $error_details[] = "Image ID {$image->image_id}: File too large (" . round($file_size / 1024 / 1024, 1) . "MB)";
                     continue;
                 }
-                
+
                 // Delete existing watermarked file
                 if (!empty($image->watermarked_url)) {
                     $watermarked_path = str_replace($upload_dir['baseurl'], $upload_dir['basedir'], $image->watermarked_url);
@@ -1513,31 +1515,19 @@ class AIH_Ajax {
                         @unlink($watermarked_path);
                     }
                 }
-                
+
                 // Regenerate watermark
                 try {
                     $new_watermark_url = $watermark->process_upload($image->image_id);
-                    
+
                     if ($new_watermark_url) {
-                        $wpdb->update(
-                            $images_table,
-                            array('watermarked_url' => $new_watermark_url),
-                            array('id' => $image->id),
-                            array('%s'),
-                            array('%d')
-                        );
-                        
-                        // If primary, update art_pieces too
+                        $batch_images_updates[$image->id] = $new_watermark_url;
+
+                        // If primary, queue art_pieces update too
                         if ($image->is_primary) {
-                            $wpdb->update(
-                                $art_table,
-                                array('watermarked_url' => $new_watermark_url),
-                                array('id' => $image->art_piece_id),
-                                array('%s'),
-                                array('%d')
-                            );
+                            $batch_art_updates[$image->art_piece_id] = $new_watermark_url;
                         }
-                        
+
                         $success_count++;
                     } else {
                         $error_count++;
@@ -1549,7 +1539,17 @@ class AIH_Ajax {
                 }
             }
         }
-        
+
+        // Build lookup of already-processed art pieces from art_images
+        $processed_art_ids = array();
+        if ($images) {
+            foreach ($images as $img) {
+                if ($img->is_primary) {
+                    $processed_art_ids[$img->art_piece_id] = true;
+                }
+            }
+        }
+
         // Also process art_pieces directly (for any not in art_images)
         if ($art_pieces) {
             foreach ($art_pieces as $piece) {
@@ -1557,33 +1557,25 @@ class AIH_Ajax {
                 if (function_exists('gc_collect_cycles')) {
                     gc_collect_cycles();
                 }
-                
-                // Check if already processed via art_images
-                $already_done = false;
-                if ($images) {
-                    foreach ($images as $img) {
-                        if ($img->art_piece_id == $piece->id && $img->is_primary) {
-                            $already_done = true;
-                            break;
-                        }
-                    }
+
+                // Check if already processed via art_images (O(1) lookup instead of nested loop)
+                if (isset($processed_art_ids[$piece->id])) {
+                    continue;
                 }
-                
-                if ($already_done) continue;
-                
+
                 $file_path = get_attached_file($piece->image_id);
-                
+
                 if (!$file_path || !file_exists($file_path)) {
                     continue; // Skip silently for art_pieces direct
                 }
-                
+
                 // Check file size
                 $file_size = @filesize($file_path);
                 if ($file_size > 10 * 1024 * 1024) {
                     $skipped_count++;
                     continue;
                 }
-                
+
                 // Delete existing watermarked file
                 if (!empty($piece->watermarked_url)) {
                     $watermarked_path = str_replace($upload_dir['baseurl'], $upload_dir['basedir'], $piece->watermarked_url);
@@ -1591,25 +1583,45 @@ class AIH_Ajax {
                         @unlink($watermarked_path);
                     }
                 }
-                
+
                 // Regenerate watermark
                 try {
                     $new_watermark_url = $watermark->process_upload($piece->image_id);
-                    
+
                     if ($new_watermark_url) {
-                        $wpdb->update(
-                            $art_table,
-                            array('watermarked_url' => $new_watermark_url),
-                            array('id' => $piece->id),
-                            array('%s'),
-                            array('%d')
-                        );
+                        $batch_art_updates[$piece->id] = $new_watermark_url;
                         $success_count++;
                     }
                 } catch (Exception $e) {
                     // Skip silently
                 }
             }
+        }
+
+        // Batch write all art_images updates using CASE statement
+        if (!empty($batch_images_updates)) {
+            $case_sql = "UPDATE {$images_table} SET watermarked_url = CASE id";
+            $ids = array();
+            foreach ($batch_images_updates as $id => $url) {
+                $case_sql .= $wpdb->prepare(" WHEN %d THEN %s", $id, $url);
+                $ids[] = intval($id);
+            }
+            $placeholders = implode(',', array_fill(0, count($ids), '%d'));
+            $case_sql .= " END WHERE id IN ($placeholders)";
+            $wpdb->query($wpdb->prepare($case_sql, $ids));
+        }
+
+        // Batch write all art_pieces updates using CASE statement
+        if (!empty($batch_art_updates)) {
+            $case_sql = "UPDATE {$art_table} SET watermarked_url = CASE id";
+            $ids = array();
+            foreach ($batch_art_updates as $id => $url) {
+                $case_sql .= $wpdb->prepare(" WHEN %d THEN %s", $id, $url);
+                $ids[] = intval($id);
+            }
+            $placeholders = implode(',', array_fill(0, count($ids), '%d'));
+            $case_sql .= " END WHERE id IN ($placeholders)";
+            $wpdb->query($wpdb->prepare($case_sql, $ids));
         }
         
         if ($success_count == 0 && $error_count == 0 && $skipped_count == 0) {

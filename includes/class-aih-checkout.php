@@ -180,32 +180,53 @@ class AIH_Checkout {
         if (!empty($reference)) $data['payment_reference'] = $reference;
         if (!empty($notes)) $data['notes'] = $notes;
         if ($status === 'paid') $data['payment_date'] = current_time('mysql');
-        
-        return $wpdb->update($orders_table, $data, array('id' => $order_id));
+
+        $result = $wpdb->update($orders_table, $data, array('id' => $order_id));
+
+        // Invalidate payment stats cache when order status changes
+        if ($result !== false && class_exists('AIH_Cache')) {
+            AIH_Cache::delete('payment_stats');
+        }
+
+        return $result;
     }
     
     public function get_all_orders($args = array()) {
         global $wpdb;
-        
+
         $defaults = array('status' => '', 'bidder_id' => '', 'orderby' => 'created_at', 'order' => 'DESC');
         $args = wp_parse_args($args, $defaults);
-        
+
         $orders_table = AIH_Database::get_table('orders');
         $bidders_table = AIH_Database::get_table('bidders');
         $order_items_table = AIH_Database::get_table('order_items');
         $art_table = AIH_Database::get_table('art_pieces');
-        
+
+        // Sanitize orderby to prevent SQL injection
+        $allowed_orderby = array('created_at', 'total', 'payment_status', 'order_number', 'updated_at');
+        if (!in_array($args['orderby'], $allowed_orderby)) {
+            $args['orderby'] = 'created_at';
+        }
+        $args['order'] = strtoupper($args['order']) === 'ASC' ? 'ASC' : 'DESC';
+
         $where = "1=1";
         if (!empty($args['status'])) $where .= $wpdb->prepare(" AND o.payment_status = %s", $args['status']);
         if (!empty($args['bidder_id'])) $where .= $wpdb->prepare(" AND o.bidder_id = %s", $args['bidder_id']);
-        
+
+        // Use derived table for item_count instead of correlated subquery
         return $wpdb->get_results(
             "SELECT o.*, bd.name_first, bd.name_last, bd.phone_mobile as phone,
-                    (SELECT COUNT(*) FROM $order_items_table oi JOIN $art_table a ON oi.art_piece_id = a.id WHERE oi.order_id = o.id) as item_count
+                    COALESCE(oic.item_count, 0) as item_count
              FROM $orders_table o
              LEFT JOIN $bidders_table bd ON o.bidder_id = bd.confirmation_code
+             LEFT JOIN (
+                 SELECT oi.order_id, COUNT(*) as item_count
+                 FROM $order_items_table oi
+                 JOIN $art_table a ON oi.art_piece_id = a.id
+                 GROUP BY oi.order_id
+             ) oic ON o.id = oic.order_id
              WHERE $where
-             ORDER BY {$args['orderby']} {$args['order']}"
+             ORDER BY o.{$args['orderby']} {$args['order']}"
         );
     }
     
@@ -214,11 +235,19 @@ class AIH_Checkout {
     }
     
     public function get_payment_stats() {
+        // Check cache first
+        if (class_exists('AIH_Cache')) {
+            $cached = AIH_Cache::get('payment_stats');
+            if ($cached !== null) {
+                return $cached;
+            }
+        }
+
         global $wpdb;
         $orders_table = AIH_Database::get_table('orders');
-        
-        return $wpdb->get_row(
-            "SELECT 
+
+        $stats = $wpdb->get_row(
+            "SELECT
                 COUNT(*) as total_orders,
                 SUM(CASE WHEN payment_status = 'paid' THEN 1 ELSE 0 END) as paid_orders,
                 SUM(CASE WHEN payment_status = 'pending' THEN 1 ELSE 0 END) as pending_orders,
@@ -226,14 +255,28 @@ class AIH_Checkout {
                 SUM(CASE WHEN payment_status = 'pending' THEN total ELSE 0 END) as total_pending
              FROM $orders_table"
         );
+
+        // Cache for 2 minutes
+        if (class_exists('AIH_Cache')) {
+            AIH_Cache::set('payment_stats', $stats, 2 * MINUTE_IN_SECONDS, 'orders');
+        }
+
+        return $stats;
     }
     
     public function delete_order($order_id) {
         global $wpdb;
         $orders_table = AIH_Database::get_table('orders');
         $order_items_table = AIH_Database::get_table('order_items');
-        
+
         $wpdb->delete($order_items_table, array('order_id' => $order_id));
-        return $wpdb->delete($orders_table, array('id' => $order_id));
+        $result = $wpdb->delete($orders_table, array('id' => $order_id));
+
+        // Invalidate payment stats cache
+        if ($result && class_exists('AIH_Cache')) {
+            AIH_Cache::delete('payment_stats');
+        }
+
+        return $result;
     }
 }

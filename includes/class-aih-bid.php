@@ -403,23 +403,50 @@ class AIH_Bid {
     
     /**
      * Get bid statistics
+     * Consolidated into a single query with conditional aggregation + caching
      */
     public function get_stats() {
         global $wpdb;
-        
+
+        // Check cache first
+        if (class_exists('AIH_Cache')) {
+            $cached = AIH_Cache::get('bid_stats');
+            if ($cached !== null) {
+                return $cached;
+            }
+        }
+
+        // Single query with conditional aggregation (replaces 9 separate queries)
+        $row = $wpdb->get_row(
+            "SELECT
+                COUNT(CASE WHEN bid_status = 'valid' OR bid_status IS NULL THEN 1 END) AS total_bids,
+                COUNT(CASE WHEN is_winning = 1 THEN 1 END) AS winning_bids,
+                COUNT(CASE WHEN is_winning = 0 AND (bid_status = 'valid' OR bid_status IS NULL) THEN 1 END) AS outbid_bids,
+                COUNT(CASE WHEN bid_status = 'too_low' THEN 1 END) AS rejected_bids,
+                COUNT(DISTINCT CASE WHEN bid_status = 'valid' OR bid_status IS NULL THEN bidder_id END) AS unique_bidders,
+                COUNT(DISTINCT CASE WHEN bid_status = 'valid' OR bid_status IS NULL THEN art_piece_id END) AS unique_art_pieces,
+                COALESCE(SUM(CASE WHEN is_winning = 1 THEN bid_amount ELSE 0 END), 0) AS total_bid_value,
+                MAX(CASE WHEN bid_status = 'valid' OR bid_status IS NULL THEN bid_amount END) AS highest_bid,
+                AVG(CASE WHEN bid_status = 'valid' OR bid_status IS NULL THEN bid_amount END) AS average_bid
+            FROM {$this->table}"
+        );
+
         $stats = new stdClass();
-        
-        // Count only valid bids for main stats
-        $stats->total_bids = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$this->table} WHERE (bid_status = 'valid' OR bid_status IS NULL)");
-        $stats->winning_bids = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$this->table} WHERE is_winning = 1");
-        $stats->outbid_bids = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$this->table} WHERE is_winning = 0 AND (bid_status = 'valid' OR bid_status IS NULL)");
-        $stats->rejected_bids = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$this->table} WHERE bid_status = 'too_low'");
-        $stats->unique_bidders = (int) $wpdb->get_var("SELECT COUNT(DISTINCT bidder_id) FROM {$this->table} WHERE (bid_status = 'valid' OR bid_status IS NULL)");
-        $stats->unique_art_pieces = (int) $wpdb->get_var("SELECT COUNT(DISTINCT art_piece_id) FROM {$this->table} WHERE (bid_status = 'valid' OR bid_status IS NULL)");
-        $stats->total_bid_value = (float) $wpdb->get_var("SELECT SUM(bid_amount) FROM {$this->table} WHERE is_winning = 1");
-        $stats->highest_bid = (float) $wpdb->get_var("SELECT MAX(bid_amount) FROM {$this->table} WHERE (bid_status = 'valid' OR bid_status IS NULL)");
-        $stats->average_bid = (float) $wpdb->get_var("SELECT AVG(bid_amount) FROM {$this->table} WHERE (bid_status = 'valid' OR bid_status IS NULL)");
-        
+        $stats->total_bids = (int) ($row->total_bids ?? 0);
+        $stats->winning_bids = (int) ($row->winning_bids ?? 0);
+        $stats->outbid_bids = (int) ($row->outbid_bids ?? 0);
+        $stats->rejected_bids = (int) ($row->rejected_bids ?? 0);
+        $stats->unique_bidders = (int) ($row->unique_bidders ?? 0);
+        $stats->unique_art_pieces = (int) ($row->unique_art_pieces ?? 0);
+        $stats->total_bid_value = (float) ($row->total_bid_value ?? 0);
+        $stats->highest_bid = (float) ($row->highest_bid ?? 0);
+        $stats->average_bid = (float) ($row->average_bid ?? 0);
+
+        // Cache for 2 minutes
+        if (class_exists('AIH_Cache')) {
+            AIH_Cache::set('bid_stats', $stats, 2 * MINUTE_IN_SECONDS, 'bids');
+        }
+
         return $stats;
     }
 }
