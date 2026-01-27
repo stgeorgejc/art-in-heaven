@@ -923,6 +923,16 @@ button.aih-action-btn .dashicons {
     transition: border-color 0.15s, box-shadow 0.15s;
 }
 
+/* Settings form-table: make text inputs fill available width */
+.aih-admin-wrap .form-table input[type="text"]:not(.small-text):not(.aih-color-text),
+.aih-admin-wrap .form-table input[type="url"],
+.aih-admin-wrap .form-table input[type="email"],
+.aih-admin-wrap .form-table input[type="password"],
+.aih-admin-wrap .form-table input[type="datetime-local"] {
+    width: 100%;
+    max-width: 500px;
+}
+
 .aih-form-row input:focus,
 .aih-form-row textarea:focus,
 .aih-form-row select:focus {
