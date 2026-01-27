@@ -101,6 +101,7 @@
                 type: 'POST',
                 data: {
                     action: 'aih_search',
+                    nonce: aihAjax.nonce,
                     search: query
                 },
                 success: function(response) {
@@ -181,6 +182,7 @@
             type: 'POST',
             data: {
                 action: 'aih_get_art_details',
+                nonce: aihAjax.nonce,
                 art_id: artId
             },
             success: function(response) {

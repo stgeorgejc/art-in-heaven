@@ -152,7 +152,7 @@ $won_without_orders = $wpdb->get_results(
     <h1><?php _e('Payments & Transactions', 'art-in-heaven'); ?></h1>
     
     <?php if (isset($message)): ?>
-    <div class="notice notice-<?php echo $message_type; ?> is-dismissible">
+    <div class="notice notice-<?php echo esc_attr($message_type); ?> is-dismissible">
         <p><?php echo esc_html($message); ?></p>
     </div>
     <?php endif; ?>

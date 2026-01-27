@@ -22,7 +22,20 @@ class AIH_Art_Piece {
     public function __construct() {
         $this->table = AIH_Database::get_table('art_pieces');
     }
-    
+
+    /**
+     * Get the primary image LEFT JOIN subquery for art pieces.
+     *
+     * Selects the primary (or first) image per art piece from the images table.
+     * Used in get_all() to avoid repeating this subquery.
+     *
+     * @return string SQL subquery suitable for LEFT JOIN ... ON a.id = img.art_piece_id
+     */
+    private function get_primary_image_subquery() {
+        $art_images_table = AIH_Database::get_table('art_images');
+        return "(SELECT art_piece_id, image_url, watermarked_url FROM $art_images_table WHERE is_primary = 1 OR sort_order = 0 GROUP BY art_piece_id)";
+    }
+
     /**
      * Get all art pieces with optional filtering
      * FIXED: Now properly checks both auction_start AND auction_end
@@ -159,8 +172,10 @@ class AIH_Art_Piece {
             ELSE 'active'
         END";
         
+        $img_subquery = $this->get_primary_image_subquery();
+
         if ($args['bidder_id']) {
-            $query = "SELECT a.*, 
+            $query = "SELECT a.*,
                       CASE WHEN f.id IS NOT NULL THEN 1 ELSE 0 END as is_favorite,
                       TIMESTAMPDIFF(SECOND, %s, a.auction_end) as seconds_remaining,
                       TIMESTAMPDIFF(SECOND, %s, a.auction_start) as seconds_until_start,
@@ -170,7 +185,7 @@ class AIH_Art_Piece {
                       FROM {$this->table} a
                       LEFT JOIN $favorites_table f ON a.id = f.art_piece_id AND f.bidder_id = %s
                       LEFT JOIN $bids_table b ON a.id = b.art_piece_id
-                      LEFT JOIN (SELECT art_piece_id, image_url, watermarked_url FROM $art_images_table WHERE is_primary = 1 OR sort_order = 0 GROUP BY art_piece_id) img ON a.id = img.art_piece_id
+                      LEFT JOIN $img_subquery img ON a.id = img.art_piece_id
                       WHERE $where_clause
                       GROUP BY a.id
                       $having_clause
@@ -183,7 +198,7 @@ class AIH_Art_Piece {
             array_unshift($values, $now); // seconds_until_start
             array_unshift($values, $now); // seconds_remaining
         } else {
-            $query = "SELECT a.*, 
+            $query = "SELECT a.*,
                       0 as is_favorite,
                       TIMESTAMPDIFF(SECOND, %s, a.auction_end) as seconds_remaining,
                       TIMESTAMPDIFF(SECOND, %s, a.auction_start) as seconds_until_start,
@@ -192,7 +207,7 @@ class AIH_Art_Piece {
                       COALESCE(NULLIF(a.watermarked_url, ''), img.watermarked_url, NULLIF(a.image_url, ''), img.image_url) as display_image_url
                       FROM {$this->table} a
                       LEFT JOIN $bids_table b ON a.id = b.art_piece_id
-                      LEFT JOIN (SELECT art_piece_id, image_url, watermarked_url FROM $art_images_table WHERE is_primary = 1 OR sort_order = 0 GROUP BY art_piece_id) img ON a.id = img.art_piece_id
+                      LEFT JOIN $img_subquery img ON a.id = img.art_piece_id
                       WHERE $where_clause
                       GROUP BY a.id
                       $having_clause
@@ -597,6 +612,14 @@ class AIH_Art_Piece {
         ));
     }
     
+    /**
+     * Get aggregate counts for art pieces by status.
+     *
+     * Returns total, active, upcoming, draft, ended counts plus bid statistics.
+     * Also used by get_reporting_stats() to avoid duplicate queries.
+     *
+     * @return object Counts object with named properties.
+     */
     public function get_counts() {
         global $wpdb;
         $bids_table = AIH_Database::get_table('bids');
@@ -691,33 +714,49 @@ class AIH_Art_Piece {
         ));
     }
     
+    /**
+     * Get reporting statistics for the dashboard.
+     *
+     * Reuses get_counts() for shared piece-level metrics to avoid
+     * duplicate queries, and adds bid-level aggregates and top pieces.
+     *
+     * @return object
+     */
     public function get_reporting_stats() {
         global $wpdb;
         $bids_table = AIH_Database::get_table('bids');
-        $now = current_time('mysql');
-        
+
+        // Reuse get_counts() for shared piece-level metrics
+        $counts = $this->get_counts();
+
         $stats = new stdClass();
-        $stats->total_pieces = $wpdb->get_var("SELECT COUNT(*) FROM {$this->table}");
-        $stats->active_count = $wpdb->get_var($wpdb->prepare(
-            "SELECT COUNT(*) FROM {$this->table} WHERE status = 'active' AND (auction_start IS NULL OR auction_start <= %s) AND (auction_end IS NULL OR auction_end > %s)", $now, $now
-        ));
-        $stats->draft_count = $wpdb->get_var("SELECT COUNT(*) FROM {$this->table} WHERE status = 'draft'");
-        $stats->ended_count = $wpdb->get_var($wpdb->prepare(
-            "SELECT COUNT(*) FROM {$this->table} WHERE status = 'ended' OR (auction_end IS NOT NULL AND auction_end <= %s)", $now
-        ));
-        $stats->total_bids = $wpdb->get_var("SELECT COUNT(*) FROM $bids_table");
-        $stats->unique_bidders = $wpdb->get_var("SELECT COUNT(DISTINCT bidder_id) FROM $bids_table");
-        $stats->pieces_with_bids = $wpdb->get_var("SELECT COUNT(DISTINCT art_piece_id) FROM $bids_table");
-        $stats->total_starting_value = $wpdb->get_var("SELECT SUM(starting_bid) FROM {$this->table}");
-        $stats->highest_bid = $wpdb->get_var("SELECT MAX(bid_amount) FROM $bids_table");
-        $stats->average_bid = $wpdb->get_var("SELECT AVG(bid_amount) FROM $bids_table");
-        
+        $stats->total_pieces     = $counts->total;
+        $stats->active_count     = $counts->active;
+        $stats->draft_count      = $counts->draft;
+        $stats->ended_count      = $counts->ended;
+        $stats->pieces_with_bids = $counts->pieces_with_bids;
+
+        // Bid-level aggregates (consolidated into a single query)
+        $bid_agg = $wpdb->get_row(
+            "SELECT COUNT(*) AS total_bids,
+                    COUNT(DISTINCT bidder_id) AS unique_bidders,
+                    MAX(bid_amount) AS highest_bid,
+                    AVG(bid_amount) AS average_bid
+             FROM $bids_table"
+        );
+
+        $stats->total_bids          = $bid_agg ? (int) $bid_agg->total_bids : 0;
+        $stats->unique_bidders      = $bid_agg ? (int) $bid_agg->unique_bidders : 0;
+        $stats->highest_bid         = $bid_agg ? (float) $bid_agg->highest_bid : 0;
+        $stats->average_bid         = $bid_agg ? (float) $bid_agg->average_bid : 0;
+        $stats->total_starting_value = (float) $wpdb->get_var("SELECT SUM(starting_bid) FROM {$this->table}");
+
         $stats->top_pieces = $wpdb->get_results(
             "SELECT a.*, COUNT(b.id) as bid_count, MAX(b.bid_amount) as highest_bid
              FROM {$this->table} a LEFT JOIN $bids_table b ON a.id = b.art_piece_id
              GROUP BY a.id ORDER BY bid_count DESC LIMIT 10"
         );
-        
+
         return $stats;
     }
 }

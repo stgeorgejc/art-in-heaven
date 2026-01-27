@@ -364,15 +364,15 @@ if (!defined('ABSPATH')) {
                             if ($order->payment_status === 'paid') $status_class = 'active';
                             if ($order->payment_status === 'refunded' || $order->payment_status === 'cancelled') $status_class = 'ended';
                             ?>
-                            <span class="aih-status-badge <?php echo $status_class; ?>"><?php echo ucfirst($order->payment_status); ?></span>
+                            <span class="aih-status-badge <?php echo esc_attr($status_class); ?>"><?php echo esc_html(ucfirst($order->payment_status)); ?></span>
                             <?php if ($order->payment_status === 'paid' && isset($order->pickup_status) && $order->pickup_status === 'picked_up'): ?>
                                 <span class="aih-badge aih-badge-info" style="margin-left: 5px;"><?php _e('Picked Up', 'art-in-heaven'); ?></span>
                             <?php endif; ?>
                         </td>
                         <td data-label="<?php esc_attr_e('Date', 'art-in-heaven'); ?>"><?php echo date_i18n(get_option('date_format'), strtotime($order->created_at)); ?></td>
                         <td class="aih-col-actions" data-label="">
-                            <a href="?page=art-in-heaven-orders&order_id=<?php echo $order->id; ?>" class="button button-small"><?php _e('View', 'art-in-heaven'); ?></a>
-                            <button type="button" class="button button-small aih-delete-order" data-id="<?php echo $order->id; ?>"><?php _e('Delete', 'art-in-heaven'); ?></button>
+                            <a href="?page=art-in-heaven-orders&order_id=<?php echo intval($order->id); ?>" class="button button-small"><?php _e('View', 'art-in-heaven'); ?></a>
+                            <button type="button" class="button button-small aih-delete-order" data-id="<?php echo intval($order->id); ?>"><?php _e('Delete', 'art-in-heaven'); ?></button>
                         </td>
                     </tr>
                     <?php endforeach; ?>

@@ -160,7 +160,7 @@ $total = $subtotal + $tax;
                 </div>
                 <?php if ($tax > 0): ?>
                 <div class="aih-summary-row">
-                    <span>Tax (<?php echo $tax_rate; ?>%)</span>
+                    <span>Tax (<?php echo esc_html($tax_rate); ?>%)</span>
                     <span>$<?php echo number_format($tax, 2); ?></span>
                 </div>
                 <?php endif; ?>

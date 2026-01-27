@@ -32,15 +32,30 @@ $orders_table = AIH_Database::get_table('orders');
 $order_items_table = AIH_Database::get_table('order_items');
 $favorites_table = AIH_Database::get_table('favorites');
 
-$total_bids = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $bids_table WHERE art_piece_id = %d", $art_id));
-$valid_bids = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $bids_table WHERE art_piece_id = %d AND (bid_status = 'valid' OR bid_status IS NULL)", $art_id));
-$rejected_bids = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $bids_table WHERE art_piece_id = %d AND bid_status = 'too_low'", $art_id));
-$unique_bidders = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(DISTINCT bidder_id) FROM $bids_table WHERE art_piece_id = %d", $art_id));
-$highest_bid = (float) $wpdb->get_var($wpdb->prepare("SELECT MAX(bid_amount) FROM $bids_table WHERE art_piece_id = %d AND (bid_status = 'valid' OR bid_status IS NULL)", $art_id));
-$lowest_bid = (float) $wpdb->get_var($wpdb->prepare("SELECT MIN(bid_amount) FROM $bids_table WHERE art_piece_id = %d AND (bid_status = 'valid' OR bid_status IS NULL)", $art_id));
-$average_bid = (float) $wpdb->get_var($wpdb->prepare("SELECT AVG(bid_amount) FROM $bids_table WHERE art_piece_id = %d AND (bid_status = 'valid' OR bid_status IS NULL)", $art_id));
-$last_bid_time = $wpdb->get_var($wpdb->prepare("SELECT MAX(bid_time) FROM $bids_table WHERE art_piece_id = %d", $art_id));
-$current_bid = $highest_bid > 0 ? $highest_bid : $piece->starting_bid;
+// Consolidated bid statistics: single query instead of 8 separate ones
+$bid_stats = $wpdb->get_row($wpdb->prepare(
+    "SELECT
+        COUNT(*) AS total_bids,
+        SUM(CASE WHEN bid_status = 'valid' OR bid_status IS NULL THEN 1 ELSE 0 END) AS valid_bids,
+        SUM(CASE WHEN bid_status = 'too_low' THEN 1 ELSE 0 END) AS rejected_bids,
+        COUNT(DISTINCT bidder_id) AS unique_bidders,
+        MAX(CASE WHEN bid_status = 'valid' OR bid_status IS NULL THEN bid_amount END) AS highest_bid,
+        MIN(CASE WHEN bid_status = 'valid' OR bid_status IS NULL THEN bid_amount END) AS lowest_bid,
+        AVG(CASE WHEN bid_status = 'valid' OR bid_status IS NULL THEN bid_amount END) AS average_bid,
+        MAX(bid_time) AS last_bid_time
+     FROM $bids_table WHERE art_piece_id = %d",
+    $art_id
+));
+
+$total_bids    = $bid_stats ? (int) $bid_stats->total_bids : 0;
+$valid_bids    = $bid_stats ? (int) $bid_stats->valid_bids : 0;
+$rejected_bids = $bid_stats ? (int) $bid_stats->rejected_bids : 0;
+$unique_bidders = $bid_stats ? (int) $bid_stats->unique_bidders : 0;
+$highest_bid   = $bid_stats ? (float) $bid_stats->highest_bid : 0;
+$lowest_bid    = $bid_stats ? (float) $bid_stats->lowest_bid : 0;
+$average_bid   = $bid_stats ? (float) $bid_stats->average_bid : 0;
+$last_bid_time = $bid_stats ? $bid_stats->last_bid_time : null;
+$current_bid   = $highest_bid > 0 ? $highest_bid : $piece->starting_bid;
 
 // Get favorites count
 $favorites_count = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $favorites_table WHERE art_piece_id = %d", $art_id));

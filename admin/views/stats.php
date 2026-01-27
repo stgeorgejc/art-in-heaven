@@ -117,7 +117,7 @@ if (!defined('ABSPATH')) {
                 data-art_id="<?php echo esc_attr($piece->art_id); ?>"
                 data-title="<?php echo esc_attr(strtolower($piece->title)); ?>"
                 data-total_bids="<?php echo intval($piece->total_bids); ?>"
-                data-bid_rate="<?php echo $piece_bid_rate; ?>"
+                data-bid_rate="<?php echo esc_attr($piece_bid_rate); ?>"
                 data-unique_bidders="<?php echo intval($piece->unique_bidders); ?>"
                 data-current_bid="<?php echo floatval($piece->current_bid ?: $piece->starting_bid); ?>">
                 <td>
@@ -201,9 +201,9 @@ if (!defined('ABSPATH')) {
                 <td>
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <div style="flex: 1; max-width: 100px; height: 8px; background: #e5e7eb; border-radius: 4px; overflow: hidden;">
-                            <div style="width: <?php echo $tier_bid_rate; ?>%; height: 100%; background: #b8956b;"></div>
+                            <div style="width: <?php echo esc_attr($tier_bid_rate); ?>%; height: 100%; background: #b8956b;"></div>
                         </div>
-                        <span style="min-width: 45px;"><?php echo $tier_bid_rate; ?>%</span>
+                        <span style="min-width: 45px;"><?php echo esc_html($tier_bid_rate); ?>%</span>
                     </div>
                 </td>
                 <td>$<?php echo number_format($stats['value'], 0); ?></td>
@@ -274,7 +274,7 @@ if (!defined('ABSPATH')) {
                         </td>
                         <td class="aih-col-stat">
                             <?php if ($piece_bid_rate > 0): ?>
-                                <span style="font-weight: 600;"><?php echo $piece_bid_rate; ?>%</span>
+                                <span style="font-weight: 600;"><?php echo esc_html($piece_bid_rate); ?>%</span>
                             <?php else: ?>
                                 <span style="color: #9ca3af;">0%</span>
                             <?php endif; ?>

@@ -265,31 +265,61 @@ class AIH_Export {
      * @return string|WP_Error File URL or error
      */
     /**
-     * Get auction statistics for reporting
-     * 
+     * Get auction statistics for reporting.
+     *
+     * Results are cached for 5 minutes via AIH_Cache to avoid running
+     * 11 separate COUNT/SUM queries on every call.
+     *
      * @return array
      */
     public static function get_auction_stats() {
-        global $wpdb;
-        
-        $art_table = AIH_Database::get_table('art_pieces');
-        $bids_table = AIH_Database::get_table('bids');
-        $bidders_table = AIH_Database::get_table('bidders');
-        $registrants_table = AIH_Database::get_table('registrants');
-        $orders_table = AIH_Database::get_table('orders');
-        
-        return array(
-            'total_art_pieces' => (int) $wpdb->get_var("SELECT COUNT(*) FROM $art_table"),
-            'active_auctions' => (int) $wpdb->get_var("SELECT COUNT(*) FROM $art_table WHERE status = 'active'"),
-            'ended_auctions' => (int) $wpdb->get_var("SELECT COUNT(*) FROM $art_table WHERE status = 'ended'"),
-            'total_bids' => (int) $wpdb->get_var("SELECT COUNT(*) FROM $bids_table"),
-            'unique_bidders' => (int) $wpdb->get_var("SELECT COUNT(DISTINCT bidder_id) FROM $bids_table"),
-            'total_registrants' => (int) $wpdb->get_var("SELECT COUNT(*) FROM $registrants_table"),
-            'logged_in_bidders' => (int) $wpdb->get_var("SELECT COUNT(*) FROM $bidders_table"),
-            'total_bid_value' => (float) $wpdb->get_var("SELECT SUM(current_bid) FROM $art_table WHERE current_bid > 0"),
-            'total_orders' => (int) $wpdb->get_var("SELECT COUNT(*) FROM $orders_table"),
-            'paid_orders' => (int) $wpdb->get_var("SELECT COUNT(*) FROM $orders_table WHERE payment_status = 'paid'"),
-            'total_revenue' => (float) $wpdb->get_var("SELECT SUM(total) FROM $orders_table WHERE payment_status = 'paid'"),
-        );
+        return AIH_Cache::remember('auction_stats', function () {
+            global $wpdb;
+
+            $art_table        = AIH_Database::get_table('art_pieces');
+            $bids_table       = AIH_Database::get_table('bids');
+            $bidders_table    = AIH_Database::get_table('bidders');
+            $registrants_table = AIH_Database::get_table('registrants');
+            $orders_table     = AIH_Database::get_table('orders');
+
+            // Consolidate art piece counts into a single query
+            $art_counts = $wpdb->get_row(
+                "SELECT
+                    COUNT(*) AS total,
+                    SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) AS active,
+                    SUM(CASE WHEN status = 'ended' THEN 1 ELSE 0 END) AS ended,
+                    COALESCE(SUM(CASE WHEN current_bid > 0 THEN current_bid ELSE 0 END), 0) AS bid_value
+                 FROM $art_table"
+            );
+
+            // Consolidate bid counts into a single query
+            $bid_counts = $wpdb->get_row(
+                "SELECT COUNT(*) AS total, COUNT(DISTINCT bidder_id) AS unique_bidders
+                 FROM $bids_table"
+            );
+
+            // Consolidate order counts into a single query
+            $order_counts = $wpdb->get_row(
+                "SELECT
+                    COUNT(*) AS total,
+                    SUM(CASE WHEN payment_status = 'paid' THEN 1 ELSE 0 END) AS paid,
+                    COALESCE(SUM(CASE WHEN payment_status = 'paid' THEN total ELSE 0 END), 0) AS revenue
+                 FROM $orders_table"
+            );
+
+            return array(
+                'total_art_pieces'  => $art_counts ? (int) $art_counts->total : 0,
+                'active_auctions'   => $art_counts ? (int) $art_counts->active : 0,
+                'ended_auctions'    => $art_counts ? (int) $art_counts->ended : 0,
+                'total_bid_value'   => $art_counts ? (float) $art_counts->bid_value : 0,
+                'total_bids'        => $bid_counts ? (int) $bid_counts->total : 0,
+                'unique_bidders'    => $bid_counts ? (int) $bid_counts->unique_bidders : 0,
+                'total_registrants' => (int) $wpdb->get_var("SELECT COUNT(*) FROM $registrants_table"),
+                'logged_in_bidders' => (int) $wpdb->get_var("SELECT COUNT(*) FROM $bidders_table"),
+                'total_orders'      => $order_counts ? (int) $order_counts->total : 0,
+                'paid_orders'       => $order_counts ? (int) $order_counts->paid : 0,
+                'total_revenue'     => $order_counts ? (float) $order_counts->revenue : 0,
+            );
+        }, 5 * MINUTE_IN_SECONDS, 'stats');
     }
 }

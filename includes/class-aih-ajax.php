@@ -1,6 +1,14 @@
 <?php
 /**
- * AJAX Handler - Fixed & Complete
+ * AJAX Handler
+ *
+ * Registers and handles all WordPress AJAX actions for both the admin
+ * panel and the public-facing frontend. Every handler verifies a nonce
+ * via check_ajax_referer() and, where applicable, checks user
+ * capabilities through AIH_Roles before processing the request.
+ *
+ * @package ArtInHeaven
+ * @since   1.0.0
  */
 
 if (!defined('ABSPATH')) {
@@ -117,12 +125,24 @@ class AIH_Ajax {
         wp_send_json_error(array('message' => $result['message']));
     }
     
+    /**
+     * Log the current bidder out and destroy their session.
+     *
+     * @return void Sends JSON response and exits.
+     */
     public function logout() {
+        check_ajax_referer('aih_nonce', 'nonce');
         AIH_Auth::get_instance()->logout_bidder();
         wp_send_json_success(array('message' => __('Logged out.', 'art-in-heaven')));
     }
-    
+
+    /**
+     * Check the current bidder's authentication status.
+     *
+     * @return void Sends JSON response and exits.
+     */
     public function check_auth() {
+        check_ajax_referer('aih_nonce', 'nonce');
         $auth = AIH_Auth::get_instance();
         wp_send_json_success(array('logged_in' => $auth->is_logged_in(), 'bidder' => $auth->get_current_bidder()));
     }
@@ -160,25 +180,37 @@ class AIH_Ajax {
     
     // ========== GALLERY ==========
     
+    /**
+     * Return all active gallery art pieces as JSON.
+     *
+     * @return void Sends JSON response and exits.
+     */
     public function get_gallery() {
+        check_ajax_referer('aih_nonce', 'nonce');
         $auth = AIH_Auth::get_instance();
         $pieces = (new AIH_Art_Piece())->get_all(array('status' => 'active', 'bidder_id' => $auth->get_current_bidder_id()));
         $data = array();
         foreach ($pieces as $p) $data[] = $this->format_art_piece($p, $auth->get_current_bidder_id());
         wp_send_json_success($data);
     }
-    
+
+    /**
+     * Return details for a single art piece, including user bids and favorites.
+     *
+     * @return void Sends JSON response and exits.
+     */
     public function get_art_details() {
+        check_ajax_referer('aih_nonce', 'nonce');
         $art_id = intval($_POST['art_id'] ?? 0);
         if (!$art_id) wp_send_json_error(array('message' => 'Invalid.'));
-        
+
         $piece = (new AIH_Art_Piece())->get($art_id);
         if (!$piece) wp_send_json_error(array('message' => 'Not found.'));
-        
+
         $auth = AIH_Auth::get_instance();
         $bidder_id = $auth->get_current_bidder_id();
         $data = $this->format_art_piece($piece, $bidder_id, true);
-        
+
         if ($bidder_id) {
             $bids = (new AIH_Bid())->get_bidder_bids_for_art_piece($art_id, $bidder_id);
             $data['user_bids'] = array();
@@ -189,21 +221,33 @@ class AIH_Ajax {
         }
         wp_send_json_success($data);
     }
-    
+
+    /**
+     * Search active art pieces by keyword and return matching results.
+     *
+     * @return void Sends JSON response and exits.
+     */
     public function search_art() {
+        check_ajax_referer('aih_nonce', 'nonce');
         $search = sanitize_text_field($_POST['search'] ?? '');
         if (strlen($search) < 2) wp_send_json_success(array());
-        
+
         $auth = AIH_Auth::get_instance();
         $results = (new AIH_Art_Piece())->get_all(array('search' => $search, 'status' => 'active', 'bidder_id' => $auth->get_current_bidder_id(), 'limit' => 20));
         $data = array();
         foreach ($results as $p) $data[] = $this->format_art_piece($p, $auth->get_current_bidder_id());
         wp_send_json_success($data);
     }
-    
+
     // ========== CHECKOUT ==========
-    
+
+    /**
+     * Return items won by the current bidder for checkout.
+     *
+     * @return void Sends JSON response and exits.
+     */
     public function get_won_items() {
+        check_ajax_referer('aih_nonce', 'nonce');
         $auth = AIH_Auth::get_instance();
         if (!$auth->is_logged_in()) wp_send_json_error(array('login_required' => true));
         
@@ -618,7 +662,9 @@ class AIH_Ajax {
         
         $id = intval($_POST['id'] ?? 0);
         $field = sanitize_key($_POST['field'] ?? '');
-        $value = $_POST['value'] ?? '';
+        $raw_value = $_POST['value'] ?? '';
+        // Default sanitization applied immediately; field-specific sanitization below
+        $value = sanitize_text_field($raw_value);
         
         if (!$id || !$field) {
             wp_send_json_error(array('message' => 'Invalid request.'));
@@ -641,10 +687,10 @@ class AIH_Ajax {
             wp_send_json_error(array('message' => 'Field not editable.'));
         }
         
-        // Sanitize value based on field type
+        // Apply field-specific sanitization (overrides default sanitize_text_field above)
         switch ($field) {
             case 'starting_bid':
-                $value = floatval(preg_replace('/[^0-9.]/', '', $value));
+                $value = floatval(preg_replace('/[^0-9.]/', '', $raw_value));
                 break;
             case 'auction_start':
             case 'auction_end':
@@ -655,11 +701,7 @@ class AIH_Ajax {
             case 'show_end_time':
                 $value = intval($value);
                 break;
-            case 'tier':
-                $value = sanitize_text_field($value);
-                break;
-            default:
-                $value = sanitize_text_field($value);
+            // 'tier' and default already sanitized via sanitize_text_field() above
         }
         
         global $wpdb;
