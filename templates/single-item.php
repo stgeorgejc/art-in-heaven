@@ -1309,10 +1309,10 @@ html.aih-lightbox-open body {
     height: 44px;
     min-width: 44px;
     min-height: 44px;
-    background: rgba(255, 255, 255, 0.95);
-    border: none;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 50%;
-    color: #1a1a1a;
+    color: rgba(255, 255, 255, 0.8);
     font-size: 24px;
     font-weight: normal;
     line-height: 44px;
@@ -1320,13 +1320,15 @@ html.aih-lightbox-open body {
     cursor: pointer;
     align-items: center;
     justify-content: center;
-    transition: background 0.2s ease, transform 0.2s ease;
+    transition: background 0.2s ease, transform 0.2s ease, color 0.2s ease;
     z-index: 1000000;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
 }
 
 .aih-lightbox-nav:hover {
-    background: #fff;
+    background: rgba(0, 0, 0, 0.7);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.4);
     transform: translateY(-50%) scale(1.1);
 }
 
