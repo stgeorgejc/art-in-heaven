@@ -302,6 +302,17 @@ class AIH_Admin {
                 return $enabled;
             }
         ));
+        register_setting('aih_integrations', 'aih_auto_sync_interval', array(
+            'type' => 'string',
+            'default' => 'hourly',
+            'sanitize_callback' => function($value) {
+                $valid = array('hourly', 'every_thirty_seconds');
+                $interval = in_array($value, $valid) ? $value : 'hourly';
+                // Reschedule if auto-sync is enabled
+                AIH_Auth::reschedule_auto_sync($interval);
+                return $interval;
+            }
+        ));
         
         // Pushpay settings - Production (in aih_integrations group)
         register_setting('aih_integrations', 'aih_pushpay_merchant_key');

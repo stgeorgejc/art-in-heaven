@@ -99,9 +99,26 @@ $is_sandbox = get_option('aih_pushpay_sandbox', 0);
                     <td>
                         <label>
                             <input type="checkbox" name="aih_auto_sync_enabled" value="1" <?php checked(get_option('aih_auto_sync_enabled', false)); ?>>
-                            <?php _e('Enable hourly auto-sync of registrants from API', 'art-in-heaven'); ?>
+                            <?php _e('Enable automatic sync of registrants from API', 'art-in-heaven'); ?>
                         </label>
-                        <p class="description"><?php _e('Automatically sync new registrants every hour. Useful during events when people are still registering.', 'art-in-heaven'); ?></p>
+                        <p class="description"><?php _e('Automatically sync new registrants at the selected interval.', 'art-in-heaven'); ?></p>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="aih_auto_sync_interval"><?php _e('Sync Interval', 'art-in-heaven'); ?></label></th>
+                    <td>
+                        <?php $current_interval = get_option('aih_auto_sync_interval', 'hourly'); ?>
+                        <select name="aih_auto_sync_interval" id="aih_auto_sync_interval">
+                            <option value="hourly" <?php selected($current_interval, 'hourly'); ?>><?php _e('Every Hour', 'art-in-heaven'); ?></option>
+                            <option value="every_thirty_seconds" <?php selected($current_interval, 'every_thirty_seconds'); ?>><?php _e('Every 30 Seconds', 'art-in-heaven'); ?></option>
+                        </select>
+                        <p class="description"><?php _e('Choose how often to sync registrants. Use 30 seconds during live events for near real-time updates.', 'art-in-heaven'); ?></p>
+                        <?php if ($current_interval === 'every_thirty_seconds'): ?>
+                        <p class="description" style="color: #b45309; margin-top: 8px;">
+                            <strong><?php _e('⚠️ Note:', 'art-in-heaven'); ?></strong>
+                            <?php _e('30-second sync increases API calls significantly. Only use during active registration periods.', 'art-in-heaven'); ?>
+                        </p>
+                        <?php endif; ?>
                     </td>
                 </tr>
             </table>

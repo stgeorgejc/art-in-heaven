@@ -641,21 +641,46 @@ class AIH_Auth {
     // =========================================================================
     // AUTO SYNC SUPPORT
     // =========================================================================
-    
+
     /**
      * Schedule auto sync cron job
+     *
+     * @param string|null $interval Optional interval override. If null, reads from options.
      */
-    public static function schedule_auto_sync() {
-        if (!wp_next_scheduled('aih_auto_sync_registrants')) {
-            wp_schedule_event(time(), 'hourly', 'aih_auto_sync_registrants');
+    public static function schedule_auto_sync($interval = null) {
+        // Clear any existing schedule first
+        wp_clear_scheduled_hook('aih_auto_sync_registrants');
+
+        // Determine interval from parameter or option
+        if ($interval === null) {
+            $interval = get_option('aih_auto_sync_interval', 'hourly');
         }
+
+        // Validate interval
+        $valid_intervals = array('hourly', 'every_thirty_seconds');
+        if (!in_array($interval, $valid_intervals)) {
+            $interval = 'hourly';
+        }
+
+        wp_schedule_event(time(), $interval, 'aih_auto_sync_registrants');
     }
-    
+
     /**
      * Unschedule auto sync cron job
      */
     public static function unschedule_auto_sync() {
         wp_clear_scheduled_hook('aih_auto_sync_registrants');
+    }
+
+    /**
+     * Reschedule auto sync with new interval
+     *
+     * @param string $interval The new interval ('hourly' or 'every_thirty_seconds')
+     */
+    public static function reschedule_auto_sync($interval) {
+        if (get_option('aih_auto_sync_enabled', false)) {
+            self::schedule_auto_sync($interval);
+        }
     }
     
     /**

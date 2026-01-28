@@ -3,7 +3,7 @@
  * Plugin Name: Art in Heaven
  * Plugin URI: https://example.com/art-in-heaven
  * Description: A comprehensive silent auction system for art pieces with bid management, favorites, and admin controls
- * Version: 0.9.157
+ * Version: 0.9.158
  * Author: Art in Heaven Team
  * Author URI: https://example.com
  * License: GPL v2 or later
@@ -22,7 +22,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('AIH_VERSION', '0.9.157');
+define('AIH_VERSION', '0.9.158');
 define('AIH_DB_VERSION', '0.9.0');
 define('AIH_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('AIH_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -158,6 +158,11 @@ class Art_In_Heaven {
         $schedules['every_five_minutes'] = array(
             'interval' => 300, // 5 minutes in seconds
             'display'  => __('Every 5 Minutes', 'art-in-heaven')
+        );
+        // Add 30-second schedule for frequent CCB sync during live events
+        $schedules['every_thirty_seconds'] = array(
+            'interval' => 30, // 30 seconds
+            'display'  => __('Every 30 Seconds', 'art-in-heaven')
         );
         return $schedules;
     }
