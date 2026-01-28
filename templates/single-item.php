@@ -230,15 +230,15 @@ $cart_count = count($checkout->get_won_items($bidder_id));
                     </div>
                     <?php endif; ?>
                     
+                    <?php if (!$is_ended): ?>
                     <div class="aih-bid-section">
-                        <?php if (!$is_ended && $art_piece->auction_end && !empty($art_piece->show_end_time)): ?>
+                        <?php if ($art_piece->auction_end && !empty($art_piece->show_end_time)): ?>
                         <div class="aih-time-remaining-single" data-end="<?php echo esc_attr($art_piece->auction_end); ?>">
                             <span class="aih-time-label">Time Remaining</span>
                             <span class="aih-time-value">--:--:--</span>
                         </div>
                         <?php endif; ?>
 
-                        <?php if (!$is_ended): ?>
                         <div class="aih-bid-form-single">
                             <div class="aih-field">
                                 <label>Your Bid</label>
@@ -249,8 +249,8 @@ $cart_count = count($checkout->get_won_items($bidder_id));
                             </button>
                         </div>
                         <div id="bid-message" class="aih-message"></div>
-                        <?php endif; ?>
                     </div>
+                    <?php endif; ?>
                     
                     <?php if (!empty($my_bid_history)): ?>
                     <div class="aih-bid-history">
