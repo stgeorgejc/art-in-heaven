@@ -348,9 +348,16 @@ jQuery(document).ready(function($) {
     var $lightboxImg = $('#aih-lightbox-img');
     var lightboxIndex = 0;
 
-    // Image sources from PHP
-    var allImages = <?php echo json_encode(array_map(function($img) { return $img->watermarked_url; }, $images)); ?>;
-    // Fallback if no images array
+    // Image sources from PHP - include primary image as fallback
+    var allImages = <?php
+        $image_urls = array_map(function($img) { return $img->watermarked_url; }, $images);
+        // If no images in array, use primary image
+        if (empty($image_urls) && $primary_image) {
+            $image_urls = array($primary_image);
+        }
+        echo json_encode($image_urls);
+    ?>;
+    // Additional fallback if PHP array is still empty
     if (!allImages || allImages.length === 0) {
         var mainSrc = $('#aih-main-image').attr('src');
         if (mainSrc) allImages = [mainSrc];
