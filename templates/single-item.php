@@ -289,11 +289,7 @@ $cart_count = count($checkout->get_won_items($bidder_id));
     <div class="aih-lightbox-content">
         <img src="" alt="" class="aih-lightbox-image" id="aih-lightbox-img">
     </div>
-    <div class="aih-lightbox-dots">
-        <?php foreach ($images as $i => $img): ?>
-        <span class="aih-lightbox-dot <?php echo $i === 0 ? 'active' : ''; ?>" data-index="<?php echo $i; ?>"></span>
-        <?php endforeach; ?>
-    </div>
+    <div class="aih-lightbox-dots"></div>
     <div class="aih-lightbox-counter"><span id="aih-lb-current">1</span> / <?php echo count($images); ?></div>
 </div>
 
@@ -361,6 +357,22 @@ jQuery(document).ready(function($) {
     }
     console.log('Lightbox images:', allImages.length, allImages);
 
+    // Generate lightbox dots dynamically based on actual image count
+    var $dotsContainer = $lightbox.find('.aih-lightbox-dots');
+    $dotsContainer.empty();
+    for (var i = 0; i < allImages.length; i++) {
+        var activeClass = i === 0 ? ' active' : '';
+        $dotsContainer.append('<span class="aih-lightbox-dot' + activeClass + '" data-index="' + i + '"></span>');
+    }
+
+    // Bind click events for dynamically created dots
+    $dotsContainer.on('click', '.aih-lightbox-dot', function() {
+        var index = parseInt($(this).data('index'));
+        lightboxIndex = index;
+        $lightboxImg.attr('src', allImages[index]);
+        updateLightboxDots(index);
+    });
+
     function updateLightboxDots(index) {
         $lightbox.find('.aih-lightbox-dot').removeClass('active');
         $lightbox.find('.aih-lightbox-dot[data-index="' + index + '"]').addClass('active');
@@ -417,15 +429,6 @@ jQuery(document).ready(function($) {
     });
     $('.aih-lightbox-next').on('click', function() {
         lightboxNav(1);
-    });
-
-    // Lightbox dot navigation
-    $('.aih-lightbox-dot').on('click', function() {
-        var index = parseInt($(this).data('index'));
-        lightboxIndex = index;
-        $lightboxImg.attr('src', allImages[index]);
-        $('#aih-lb-current').text(index + 1);
-        updateLightboxDots(index);
     });
 
     // Keyboard navigation
