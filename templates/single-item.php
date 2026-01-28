@@ -238,21 +238,11 @@ $cart_count = count($checkout->get_won_items($bidder_id));
                         </div>
                         <?php endif; ?>
 
-                        <div class="aih-current-bid">
-                            <?php if ($has_bids): ?>
-                            <span class="aih-bid-label">Current Bid</span>
-                            <span class="aih-bid-amount" id="current-bid">$<?php echo number_format($current_bid); ?></span>
-                            <?php else: ?>
-                            <span class="aih-bid-label">Starting Bid</span>
-                            <span class="aih-bid-amount" id="current-bid">$<?php echo number_format($display_bid); ?></span>
-                            <?php endif; ?>
-                        </div>
-
                         <?php if (!$is_ended): ?>
                         <div class="aih-bid-form-single">
                             <div class="aih-field">
                                 <label>Your Bid</label>
-                                <input type="text" inputmode="numeric" pattern="[0-9]*" id="bid-amount" data-min="<?php echo $min_bid; ?>" placeholder="$<?php echo number_format($min_bid); ?>+">
+                                <input type="text" inputmode="numeric" pattern="[0-9]*" id="bid-amount" data-min="<?php echo $min_bid; ?>" placeholder="$">
                             </div>
                             <button type="button" id="place-bid" class="aih-btn" data-id="<?php echo $art_piece->id; ?>">
                                 Bid
@@ -435,11 +425,9 @@ jQuery(document).ready(function($) {
         $.post(aihAjax.ajaxurl, {action:'aih_place_bid', nonce:aihAjax.nonce, art_piece_id:$btn.data('id'), bid_amount:amount}, function(r) {
             if (r.success) {
                 $msg.removeClass('error').addClass('success').text('Bid placed successfully!').show();
-                $('#current-bid').text('').addClass('aih-bid-hidden');
-                $('.aih-current-bid .aih-bid-label').text('Bid Placed');
                 $('.aih-single-image').find('.aih-badge').remove();
                 $('.aih-single-image').prepend('<span class="aih-badge aih-badge-winning aih-badge-single">Winning</span>');
-                $('#bid-amount').val('').attr('placeholder', 'Enter bid');
+                $('#bid-amount').val('');
             } else {
                 $msg.removeClass('success').addClass('error').text(r.data.message || 'Failed').show();
             }
