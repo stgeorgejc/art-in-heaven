@@ -386,10 +386,19 @@ jQuery(document).ready(function($) {
     }
 
     function openLightbox(index) {
-        console.log('Opening lightbox, index:', index, 'total images:', allImages.length);
-        if (allImages.length === 0) return;
+        console.log('Opening lightbox, index:', index, 'total images:', allImages.length, 'images:', allImages);
+        if (allImages.length === 0) {
+            console.log('No images available, cannot open lightbox');
+            return;
+        }
+        // Ensure index is valid
+        if (index < 0 || index >= allImages.length) {
+            index = 0;
+        }
         lightboxIndex = index;
-        $lightboxImg.attr('src', allImages[index]);
+        var imgSrc = allImages[index];
+        console.log('Setting lightbox image to:', imgSrc);
+        $lightboxImg.attr('src', imgSrc);
         $('#aih-lb-current').text(index + 1);
         updateLightboxDots(index);
         $lightbox.addClass('active');
@@ -422,20 +431,22 @@ jQuery(document).ready(function($) {
     }
 
     // Open lightbox on main image click
-    $('#aih-main-image').on('click', function() {
+    $('#aih-main-image').on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('Main image clicked, currentImgIndex:', currentImgIndex, 'allImages:', allImages);
         openLightbox(currentImgIndex);
     });
 
     // Close lightbox
-    $('.aih-lightbox-close').on('click', closeLightbox);
+    $('.aih-lightbox-close').on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        closeLightbox();
+    });
     $lightbox.on('click', function(e) {
-        // Close if clicking anywhere except on interactive elements
-        var $target = $(e.target);
-        var isInteractive = $target.is('.aih-lightbox-image') ||
-                           $target.is('.aih-lightbox-nav') ||
-                           $target.is('.aih-lightbox-dot') ||
-                           $target.is('.aih-lightbox-close');
-        if (!isInteractive) {
+        // Only close if clicking directly on the lightbox background
+        if (e.target === this) {
             closeLightbox();
         }
     });
