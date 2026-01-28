@@ -396,11 +396,9 @@ jQuery(document).ready(function($) {
         updateLightboxDots(lightboxIndex);
     }
 
-    // Open lightbox on main image click (only if multiple images)
+    // Open lightbox on main image click
     $('#aih-main-image').on('click', function() {
-        if (allImages.length > 1) {
-            openLightbox(currentImgIndex);
-        }
+        openLightbox(currentImgIndex);
     });
 
     // Close lightbox
@@ -655,13 +653,8 @@ jQuery(document).ready(function($) {
     max-height: 55vh;
     display: block;
     object-fit: contain;
-    cursor: default;
-    object-position: center;
-}
-
-/* Only show zoom cursor when multiple images available */
-.aih-single-image.has-multiple-images > img {
     cursor: zoom-in;
+    object-position: center;
 }
 
 .aih-single-image .aih-fav-btn {
