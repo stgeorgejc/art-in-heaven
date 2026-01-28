@@ -1297,8 +1297,9 @@ html.aih-lightbox-open body {
     display: flex !important;
 }
 
+/* Hide counter - using dots only */
 .aih-lightbox.has-multiple .aih-lightbox-counter {
-    display: block !important;
+    display: none !important;
 }
 
 .aih-lightbox-nav {
@@ -1382,17 +1383,20 @@ html.aih-lightbox-open body {
     min-width: 10px;
     min-height: 10px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.4);
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     cursor: pointer;
-    transition: background 0.2s ease, transform 0.2s ease;
+    transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
 }
 
 .aih-lightbox-dot:hover {
-    background: rgba(255, 255, 255, 0.7);
+    background: rgba(0, 0, 0, 0.7);
+    border-color: rgba(255, 255, 255, 0.4);
 }
 
 .aih-lightbox-dot.active {
-    background: #fff;
+    background: rgba(0, 0, 0, 0.8);
+    border-color: rgba(255, 255, 255, 0.6);
     transform: scale(1.3);
 }
 
