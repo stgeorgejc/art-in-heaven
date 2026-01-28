@@ -198,6 +198,10 @@ $cart_count = count($checkout->get_won_items($bidder_id));
                         <span class="aih-image-dot <?php echo $i === 0 ? 'active' : ''; ?>" data-index="<?php echo $i; ?>" data-src="<?php echo esc_url($img->watermarked_url); ?>"></span>
                         <?php endforeach; ?>
                     </div>
+                    <button type="button" class="aih-view-photos-btn" id="aih-view-photos">
+                        <span class="aih-view-photos-icon">🖼</span>
+                        <span>View Photos (<?php echo count($images); ?>)</span>
+                    </button>
                     <?php endif; ?>
                 </div>
 
@@ -398,6 +402,11 @@ jQuery(document).ready(function($) {
 
     // Open lightbox on main image click
     $('#aih-main-image').on('click', function() {
+        openLightbox(currentImgIndex);
+    });
+
+    // Open lightbox on View Photos button click
+    $('#aih-view-photos').on('click', function() {
         openLightbox(currentImgIndex);
     });
 
@@ -1195,6 +1204,50 @@ jQuery(document).ready(function($) {
 .aih-image-dot.active {
     background: white;
     transform: scale(1.3);
+}
+
+/* View Photos button */
+.aih-view-photos-btn {
+    position: absolute;
+    bottom: 24px;
+    right: 24px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: rgba(255, 255, 255, 0.95);
+    border: none;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-primary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    z-index: 5;
+}
+
+.aih-view-photos-btn:hover {
+    background: var(--color-accent);
+    color: white;
+    transform: scale(1.05);
+}
+
+.aih-view-photos-icon {
+    font-size: 16px;
+}
+
+@media (max-width: 600px) {
+    .aih-view-photos-btn {
+        bottom: 16px;
+        right: 16px;
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+
+    .aih-view-photos-icon {
+        font-size: 14px;
+    }
 }
 
 /* Lightbox styles */
