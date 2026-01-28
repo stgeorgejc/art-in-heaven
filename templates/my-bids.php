@@ -168,7 +168,7 @@ $cart_count = count($checkout->get_won_items($bidder_id));
 
                     <?php if (!$is_ended && !$is_winning): ?>
                     <div class="aih-bid-form">
-                        <input type="text" inputmode="numeric" pattern="[0-9]*" class="aih-bid-input" data-min="<?php echo $min_bid; ?>" placeholder="$<?php echo number_format($min_bid); ?>+">
+                        <input type="text" inputmode="numeric" pattern="[0-9]*" class="aih-bid-input" data-min="<?php echo $min_bid; ?>" placeholder="$">
                         <button type="button" class="aih-bid-btn" data-id="<?php echo $bid->art_piece_id; ?>">Bid</button>
                     </div>
                     <?php endif; ?>

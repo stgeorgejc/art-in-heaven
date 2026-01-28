@@ -292,32 +292,9 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
 
                 <?php if (!$is_ended): ?>
                 <div class="aih-card-footer">
-                    <div class="aih-bid-info">
-                        <div class="aih-bid-info-left">
-                            <?php if ($has_bids): ?>
-                            <span class="aih-bid-label">Current Bid</span>
-                            <span class="aih-bid-amount">$<?php echo number_format($current_bid); ?></span>
-                            <?php else: ?>
-                            <span class="aih-bid-label">Starting Bid</span>
-                            <span class="aih-bid-amount">$<?php echo number_format($display_bid); ?></span>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-
                     <div class="aih-bid-form">
-                        <input type="text" inputmode="numeric" pattern="[0-9]*" class="aih-bid-input" data-min="<?php echo $min_bid; ?>" placeholder="$<?php echo number_format($min_bid); ?>+">
+                        <input type="text" inputmode="numeric" pattern="[0-9]*" class="aih-bid-input" data-min="<?php echo $min_bid; ?>" placeholder="$">
                         <button type="button" class="aih-bid-btn" data-id="<?php echo $piece->id; ?>">Bid</button>
-                    </div>
-                </div>
-                <?php else: ?>
-                <div class="aih-card-footer">
-                    <div class="aih-bid-info aih-bid-info-centered">
-                        <div>
-                            <span class="aih-bid-label"><?php echo $has_bids ? 'Final Bid' : 'No Bids'; ?></span>
-                            <?php if ($has_bids): ?>
-                            <span class="aih-bid-amount">$<?php echo number_format($current_bid); ?></span>
-                            <?php endif; ?>
-                        </div>
                     </div>
                 </div>
                 <?php endif; ?>
@@ -547,8 +524,6 @@ jQuery(document).ready(function($) {
         $.post(aihAjax.ajaxurl, {action:'aih_place_bid', nonce:aihAjax.nonce, art_piece_id:id, bid_amount:amount}, function(r) {
             if (r.success) {
                 $msg.removeClass('error').addClass('success').text('Bid placed!').show();
-                $card.find('.aih-bid-label').text('Current Bid');
-                $card.find('.aih-bid-amount').text('$' + amount.toLocaleString()).removeClass('aih-bid-hidden');
                 $card.addClass('winning');
                 var $badge = $card.find('.aih-badge');
                 if ($badge.length) {
@@ -556,7 +531,7 @@ jQuery(document).ready(function($) {
                 } else {
                     $card.find('.aih-card-image').append('<div class="aih-badge aih-badge-winning">Winning</div>');
                 }
-                $input.val('').attr('placeholder', '$' + (amount + <?php echo intval($bid_increment); ?>) + '+');
+                $input.val('');
                 setTimeout(function() { $msg.fadeOut(); }, 2000);
             } else {
                 $msg.removeClass('success').addClass('error').text(r.data.message || 'Bid failed').show();
