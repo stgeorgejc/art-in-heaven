@@ -399,8 +399,10 @@ jQuery(document).ready(function($) {
     }
 
     function closeLightbox() {
-        $lightbox.removeClass('active');
+        $lightbox.removeClass('active has-multiple');
         $('html').removeClass('aih-lightbox-open');
+        // Ensure body scroll is restored
+        $('body').css('overflow', '');
     }
 
     function lightboxNav(direction) {
@@ -420,7 +422,15 @@ jQuery(document).ready(function($) {
     // Close lightbox
     $('.aih-lightbox-close').on('click', closeLightbox);
     $lightbox.on('click', function(e) {
-        if (e.target === this) closeLightbox();
+        // Close if clicking anywhere except on interactive elements
+        var $target = $(e.target);
+        var isInteractive = $target.is('.aih-lightbox-image') ||
+                           $target.is('.aih-lightbox-nav') ||
+                           $target.is('.aih-lightbox-dot') ||
+                           $target.is('.aih-lightbox-close');
+        if (!isInteractive) {
+            closeLightbox();
+        }
     });
 
     // Lightbox navigation
