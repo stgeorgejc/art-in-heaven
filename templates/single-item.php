@@ -1143,9 +1143,10 @@ jQuery(document).ready(function($) {
     border-radius: 50%;
     cursor: pointer;
     font-size: 24px;
-    font-weight: bold;
-    line-height: 1;
+    font-weight: normal;
+    line-height: 40px;
     padding: 0;
+    text-align: center;
     color: var(--color-primary);
     z-index: 5;
     opacity: 1;
@@ -1153,12 +1154,15 @@ jQuery(document).ready(function($) {
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 
+/* Adjust arrow position for better optical centering */
 .aih-img-nav-prev {
     left: 24px;
+    padding-right: 2px;
 }
 
 .aih-img-nav-next {
     right: 24px;
+    padding-left: 2px;
 }
 
 .aih-img-nav:hover {
@@ -1402,17 +1406,20 @@ html.aih-lightbox-open body {
         height: 32px;
         min-width: 32px;
         min-height: 32px;
-        font-size: 20px;
-        line-height: 1;
-        padding: 0;
+        font-size: 18px;
+        line-height: 32px;
     }
 
     .aih-img-nav-prev {
         left: 16px;
+        padding-right: 1px;
+        padding-left: 0;
     }
 
     .aih-img-nav-next {
         right: 16px;
+        padding-left: 1px;
+        padding-right: 0;
     }
 
     .aih-image-dot {
