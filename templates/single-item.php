@@ -900,7 +900,7 @@ jQuery(document).ready(function($) {
     width: 50px;
     height: 38px;
     padding: 0;
-    font-size: 10px;
+    font-size: 14px;
     white-space: nowrap;
     display: flex;
     align-items: center;
@@ -1122,7 +1122,7 @@ jQuery(document).ready(function($) {
         height: 44px;
         width: 60px;
         padding: 0;
-        font-size: 10px;
+        font-size: 16px;
     }
 }
 
