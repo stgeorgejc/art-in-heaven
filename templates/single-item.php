@@ -96,9 +96,9 @@ if ($computed_status === 'ended') {
 $images = $art_images->get_images($art_piece->id);
 $primary_image = !empty($images) ? $images[0]->watermarked_url : ($art_piece->watermarked_url ?: $art_piece->image_url);
 
-// Navigation
+// Navigation - include all pieces (active and ended) so navigation works for ended items too
 $art_model = new AIH_Art_Piece();
-$all_pieces = $art_model->get_all(array('status' => 'active', 'bidder_id' => $bidder_id));
+$all_pieces = $art_model->get_all(array('bidder_id' => $bidder_id));
 $current_index = -1;
 foreach ($all_pieces as $i => $p) {
     if ($p->id == $art_piece->id) { $current_index = $i; break; }
