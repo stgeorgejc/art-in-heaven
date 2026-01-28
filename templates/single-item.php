@@ -290,10 +290,15 @@ $cart_count = count($checkout->get_won_items($bidder_id));
     <?php endif; ?>
     <div class="aih-lightbox-content">
         <img src="" alt="" class="aih-lightbox-image" id="aih-lightbox-img">
-        <?php if (count($images) > 1): ?>
-        <div class="aih-lightbox-counter"><span id="aih-lb-current">1</span> / <?php echo count($images); ?></div>
-        <?php endif; ?>
     </div>
+    <?php if (count($images) > 1): ?>
+    <div class="aih-lightbox-dots">
+        <?php foreach ($images as $i => $img): ?>
+        <span class="aih-lightbox-dot <?php echo $i === 0 ? 'active' : ''; ?>" data-index="<?php echo $i; ?>"></span>
+        <?php endforeach; ?>
+    </div>
+    <div class="aih-lightbox-counter"><span id="aih-lb-current">1</span> / <?php echo count($images); ?></div>
+    <?php endif; ?>
 </div>
 
 <script>
@@ -362,11 +367,17 @@ jQuery(document).ready(function($) {
         if (mainSrc) allImages.push(mainSrc);
     }
 
+    function updateLightboxDots(index) {
+        $lightbox.find('.aih-lightbox-dot').removeClass('active');
+        $lightbox.find('.aih-lightbox-dot[data-index="' + index + '"]').addClass('active');
+    }
+
     function openLightbox(index) {
         if (allImages.length === 0) return;
         lightboxIndex = index;
         $lightboxImg.attr('src', allImages[index]);
         $('#aih-lb-current').text(index + 1);
+        updateLightboxDots(index);
         $lightbox.addClass('active');
         $('body').css('overflow', 'hidden');
     }
@@ -382,6 +393,7 @@ jQuery(document).ready(function($) {
         if (lightboxIndex >= allImages.length) lightboxIndex = 0;
         $lightboxImg.attr('src', allImages[lightboxIndex]);
         $('#aih-lb-current').text(lightboxIndex + 1);
+        updateLightboxDots(lightboxIndex);
     }
 
     // Open lightbox on main image click
@@ -401,6 +413,15 @@ jQuery(document).ready(function($) {
     });
     $('.aih-lightbox-next').on('click', function() {
         lightboxNav(1);
+    });
+
+    // Lightbox dot navigation
+    $('.aih-lightbox-dot').on('click', function() {
+        var index = parseInt($(this).data('index'));
+        lightboxIndex = index;
+        $lightboxImg.attr('src', allImages[index]);
+        $('#aih-lb-current').text(index + 1);
+        updateLightboxDots(index);
     });
 
     // Keyboard navigation
