@@ -352,16 +352,14 @@ jQuery(document).ready(function($) {
     var $lightboxImg = $('#aih-lightbox-img');
     var lightboxIndex = 0;
 
-    // Collect all image sources
-    var allImages = [];
-    $('.aih-image-dot').each(function() {
-        allImages.push($(this).data('src'));
-    });
-    // If no dots, use the main image
-    if (allImages.length === 0) {
+    // Image sources from PHP
+    var allImages = <?php echo json_encode(array_map(function($img) { return $img->watermarked_url; }, $images)); ?>;
+    // Fallback if no images array
+    if (!allImages || allImages.length === 0) {
         var mainSrc = $('#aih-main-image').attr('src');
-        if (mainSrc) allImages.push(mainSrc);
+        if (mainSrc) allImages = [mainSrc];
     }
+    console.log('Lightbox images:', allImages.length, allImages);
 
     function updateLightboxDots(index) {
         $lightbox.find('.aih-lightbox-dot').removeClass('active');
@@ -369,6 +367,7 @@ jQuery(document).ready(function($) {
     }
 
     function openLightbox(index) {
+        console.log('Opening lightbox, index:', index, 'total images:', allImages.length);
         if (allImages.length === 0) return;
         lightboxIndex = index;
         $lightboxImg.attr('src', allImages[index]);
@@ -379,10 +378,12 @@ jQuery(document).ready(function($) {
 
         // Show/hide navigation based on image count
         if (allImages.length > 1) {
+            console.log('Showing nav buttons');
             $('.aih-lightbox-nav').css('display', 'flex');
             $('.aih-lightbox-dots').css('display', 'flex');
             $('.aih-lightbox-counter').css('display', 'block');
         } else {
+            console.log('Hiding nav buttons (single image)');
             $('.aih-lightbox-nav').hide();
             $('.aih-lightbox-dots').hide();
             $('.aih-lightbox-counter').hide();
