@@ -1131,10 +1131,10 @@ jQuery(document).ready(function($) {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    width: 40px;
-    height: 40px;
-    min-width: 40px;
-    min-height: 40px;
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1142,9 +1142,9 @@ jQuery(document).ready(function($) {
     border: none;
     border-radius: 50%;
     cursor: pointer;
-    font-size: 24px;
+    font-size: 20px;
     font-weight: normal;
-    line-height: 40px;
+    line-height: 32px;
     padding: 0;
     text-align: center;
     color: var(--color-primary);
@@ -1402,22 +1402,22 @@ html.aih-lightbox-open body {
 @media (max-width: 768px) {
     .aih-img-nav {
         opacity: 1;
-        width: 32px;
-        height: 32px;
-        min-width: 32px;
-        min-height: 32px;
-        font-size: 18px;
-        line-height: 32px;
+        width: 28px;
+        height: 28px;
+        min-width: 28px;
+        min-height: 28px;
+        font-size: 16px;
+        line-height: 28px;
     }
 
     .aih-img-nav-prev {
-        left: 16px;
+        left: 12px;
         padding-right: 1px;
         padding-left: 0;
     }
 
     .aih-img-nav-next {
-        right: 16px;
+        right: 12px;
         padding-left: 1px;
         padding-right: 0;
     }
