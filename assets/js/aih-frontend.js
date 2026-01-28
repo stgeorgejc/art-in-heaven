@@ -417,6 +417,7 @@
                 '<img class="aih-lightbox-image" src="" alt="">' +
                 '<button type="button" class="aih-lightbox-nav aih-lightbox-next">❯</button>' +
             '</div>' +
+            '<div class="aih-lightbox-dots"></div>' +
             '<div class="aih-lightbox-counter"></div>' +
             '<div class="aih-lightbox-thumbnails"></div>' +
         '</div>';
@@ -454,6 +455,13 @@
         
         // Thumbnail click
         $lightbox.on('click', '.aih-lightbox-thumb', function(e) {
+            e.stopPropagation();
+            var index = $(this).data('index');
+            showLightboxImage(index);
+        });
+
+        // Dot indicator click
+        $lightbox.on('click', '.aih-lightbox-dot', function(e) {
             e.stopPropagation();
             var index = $(this).data('index');
             showLightboxImage(index);
@@ -518,12 +526,23 @@
                 .attr('alt', '');
             $thumbContainer.append($thumb);
         });
-        
-        // Show/hide nav and thumbnails based on image count
+
+        // Build dot indicators
+        var $dotsContainer = $lightbox.find('.aih-lightbox-dots');
+        $dotsContainer.empty();
+        images.forEach(function(img, i) {
+            var $dot = $('<span>')
+                .addClass('aih-lightbox-dot')
+                .toggleClass('active', i === currentLightboxIndex)
+                .attr('data-index', i);
+            $dotsContainer.append($dot);
+        });
+
+        // Show/hide nav, thumbnails, dots, and counter based on image count
         if (images.length <= 1) {
-            $lightbox.find('.aih-lightbox-nav, .aih-lightbox-thumbnails, .aih-lightbox-counter').hide();
+            $lightbox.find('.aih-lightbox-nav, .aih-lightbox-thumbnails, .aih-lightbox-dots, .aih-lightbox-counter').hide();
         } else {
-            $lightbox.find('.aih-lightbox-nav, .aih-lightbox-thumbnails, .aih-lightbox-counter').show();
+            $lightbox.find('.aih-lightbox-nav, .aih-lightbox-thumbnails, .aih-lightbox-dots, .aih-lightbox-counter').show();
         }
         
         showLightboxImage(currentLightboxIndex);
@@ -546,6 +565,10 @@
         // Update thumbnail active state
         $lightbox.find('.aih-lightbox-thumb').removeClass('active');
         $lightbox.find('.aih-lightbox-thumb[data-index="' + index + '"]').addClass('active');
+
+        // Update dot indicator active state
+        $lightbox.find('.aih-lightbox-dot').removeClass('active');
+        $lightbox.find('.aih-lightbox-dot[data-index="' + index + '"]').addClass('active');
         
         // Scroll thumbnail into view
         var $thumb = $lightbox.find('.aih-lightbox-thumb.active');
