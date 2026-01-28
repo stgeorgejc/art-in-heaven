@@ -284,17 +284,17 @@ $cart_count = count($checkout->get_won_items($bidder_id));
 <!-- Lightbox for image viewing -->
 <div class="aih-lightbox" id="aih-lightbox">
     <button type="button" class="aih-lightbox-close" aria-label="Close">&times;</button>
-    <button type="button" class="aih-lightbox-nav aih-lightbox-prev" aria-label="Previous image" style="display: none;">‹</button>
-    <button type="button" class="aih-lightbox-nav aih-lightbox-next" aria-label="Next image" style="display: none;">›</button>
+    <button type="button" class="aih-lightbox-nav aih-lightbox-prev" aria-label="Previous image">‹</button>
+    <button type="button" class="aih-lightbox-nav aih-lightbox-next" aria-label="Next image">›</button>
     <div class="aih-lightbox-content">
         <img src="" alt="" class="aih-lightbox-image" id="aih-lightbox-img">
     </div>
-    <div class="aih-lightbox-dots" style="display: none;">
+    <div class="aih-lightbox-dots">
         <?php foreach ($images as $i => $img): ?>
         <span class="aih-lightbox-dot <?php echo $i === 0 ? 'active' : ''; ?>" data-index="<?php echo $i; ?>"></span>
         <?php endforeach; ?>
     </div>
-    <div class="aih-lightbox-counter" style="display: none;"><span id="aih-lb-current">1</span> / <?php echo count($images); ?></div>
+    <div class="aih-lightbox-counter"><span id="aih-lb-current">1</span> / <?php echo count($images); ?></div>
 </div>
 
 <script>
@@ -379,14 +379,10 @@ jQuery(document).ready(function($) {
         // Show/hide navigation based on image count
         if (allImages.length > 1) {
             console.log('Showing nav buttons');
-            $('.aih-lightbox-nav').css('display', 'flex');
-            $('.aih-lightbox-dots').css('display', 'flex');
-            $('.aih-lightbox-counter').css('display', 'block');
+            $lightbox.addClass('has-multiple');
         } else {
             console.log('Hiding nav buttons (single image)');
-            $('.aih-lightbox-nav').hide();
-            $('.aih-lightbox-dots').hide();
-            $('.aih-lightbox-counter').hide();
+            $lightbox.removeClass('has-multiple');
         }
     }
 
@@ -1285,6 +1281,26 @@ html.aih-lightbox-open body {
     box-shadow: 0 10px 50px rgba(0, 0, 0, 0.5);
 }
 
+/* Hide lightbox nav elements by default */
+.aih-lightbox-nav,
+.aih-lightbox-dots,
+.aih-lightbox-counter {
+    display: none !important;
+}
+
+/* Show nav elements when lightbox has multiple images */
+.aih-lightbox.has-multiple .aih-lightbox-nav {
+    display: flex !important;
+}
+
+.aih-lightbox.has-multiple .aih-lightbox-dots {
+    display: flex !important;
+}
+
+.aih-lightbox.has-multiple .aih-lightbox-counter {
+    display: block !important;
+}
+
 .aih-lightbox-nav {
     position: fixed;
     top: 50%;
@@ -1302,7 +1318,6 @@ html.aih-lightbox-open body {
     line-height: 44px;
     text-align: center;
     cursor: pointer;
-    display: flex;
     align-items: center;
     justify-content: center;
     transition: background 0.2s ease, transform 0.2s ease;
@@ -1349,6 +1364,34 @@ html.aih-lightbox-open body {
     font-size: 14px;
     margin-top: 20px;
     opacity: 0.8;
+}
+
+/* Lightbox dots */
+.aih-lightbox-dots {
+    flex-direction: row;
+    gap: 10px;
+    margin-top: 16px;
+    justify-content: center;
+}
+
+.aih-lightbox-dot {
+    width: 10px;
+    height: 10px;
+    min-width: 10px;
+    min-height: 10px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.aih-lightbox-dot:hover {
+    background: rgba(255, 255, 255, 0.7);
+}
+
+.aih-lightbox-dot.active {
+    background: #fff;
+    transform: scale(1.3);
 }
 
 /* Single item placeholder */
