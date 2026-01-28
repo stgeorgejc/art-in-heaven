@@ -362,6 +362,10 @@ jQuery(document).ready(function($) {
         gap: 8px;
     }
 
+    .aih-mybids-page .aih-bid-info-centered {
+        align-items: center;
+    }
+
     .aih-mybids-page .aih-bid-info .aih-bid-label {
         font-size: 9px;
     }
