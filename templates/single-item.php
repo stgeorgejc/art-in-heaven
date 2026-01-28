@@ -379,12 +379,12 @@ jQuery(document).ready(function($) {
         $('#aih-lb-current').text(index + 1);
         updateLightboxDots(index);
         $lightbox.addClass('active');
-        $('body').css('overflow', 'hidden');
+        $('html').addClass('aih-lightbox-open');
     }
 
     function closeLightbox() {
         $lightbox.removeClass('active');
-        $('body').css('overflow', '');
+        $('html').removeClass('aih-lightbox-open');
     }
 
     function lightboxNav(direction) {
@@ -1203,15 +1203,16 @@ jQuery(document).ready(function($) {
     position: fixed;
     top: 0;
     left: 0;
-    right: 0;
-    bottom: 0;
-    width: 100%;
-    height: 100%;
+    width: 100vw;
+    height: 100vh;
+    min-width: 100vw;
+    min-height: 100vh;
     margin: 0;
     padding: 0;
     background: rgba(0, 0, 0, 0.98);
     z-index: 999999;
     overflow: hidden;
+    box-sizing: border-box;
 }
 
 .aih-lightbox.active {
@@ -1219,6 +1220,12 @@ jQuery(document).ready(function($) {
     align-items: center;
     justify-content: center;
     flex-direction: column;
+}
+
+/* Ensure lightbox covers entire viewport even with scrollbars */
+html.aih-lightbox-open,
+html.aih-lightbox-open body {
+    overflow: hidden !important;
 }
 
 .aih-lightbox-close {
