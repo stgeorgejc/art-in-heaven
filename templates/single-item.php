@@ -901,6 +901,7 @@ jQuery(document).ready(function($) {
     height: 38px;
     padding: 0;
     font-size: 14px;
+    line-height: 1;
     white-space: nowrap;
     display: flex;
     align-items: center;
@@ -1123,6 +1124,7 @@ jQuery(document).ready(function($) {
         width: 60px;
         padding: 0;
         font-size: 16px;
+        line-height: 1;
     }
 }
 
