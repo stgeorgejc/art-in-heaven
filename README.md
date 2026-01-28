@@ -1,10 +1,22 @@
 # Art in Heaven WordPress Plugin
 
-A comprehensive WordPress plugin for managing silent art auctions with CCB API integration, Pushpay payments, and year-based data management.
+A comprehensive WordPress plugin for managing silent art auctions. The plugin enables churches and organizations to run fully-featured online art auctions where participants can browse artwork, place bids in real-time, track favorites, and complete purchases through integrated payment processing.
 
-## Version 0.9.0 (Beta)
+## Key Capabilities
 
-## What's New in 2.7.0
+- **Silent Auction Management**: Create and manage art piece listings with images, descriptions, starting prices, and scheduled auction times
+- **Real-time Bidding**: Secure bidding system with validation, minimum increment enforcement, and live countdown timers
+- **User Authentication**: Confirmation code-based login integrated with Church Community Builder (CCB) API for registrant management
+- **Automatic Watermarking**: Protect artwork images with customizable watermarks
+- **Favorites System**: Allow bidders to track items they're interested in
+- **Payment Integration**: Seamless checkout via Pushpay for won items
+- **Email Notifications**: Automated alerts for outbids, wins, and auction reminders
+- **Admin Dashboard**: Comprehensive management interface for art pieces, bids, bidders, orders, and reports
+- **GDPR Compliance**: Built-in data export and erasure capabilities
+
+## Version 0.9.157
+
+## What's New in 0.9.x
 
 ### Security Enhancements
 - **SA_Security Class**: Centralized input sanitization, validation, and escaping
