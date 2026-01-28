@@ -284,21 +284,17 @@ $cart_count = count($checkout->get_won_items($bidder_id));
 <!-- Lightbox for image viewing -->
 <div class="aih-lightbox" id="aih-lightbox">
     <button type="button" class="aih-lightbox-close" aria-label="Close">&times;</button>
-    <?php if (count($images) > 1): ?>
-    <button type="button" class="aih-lightbox-nav aih-lightbox-prev" aria-label="Previous image">‹</button>
-    <button type="button" class="aih-lightbox-nav aih-lightbox-next" aria-label="Next image">›</button>
-    <?php endif; ?>
+    <button type="button" class="aih-lightbox-nav aih-lightbox-prev" aria-label="Previous image" style="display: none;">‹</button>
+    <button type="button" class="aih-lightbox-nav aih-lightbox-next" aria-label="Next image" style="display: none;">›</button>
     <div class="aih-lightbox-content">
         <img src="" alt="" class="aih-lightbox-image" id="aih-lightbox-img">
     </div>
-    <?php if (count($images) > 1): ?>
-    <div class="aih-lightbox-dots">
+    <div class="aih-lightbox-dots" style="display: none;">
         <?php foreach ($images as $i => $img): ?>
         <span class="aih-lightbox-dot <?php echo $i === 0 ? 'active' : ''; ?>" data-index="<?php echo $i; ?>"></span>
         <?php endforeach; ?>
     </div>
-    <div class="aih-lightbox-counter"><span id="aih-lb-current">1</span> / <?php echo count($images); ?></div>
-    <?php endif; ?>
+    <div class="aih-lightbox-counter" style="display: none;"><span id="aih-lb-current">1</span> / <?php echo count($images); ?></div>
 </div>
 
 <script>
@@ -380,6 +376,17 @@ jQuery(document).ready(function($) {
         updateLightboxDots(index);
         $lightbox.addClass('active');
         $('html').addClass('aih-lightbox-open');
+
+        // Show/hide navigation based on image count
+        if (allImages.length > 1) {
+            $('.aih-lightbox-nav').css('display', 'flex');
+            $('.aih-lightbox-dots').css('display', 'flex');
+            $('.aih-lightbox-counter').css('display', 'block');
+        } else {
+            $('.aih-lightbox-nav').hide();
+            $('.aih-lightbox-dots').hide();
+            $('.aih-lightbox-counter').hide();
+        }
     }
 
     function closeLightbox() {
