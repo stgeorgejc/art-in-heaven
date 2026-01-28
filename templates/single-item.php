@@ -1133,6 +1133,8 @@ jQuery(document).ready(function($) {
     transform: translateY(-50%);
     width: 40px;
     height: 40px;
+    min-width: 40px;
+    min-height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1142,6 +1144,8 @@ jQuery(document).ready(function($) {
     cursor: pointer;
     font-size: 24px;
     font-weight: bold;
+    line-height: 1;
+    padding: 0;
     color: var(--color-primary);
     z-index: 5;
     opacity: 1;
@@ -1396,7 +1400,11 @@ html.aih-lightbox-open body {
         opacity: 1;
         width: 32px;
         height: 32px;
-        font-size: 18px;
+        min-width: 32px;
+        min-height: 32px;
+        font-size: 20px;
+        line-height: 1;
+        padding: 0;
     }
 
     .aih-img-nav-prev {
