@@ -1281,31 +1281,59 @@ html.aih-lightbox-open body {
     position: fixed;
     top: 50%;
     transform: translateY(-50%);
-    width: 50px;
-    height: 50px;
-    background: rgba(255, 255, 255, 0.2);
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    background: rgba(255, 255, 255, 0.95);
     border: none;
     border-radius: 50%;
-    color: #fff;
-    font-size: 28px;
+    color: #1a1a1a;
+    font-size: 24px;
+    font-weight: normal;
+    line-height: 44px;
+    text-align: center;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background 0.2s ease;
+    transition: background 0.2s ease, transform 0.2s ease;
     z-index: 1000000;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
 }
 
 .aih-lightbox-nav:hover {
-    background: rgba(255, 255, 255, 0.3);
+    background: #fff;
+    transform: translateY(-50%) scale(1.1);
 }
 
 .aih-lightbox-prev {
     left: 20px;
+    padding-right: 2px;
 }
 
 .aih-lightbox-next {
     right: 20px;
+    padding-left: 2px;
+}
+
+@media (max-width: 768px) {
+    .aih-lightbox-nav {
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+        min-height: 36px;
+        font-size: 20px;
+        line-height: 36px;
+    }
+
+    .aih-lightbox-prev {
+        left: 10px;
+    }
+
+    .aih-lightbox-next {
+        right: 10px;
+    }
 }
 
 .aih-lightbox-counter {
