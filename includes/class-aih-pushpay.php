@@ -558,6 +558,87 @@ class AIH_Pushpay_API {
     }
     
     /**
+     * Discover organization and merchant keys using client credentials.
+     * Authenticates with the API and fetches available organizations and merchants.
+     */
+    public function discover_keys() {
+        $token = $this->get_access_token(true);
+
+        if (is_wp_error($token)) {
+            return array(
+                'success' => false,
+                'message' => 'Authentication failed: ' . $token->get_error_message()
+            );
+        }
+
+        // Fetch organizations
+        $orgs_result = $this->api_request('/organizations');
+
+        if (is_wp_error($orgs_result)) {
+            return array(
+                'success' => false,
+                'message' => 'Failed to fetch organizations: ' . $orgs_result->get_error_message()
+            );
+        }
+
+        $organizations = array();
+        $items = isset($orgs_result['items']) ? $orgs_result['items'] : (is_array($orgs_result) && isset($orgs_result[0]) ? $orgs_result : array());
+
+        // Handle single org response (not wrapped in items)
+        if (empty($items) && isset($orgs_result['key'])) {
+            $items = array($orgs_result);
+        }
+
+        foreach ($items as $org) {
+            $org_key = isset($org['key']) ? $org['key'] : '';
+            $org_name = isset($org['name']) ? $org['name'] : 'Unknown';
+
+            if (empty($org_key)) continue;
+
+            $org_data = array(
+                'key' => $org_key,
+                'name' => $org_name,
+                'merchants' => array()
+            );
+
+            // Fetch merchants for this organization
+            $merchants_result = $this->api_request('/organization/' . $org_key . '/merchants');
+
+            if (!is_wp_error($merchants_result)) {
+                $merchant_items = isset($merchants_result['items']) ? $merchants_result['items'] : (is_array($merchants_result) && isset($merchants_result[0]) ? $merchants_result : array());
+
+                if (empty($merchant_items) && isset($merchants_result['key'])) {
+                    $merchant_items = array($merchants_result);
+                }
+
+                foreach ($merchant_items as $merchant) {
+                    if (isset($merchant['key'])) {
+                        $org_data['merchants'][] = array(
+                            'key' => $merchant['key'],
+                            'name' => isset($merchant['name']) ? $merchant['name'] : 'Unknown'
+                        );
+                    }
+                }
+            }
+
+            $organizations[] = $org_data;
+        }
+
+        if (empty($organizations)) {
+            return array(
+                'success' => false,
+                'message' => 'No organizations found. Your API credentials may not have the required permissions.'
+            );
+        }
+
+        return array(
+            'success' => true,
+            'organizations' => $organizations,
+            'message' => sprintf('Found %d organization(s).', count($organizations))
+        );
+    }
+
+    /**
      * Generate payment URL with pre-filled data
      */
     public function get_payment_url($order) {

@@ -87,6 +87,7 @@ class AIH_Ajax {
         add_action('wp_ajax_aih_admin_test_pushpay', array($this, 'admin_test_pushpay'));
         add_action('wp_ajax_aih_admin_sync_pushpay', array($this, 'admin_sync_pushpay'));
         add_action('wp_ajax_aih_admin_match_transaction', array($this, 'admin_match_transaction'));
+        add_action('wp_ajax_aih_admin_discover_pushpay_keys', array($this, 'admin_discover_pushpay_keys'));
         // Aliases for transactions page
         add_action('wp_ajax_aih_test_pushpay_connection', array($this, 'admin_test_pushpay'));
         add_action('wp_ajax_aih_sync_pushpay_transactions', array($this, 'admin_sync_pushpay'));
@@ -1320,6 +1321,45 @@ class AIH_Ajax {
         }
     }
     
+    /**
+     * Discover Pushpay organization and merchant keys
+     */
+    public function admin_discover_pushpay_keys() {
+        check_ajax_referer('aih_admin_nonce', 'nonce');
+
+        if (!AIH_Roles::can_manage_settings()) {
+            wp_send_json_error(array('message' => 'Permission denied.'));
+        }
+
+        $pushpay = AIH_Pushpay_API::get_instance();
+        $result = $pushpay->discover_keys();
+
+        if ($result['success']) {
+            // If auto-apply requested and only one org/merchant found, save them
+            $auto_apply = isset($_POST['auto_apply']) && $_POST['auto_apply'] === '1';
+            if ($auto_apply && !empty($result['organizations'])) {
+                $org = $result['organizations'][0];
+                $is_sandbox = get_option('aih_pushpay_sandbox', 0);
+                $prefix = $is_sandbox ? 'aih_pushpay_sandbox_' : 'aih_pushpay_';
+
+                update_option($prefix . 'organization_key', $org['key']);
+                $result['applied_org'] = $org['key'];
+
+                if (!empty($org['merchants'])) {
+                    update_option($prefix . 'merchant_key', $org['merchants'][0]['key']);
+                    $result['applied_merchant'] = $org['merchants'][0]['key'];
+                }
+
+                // Clear cached token so next request uses updated settings
+                delete_transient('aih_pushpay_token');
+            }
+
+            wp_send_json_success($result);
+        } else {
+            wp_send_json_error($result);
+        }
+    }
+
     /**
      * Sync Pushpay transactions
      */

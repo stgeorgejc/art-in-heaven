@@ -214,7 +214,7 @@ $is_sandbox = get_option('aih_pushpay_sandbox', 0);
                     🧪 <?php _e('Sandbox Credentials', 'art-in-heaven'); ?>
                 </h3>
                 <p class="description"><?php _e('Use these credentials for testing. Get them from the Pushpay Sandbox Developer Portal.', 'art-in-heaven'); ?></p>
-                
+
                 <table class="form-table">
                     <tr>
                         <th scope="row"><label for="aih_pushpay_sandbox_client_id"><?php _e('Client ID', 'art-in-heaven'); ?></label></th>
@@ -242,6 +242,11 @@ $is_sandbox = get_option('aih_pushpay_sandbox', 0);
                         </td>
                     </tr>
                 </table>
+                <p style="margin-top: 10px;">
+                    <button type="button" class="button aih-discover-keys" data-env="sandbox"><?php _e('Discover Keys from API', 'art-in-heaven'); ?></button>
+                    <span class="aih-discover-result" style="margin-left: 10px;"></span>
+                </p>
+                <p class="description"><?php _e('Enter your Client ID and Client Secret above, save settings, then click to auto-discover your Organization and Merchant keys.', 'art-in-heaven'); ?></p>
             </div>
             
             <!-- Production Credentials -->
@@ -278,6 +283,11 @@ $is_sandbox = get_option('aih_pushpay_sandbox', 0);
                         </td>
                     </tr>
                 </table>
+                <p style="margin-top: 10px;">
+                    <button type="button" class="button aih-discover-keys" data-env="production"><?php _e('Discover Keys from API', 'art-in-heaven'); ?></button>
+                    <span class="aih-discover-result" style="margin-left: 10px;"></span>
+                </p>
+                <p class="description"><?php _e('Enter your Client ID and Client Secret above, save settings, then click to auto-discover your Organization and Merchant keys.', 'art-in-heaven'); ?></p>
             </div>
             
             <!-- Shared Payment Link Settings -->
@@ -425,6 +435,54 @@ jQuery(document).ready(function($) {
         });
     });
     
+    // Discover Pushpay Keys
+    $('.aih-discover-keys').on('click', function() {
+        var $btn = $(this).prop('disabled', true).text('<?php echo esc_js(__('Discovering...', 'art-in-heaven')); ?>');
+        var $result = $btn.siblings('.aih-discover-result').html('<span style="color:#666;"><?php echo esc_js(__('Authenticating and fetching keys...', 'art-in-heaven')); ?></span>');
+        var env = $btn.data('env');
+        var prefix = env === 'sandbox' ? 'aih_pushpay_sandbox_' : 'aih_pushpay_';
+
+        $.ajax({
+            url: ajaxurl,
+            type: 'POST',
+            timeout: 30000,
+            data: { action: 'aih_admin_discover_pushpay_keys', nonce: nonce, auto_apply: '1' },
+            success: function(response) {
+                if (response.success) {
+                    var data = response.data;
+                    var msg = '';
+                    if (data.organizations && data.organizations.length > 0) {
+                        var org = data.organizations[0];
+                        // Fill org key field
+                        $('#' + prefix + 'organization_key').val(org.key);
+                        msg = '<?php echo esc_js(__('Organization:', 'art-in-heaven')); ?> ' + org.name + ' (' + org.key + ')';
+
+                        if (org.merchants && org.merchants.length > 0) {
+                            var merchant = org.merchants[0];
+                            $('#' + prefix + 'merchant_key').val(merchant.key);
+                            msg += '<br><?php echo esc_js(__('Merchant:', 'art-in-heaven')); ?> ' + merchant.name + ' (' + merchant.key + ')';
+                        } else {
+                            msg += '<br><span style="color:#b45309;"><?php echo esc_js(__('No merchants found for this organization.', 'art-in-heaven')); ?></span>';
+                        }
+
+                        if (data.organizations.length > 1) {
+                            msg += '<br><em><?php echo esc_js(__('Multiple organizations found. First one selected. Save settings to confirm.', 'art-in-heaven')); ?></em>';
+                        }
+                    }
+                    $result.html('<span style="color:green;">&#10003; ' + msg + '</span>');
+                } else {
+                    $result.html('<span style="color:red;">&#10007; ' + (response.data ? response.data.message : '<?php echo esc_js(__('Discovery failed', 'art-in-heaven')); ?>') + '</span>');
+                }
+            },
+            error: function(xhr, status, error) {
+                $result.html('<span style="color:red;">&#10007; ' + error + '</span>');
+            },
+            complete: function() {
+                $btn.prop('disabled', false).text('<?php echo esc_js(__('Discover Keys from API', 'art-in-heaven')); ?>');
+            }
+        });
+    });
+
     // Toggle Pushpay environment sections
     $('input[name="aih_pushpay_sandbox"]').on('change', function() {
         var isSandbox = $(this).val() === '1';
