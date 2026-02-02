@@ -97,6 +97,7 @@ if (!defined('ABSPATH')) {
                             <label><?php _e('Payment Method', 'art-in-heaven'); ?></label>
                             <select name="method">
                                 <option value="" <?php selected($single_order->payment_method, ''); ?>><?php _e('Select...', 'art-in-heaven'); ?></option>
+                                <option value="pushpay" <?php selected($single_order->payment_method, 'pushpay'); ?>><?php _e('Pushpay', 'art-in-heaven'); ?></option>
                                 <option value="cash" <?php selected($single_order->payment_method, 'cash'); ?>><?php _e('Cash', 'art-in-heaven'); ?></option>
                                 <option value="check" <?php selected($single_order->payment_method, 'check'); ?>><?php _e('Check', 'art-in-heaven'); ?></option>
                                 <option value="card" <?php selected($single_order->payment_method, 'card'); ?>><?php _e('Credit Card', 'art-in-heaven'); ?></option>
