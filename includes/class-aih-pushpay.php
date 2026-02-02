@@ -390,7 +390,7 @@ class AIH_Pushpay_API {
                     'amount' => floatval($payment['amount']['amount']),
                     'currency' => $payment['amount']['currency'],
                     'status' => $payment['status'],
-                    'payer_name' => isset($payment['payer']['name']) ? $payment['payer']['name'] : '',
+                    'payer_name' => isset($payment['payer']['fullName']) ? $payment['payer']['fullName'] : (isset($payment['payer']['firstName']) ? trim($payment['payer']['firstName'] . ' ' . ($payment['payer']['lastName'] ?? '')) : ''),
                     'payer_email' => isset($payment['payer']['emailAddress']) ? $payment['payer']['emailAddress'] : '',
                     'fund' => isset($payment['fund']['name']) ? $payment['fund']['name'] : '',
                     'reference' => isset($payment['paymentMethodDetails']['reference']) ? $payment['paymentMethodDetails']['reference'] : '',
@@ -408,11 +408,33 @@ class AIH_Pushpay_API {
                 
                 if ($existing) {
                     $wpdb->update($transactions_table, $transaction_data, array('id' => $existing));
+
+                    // Backfill payment_reference for already-linked orders missing it
+                    $linked_order_id = $wpdb->get_var($wpdb->prepare(
+                        "SELECT order_id FROM {$transactions_table} WHERE id = %d AND order_id IS NOT NULL",
+                        $existing
+                    ));
+                    if ($linked_order_id) {
+                        $linked_order = $wpdb->get_row($wpdb->prepare(
+                            "SELECT id, payment_reference FROM {$orders_table} WHERE id = %d",
+                            $linked_order_id
+                        ));
+                        if ($linked_order && empty($linked_order->payment_reference)) {
+                            $wpdb->update(
+                                $orders_table,
+                                array(
+                                    'payment_reference' => isset($payment['transactionId']) ? $payment['transactionId'] : $payment['paymentToken'],
+                                    'updated_at' => current_time('mysql')
+                                ),
+                                array('id' => $linked_order->id)
+                            );
+                        }
+                    }
                 } else {
                     $wpdb->insert($transactions_table, $transaction_data);
                     $total_synced++;
                 }
-                
+
                 // Try to match to an order by reference (order number in notes/reference)
                 $order_number = null;
                 
@@ -456,10 +478,21 @@ class AIH_Pushpay_API {
                             array(
                                 'payment_status' => 'paid',
                                 'payment_method' => 'pushpay',
-                                'payment_reference' => $payment['paymentToken'],
+                                'payment_reference' => isset($payment['transactionId']) ? $payment['transactionId'] : $payment['paymentToken'],
                                 'pushpay_payment_id' => $payment['paymentToken'],
                                 'pushpay_status' => $payment['status'],
                                 'payment_date' => date('Y-m-d H:i:s', strtotime($payment['createdOn'])),
+                                'updated_at' => current_time('mysql')
+                            ),
+                            array('id' => $order->id)
+                        );
+                    } elseif ($order && empty($order->payment_reference)) {
+                        // Backfill payment_reference for already-paid orders
+                        $wpdb->update(
+                            $orders_table,
+                            array(
+                                'payment_reference' => isset($payment['transactionId']) ? $payment['transactionId'] : $payment['paymentToken'],
+                                'pushpay_payment_id' => $payment['paymentToken'],
                                 'updated_at' => current_time('mysql')
                             ),
                             array('id' => $order->id)
@@ -580,13 +613,17 @@ class AIH_Pushpay_API {
             array('id' => $transaction_id)
         );
         
+        // Extract transactionId from raw data if available
+        $raw = json_decode($transaction->raw_data, true);
+        $reference = isset($raw['transactionId']) ? $raw['transactionId'] : $transaction->pushpay_id;
+
         // Update order
         $wpdb->update(
             $orders_table,
             array(
                 'payment_status' => 'paid',
                 'payment_method' => 'pushpay',
-                'payment_reference' => $transaction->pushpay_id,
+                'payment_reference' => $reference,
                 'pushpay_payment_id' => $transaction->pushpay_id,
                 'pushpay_status' => $transaction->status,
                 'payment_date' => $transaction->payment_date,

@@ -124,6 +124,7 @@ class Art_In_Heaven {
         register_activation_hook(__FILE__, array($this, 'activate'));
         register_deactivation_hook(__FILE__, array($this, 'deactivate'));
         
+        add_action('init', array($this, 'maybe_update_db'), 0);
         add_action('init', array($this, 'init'), 0);
         add_action('rest_api_init', array($this, 'init_rest_api'));
         add_action('wp_enqueue_scripts', array($this, 'enqueue_frontend_assets'));
@@ -167,6 +168,16 @@ class Art_In_Heaven {
         return $schedules;
     }
     
+    /**
+     * Auto-run database migrations when plugin version changes
+     */
+    public function maybe_update_db() {
+        $installed_version = get_option('aih_db_version', '0');
+        if (version_compare($installed_version, AIH_VERSION, '<')) {
+            AIH_Database::activate();
+        }
+    }
+
     /**
      * Disable WordPress intermediate image sizes for AIH uploads
      * This prevents WordPress from creating 6+ copies of every uploaded image
