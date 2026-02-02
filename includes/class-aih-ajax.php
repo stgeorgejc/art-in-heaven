@@ -1335,22 +1335,44 @@ class AIH_Ajax {
         $result = $pushpay->discover_keys();
 
         if ($result['success']) {
-            // If auto-apply requested and only one org/merchant found, save them
-            $auto_apply = isset($_POST['auto_apply']) && $_POST['auto_apply'] === '1';
-            if ($auto_apply && !empty($result['organizations'])) {
-                $org = $result['organizations'][0];
-                $is_sandbox = get_option('aih_pushpay_sandbox', 0);
-                $prefix = $is_sandbox ? 'aih_pushpay_sandbox_' : 'aih_pushpay_';
+            $is_sandbox = get_option('aih_pushpay_sandbox', 0);
+            $prefix = $is_sandbox ? 'aih_pushpay_sandbox_' : 'aih_pushpay_';
 
+            // If a specific org index was selected, apply that one
+            if (isset($_POST['selected_org_index']) && !empty($result['organizations'])) {
+                $idx = intval($_POST['selected_org_index']);
+                if (isset($result['organizations'][$idx])) {
+                    $org = $result['organizations'][$idx];
+                    update_option($prefix . 'organization_key', $org['key']);
+                    $result['applied_org'] = $org['key'];
+
+                    // Apply selected merchant if specified, otherwise first merchant
+                    $merchant_idx = isset($_POST['selected_merchant_index']) ? intval($_POST['selected_merchant_index']) : 0;
+                    if (!empty($org['merchants']) && isset($org['merchants'][$merchant_idx])) {
+                        update_option($prefix . 'merchant_key', $org['merchants'][$merchant_idx]['key']);
+                        $result['applied_merchant'] = $org['merchants'][$merchant_idx]['key'];
+                        if (!empty($org['merchants'][$merchant_idx]['handle'])) {
+                            update_option($prefix . 'merchant_handle', $org['merchants'][$merchant_idx]['handle']);
+                        }
+                    }
+
+                    delete_transient('aih_pushpay_token');
+                }
+            }
+            // Auto-apply only if exactly one org found
+            elseif (isset($_POST['auto_apply']) && $_POST['auto_apply'] === '1' && !empty($result['organizations']) && count($result['organizations']) === 1) {
+                $org = $result['organizations'][0];
                 update_option($prefix . 'organization_key', $org['key']);
                 $result['applied_org'] = $org['key'];
 
-                if (!empty($org['merchants'])) {
+                if (!empty($org['merchants']) && count($org['merchants']) === 1) {
                     update_option($prefix . 'merchant_key', $org['merchants'][0]['key']);
                     $result['applied_merchant'] = $org['merchants'][0]['key'];
+                    if (!empty($org['merchants'][0]['handle'])) {
+                        update_option($prefix . 'merchant_handle', $org['merchants'][0]['handle']);
+                    }
                 }
 
-                // Clear cached token so next request uses updated settings
                 delete_transient('aih_pushpay_token');
             }
 

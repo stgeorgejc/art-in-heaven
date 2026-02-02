@@ -230,12 +230,10 @@ jQuery(document).ready(function($) {
     $('#aih-create-order').on('click', function() {
         var $btn = $(this).prop('disabled', true).addClass('loading');
         $.post(aihAjax.ajaxurl, {action:'aih_create_order', nonce:aihAjax.nonce}, function(r) {
-            if (r.success && r.data.payment_url) {
-                window.location.href = r.data.payment_url;
-            } else if (r.success) {
-                location.reload();
+            if (r.success && r.data.pushpay_url) {
+                window.location.href = r.data.pushpay_url;
             } else {
-                alert(r.data.message || 'Error creating order');
+                alert(r.data.message || 'Error creating order. Payment URL could not be generated.');
                 $btn.prop('disabled', false).removeClass('loading');
             }
         });

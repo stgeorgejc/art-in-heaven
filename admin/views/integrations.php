@@ -174,13 +174,11 @@ $is_sandbox = get_option('aih_pushpay_sandbox', 0);
                         <td><?php echo intval($last_pp_sync_count); ?></td>
                     </tr>
                 </table>
-                <?php if ($pushpay->is_configured()): ?>
                 <p style="margin-top: 15px;">
                     <button type="button" id="aih-test-pushpay" class="button"><?php _e('Test Connection', 'art-in-heaven'); ?></button>
                     <button type="button" id="aih-sync-pushpay" class="button button-primary"><?php _e('Sync Transactions', 'art-in-heaven'); ?></button>
                     <span id="aih-pushpay-result" style="margin-left: 10px;"></span>
                 </p>
-                <?php endif; ?>
             </div>
             
             <!-- Environment Toggle -->
@@ -238,7 +236,14 @@ $is_sandbox = get_option('aih_pushpay_sandbox', 0);
                         <th scope="row"><label for="aih_pushpay_sandbox_merchant_key"><?php _e('Merchant Key', 'art-in-heaven'); ?></label></th>
                         <td>
                             <input type="text" id="aih_pushpay_sandbox_merchant_key" name="aih_pushpay_sandbox_merchant_key" value="<?php echo esc_attr(get_option('aih_pushpay_sandbox_merchant_key', '')); ?>" class="regular-text">
-                            <p class="description"><?php _e('For payment links (the part after pushpay.com/pay/)', 'art-in-heaven'); ?></p>
+                            <p class="description"><?php _e('API key used for fetching transactions', 'art-in-heaven'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><label for="aih_pushpay_sandbox_merchant_handle"><?php _e('Merchant Handle', 'art-in-heaven'); ?></label></th>
+                        <td>
+                            <input type="text" id="aih_pushpay_sandbox_merchant_handle" name="aih_pushpay_sandbox_merchant_handle" value="<?php echo esc_attr(get_option('aih_pushpay_sandbox_merchant_handle', '')); ?>" class="regular-text">
+                            <p class="description"><?php _e('The handle from your giving page URL (pushpay.com/g/<strong>your-handle</strong>)', 'art-in-heaven'); ?></p>
                         </td>
                     </tr>
                 </table>
@@ -279,7 +284,14 @@ $is_sandbox = get_option('aih_pushpay_sandbox', 0);
                         <th scope="row"><label for="aih_pushpay_merchant_key"><?php _e('Merchant Key', 'art-in-heaven'); ?></label></th>
                         <td>
                             <input type="text" id="aih_pushpay_merchant_key" name="aih_pushpay_merchant_key" value="<?php echo esc_attr(get_option('aih_pushpay_merchant_key', '')); ?>" class="regular-text">
-                            <p class="description"><?php _e('For payment links (the part after pushpay.com/pay/)', 'art-in-heaven'); ?></p>
+                            <p class="description"><?php _e('API key used for fetching transactions', 'art-in-heaven'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><label for="aih_pushpay_merchant_handle"><?php _e('Merchant Handle', 'art-in-heaven'); ?></label></th>
+                        <td>
+                            <input type="text" id="aih_pushpay_merchant_handle" name="aih_pushpay_merchant_handle" value="<?php echo esc_attr(get_option('aih_pushpay_merchant_handle', '')); ?>" class="regular-text">
+                            <p class="description"><?php _e('The handle from your giving page URL (pushpay.com/g/<strong>your-handle</strong>)', 'art-in-heaven'); ?></p>
                         </td>
                     </tr>
                 </table>
@@ -295,13 +307,6 @@ $is_sandbox = get_option('aih_pushpay_sandbox', 0);
             <p class="description"><?php _e('These settings apply to both environments.', 'art-in-heaven'); ?></p>
             
             <table class="form-table">
-                <tr>
-                    <th scope="row"><label for="aih_pushpay_base_url"><?php _e('Payment URL', 'art-in-heaven'); ?></label></th>
-                    <td>
-                        <input type="url" id="aih_pushpay_base_url" name="aih_pushpay_base_url" value="<?php echo esc_attr(get_option('aih_pushpay_base_url', 'https://pushpay.com/pay/')); ?>" class="regular-text">
-                        <p class="description"><?php _e('Base URL for payment links', 'art-in-heaven'); ?></p>
-                    </td>
-                </tr>
                 <tr>
                     <th scope="row"><label for="aih_pushpay_fund"><?php _e('Fund/Category', 'art-in-heaven'); ?></label></th>
                     <td>
@@ -450,26 +455,166 @@ jQuery(document).ready(function($) {
             success: function(response) {
                 if (response.success) {
                     var data = response.data;
-                    var msg = '';
-                    if (data.organizations && data.organizations.length > 0) {
-                        var org = data.organizations[0];
-                        // Fill org key field
+                    var orgs = data.organizations || [];
+
+                    if (orgs.length === 0) {
+                        $result.html('<span style="color:red;">&#10007; <?php echo esc_js(__('No organizations found.', 'art-in-heaven')); ?></span>');
+                        return;
+                    }
+
+                    // Single org - auto-applied by backend
+                    if (orgs.length === 1) {
+                        var org = orgs[0];
                         $('#' + prefix + 'organization_key').val(org.key);
-                        msg = '<?php echo esc_js(__('Organization:', 'art-in-heaven')); ?> ' + org.name + ' (' + org.key + ')';
+                        var msg = '<?php echo esc_js(__('Organization:', 'art-in-heaven')); ?> ' + org.name + ' (' + org.key + ')';
 
                         if (org.merchants && org.merchants.length > 0) {
-                            var merchant = org.merchants[0];
-                            $('#' + prefix + 'merchant_key').val(merchant.key);
-                            msg += '<br><?php echo esc_js(__('Merchant:', 'art-in-heaven')); ?> ' + merchant.name + ' (' + merchant.key + ')';
+                            $('#' + prefix + 'merchant_key').val(org.merchants[0].key);
+                            if (org.merchants[0].handle) {
+                                $('#' + prefix + 'merchant_handle').val(org.merchants[0].handle);
+                            }
+                            msg += '<br><?php echo esc_js(__('Merchant:', 'art-in-heaven')); ?> ' + org.merchants[0].name + ' (' + org.merchants[0].key + ')';
+                            if (org.merchants[0].handle) {
+                                msg += '<br><?php echo esc_js(__('Handle:', 'art-in-heaven')); ?> ' + org.merchants[0].handle;
+                            }
                         } else {
                             msg += '<br><span style="color:#b45309;"><?php echo esc_js(__('No merchants found for this organization.', 'art-in-heaven')); ?></span>';
                         }
+                        $result.html('<span style="color:green;">&#10003; ' + msg + '</span>');
+                        return;
+                    }
 
-                        if (data.organizations.length > 1) {
-                            msg += '<br><em><?php echo esc_js(__('Multiple organizations found. First one selected. Save settings to confirm.', 'art-in-heaven')); ?></em>';
+                    // Multiple orgs - show selection UI with search
+                    var html = '<div style="margin-top:10px; padding:15px; background:#fff; border:1px solid #ccc; border-radius:6px;">';
+                    html += '<strong><?php echo esc_js(__('Found', 'art-in-heaven')); ?> ' + orgs.length + ' <?php echo esc_js(__('organizations. Search and select yours:', 'art-in-heaven')); ?></strong>';
+                    html += '<div style="margin-top:10px;">';
+                    html += '<input type="text" class="aih-org-search regular-text" placeholder="<?php echo esc_attr(__('Type to filter by name or key...', 'art-in-heaven')); ?>" style="width:100%; padding:8px; margin-bottom:8px; border:1px solid #8c8f94; border-radius:4px;">';
+                    html += '<div class="aih-org-count" style="font-size:12px; color:#666; margin-bottom:8px;"><?php echo esc_js(__('Showing', 'art-in-heaven')); ?> <span class="aih-org-visible">' + orgs.length + '</span> <?php echo esc_js(__('of', 'art-in-heaven')); ?> ' + orgs.length + '</div>';
+                    html += '</div>';
+                    html += '<div class="aih-org-list" style="max-height:300px; overflow-y:auto; border:1px solid #eee; border-radius:4px; padding:4px;">';
+
+                    for (var i = 0; i < orgs.length; i++) {
+                        var o = orgs[i];
+                        var merchantInfo = '';
+                        if (o.merchants && o.merchants.length > 0) {
+                            var merchantNames = [];
+                            for (var m = 0; m < o.merchants.length; m++) {
+                                merchantNames.push(o.merchants[m].name);
+                            }
+                            merchantInfo = ' — <?php echo esc_js(__('Merchants:', 'art-in-heaven')); ?> ' + merchantNames.join(', ');
+                        } else {
+                            merchantInfo = ' — <em><?php echo esc_js(__('No merchants', 'art-in-heaven')); ?></em>';
+                        }
+
+                        html += '<label class="aih-org-item" data-name="' + $('<span>').text(o.name).html().toLowerCase() + '" data-key="' + $('<span>').text(o.key).html().toLowerCase() + '" style="display:block; padding:8px 10px; margin:2px 0; border:1px solid #ddd; border-radius:4px; cursor:pointer; background:#fafafa;">';
+                        html += '<input type="radio" name="aih_discover_org" value="' + i + '" style="margin-right:8px;">';
+                        html += '<strong>' + $('<span>').text(o.name).html() + '</strong>';
+                        html += ' <code style="font-size:11px;">' + $('<span>').text(o.key).html() + '</code>';
+                        html += merchantInfo;
+                        html += '</label>';
+
+                        // If org has multiple merchants, show merchant selection
+                        if (o.merchants && o.merchants.length > 1) {
+                            html += '<div class="aih-merchant-select" data-org-index="' + i + '" style="margin-left:30px; margin-bottom:8px; display:none;">';
+                            html += '<em><?php echo esc_js(__('Select merchant:', 'art-in-heaven')); ?></em><br>';
+                            for (var m = 0; m < o.merchants.length; m++) {
+                                html += '<label style="display:block; padding:4px 8px; cursor:pointer;">';
+                                html += '<input type="radio" name="aih_discover_merchant_' + i + '" value="' + m + '"' + (m === 0 ? ' checked' : '') + ' style="margin-right:6px;">';
+                                html += $('<span>').text(o.merchants[m].name).html() + ' <code style="font-size:11px;">' + $('<span>').text(o.merchants[m].key).html() + '</code>';
+                                html += '</label>';
+                            }
+                            html += '</div>';
                         }
                     }
-                    $result.html('<span style="color:green;">&#10003; ' + msg + '</span>');
+
+                    html += '</div>';
+                    html += '<div class="aih-no-results" style="display:none; padding:12px; text-align:center; color:#666; font-style:italic;"><?php echo esc_js(__('No organizations match your search.', 'art-in-heaven')); ?></div>';
+                    html += '<button type="button" class="button button-primary aih-apply-org" style="margin-top:12px;" disabled><?php echo esc_js(__('Apply Selected', 'art-in-heaven')); ?></button>';
+                    html += '</div>';
+
+                    $result.html(html);
+
+                    // Search/filter organizations
+                    $result.find('.aih-org-search').on('input', function() {
+                        var query = $(this).val().toLowerCase().trim();
+                        var visible = 0;
+                        $result.find('.aih-org-item').each(function() {
+                            var name = $(this).data('name') || '';
+                            var key = $(this).data('key') || '';
+                            var match = !query || name.indexOf(query) !== -1 || key.indexOf(query) !== -1;
+                            $(this).toggle(match);
+                            // Hide merchant selectors for hidden orgs
+                            var idx = $(this).find('input[type="radio"]').val();
+                            if (!match) {
+                                $result.find('.aih-merchant-select[data-org-index="' + idx + '"]').hide();
+                            }
+                            if (match) visible++;
+                        });
+                        $result.find('.aih-org-visible').text(visible);
+                        $result.find('.aih-no-results').toggle(visible === 0);
+                        $result.find('.aih-org-list').toggle(visible > 0);
+                    }).focus();
+
+                    // Show/hide merchant selectors when org radio changes, enable apply button
+                    $result.find('input[name="aih_discover_org"]').on('change', function() {
+                        $result.find('.aih-merchant-select').hide();
+                        $result.find('.aih-merchant-select[data-org-index="' + $(this).val() + '"]').show();
+                        $result.find('.aih-apply-org').prop('disabled', false);
+                    });
+
+                    // Apply selected org
+                    $result.find('.aih-apply-org').on('click', function() {
+                        var selectedIdx = parseInt($result.find('input[name="aih_discover_org"]:checked').val());
+                        var selectedOrg = orgs[selectedIdx];
+                        var selectedMerchantIdx = 0;
+                        var $merchantRadio = $result.find('input[name="aih_discover_merchant_' + selectedIdx + '"]:checked');
+                        if ($merchantRadio.length) {
+                            selectedMerchantIdx = parseInt($merchantRadio.val());
+                        }
+
+                        var $applyBtn = $(this).prop('disabled', true).text('<?php echo esc_js(__('Applying...', 'art-in-heaven')); ?>');
+
+                        // Send selection to backend to save
+                        $.ajax({
+                            url: ajaxurl,
+                            type: 'POST',
+                            timeout: 15000,
+                            data: {
+                                action: 'aih_admin_discover_pushpay_keys',
+                                nonce: nonce,
+                                selected_org_index: selectedIdx,
+                                selected_merchant_index: selectedMerchantIdx
+                            },
+                            success: function(resp) {
+                                // Update input fields
+                                $('#' + prefix + 'organization_key').val(selectedOrg.key);
+                                if (selectedOrg.merchants && selectedOrg.merchants[selectedMerchantIdx]) {
+                                    $('#' + prefix + 'merchant_key').val(selectedOrg.merchants[selectedMerchantIdx].key);
+                                    if (selectedOrg.merchants[selectedMerchantIdx].handle) {
+                                        $('#' + prefix + 'merchant_handle').val(selectedOrg.merchants[selectedMerchantIdx].handle);
+                                    }
+                                }
+
+                                var confirmMsg = '<?php echo esc_js(__('Applied:', 'art-in-heaven')); ?> ' + selectedOrg.name;
+                                if (selectedOrg.merchants && selectedOrg.merchants[selectedMerchantIdx]) {
+                                    confirmMsg += ' / ' + selectedOrg.merchants[selectedMerchantIdx].name;
+                                }
+                                confirmMsg += '. <?php echo esc_js(__('Save settings to confirm.', 'art-in-heaven')); ?>';
+                                $result.html('<span style="color:green;">&#10003; ' + confirmMsg + '</span>');
+                            },
+                            error: function() {
+                                // Still update fields locally even if save fails
+                                $('#' + prefix + 'organization_key').val(selectedOrg.key);
+                                if (selectedOrg.merchants && selectedOrg.merchants[selectedMerchantIdx]) {
+                                    $('#' + prefix + 'merchant_key').val(selectedOrg.merchants[selectedMerchantIdx].key);
+                                    if (selectedOrg.merchants[selectedMerchantIdx].handle) {
+                                        $('#' + prefix + 'merchant_handle').val(selectedOrg.merchants[selectedMerchantIdx].handle);
+                                    }
+                                }
+                                $result.html('<span style="color:#b45309;">&#10003; <?php echo esc_js(__('Keys filled in but could not auto-save. Click "Save Integration Settings" below.', 'art-in-heaven')); ?></span>');
+                            }
+                        });
+                    });
                 } else {
                     $result.html('<span style="color:red;">&#10007; ' + (response.data ? response.data.message : '<?php echo esc_js(__('Discovery failed', 'art-in-heaven')); ?>') + '</span>');
                 }
