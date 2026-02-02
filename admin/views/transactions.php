@@ -395,13 +395,15 @@ jQuery(document).ready(function($) {
     // Sync transactions
     $('#aih-sync-transactions').on('click', function() {
         var $btn = $(this);
-        $btn.prop('disabled', true).find('.dashicons').addClass('aih-spin');
-        
+        var $icon = $btn.prop('disabled', true).find('.dashicons');
+        $icon.removeClass('dashicons-update').addClass('dashicons-update-alt aih-spin');
+
         $.post(ajaxurl, {
             action: 'aih_sync_pushpay_transactions',
             nonce: aihAdmin.nonce
         }, function(response) {
-            $btn.prop('disabled', false).find('.dashicons').removeClass('aih-spin');
+            $icon.removeClass('dashicons-update-alt aih-spin').addClass('dashicons-update');
+            $btn.prop('disabled', false);
             if (response.success) {
                 alert(response.data.message);
                 location.reload();
@@ -409,7 +411,8 @@ jQuery(document).ready(function($) {
                 alert('Error: ' + (response.data ? response.data.message : 'Sync failed'));
             }
         }).fail(function() {
-            $btn.prop('disabled', false).find('.dashicons').removeClass('aih-spin');
+            $icon.removeClass('dashicons-update-alt aih-spin').addClass('dashicons-update');
+            $btn.prop('disabled', false);
             alert('Request failed');
         });
     });

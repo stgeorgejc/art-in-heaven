@@ -316,17 +316,18 @@ class AIH_Admin {
         
         // Pushpay settings - Production (in aih_integrations group)
         register_setting('aih_integrations', 'aih_pushpay_merchant_key');
-        register_setting('aih_integrations', 'aih_pushpay_base_url');
+        register_setting('aih_integrations', 'aih_pushpay_merchant_handle');
         register_setting('aih_integrations', 'aih_pushpay_fund');
         register_setting('aih_integrations', 'aih_pushpay_client_id');
         register_setting('aih_integrations', 'aih_pushpay_client_secret');
         register_setting('aih_integrations', 'aih_pushpay_organization_key');
-        
+
         // Pushpay settings - Sandbox (in aih_integrations group)
         register_setting('aih_integrations', 'aih_pushpay_sandbox_client_id');
         register_setting('aih_integrations', 'aih_pushpay_sandbox_client_secret');
         register_setting('aih_integrations', 'aih_pushpay_sandbox_organization_key');
         register_setting('aih_integrations', 'aih_pushpay_sandbox_merchant_key');
+        register_setting('aih_integrations', 'aih_pushpay_sandbox_merchant_handle');
         
         // Pushpay environment toggle (in aih_integrations group)
         register_setting('aih_integrations', 'aih_pushpay_sandbox', array(

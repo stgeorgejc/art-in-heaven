@@ -16,7 +16,7 @@ class AIH_Pushpay_API {
     // API endpoints
     const AUTH_URL = 'https://auth.pushpay.com/pushpay-sandbox/oauth/token'; // Sandbox
     const AUTH_URL_PROD = 'https://auth.pushpay.com/pushpay/oauth/token'; // Production
-    const API_URL = 'https://sandbox-api.pushpay.com/v1'; // Sandbox
+    const API_URL = 'https://sandbox-api.pushpay.io/v1'; // Sandbox
     const API_URL_PROD = 'https://api.pushpay.com/v1'; // Production
     
     private $access_token = null;
@@ -42,7 +42,7 @@ class AIH_Pushpay_API {
                 'client_secret' => get_option('aih_pushpay_sandbox_client_secret', ''),
                 'organization_key' => get_option('aih_pushpay_sandbox_organization_key', ''),
                 'merchant_key' => get_option('aih_pushpay_sandbox_merchant_key', ''),
-                'base_url' => get_option('aih_pushpay_base_url', 'https://pushpay.com/pay/'),
+                'merchant_handle' => get_option('aih_pushpay_sandbox_merchant_handle', ''),
                 'fund' => get_option('aih_pushpay_fund', 'art-in-heaven'),
                 'sandbox_mode' => true,
             );
@@ -53,7 +53,7 @@ class AIH_Pushpay_API {
                 'client_secret' => get_option('aih_pushpay_client_secret', ''),
                 'organization_key' => get_option('aih_pushpay_organization_key', ''),
                 'merchant_key' => get_option('aih_pushpay_merchant_key', ''),
-                'base_url' => get_option('aih_pushpay_base_url', 'https://pushpay.com/pay/'),
+                'merchant_handle' => get_option('aih_pushpay_merchant_handle', ''),
                 'fund' => get_option('aih_pushpay_fund', 'art-in-heaven'),
                 'sandbox_mode' => false,
             );
@@ -109,7 +109,7 @@ class AIH_Pushpay_API {
             ),
             'body' => array(
                 'grant_type' => 'client_credentials',
-                'scope' => 'read'
+                'scope' => 'read merchant:view_payments'
             ),
             'timeout' => 30
         ));
@@ -163,30 +163,45 @@ class AIH_Pushpay_API {
             $args['body'] = json_encode($data);
         }
         
+        error_log('Pushpay API Request: ' . $method . ' ' . $url);
         $response = wp_remote_request($url, $args);
-        
+
         if (is_wp_error($response)) {
             error_log('Pushpay API Error: ' . $response->get_error_message());
             return $response;
         }
-        
+
         $code = wp_remote_retrieve_response_code($response);
-        $body = json_decode(wp_remote_retrieve_body($response), true);
+        $raw_body = wp_remote_retrieve_body($response);
+        $body = json_decode($raw_body, true);
+        error_log('Pushpay API Response (' . $code . '): ' . substr($raw_body, 0, 500));
         
         if ($code === 401) {
-            // Token expired, try refreshing
-            delete_transient('aih_pushpay_token');
-            $token = $this->get_access_token(true);
-            if (!is_wp_error($token)) {
-                return $this->api_request($endpoint, $method, $data);
+            // Token expired, try refreshing once
+            static $auth_retried = false;
+            if (!$auth_retried) {
+                $auth_retried = true;
+                delete_transient('aih_pushpay_token');
+                $token = $this->get_access_token(true);
+                if (!is_wp_error($token)) {
+                    $result = $this->api_request($endpoint, $method, $data);
+                    $auth_retried = false;
+                    return $result;
+                }
             }
-            return new WP_Error('auth_expired', 'Authentication expired and refresh failed.');
+            $auth_retried = false;
+            return new WP_Error('auth_expired', 'Authentication failed (401) — ' . $method . ' ' . $url);
         }
         
+        if ($code === 429) {
+            error_log('Pushpay API rate limited (429) on ' . $url);
+            return new WP_Error('rate_limited', 'Rate limited (429) on ' . $method . ' ' . $url, array('code' => 429));
+        }
+
         if ($code >= 400) {
             $error_msg = isset($body['message']) ? $body['message'] : 'API request failed';
-            error_log('Pushpay API Error (' . $code . '): ' . $error_msg);
-            return new WP_Error('api_error', $error_msg, array('code' => $code, 'body' => $body));
+            error_log('Pushpay API Error (' . $code . ') on ' . $url . ': ' . $error_msg . ' | Response: ' . $raw_body);
+            return new WP_Error('api_error', $error_msg . ' (HTTP ' . $code . ') — ' . $method . ' ' . $url, array('code' => $code, 'body' => $body));
         }
         
         return $body;
@@ -227,11 +242,11 @@ class AIH_Pushpay_API {
      */
     public function get_payments($params = array()) {
         $settings = $this->get_settings();
-        
-        if (empty($settings['organization_key'])) {
-            return new WP_Error('no_org', 'Organization key not configured.');
+
+        if (empty($settings['merchant_key'])) {
+            return new WP_Error('no_merchant', 'Merchant key not configured.');
         }
-        
+
         $defaults = array(
             'page' => 0,
             'pageSize' => 100,
@@ -240,15 +255,15 @@ class AIH_Pushpay_API {
             'status' => null, // Success, Failed, Processing, etc.
             'fund' => null
         );
-        
+
         $params = wp_parse_args($params, $defaults);
-        
+
         // Build query string
         $query = array(
             'page' => $params['page'],
             'pageSize' => $params['pageSize']
         );
-        
+
         if ($params['from']) {
             $query['from'] = $params['from'];
         }
@@ -258,9 +273,9 @@ class AIH_Pushpay_API {
         if ($params['status']) {
             $query['status'] = $params['status'];
         }
-        
-        $endpoint = '/organization/' . $settings['organization_key'] . '/payments?' . http_build_query($query);
-        
+
+        $endpoint = '/merchant/' . $settings['merchant_key'] . '/payments?' . http_build_query($query);
+
         return $this->api_request($endpoint);
     }
     
@@ -269,12 +284,12 @@ class AIH_Pushpay_API {
      */
     public function get_payment($payment_id) {
         $settings = $this->get_settings();
-        
-        if (empty($settings['organization_key'])) {
-            return new WP_Error('no_org', 'Organization key not configured.');
+
+        if (empty($settings['merchant_key'])) {
+            return new WP_Error('no_merchant', 'Merchant key not configured.');
         }
-        
-        return $this->api_request('/organization/' . $settings['organization_key'] . '/payment/' . $payment_id);
+
+        return $this->api_request('/merchant/' . $settings['merchant_key'] . '/payment/' . $payment_id);
     }
     
     /**
@@ -282,12 +297,12 @@ class AIH_Pushpay_API {
      */
     public function search_by_reference($reference) {
         $settings = $this->get_settings();
-        
-        if (empty($settings['organization_key'])) {
-            return new WP_Error('no_org', 'Organization key not configured.');
+
+        if (empty($settings['merchant_key'])) {
+            return new WP_Error('no_merchant', 'Merchant key not configured.');
         }
-        
-        $endpoint = '/organization/' . $settings['organization_key'] . '/payments?' . http_build_query(array(
+
+        $endpoint = '/merchant/' . $settings['merchant_key'] . '/payments?' . http_build_query(array(
             'pageSize' => 10,
             'q' => $reference
         ));
@@ -313,39 +328,61 @@ class AIH_Pushpay_API {
      */
     public function sync_payments($days_back = 30) {
         global $wpdb;
-        
+
         $settings = $this->get_settings();
         $orders_table = AIH_Database::get_table('orders');
         $transactions_table = AIH_Database::get_table('pushpay_transactions');
-        
-        // Calculate date range
-        $from = date('c', strtotime("-{$days_back} days"));
+        $fund_name = get_option('aih_pushpay_fund', 'art-in-heaven');
+
+        // Use event start date if set, otherwise fetch all transactions
+        $event_date = get_option('aih_event_date', '');
+        $from = !empty($event_date) ? date('c', strtotime($event_date)) : null;
         $to = date('c');
-        
+
         $page = 0;
         $total_synced = 0;
         $total_matched = 0;
         $has_more = true;
-        
+
         while ($has_more) {
-            $result = $this->get_payments(array(
+            $payment_params = array(
                 'page' => $page,
                 'pageSize' => 100,
-                'from' => $from,
-                'to' => $to,
                 'status' => 'Success'
-            ));
+            );
+            if ($from) {
+                $payment_params['from'] = $from;
+            }
+            $payment_params['to'] = $to;
+
+            $result = $this->get_payments($payment_params);
             
             if (is_wp_error($result)) {
                 return $result;
             }
             
             $payments = isset($result['items']) ? $result['items'] : array();
-            
+
             if (empty($payments)) {
                 break;
             }
-            
+
+            // Log fund names from API for debugging
+            $before_count = count($payments);
+            $fund_names_found = array_map(function($p) {
+                return isset($p['fund']['name']) ? $p['fund']['name'] : '(no fund)';
+            }, $payments);
+            error_log('Pushpay sync: ' . $before_count . ' payments before fund filter. Fund names in response: ' . implode(', ', array_unique($fund_names_found)) . ' | Filtering for: "' . $fund_name . '"');
+
+            // Filter by fund/category (API doesn't support fund filtering)
+            if (!empty($fund_name)) {
+                $payments = array_filter($payments, function($payment) use ($fund_name) {
+                    $payment_fund = isset($payment['fund']['name']) ? $payment['fund']['name'] : '';
+                    return strcasecmp($payment_fund, $fund_name) === 0;
+                });
+                error_log('Pushpay sync: ' . count($payments) . ' payments after fund filter.');
+            }
+
             foreach ($payments as $payment) {
                 // Store transaction
                 $transaction_data = array(
@@ -419,6 +456,7 @@ class AIH_Pushpay_API {
                             array(
                                 'payment_status' => 'paid',
                                 'payment_method' => 'pushpay',
+                                'payment_reference' => $payment['paymentToken'],
                                 'pushpay_payment_id' => $payment['paymentToken'],
                                 'pushpay_status' => $payment['status'],
                                 'payment_date' => date('Y-m-d H:i:s', strtotime($payment['createdOn'])),
@@ -442,6 +480,11 @@ class AIH_Pushpay_API {
             // Check for more pages
             $has_more = isset($result['page']) && isset($result['totalPages']) && $result['page'] < $result['totalPages'] - 1;
             $page++;
+
+            // Throttle requests to avoid hitting Pushpay rate limits
+            if ($has_more) {
+                sleep(1);
+            }
             
             // Safety limit
             if ($page > 50) break;
@@ -543,6 +586,7 @@ class AIH_Pushpay_API {
             array(
                 'payment_status' => 'paid',
                 'payment_method' => 'pushpay',
+                'payment_reference' => $transaction->pushpay_id,
                 'pushpay_payment_id' => $transaction->pushpay_id,
                 'pushpay_status' => $transaction->status,
                 'payment_date' => $transaction->payment_date,
@@ -571,8 +615,8 @@ class AIH_Pushpay_API {
             );
         }
 
-        // Fetch organizations
-        $orgs_result = $this->api_request('/organizations');
+        // Fetch organizations in scope for current credentials
+        $orgs_result = $this->api_request('/organizations/in-scope');
 
         if (is_wp_error($orgs_result)) {
             return array(
@@ -601,8 +645,8 @@ class AIH_Pushpay_API {
                 'merchants' => array()
             );
 
-            // Fetch merchants for this organization
-            $merchants_result = $this->api_request('/organization/' . $org_key . '/merchants');
+            // Fetch merchant listings for this organization
+            $merchants_result = $this->api_request('/organization/' . $org_key . '/merchantlistings');
 
             if (!is_wp_error($merchants_result)) {
                 $merchant_items = isset($merchants_result['items']) ? $merchants_result['items'] : (is_array($merchants_result) && isset($merchants_result[0]) ? $merchants_result : array());
@@ -615,7 +659,8 @@ class AIH_Pushpay_API {
                     if (isset($merchant['key'])) {
                         $org_data['merchants'][] = array(
                             'key' => $merchant['key'],
-                            'name' => isset($merchant['name']) ? $merchant['name'] : 'Unknown'
+                            'name' => isset($merchant['name']) ? $merchant['name'] : 'Unknown',
+                            'handle' => isset($merchant['handle']) ? $merchant['handle'] : ''
                         );
                     }
                 }
@@ -643,28 +688,32 @@ class AIH_Pushpay_API {
      */
     public function get_payment_url($order) {
         $settings = $this->get_settings();
-        
-        if (empty($settings['merchant_key'])) {
+
+        if (empty($settings['merchant_handle'])) {
             return '';
         }
-        
+
         $auth = AIH_Auth::get_instance();
         $bidder = $auth->get_bidder_by_email($order->bidder_id);
-        
+
         $params = array(
             'a' => number_format($order->total, 2, '.', ''),
-            'r' => 'false', // Not recurring
+            'al' => 'true',          // Lock the amount
+            'rcv' => 'false',        // Not recurring
             'fnd' => $settings['fund'],
-            'rcv' => $order->order_number, // Reference/receipt
+            'fndv' => 'lock',        // Lock the fund selection
+            'sr' => $order->order_number, // Source reference for tracking
+            'nt' => $order->order_number, // Note field with order number
         );
-        
+
         if ($bidder) {
-            if (!empty($bidder->email_primary)) $params['em'] = $bidder->email_primary;
-            if (!empty($bidder->name_first)) $params['fn'] = $bidder->name_first;
-            if (!empty($bidder->name_last)) $params['ln'] = $bidder->name_last;
-            if (!empty($bidder->phone_mobile)) $params['ph'] = $bidder->phone_mobile;
+            if (!empty($bidder->email_primary)) $params['ue'] = $bidder->email_primary;
+            if (!empty($bidder->name_first)) $params['ufn'] = $bidder->name_first;
+            if (!empty($bidder->name_last)) $params['uln'] = $bidder->name_last;
+            if (!empty($bidder->phone_mobile)) $params['up'] = $bidder->phone_mobile;
         }
-        
-        return $settings['base_url'] . $settings['merchant_key'] . '?' . http_build_query($params);
+
+        $base_url = $settings['sandbox_mode'] ? 'https://sandbox.pushpay.io/g/' : 'https://pushpay.com/g/';
+        return $base_url . $settings['merchant_handle'] . '?' . http_build_query($params);
     }
 }

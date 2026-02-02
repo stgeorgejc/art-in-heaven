@@ -120,13 +120,21 @@ class AIH_Checkout {
             $wpdb->query('COMMIT');
             
             $order = $this->get_order($order_id);
-            
+            $pushpay_url = $this->get_pushpay_payment_url($order);
+
+            if (empty($pushpay_url)) {
+                return array(
+                    'success' => false,
+                    'message' => 'Payment URL could not be generated. Please configure the Merchant Handle in Pushpay settings.'
+                );
+            }
+
             return array(
                 'success' => true,
                 'order_id' => $order_id,
                 'order_number' => $order_number,
                 'totals' => $totals,
-                'pushpay_url' => $this->get_pushpay_payment_url($order)
+                'pushpay_url' => $pushpay_url
             );
             
         } catch (Exception $e) {
