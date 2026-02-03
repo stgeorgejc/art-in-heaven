@@ -211,7 +211,14 @@ class AIH_Admin {
         if (isset($_POST['aih_action']) && $_POST['aih_action'] === 'create_tables'
             && isset($_POST['aih_create_tables_nonce']) && wp_verify_nonce($_POST['aih_create_tables_nonce'], 'aih_create_tables')) {
             AIH_Database::create_tables();
-            wp_safe_redirect(admin_url('admin.php?page=art-in-heaven&tables_created=1'));
+            if (AIH_Database::tables_exist()) {
+                wp_safe_redirect(admin_url('admin.php?page=art-in-heaven&tables_created=1'));
+            } else {
+                // Tables failed to create - pass error info
+                global $wpdb;
+                error_log('AIH: create_tables failed. Last DB error: ' . $wpdb->last_error);
+                wp_safe_redirect(admin_url('admin.php?page=art-in-heaven&tables_error=1'));
+            }
             exit;
         }
 

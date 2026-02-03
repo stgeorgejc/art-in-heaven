@@ -289,17 +289,26 @@ class AIH_Database {
         ) $charset_collate;";
         
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-        dbDelta($sql_art);
-        dbDelta($sql_bids);
-        dbDelta($sql_favorites);
-        dbDelta($sql_bidders);
-        dbDelta($sql_orders);
-        dbDelta($sql_order_items);
-        dbDelta($sql_registrants);
-        dbDelta($sql_audit);
-        dbDelta($sql_art_images);
-        dbDelta($sql_pushpay);
-        
+
+        $results = array();
+        $results['art'] = dbDelta($sql_art);
+        $results['bids'] = dbDelta($sql_bids);
+        $results['favorites'] = dbDelta($sql_favorites);
+        $results['bidders'] = dbDelta($sql_bidders);
+        $results['orders'] = dbDelta($sql_orders);
+        $results['order_items'] = dbDelta($sql_order_items);
+        $results['registrants'] = dbDelta($sql_registrants);
+        $results['audit'] = dbDelta($sql_audit);
+        $results['art_images'] = dbDelta($sql_art_images);
+        $results['pushpay'] = dbDelta($sql_pushpay);
+
+        // Log results for debugging
+        error_log('AIH create_tables: year=' . $year . ' prefix=' . $wpdb->prefix);
+        error_log('AIH create_tables results: ' . print_r($results, true));
+        if ($wpdb->last_error) {
+            error_log('AIH create_tables DB error: ' . $wpdb->last_error);
+        }
+
         // Migrate: Add bid_status column if it doesn't exist
         self::migrate_bids_table($year);
         

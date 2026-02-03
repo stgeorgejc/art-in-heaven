@@ -8,7 +8,19 @@ $year = AIH_Database::get_auction_year();
 ?>
 <div class="wrap aih-admin-wrap">
     <h1><?php _e('Art in Heaven Dashboard', 'art-in-heaven'); ?></h1>
-    
+
+    <?php if (isset($_GET['tables_error'])): ?>
+    <div class="notice notice-error" style="padding: 15px; margin: 20px 0;">
+        <strong><?php _e('Error:', 'art-in-heaven'); ?></strong>
+        <?php _e('Failed to create database tables. Please check your database permissions and try again.', 'art-in-heaven'); ?>
+        <?php
+        global $wpdb;
+        $table = $wpdb->prefix . absint($year) . '_ArtPieces';
+        ?>
+        <br><small><?php printf(__('Looking for table: %s | DB prefix: %s | Year: %s', 'art-in-heaven'), esc_html($table), esc_html($wpdb->prefix), esc_html($year)); ?></small>
+    </div>
+    <?php endif; ?>
+
     <div class="notice notice-warning" style="padding: 20px; margin: 20px 0;">
         <h2 style="margin-top: 0;"><?php _e('Database Setup Required', 'art-in-heaven'); ?></h2>
         <p><?php printf(__('The database tables for auction year %s have not been created yet.', 'art-in-heaven'), '<strong>' . esc_html($year) . '</strong>'); ?></p>
