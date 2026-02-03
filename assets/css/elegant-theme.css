@@ -1,0 +1,2619 @@
+/* ============================================
+   ELEGANT AUCTION THEME - MOBILE FIRST
+   Version: 0.9.129
+
+   Note: Google Fonts are loaded via wp_enqueue_style
+   in class-aih-assets.php for better performance.
+   ============================================ */
+
+:root {
+    --color-bg: #faf9f7;
+    --color-bg-alt: #f5f3f0;
+    --color-surface: #ffffff;
+    --color-primary: #1c1c1c;
+    --color-secondary: #4a4a4a;
+    --color-muted: #8a8a8a;
+    --color-border: #e8e6e3;
+    --color-accent: #b8956b;
+    --color-accent-dark: #9a7a55;
+    --color-success: #4a7c59;
+    --color-error: #a63d40;
+    --color-winning: #2d5a3d;
+    --font-display: 'Cormorant Garamond', Georgia, serif;
+    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 20px rgba(0,0,0,0.06);
+    --shadow-lg: 0 10px 40px rgba(0,0,0,0.08);
+    --radius: 4px;
+    --transition: 0.25s ease;
+    /* Safe area insets for notched devices (iPhone X+) */
+    --safe-area-top: env(safe-area-inset-top, 0px);
+    --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-area-left: env(safe-area-inset-left, 0px);
+    --safe-area-right: env(safe-area-inset-right, 0px);
+}
+
+/* ============================================
+   CROSS-BROWSER COMPATIBILITY
+   Supports: iPhone 14-17, Samsung S20-S25, Pixel 7-10
+   ============================================ */
+
+/* Ensure smooth scrolling on iOS */
+@supports (-webkit-overflow-scrolling: touch) {
+    html {
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* Touch action for better mobile interaction */
+*, *::before, *::after {
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+    -webkit-touch-callout: none;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* Force background on body/html when our pages load */
+html body {
+    background: var(--color-bg) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Reset only containers that wrap our auction content - scoped to not affect theme header */
+.aih-page,
+.aih-page .site-content,
+.aih-page .content-area,
+.aih-page .site-main,
+.aih-page .entry-content,
+.aih-page .wp-block-post-content,
+.aih-page .page-content,
+.aih-page .is-layout-constrained,
+.aih-page .is-layout-flow,
+.aih-page .has-global-padding {
+    background: transparent !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+}
+
+/* Remove any theme padding/margins around our content */
+.aih-page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--color-bg);
+    font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--color-primary);
+    -webkit-font-smoothing: antialiased;
+    flex: 1 1 auto;
+    width: 100% !important;
+    max-width: 100% !important;
+    position: relative;
+    overflow-x: hidden;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+}
+
+/* ============================================
+   HEADER - MOBILE FIRST
+   ============================================ */
+.aih-header {
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+.aih-header-inner {
+    padding: 12px 24px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    max-width: 100% !important;
+    margin: 0 auto;
+    width: 100% !important;
+}
+
+.aih-logo {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--color-primary);
+    text-decoration: none;
+    letter-spacing: -0.5px;
+    white-space: nowrap;
+}
+
+.aih-nav {
+    display: flex;
+    gap: 20px;
+    order: 3;
+    width: 100%;
+    justify-content: center;
+    padding-top: 12px;
+    border-top: 1px solid var(--color-border);
+}
+
+.aih-nav-link {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--color-muted);
+    text-decoration: none;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    transition: color var(--transition);
+    padding: 6px 0;
+    border-bottom: 2px solid transparent;
+}
+
+.aih-nav-link:hover,
+.aih-nav-link.aih-nav-active {
+    color: var(--color-primary);
+}
+
+.aih-nav-link.aih-nav-active {
+    border-bottom-color: var(--color-accent);
+}
+
+.aih-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.aih-cart-link {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 12px;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    text-decoration: none;
+    color: var(--color-primary);
+    font-size: 13px;
+    transition: all var(--transition);
+}
+
+.aih-cart-link:hover {
+    border-color: var(--color-accent);
+}
+
+.aih-cart-count {
+    background: var(--color-accent);
+    color: white;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 10px;
+}
+
+.aih-user-menu {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.aih-user-name {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-secondary);
+}
+
+.aih-logout-btn {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--color-muted);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px 0;
+    transition: color var(--transition);
+}
+
+.aih-logout-btn:hover {
+    color: var(--color-error);
+}
+
+/* ============================================
+   MAIN CONTENT - MOBILE FIRST
+   ============================================ */
+.aih-main {
+    flex: 1 1 auto;
+    width: 100% !important;
+    padding: 20px 24px;
+    background: var(--color-bg);
+    min-height: 0;
+    min-width: 0;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    max-width: 100% !important;
+    margin: 0 auto;
+    box-sizing: border-box;
+}
+
+/* Centered main for login pages */
+.aih-main-centered,
+.aih-main.aih-main-centered {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    max-width: 100% !important;
+}
+
+.aih-gallery-header {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.aih-gallery-title h1 {
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 500;
+    color: var(--color-primary);
+    letter-spacing: -0.5px;
+    margin-bottom: 2px;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+}
+
+.aih-subtitle {
+    font-size: 12px;
+    color: var(--color-muted);
+}
+
+.aih-gallery-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+    align-items: center;
+}
+
+.aih-search-box {
+    flex: 0 0 auto;
+    width: 240px;
+}
+
+.aih-search-input {
+    width: 100%;
+    height: 36px;
+    padding: 0 12px;
+    font-family: var(--font-body);
+    font-size: 13px;
+    color: var(--color-primary);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    transition: all var(--transition);
+    -webkit-appearance: none;
+    box-sizing: border-box;
+}
+
+.aih-search-input:focus {
+    outline: none;
+    border-color: var(--color-accent);
+}
+
+.aih-search-input::placeholder {
+    color: var(--color-muted);
+}
+
+.aih-filter-group {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 6px;
+    flex: 0 1 auto;
+}
+
+/* Sort & Filter Toggle Button */
+.aih-filter-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 36px;
+    padding: 0 12px;
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--color-primary);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all var(--transition);
+    white-space: nowrap;
+    box-sizing: border-box;
+}
+
+.aih-filter-toggle:hover {
+    border-color: var(--color-accent);
+}
+
+.aih-filter-toggle.active {
+    border-color: var(--color-accent);
+    background: var(--color-bg);
+}
+
+.aih-filter-chevron {
+    transition: transform var(--transition);
+    flex-shrink: 0;
+}
+
+.aih-filter-toggle.active .aih-filter-chevron {
+    transform: rotate(180deg);
+}
+
+/* Filter Panel - Base styles */
+.aih-filter-overlay {
+    display: none !important;
+}
+
+.aih-filter-panel {
+    display: none;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    margin-bottom: 20px;
+    position: static;
+    transform: none;
+}
+
+.aih-filter-panel.open {
+    display: block;
+}
+
+.aih-filter-panel-header {
+    display: none !important;
+}
+
+.aih-filter-panel-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 16px;
+    padding: 16px;
+}
+
+/* Filter Panel - Mobile (bottom sheet overlay) */
+@media (max-width: 600px) {
+    .aih-filter-overlay {
+        display: none !important;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+    .aih-filter-overlay.open {
+        display: block !important;
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .aih-filter-panel {
+        display: block !important;
+        position: fixed !important;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: var(--color-surface);
+        border: none;
+        border-radius: 16px 16px 0 0;
+        z-index: 1000;
+        transform: translateY(100%);
+        transition: transform 0.3s ease;
+        max-height: 80vh;
+        overflow-y: auto;
+        margin-bottom: 0;
+    }
+
+    .aih-filter-panel.open {
+        transform: translateY(0);
+    }
+
+    .aih-filter-panel-header {
+        display: flex !important;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--color-border);
+        position: sticky;
+        top: 0;
+        background: var(--color-surface);
+        z-index: 1;
+    }
+
+    .aih-filter-panel-title {
+        font-family: var(--font-display);
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--color-primary);
+    }
+
+    .aih-filter-panel-close {
+        width: 32px;
+        height: 32px;
+        border: none;
+        background: var(--color-bg);
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--color-muted);
+        transition: all var(--transition);
+    }
+
+    .aih-filter-panel-close:hover {
+        background: var(--color-border);
+        color: var(--color-primary);
+    }
+
+    .aih-filter-panel-content {
+        padding: 20px;
+    }
+
+    body.filter-open {
+        overflow: hidden;
+    }
+}
+
+.aih-filter-section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.aih-filter-label {
+    font-family: var(--font-body);
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-muted);
+}
+
+.aih-filter-section .aih-select {
+    width: 100%;
+    min-width: auto;
+}
+
+.aih-select {
+    padding: 8px 28px 8px 10px;
+    font-family: var(--font-body);
+    font-size: 13px;
+    color: var(--color-primary);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238a8a8a' d='M6 8L2 4h8z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    transition: all var(--transition);
+    -webkit-appearance: none;
+    min-width: 110px;
+}
+
+.aih-select:focus {
+    outline: none;
+    border-color: var(--color-accent);
+}
+
+/* View Toggle */
+.aih-view-toggle {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    height: 36px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 0 4px;
+    background: var(--color-surface);
+    flex-shrink: 0;
+    margin-left: auto;
+    box-sizing: border-box;
+}
+
+.aih-view-toggle .aih-view-btn {
+    padding: 6px 8px;
+    background: transparent;
+    border: none;
+    border-radius: 2px;
+    cursor: pointer;
+    color: var(--color-muted);
+    transition: all var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.aih-view-toggle .aih-view-btn:hover {
+    color: var(--color-primary);
+}
+
+.aih-view-toggle .aih-view-btn.active {
+    background: var(--color-accent);
+    color: white;
+}
+
+/* ============================================
+   GALLERY GRID - DYNAMIC
+   ============================================ */
+.aih-gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+    width: 100%;
+}
+
+/* Ensure all cards have same dimensions */
+.aih-gallery-grid .aih-card {
+    width: 100%;
+    min-width: 0;
+}
+
+/* Single Column View Mode - shows all items in one column */
+.aih-gallery-grid.single-view {
+    grid-template-columns: minmax(0, 1fr) !important;
+    max-width: 450px;
+    margin: 0 auto;
+    gap: 20px;
+}
+
+.aih-gallery-grid.single-view .aih-card {
+    width: 100%;
+    max-width: 100%;
+}
+
+.aih-gallery-grid.single-view .aih-card-image {
+    aspect-ratio: 1/1;
+}
+
+.aih-gallery-grid.single-view .aih-card-image img {
+    object-fit: cover;
+    width: 100%;
+    height: 100%;
+}
+
+/* Responsive grid - mobile adjustments */
+@media (max-width: 600px) {
+    /* Mobile search/filter/view controls - smaller */
+    .aih-search-input {
+        padding: 5px 8px !important;
+        font-size: 11px !important;
+    }
+
+    .aih-select {
+        padding: 5px 20px 5px 6px !important;
+        font-size: 10px !important;
+        min-width: 70px !important;
+        background-position: right 4px center !important;
+    }
+
+    .aih-filter-group {
+        gap: 4px !important;
+    }
+
+    .aih-view-toggle {
+        padding: 1px !important;
+        gap: 1px !important;
+        border-width: 1px !important;
+    }
+
+    .aih-view-toggle .aih-view-btn {
+        padding: 2px 3px !important;
+        border-radius: 2px !important;
+    }
+
+    .aih-view-toggle .aih-view-btn svg {
+        width: 10px !important;
+        height: 10px !important;
+    }
+
+    .aih-gallery-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        width: 100%;
+    }
+
+    .aih-gallery-grid .aih-card {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .aih-gallery-grid.single-view {
+        grid-template-columns: minmax(0, 1fr);
+        max-width: 100%;
+        gap: 16px;
+    }
+
+    /* Mobile card body */
+    .aih-card-body {
+        height: 62px;
+        padding: 8px 6px;
+        min-width: 0;
+        max-width: 100%;
+        overflow: hidden;
+    }
+
+    .aih-card-title {
+        font-size: 14px;
+        line-height: 1.6;
+        padding-bottom: 3px;
+        -webkit-line-clamp: 1;
+        min-width: 0;
+        max-width: 100%;
+        width: 100%;
+    }
+
+    .aih-card-artist {
+        font-size: 11px;
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    /* Mobile card footer */
+    .aih-card-footer {
+        padding: 4px 4px 6px;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        align-self: stretch !important;
+    }
+
+    /* Force card to stretch children */
+    .aih-card {
+        align-items: stretch !important;
+    }
+
+    .aih-bid-info {
+        margin-bottom: 6px;
+    }
+
+    .aih-bid-label {
+        font-size: 8px;
+    }
+
+    .aih-bid-amount {
+        font-size: clamp(14px, 4vw, 16px);
+    }
+
+    .aih-card-footer .aih-bid-form {
+        display: flex !important;
+        flex-direction: row !important;
+        gap: 4px !important;
+        width: calc(100% + 8px) !important;
+        margin-left: -4px !important;
+        margin-right: -4px !important;
+        padding-left: 4px !important;
+        padding-right: 4px !important;
+        box-sizing: border-box !important;
+    }
+
+    .aih-card-footer .aih-bid-input {
+        flex: 1 !important;
+        min-width: 0 !important;
+        padding: 6px 8px !important;
+        font-size: 14px !important;
+        -webkit-appearance: none !important;
+        -moz-appearance: textfield !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Hide number input spinners */
+    .aih-card-footer .aih-bid-input::-webkit-outer-spin-button,
+    .aih-card-footer .aih-bid-input::-webkit-inner-spin-button {
+        -webkit-appearance: none !important;
+        margin: 0 !important;
+    }
+
+    .aih-card-footer .aih-bid-btn {
+        flex-shrink: 0 !important;
+        width: 32px !important;
+        padding: 6px 2px !important;
+        font-size: 10px !important;
+        letter-spacing: 0 !important;
+    }
+
+    /* Mobile art ID badge - larger and more prominent */
+    .aih-art-id-badge {
+        bottom: 8px;
+        left: 8px;
+        padding: 5px 8px !important;
+        font-size: clamp(14px, 4vw, 18px) !important;
+    }
+
+    /* Mobile status badge */
+    .aih-badge {
+        top: 8px;
+        left: 8px;
+        padding: 4px 8px;
+        font-size: 9px;
+    }
+
+    /* Mobile favorite button - already set in base styles */
+
+    /* Single view - larger art ID badge since card is bigger */
+    .aih-gallery-grid.single-view .aih-art-id-badge {
+        bottom: 10px;
+        left: 10px;
+        padding: 5px 10px;
+        font-size: clamp(14px, 4vw, 20px);
+    }
+
+    .aih-gallery-grid.single-view .aih-badge {
+        top: 10px;
+        left: 10px;
+        padding: 4px 8px;
+        font-size: 10px;
+    }
+
+    .aih-gallery-grid.single-view .aih-fav-btn {
+        top: 12px;
+        right: 12px;
+        width: 32px;
+        height: 32px;
+        min-width: 32px;
+        min-height: 32px;
+        font-size: 16px;
+    }
+
+    .aih-gallery-grid.single-view .aih-card-body {
+        height: auto;
+        min-height: 70px;
+        padding: 12px 14px;
+    }
+
+    .aih-gallery-grid.single-view .aih-card-title {
+        font-size: 16px;
+    }
+
+    .aih-gallery-grid.single-view .aih-card-artist {
+        font-size: 12px;
+    }
+
+    .aih-gallery-grid.single-view .aih-card-footer {
+        padding: 12px 14px 14px;
+    }
+
+    .aih-gallery-grid.single-view .aih-bid-amount {
+        font-size: 20px;
+    }
+
+    .aih-gallery-grid.single-view .aih-bid-form {
+        display: flex !important;
+        flex-direction: row !important;
+        gap: 6px !important;
+        width: calc(100% + 28px) !important;
+        margin-left: -14px !important;
+        margin-right: -14px !important;
+        padding-left: 14px !important;
+        padding-right: 14px !important;
+    }
+
+    .aih-gallery-grid.single-view .aih-bid-input {
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+        padding: 10px 14px;
+        font-size: 16px;
+    }
+
+    .aih-gallery-grid.single-view .aih-bid-btn {
+        flex: 0 0 40px !important;
+        width: 40px !important;
+        min-width: 40px !important;
+        max-width: 40px !important;
+        padding: 10px 8px;
+        font-size: 11px;
+        letter-spacing: 0.3px;
+    }
+
+    /* Mobile placeholder */
+    .aih-placeholder {
+        padding: 8px;
+    }
+
+    .aih-placeholder-id {
+        font-size: 18px;
+        margin-bottom: 3px;
+    }
+
+    .aih-placeholder-text {
+        font-size: 7px;
+        letter-spacing: 0.3px;
+    }
+
+    /* Single view placeholder - larger */
+    .aih-gallery-grid.single-view .aih-placeholder-id {
+        font-size: 32px;
+        margin-bottom: 6px;
+    }
+
+    .aih-gallery-grid.single-view .aih-placeholder-text {
+        font-size: 10px;
+    }
+}
+
+/* ============================================
+   CARD - MOBILE OPTIMIZED
+   ============================================ */
+.aih-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    transition: all var(--transition);
+    display: flex;
+    flex-direction: column;
+}
+
+.aih-card.ended {
+    opacity: 0.7;
+}
+
+.aih-card-image {
+    position: relative;
+    /* Fallback for browsers without aspect-ratio support */
+    padding-bottom: 100%; /* 1:1 ratio fallback */
+    height: 0;
+    overflow: hidden;
+    background: var(--color-bg-alt);
+    width: 100%;
+}
+
+/* Modern browsers with aspect-ratio support */
+@supports (aspect-ratio: 1/1) {
+    .aih-card-image {
+        aspect-ratio: 1/1;
+        padding-bottom: 0;
+        height: auto;
+    }
+}
+
+.aih-card-image img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
+.aih-card-image a {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+/* Placeholder for images - improved visibility */
+.aih-placeholder {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--color-bg-alt) 0%, var(--color-border) 100%);
+    color: var(--color-muted);
+    padding: 15px;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.aih-placeholder-id {
+    font-family: var(--font-display);
+    font-size: clamp(24px, 8vw, 42px);
+    font-weight: 600;
+    color: var(--color-accent);
+    margin-bottom: 6px;
+    line-height: 1;
+    word-break: break-all;
+}
+
+.aih-placeholder-text {
+    font-size: clamp(9px, 2.5vw, 12px);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--color-muted);
+    white-space: nowrap;
+}
+
+.aih-placeholder-link {
+    display: flex;
+    width: 100%;
+    height: 100%;
+}
+
+/* Art ID badge on image */
+.aih-art-id-badge {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    padding: 5px 8px;
+    font-size: clamp(14px, 4vw, 18px);
+    font-weight: 700;
+    font-family: var(--font-display);
+    letter-spacing: 0.5px;
+    background: rgba(255, 255, 255, 0.95);
+    color: var(--color-accent);
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    z-index: 4;
+}
+
+.aih-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    padding: 5px 10px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-radius: 2px;
+}
+
+.aih-badge-winning {
+    background: var(--color-winning);
+    color: white;
+}
+
+.aih-badge-ended {
+    background: var(--color-secondary);
+    color: white;
+}
+
+.aih-fav-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    min-height: 28px;
+    aspect-ratio: 1/1;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all var(--transition);
+    font-size: 14px;
+    color: var(--color-muted);
+    -webkit-tap-highlight-color: transparent;
+    z-index: 5;
+    box-sizing: border-box;
+}
+
+.aih-fav-btn:hover,
+.aih-fav-btn:active {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+}
+
+.aih-fav-btn.active {
+    background: var(--color-error);
+    border-color: var(--color-error);
+    color: white;
+}
+
+.aih-card-body {
+    padding: 10px 12px;
+    min-width: 0;
+    max-width: 100%;
+    min-height: 82px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.aih-card-meta {
+    margin-bottom: 4px;
+}
+
+.aih-art-id {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--color-accent);
+}
+
+.aih-card-title {
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.6;
+    margin-bottom: 3px;
+    padding-bottom: 3px;
+    /* Ellipsis for long titles - 2 lines max */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    /* Ensure width constraints for ellipsis to work */
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
+    word-break: break-word;
+}
+
+.aih-card-title a {
+    color: var(--color-primary);
+    text-decoration: none;
+}
+
+.aih-card-artist {
+    font-size: 11px;
+    color: var(--color-muted);
+    /* Ellipsis for long artist names - 1 line */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.aih-card-footer {
+    padding: 8px 12px 10px;
+    border-top: 1px solid var(--color-border);
+    background: var(--color-bg);
+    min-width: 0;
+    width: 100%;
+    align-self: stretch;
+    box-sizing: border-box;
+}
+
+.aih-bid-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 6px;
+    gap: 8px;
+}
+
+/* Hide empty bid info containers */
+.aih-bid-info-left:empty {
+    display: none;
+}
+
+/* Hide entire bid info row when left is empty and no time remaining */
+.aih-bid-info:has(.aih-bid-info-left:empty):not(:has(.aih-time-remaining)) {
+    display: none;
+    margin-bottom: 0;
+}
+
+/* Centered bid info (for ended items and my-bids) */
+.aih-bid-info-centered {
+    justify-content: center;
+    text-align: center;
+}
+
+.aih-bid-info-centered > div {
+    text-align: center;
+}
+
+.aih-bid-label {
+    font-size: 9px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-muted);
+}
+
+.aih-bid-amount {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--color-primary);
+}
+
+.aih-bid-form {
+    display: flex;
+    flex-direction: row;
+    gap: 4px;
+    width: calc(100% + 24px);
+    margin-left: -12px;
+    margin-right: -12px;
+    padding-left: 12px;
+    padding-right: 12px;
+    box-sizing: border-box;
+}
+
+.aih-bid-input {
+    flex: 1;
+    min-width: 0;
+    padding: 8px 10px;
+    font-family: var(--font-body);
+    font-size: 14px;
+    color: var(--color-primary);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    box-sizing: border-box;
+    -webkit-appearance: none;
+    -moz-appearance: textfield;
+}
+
+/* Hide number input spinners */
+.aih-bid-input::-webkit-outer-spin-button,
+.aih-bid-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.aih-bid-input:focus {
+    outline: none;
+    border-color: var(--color-accent);
+}
+
+.aih-bid-input::placeholder {
+    color: var(--color-muted);
+}
+
+.aih-bid-btn {
+    flex-shrink: 0;
+    width: 32px;
+    padding: 8px 2px;
+    font-family: var(--font-body);
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0;
+    color: var(--color-surface);
+    background: var(--color-primary);
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all var(--transition);
+    white-space: nowrap;
+    box-sizing: border-box;
+    vertical-align: middle;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.aih-bid-btn:hover,
+.aih-bid-btn:active {
+    background: var(--color-accent);
+}
+
+.aih-bid-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.aih-bid-message {
+    margin-top: 10px;
+    padding: 10px 12px;
+    font-size: 13px;
+    border-radius: var(--radius);
+    display: none;
+}
+
+.aih-bid-message.success {
+    display: block;
+    background: #e8f5e9;
+    color: var(--color-success);
+}
+
+.aih-bid-message.error {
+    display: block;
+    background: #ffebee;
+    color: var(--color-error);
+}
+
+/* ============================================
+   EMPTY STATE
+   ============================================ */
+.aih-empty-state {
+    text-align: center;
+    padding: 60px 24px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+}
+
+.aih-empty-state .aih-ornament {
+    font-size: 20px;
+    color: var(--color-accent);
+    margin-bottom: 20px;
+}
+
+.aih-empty-state h2 {
+    font-family: var(--font-display);
+    font-size: 26px;
+    font-weight: 500;
+    margin-bottom: 10px;
+}
+
+.aih-empty-state p {
+    color: var(--color-muted);
+    font-size: 14px;
+}
+
+/* ============================================
+   LOGIN CARD - MOBILE FIRST
+   ============================================ */
+.aih-login-card {
+    width: 100%;
+    max-width: 400px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-lg);
+    margin: 0 auto;
+}
+
+.aih-login-header {
+    text-align: center;
+    padding: 32px 24px 24px;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.aih-ornament {
+    font-size: 16px;
+    color: var(--color-accent);
+    margin-bottom: 16px;
+    letter-spacing: 8px;
+}
+
+.aih-login-header h1 {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 500;
+    margin-bottom: 10px;
+}
+
+.aih-login-header p {
+    font-size: 13px;
+    color: var(--color-muted);
+}
+
+.aih-login-form {
+    padding: 24px;
+}
+
+.aih-field {
+    margin-bottom: 20px;
+}
+
+.aih-field label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--color-secondary);
+    margin-bottom: 8px;
+}
+
+.aih-field input {
+    width: 100%;
+    padding: 14px 16px;
+    font-family: var(--font-body);
+    font-size: 16px; /* Prevents iOS zoom */
+    font-weight: 500;
+    letter-spacing: 3px;
+    text-align: center;
+    text-transform: uppercase;
+    color: var(--color-primary);
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    transition: all var(--transition);
+    -webkit-appearance: none;
+}
+
+.aih-field input:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    background: var(--color-surface);
+}
+
+.aih-btn {
+    width: 100%;
+    padding: 12px 20px;
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--color-surface);
+    background: var(--color-primary);
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all var(--transition);
+    -webkit-tap-highlight-color: transparent;
+}
+
+.aih-btn:hover,
+.aih-btn:active {
+    background: var(--color-accent);
+}
+
+.aih-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.aih-btn.loading {
+    position: relative;
+    color: transparent;
+}
+
+.aih-btn.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 18px; height: 18px;
+    margin: -9px 0 0 -9px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.aih-message {
+    margin-top: 16px;
+    padding: 12px 14px;
+    font-size: 13px;
+    text-align: center;
+    border-radius: var(--radius);
+    display: none;
+}
+
+.aih-message.success { display: block; background: #e8f5e9; color: var(--color-success); }
+.aih-message.error { display: block; background: #ffebee; color: var(--color-error); }
+
+/* ============================================
+   FOOTER
+   ============================================ */
+.aih-footer {
+    text-align: center;
+    padding: 20px 16px;
+    border-top: 1px solid var(--color-border);
+    background: var(--color-surface);
+}
+
+.aih-footer p {
+    font-size: 11px;
+    color: var(--color-muted);
+    letter-spacing: 0.5px;
+}
+
+/* ============================================
+   TOAST
+   ============================================ */
+.aih-toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    padding: 12px 20px;
+    background: var(--color-primary);
+    color: white;
+    font-size: 13px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 9999;
+}
+
+.aih-toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}
+
+/* ============================================
+   SINGLE ITEM PAGE
+   ============================================ */
+.aih-single-content {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 32px;
+}
+
+/* Image wrapper with navigation arrows */
+.aih-single-image-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.aih-single-image-wrapper .aih-nav-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 50%;
+    color: var(--color-primary);
+    text-decoration: none;
+    font-size: 18px;
+    transition: all var(--transition);
+    z-index: 10;
+    box-shadow: var(--shadow-sm);
+}
+
+.aih-single-image-wrapper .aih-nav-arrow:hover {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: white;
+}
+
+.aih-single-image-wrapper .aih-nav-prev {
+    left: -22px;
+}
+
+.aih-single-image-wrapper .aih-nav-next {
+    right: -22px;
+}
+
+.aih-single-image {
+    position: relative;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    overflow: hidden;
+}
+
+.aih-single-image > img {
+    width: 100%;
+    height: auto;
+    display: block;
+    object-fit: contain;
+    object-position: center;
+    max-height: 70vh;
+    margin: 0 auto;
+}
+
+.aih-single-image .aih-fav-btn {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+}
+
+.aih-thumbnails {
+    display: flex;
+    gap: 8px;
+    padding: 12px;
+    border-top: 1px solid var(--color-border);
+    overflow-x: auto;
+}
+
+.aih-thumb {
+    flex-shrink: 0;
+    width: 60px;
+    height: 60px;
+    padding: 0;
+    border: 2px solid transparent;
+    background: none;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: all var(--transition);
+}
+
+.aih-thumb:hover,
+.aih-thumb.active {
+    opacity: 1;
+    border-color: var(--color-accent);
+}
+
+.aih-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.aih-single-details {
+    padding: 0;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
+}
+
+.aih-single-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+.aih-single-details h1 {
+    font-family: var(--font-display);
+    font-size: clamp(22px, 5vw, 28px);
+    font-weight: 500;
+    line-height: 1.3;
+    margin-bottom: 8px;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
+}
+
+.aih-artist {
+    font-size: clamp(13px, 3vw, 15px);
+    color: var(--color-muted);
+    margin-bottom: 24px;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+}
+
+.aih-piece-info {
+    margin-bottom: 24px;
+    padding: 20px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    overflow: hidden;
+}
+
+.aih-info-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--color-border);
+    font-size: clamp(13px, 3vw, 14px);
+}
+
+.aih-info-row:last-child {
+    border-bottom: none;
+}
+
+.aih-info-label {
+    color: var(--color-muted);
+    font-size: clamp(11px, 2.5vw, 12px);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.aih-info-row span:last-child {
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
+}
+
+.aih-description {
+    font-size: clamp(13px, 3vw, 14px);
+    line-height: 1.7;
+    color: var(--color-secondary);
+    margin-bottom: 24px;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
+}
+
+.aih-bid-section {
+    padding: 24px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+}
+
+.aih-current-bid {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.aih-current-bid .aih-bid-label {
+    display: block;
+    font-size: clamp(10px, 2.5vw, 11px);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--color-muted);
+    margin-bottom: 8px;
+}
+
+.aih-current-bid .aih-bid-amount {
+    font-family: var(--font-display);
+    font-size: clamp(28px, 7vw, 36px);
+    font-weight: 600;
+}
+
+/* Hidden bid amount - when bid is placed */
+.aih-bid-hidden {
+    display: none !important;
+}
+
+.aih-bid-form-single {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.aih-bid-form-single .aih-field {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+.aih-bid-form-single .aih-field label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--color-secondary);
+    margin-bottom: 6px;
+}
+
+.aih-bid-form-single .aih-field input {
+    width: 100%;
+    height: 38px;
+    padding: 0 10px;
+    font-family: var(--font-body);
+    font-size: 14px;
+    text-align: left;
+    color: var(--color-primary);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    transition: all var(--transition);
+    -webkit-appearance: none;
+    -moz-appearance: textfield;
+    box-sizing: border-box;
+}
+
+.aih-bid-form-single .aih-field input::-webkit-outer-spin-button,
+.aih-bid-form-single .aih-field input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.aih-bid-form-single .aih-field input:focus {
+    outline: none;
+    border-color: var(--color-accent);
+}
+
+.aih-bid-form-single .aih-field input::placeholder {
+    color: var(--color-muted);
+}
+
+.aih-bid-form-single .aih-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 38px;
+    padding: 0 12px;
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: 0;
+    color: var(--color-surface);
+    background: var(--color-primary);
+    border: 1px solid var(--color-primary);
+    border-radius: var(--radius);
+    white-space: nowrap;
+    box-sizing: border-box;
+}
+
+/* ============================================
+   TABLET STYLES (600px+)
+   ============================================ */
+@media (min-width: 600px) {
+    .aih-btn {
+        padding: 14px 24px;
+        font-size: 12px;
+        letter-spacing: 2px;
+    }
+
+    .aih-main {
+        padding: 24px;
+    }
+    
+    .aih-gallery-header {
+        gap: 16px;
+        margin-bottom: 28px;
+    }
+
+    .aih-gallery-controls {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+    
+    .aih-search-box {
+        width: auto;
+    }
+    
+    .aih-search-input {
+        width: 240px;
+    }
+    
+    .aih-filter-group {
+        width: auto;
+    }
+    
+    .aih-select {
+        flex: none;
+        min-width: 140px;
+    }
+    
+    .aih-gallery-title h1 {
+        font-size: 32px;
+    }
+    
+    .aih-card-title {
+        font-size: 22px;
+    }
+    
+    .aih-login-header {
+        padding: 40px 32px 28px;
+    }
+    
+    .aih-login-header h1 {
+        font-size: 32px;
+    }
+    
+    .aih-login-form {
+        padding: 28px 32px 32px;
+    }
+}
+
+/* ============================================
+   DESKTOP STYLES (900px+)
+   ============================================ */
+@media (min-width: 900px) {
+    .aih-page {
+        font-size: 15px;
+    }
+    
+    .aih-header-inner {
+        padding: 16px 48px;
+        flex-wrap: nowrap;
+    }
+    
+    .aih-logo {
+        font-size: 24px;
+    }
+    
+    .aih-nav {
+        order: 0;
+        width: auto;
+        flex: 1;
+        justify-content: center;
+        gap: 36px;
+        padding-top: 0;
+        border-top: none;
+    }
+    
+    .aih-nav-link {
+        font-size: 12px;
+    }
+    
+    .aih-main {
+        padding: 32px 48px;
+    }
+    
+    .aih-gallery-header {
+        gap: 16px;
+    }
+    
+    .aih-gallery-grid {
+        gap: 24px;
+    }
+    
+    .aih-gallery-title h1 {
+        font-size: 32px;
+    }
+    
+    .aih-card:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateY(-2px);
+    }
+    
+    .aih-card:hover .aih-card-image img {
+        transform: scale(1.03);
+    }
+    
+    .aih-card-image img {
+        transition: transform 0.4s ease;
+    }
+    
+    .aih-card-body {
+        padding: 14px 16px;
+    }
+    
+    .aih-card-footer {
+        padding: 10px 14px 12px;
+    }
+
+    .aih-bid-form {
+        width: calc(100% + 28px);
+        margin-left: -14px;
+        margin-right: -14px;
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+
+    .aih-bid-amount {
+        font-size: 24px;
+    }
+
+    /* Single item desktop */
+    .aih-single-content {
+        grid-template-columns: 1.2fr 1fr;
+        gap: 48px;
+    }
+    
+    .aih-single-details h1 {
+        font-size: 32px;
+    }
+    
+    .aih-info-row {
+        flex-direction: row;
+        justify-content: space-between;
+        gap: 16px;
+    }
+    
+    .aih-current-bid .aih-bid-amount {
+        font-size: 42px;
+    }
+    
+    .aih-bid-form-single {
+        flex-direction: row;
+        align-items: flex-end;
+    }
+    
+    .aih-bid-form-single .aih-field {
+        flex: 1;
+    }
+    
+    .aih-bid-form-single .aih-btn {
+        min-width: 140px;
+    }
+}
+
+/* ============================================
+   LARGE DESKTOP (1200px+)
+   ============================================ */
+@media (min-width: 1200px) {
+    .aih-gallery-title h1 {
+        font-size: 38px;
+    }
+}
+
+/* ============================================
+   IMAGE CAROUSEL STYLES
+   ============================================ */
+.aih-image-carousel {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.aih-carousel-link {
+    display: block;
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.aih-carousel-img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.aih-carousel-img.active {
+    opacity: 1;
+    position: relative;
+}
+
+.aih-carousel-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: bold;
+    color: var(--color-primary);
+    z-index: 5;
+    opacity: 0;
+    transition: opacity 0.2s ease, background 0.2s ease;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+}
+
+.aih-card-image:hover .aih-carousel-arrow {
+    opacity: 1;
+}
+
+.aih-carousel-prev {
+    left: 8px;
+}
+
+.aih-carousel-next {
+    right: 8px;
+}
+
+.aih-carousel-arrow:hover {
+    background: var(--color-accent);
+    color: white;
+}
+
+.aih-carousel-dots {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 6px;
+    z-index: 5;
+}
+
+.aih-carousel-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.aih-carousel-dot:hover {
+    background: rgba(255, 255, 255, 0.8);
+}
+
+.aih-carousel-dot.active {
+    background: white;
+    transform: scale(1.2);
+}
+
+/* ============================================
+   TIME REMAINING STYLES
+   ============================================ */
+/* Note: .aih-bid-info base styles are defined in CARD section above */
+
+.aih-bid-info-left {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+}
+
+/* Time remaining badge - positioned on image */
+.aih-card-image .aih-time-remaining {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    z-index: 5;
+    backdrop-filter: blur(4px);
+}
+
+.aih-card-image .aih-time-remaining .aih-time-value {
+    color: white;
+}
+
+.aih-card-image .aih-time-remaining.urgent .aih-time-value {
+    color: #ff6b6b;
+}
+
+.aih-card-image .aih-time-remaining.ended .aih-time-value {
+    color: var(--color-muted);
+}
+
+/* NARROWER FILTER DROPDOWNS - see FIX FILTER/SEARCH OVERLAP section */
+
+/* ============================================
+   VIEW TOGGLE SIZES
+   ============================================ */
+/* Mobile view toggle styles are defined in the main mobile section above */
+
+/* Tablet/Desktop */
+@media (min-width: 601px) {
+    .aih-view-toggle .aih-view-btn svg {
+        width: 15px;
+        height: 15px;
+    }
+}
+
+/* ============================================
+   USER NAME LINK STYLES
+   ============================================ */
+.aih-user-name-link {
+    color: var(--color-secondary);
+    text-decoration: none;
+    transition: color var(--transition);
+}
+
+.aih-user-name-link:hover {
+    color: var(--color-accent);
+}
+
+/* ============================================
+   HEART/FAVORITE BUTTON - ICON CENTERING
+   ============================================ */
+.aih-fav-btn .aih-fav-icon {
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Outline heart for unpressed state */
+    -webkit-text-stroke: 1.5px var(--color-muted);
+    color: transparent;
+}
+
+.aih-fav-btn:hover .aih-fav-icon {
+    -webkit-text-stroke-color: var(--color-accent);
+}
+
+.aih-fav-btn.active .aih-fav-icon {
+    /* Filled heart for pressed state */
+    -webkit-text-stroke: 0;
+    color: white;
+}
+
+/* Desktop favorite button - matches badge size */
+@media (min-width: 600px) {
+    .aih-card-image .aih-fav-btn {
+        top: 10px;
+        right: 10px;
+        width: 30px;
+        height: 30px;
+        min-width: 30px;
+        min-height: 30px;
+        font-size: 14px;
+    }
+}
+
+/* ============================================
+   SINGLE VIEW NAVIGATION FIX FOR MOBILE
+   ============================================ */
+.aih-single-nav {
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 12px;
+}
+
+.aih-single-nav button {
+    padding: 8px 14px;
+    font-size: 13px;
+    min-width: 80px;
+}
+
+@media (max-width: 480px) {
+    .aih-single-nav {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .aih-single-nav button {
+        width: 100%;
+    }
+
+    .aih-single-counter {
+        order: -1;
+        text-align: center;
+        width: 100%;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--color-border);
+        margin-bottom: 4px;
+    }
+}
+
+/* Hide single view on very small screens - force grid */
+@media (max-width: 400px) {
+    .aih-view-toggle {
+        display: none;
+    }
+
+    .aih-gallery-grid.single-view {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    .aih-gallery-grid.single-view .aih-card {
+        display: flex !important;
+    }
+
+    .aih-single-nav {
+        display: none !important;
+    }
+}
+
+/* ============================================
+   RESPONSIVE BID AMOUNT SIZING (Tablet only - 600-899px)
+   Desktop styles (900px+) are in DESKTOP STYLES section above
+   ============================================ */
+@media (min-width: 600px) and (max-width: 899px) {
+    .aih-card-footer {
+        padding: 10px 14px 12px;
+    }
+
+    .aih-bid-form {
+        width: calc(100% + 28px);
+        margin-left: -14px;
+        margin-right: -14px;
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+
+    .aih-bid-amount {
+        font-size: 22px;
+    }
+}
+
+
+/* ============================================
+   MOBILE CAROUSEL TOUCH IMPROVEMENTS
+   ============================================ */
+@media (max-width: 768px) {
+    .aih-carousel-arrow {
+        opacity: 1;
+        width: 26px;
+        height: 26px;
+        font-size: 16px;
+    }
+
+    .aih-carousel-prev {
+        left: 6px;
+    }
+
+    .aih-carousel-next {
+        right: 6px;
+    }
+
+    .aih-carousel-dot {
+        width: 7px;
+        height: 7px;
+    }
+}
+
+/* ============================================
+   FIX FILTER/SEARCH OVERLAP
+   ============================================ */
+.aih-select-narrow {
+    min-width: 80px;
+    max-width: 120px;
+    padding: 7px 22px 7px 8px;
+    font-size: 11px;
+}
+
+@media (max-width: 600px) {
+    .aih-gallery-controls {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .aih-search-box {
+        flex: 1 1 100%;
+        width: 100%;
+        order: 0;
+    }
+
+    .aih-filter-toggle {
+        order: 1;
+    }
+
+    .aih-filter-group {
+        flex: 1 1 auto;
+        flex-wrap: wrap;
+        order: 2;
+    }
+
+    .aih-select-narrow {
+        flex: 1 1 calc(33% - 4px);
+        max-width: calc(33% - 4px);
+        min-width: 70px;
+    }
+
+    .aih-view-toggle {
+        order: 3;
+        margin-left: auto;
+    }
+}
+
+@media (min-width: 601px) and (max-width: 900px) {
+    .aih-gallery-controls {
+        flex-wrap: nowrap;
+        gap: 8px;
+    }
+
+    .aih-search-box {
+        flex: 0 0 150px;
+    }
+
+    .aih-filter-group {
+        flex: 0 1 auto;
+        flex-wrap: nowrap;
+    }
+
+    .aih-select-narrow {
+        min-width: 85px;
+        max-width: 110px;
+    }
+}
+
+@media (min-width: 901px) {
+    .aih-gallery-controls {
+        flex-wrap: nowrap;
+    }
+
+    .aih-search-box {
+        width: 240px;
+        flex-shrink: 0;
+    }
+
+    .aih-filter-group {
+        flex-wrap: nowrap;
+        flex-shrink: 0;
+    }
+
+    .aih-select-narrow {
+        min-width: 90px;
+        max-width: 130px;
+        padding: 8px 24px 8px 10px;
+        font-size: 12px;
+    }
+}
+
+/* ============================================
+   RESPONSIVE EDGE PADDING
+   Note: Base padding is set in TABLET (600px+) and DESKTOP (900px+) sections above.
+   These rules add larger padding for very wide screens.
+   ============================================ */
+@media (min-width: 1400px) {
+    .aih-main {
+        padding: 32px 48px;
+    }
+
+    .aih-header-inner {
+        padding: 16px 48px;
+    }
+}
+
+@media (min-width: 1600px) {
+    .aih-gallery-grid {
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    }
+
+    /* Ensure single-view still works at large screens */
+    .aih-gallery-grid.single-view {
+        grid-template-columns: 1fr !important;
+        max-width: 500px;
+    }
+}
+
+/* ============================================
+   CHECKOUT PAGE - FULL WIDTH LAYOUT
+   ============================================ */
+.aih-checkout-page .aih-main {
+    max-width: 100%;
+    width: 100%;
+}
+
+/* ============================================
+   SINGLE ITEM PAGE - FULL WIDTH LAYOUT
+   ============================================ */
+.aih-single-page .aih-main {
+    max-width: 100%;
+    width: 100%;
+}
+
+/* ============================================
+   SINGLE ITEM PAGE - MOBILE TITLE PADDING
+   ============================================ */
+@media (max-width: 600px) {
+    .aih-single-page .aih-single-details {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .aih-single-page .aih-single-details h1 {
+        padding-left: 4px;
+        padding-right: 4px;
+    }
+}
+
+/* ============================================
+   GALLERY PAGE - FULL WIDTH LAYOUT
+   ============================================ */
+.aih-gallery-page .aih-main {
+    max-width: 100% !important;
+    width: 100% !important;
+}
+
+/* ============================================
+   MY BIDS PAGE - FULL WIDTH LAYOUT
+   ============================================ */
+.aih-mybids-page .aih-main {
+    max-width: 100% !important;
+    width: 100% !important;
+}
+
+/* ============================================
+   SCROLL TO TOP BUTTON
+   ============================================ */
+.aih-scroll-top {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 48px;
+    height: 48px;
+    background: var(--color-accent);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    z-index: 999;
+}
+
+.aih-scroll-top.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.aih-scroll-top:hover {
+    background: var(--color-accent-dark);
+    transform: translateY(-3px);
+}
+
+@media (max-width: 600px) {
+    .aih-scroll-top {
+        width: 42px;
+        height: 42px;
+        font-size: 18px;
+        bottom: 16px;
+        right: 16px;
+    }
+}
+
+/* ============================================
+   CHECKOUT PAGE - IMPROVED LAYOUT
+   ============================================ */
+.aih-checkout-page .aih-checkout-layout {
+    grid-template-columns: 1fr minmax(350px, 500px);
+    gap: 32px;
+}
+
+.aih-checkout-page .aih-checkout-item-details {
+    min-width: 0;
+    overflow: hidden;
+}
+
+.aih-checkout-page .aih-checkout-item-details h4 {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@media (min-width: 1200px) {
+    .aih-checkout-page .aih-checkout-layout {
+        gap: 48px;
+    }
+}
+
+@media (max-width: 1000px) {
+    .aih-checkout-page .aih-checkout-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Order modal - transaction ID */
+.aih-order-txn {
+    margin-top: 8px;
+    font-family: var(--font-body);
+    font-size: 13px;
+    color: var(--color-muted);
+}
+.aih-txn-label { font-weight: 500; }
+.aih-txn-value { font-family: monospace; }
+
+/* Mobile styles consolidated - see above sections */
+
+/* ============================================
+   GALLERY CARD - BID INFO HIDE WHEN PLACED
+   ============================================ */
+.aih-bid-info-left .aih-bid-hidden {
+    display: none !important;
+}
+
+/* Keep "Bid Placed" label visible but hide amount */
+.aih-card .aih-bid-info .aih-bid-label {
+    display: block;
+}
+
+/* ============================================
+   SINGLE PAGE - NAVIGATION & PAGE INDICATOR
+   Note: Main styles are in single-item.php
+   ============================================ */
+.aih-back-link {
+    font-size: 13px;
+    color: var(--color-muted);
+    text-decoration: none;
+    transition: color var(--transition);
+}
+
+.aih-back-link:hover {
+    color: var(--color-primary);
+}
+
+/* ============================================
+   DEVICE-SPECIFIC OPTIMIZATIONS
+   iPhone 14-17, Samsung S20-S25, Pixel 7-10
+   ============================================ */
+
+/* Small phones: Samsung S20-S25 base (360px width) */
+@media screen and (max-width: 379px) {
+    .aih-card-title {
+        font-size: 13px;
+    }
+
+    .aih-card-artist {
+        font-size: 10px;
+    }
+
+    .aih-card-body {
+        height: 58px;
+        padding: 6px 5px;
+    }
+
+    .aih-gallery-grid {
+        gap: 10px;
+    }
+
+    .aih-bid-input {
+        font-size: 14px;
+        padding: 6px 8px;
+    }
+
+    .aih-bid-btn {
+        font-size: 10px;
+        padding: 6px 10px;
+    }
+}
+
+/* Medium phones: iPhone 14/15/16, Pixel 7-9 (390-412px width) */
+@media screen and (min-width: 380px) and (max-width: 427px) {
+    .aih-card-title {
+        font-size: 14px;
+    }
+
+    .aih-card-body {
+        height: 62px;
+        padding: 8px 6px;
+    }
+
+    .aih-gallery-grid {
+        gap: 12px;
+    }
+}
+
+/* Large phones: iPhone Plus/Pro Max, Pixel Pro (428-448px width) */
+@media screen and (min-width: 428px) and (max-width: 599px) {
+    .aih-card-title {
+        font-size: 15px;
+    }
+
+    .aih-card-body {
+        height: 66px;
+        padding: 8px 8px;
+    }
+
+    .aih-gallery-grid {
+        gap: 14px;
+    }
+}
+
+/* Ensure touch targets are at least 44px for iOS accessibility */
+@media (pointer: coarse) {
+    .aih-bid-btn,
+    .aih-view-btn,
+    .aih-filter-toggle {
+        min-height: 30px;
+        min-width: 30px;
+    }
+
+    .aih-view-btn svg,
+    .aih-filter-toggle > svg:first-child {
+        width: 20px;
+        height: 20px;
+    }
+
+    .aih-select {
+        min-height: 44px;
+    }
+}
+
+/* High DPI displays (Retina, Samsung AMOLED, etc.) */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .aih-card {
+        /* Ensure crisp borders on high DPI */
+        border-width: 0.5px;
+    }
+}
+
+/* Safe area padding for notched devices */
+@supports (padding: env(safe-area-inset-bottom)) {
+    .aih-footer {
+        padding-bottom: calc(16px + env(safe-area-inset-bottom));
+    }
+
+    .aih-header {
+        padding-top: env(safe-area-inset-top);
+    }
+}
+
+/* Prevent text size adjustment on orientation change (iOS) */
+html {
+    -webkit-text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+
+/* Improve font rendering on all devices */
+body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
