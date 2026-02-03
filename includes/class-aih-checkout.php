@@ -156,7 +156,8 @@ class AIH_Checkout {
             "SELECT o.*,
                     COALESCE(bd.name_first, rg.name_first) as name_first,
                     COALESCE(bd.name_last, rg.name_last) as name_last,
-                    COALESCE(bd.phone_mobile, rg.phone_mobile) as phone
+                    COALESCE(bd.phone_mobile, rg.phone_mobile) as phone,
+                    COALESCE(bd.email_primary, rg.email_primary) as email
              FROM $orders_table o
              LEFT JOIN $bidders_table bd ON o.bidder_id = bd.confirmation_code
              LEFT JOIN $registrants_table rg ON o.bidder_id = rg.confirmation_code
@@ -234,6 +235,7 @@ class AIH_Checkout {
                     COALESCE(bd.name_first, rg.name_first) as name_first,
                     COALESCE(bd.name_last, rg.name_last) as name_last,
                     COALESCE(bd.phone_mobile, rg.phone_mobile) as phone,
+                    COALESCE(bd.email_primary, rg.email_primary) as email,
                     COALESCE(oic.item_count, 0) as item_count
              FROM $orders_table o
              LEFT JOIN $bidders_table bd ON o.bidder_id = bd.confirmation_code

@@ -128,6 +128,13 @@ foreach ($orders as $order) {
         </a>
     </nav>
     
+    <!-- Search Bar -->
+    <div class="aih-pickup-search-bar">
+        <span class="dashicons dashicons-search"></span>
+        <input type="text" id="aih-pickup-search" placeholder="<?php esc_attr_e('Search by name, email, order #, or art piece...', 'art-in-heaven'); ?>">
+        <span class="aih-pickup-search-count"><span id="aih-visible-count"><?php echo count($orders); ?></span> <?php _e('orders', 'art-in-heaven'); ?></span>
+    </div>
+
     <div class="aih-panel" style="margin-top: 0; border-top: none; border-radius: 0 0 8px 8px;">
         <?php if (empty($orders)): ?>
             <div class="aih-empty-state">
@@ -148,7 +155,19 @@ foreach ($orders as $order) {
         <?php else: ?>
             <div class="aih-pickup-list">
                 <?php foreach ($orders as $order): ?>
-                    <div class="aih-pickup-card" data-order-id="<?php echo $order->id; ?>">
+                    <?php
+                        $search_items = array();
+                        foreach ($order->items as $si) {
+                            $search_items[] = strtolower($si->title . ' ' . $si->artist . ' ' . $si->art_id);
+                        }
+                        $search_data = strtolower(
+                            ($order->name_first ?? '') . ' ' . ($order->name_last ?? '') . ' ' .
+                            ($order->email_primary ?? '') . ' ' . ($order->phone_mobile ?? '') . ' ' .
+                            $order->order_number . ' ' . ($order->confirmation_code ?? $order->bidder_id) . ' ' .
+                            implode(' ', $search_items)
+                        );
+                    ?>
+                    <div class="aih-pickup-card" data-order-id="<?php echo $order->id; ?>" data-search="<?php echo esc_attr($search_data); ?>">
                         <div class="aih-pickup-header">
                             <div class="aih-pickup-order-info">
                                 <span class="aih-order-number"><?php echo esc_html($order->order_number); ?></span>
@@ -720,6 +739,44 @@ foreach ($orders as $order) {
     height: 16px;
 }
 
+/* Search Bar */
+.aih-pickup-search-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #fff;
+    padding: 12px 20px;
+    border: 1px solid #e5e7eb;
+    border-top: none;
+}
+
+.aih-pickup-search-bar > .dashicons {
+    color: #9ca3af;
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+.aih-pickup-search-bar input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 14px;
+    padding: 4px 0;
+    background: transparent;
+}
+
+.aih-pickup-search-count {
+    font-size: 13px;
+    color: #9ca3af;
+    white-space: nowrap;
+}
+
+.aih-pickup-card.aih-hidden {
+    display: none;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .aih-pickup-header {
@@ -756,6 +813,27 @@ foreach ($orders as $order) {
 
 <script>
 jQuery(document).ready(function($) {
+    // Search filtering
+    var $cards = $('.aih-pickup-card');
+    var $searchInput = $('#aih-pickup-search');
+
+    $searchInput.on('input', function() {
+        var search = this.value.toLowerCase().trim();
+        var visibleCount = 0;
+
+        $cards.each(function() {
+            var searchData = this.getAttribute('data-search') || '';
+            if (!search || searchData.indexOf(search) !== -1) {
+                this.style.display = '';
+                visibleCount++;
+            } else {
+                this.style.display = 'none';
+            }
+        });
+
+        document.getElementById('aih-visible-count').textContent = visibleCount;
+    });
+
     var $modal = $('#aih-pickup-modal');
     var currentOrderId = null;
     

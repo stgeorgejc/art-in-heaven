@@ -32,11 +32,16 @@ if (!defined('ABSPATH')) {
                             </tr>
                         </thead>
                         <tbody>
-                            <?php foreach ($single_order->items as $item): ?>
+                            <?php
+                            $art_images = new AIH_Art_Images();
+                            foreach ($single_order->items as $item):
+                                $images = $art_images->get_images($item->art_piece_id);
+                                $thumb = !empty($images) ? ($images[0]->watermarked_url ?: $images[0]->image_url) : ($item->watermarked_url ?: $item->image_url);
+                            ?>
                             <tr>
                                 <td>
-                                    <?php if ($item->watermarked_url || $item->image_url): ?>
-                                        <img src="<?php echo esc_url($item->watermarked_url ?: $item->image_url); ?>" class="aih-thumb" alt="">
+                                    <?php if ($thumb): ?>
+                                        <img src="<?php echo esc_url($thumb); ?>" class="aih-thumb" alt="">
                                     <?php endif; ?>
                                 </td>
                                 <td>
@@ -72,8 +77,8 @@ if (!defined('ABSPATH')) {
             <div class="aih-order-sidebar">
                 <div class="aih-form-section">
                     <h2><?php _e('Bidder Information', 'art-in-heaven'); ?></h2>
-                    <p><strong><?php _e('Email:', 'art-in-heaven'); ?></strong><br><?php echo esc_html($single_order->bidder_id); ?></p>
                     <p><strong><?php _e('Name:', 'art-in-heaven'); ?></strong><br><?php echo esc_html(trim(($single_order->name_first ?? '') . ' ' . ($single_order->name_last ?? '')) ?: 'N/A'); ?></p>
+                    <p><strong><?php _e('Email:', 'art-in-heaven'); ?></strong><br><?php echo esc_html($single_order->email ?: $single_order->bidder_id); ?></p>
                     <p><strong><?php _e('Phone:', 'art-in-heaven'); ?></strong><br><?php echo esc_html($single_order->phone ?: 'N/A'); ?></p>
                     <p><strong><?php _e('Order Date:', 'art-in-heaven'); ?></strong><br><?php echo date_i18n(get_option('date_format') . ' ' . get_option('time_format'), strtotime($single_order->created_at)); ?></p>
                 </div>
