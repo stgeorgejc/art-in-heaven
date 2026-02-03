@@ -1,0 +1,23 @@
+# Ignore everything by default
+/*
+
+# Allow .gitignore itself
+!.gitignore
+
+# Allow wp-content via app/public path
+!app/
+app/*
+!app/public/
+app/public/*
+!app/public/wp-content/
+app/public/wp-content/*
+
+# Track themes and plugins
+!app/public/wp-content/themes/
+!app/public/wp-content/plugins/
+
+# OS files
+.DS_Store
+
+# Local by Flywheel
+local-xdebuginfo.php
