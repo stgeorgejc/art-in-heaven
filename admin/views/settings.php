@@ -308,6 +308,11 @@ $event_date = get_option('aih_event_date', '');
             <tr><th>WordPress</th><td><?php echo get_bloginfo('version'); ?></td></tr>
             <tr><th>Plugin</th><td><?php echo AIH_VERSION; ?></td></tr>
             <tr><th>GD Library</th><td><?php echo extension_loaded('gd') ? '<span class="aih-check-yes">✓</span>' : '<span class="aih-check-no">✗</span>'; ?></td></tr>
+            <tr><th>FreeType (TTF fonts)</th><td><?php echo function_exists('imagettftext') ? '<span class="aih-check-yes">✓</span>' : '<span class="aih-check-no">✗ Watermarks will use low-quality bitmap fonts</span>'; ?></td></tr>
+            <tr><th>Watermark Font</th><td><?php
+                $font_path = AIH_PLUGIN_DIR . 'assets/fonts/OpenSans-Bold.ttf';
+                echo file_exists($font_path) ? '<span class="aih-check-yes">✓ ' . esc_html($font_path) . '</span>' : '<span class="aih-check-no">✗ Font file missing</span>';
+            ?></td></tr>
         </table>
     </div>
 </div>
