@@ -290,23 +290,36 @@ class AIH_Database {
         
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
 
-        $results = array();
-        $results['art'] = dbDelta($sql_art);
-        $results['bids'] = dbDelta($sql_bids);
-        $results['favorites'] = dbDelta($sql_favorites);
-        $results['bidders'] = dbDelta($sql_bidders);
-        $results['orders'] = dbDelta($sql_orders);
-        $results['order_items'] = dbDelta($sql_order_items);
-        $results['registrants'] = dbDelta($sql_registrants);
-        $results['audit'] = dbDelta($sql_audit);
-        $results['art_images'] = dbDelta($sql_art_images);
-        $results['pushpay'] = dbDelta($sql_pushpay);
+        $all_sql = array(
+            'art' => $sql_art,
+            'bids' => $sql_bids,
+            'favorites' => $sql_favorites,
+            'bidders' => $sql_bidders,
+            'orders' => $sql_orders,
+            'order_items' => $sql_order_items,
+            'registrants' => $sql_registrants,
+            'audit' => $sql_audit,
+            'art_images' => $sql_art_images,
+            'pushpay' => $sql_pushpay,
+        );
 
-        // Log results for debugging
-        error_log('AIH create_tables: year=' . $year . ' prefix=' . $wpdb->prefix);
-        error_log('AIH create_tables results: ' . print_r($results, true));
-        if ($wpdb->last_error) {
-            error_log('AIH create_tables DB error: ' . $wpdb->last_error);
+        foreach ($all_sql as $key => $sql) {
+            dbDelta($sql);
+        }
+
+        // If dbDelta failed, fall back to direct queries
+        $check_table = $wpdb->prefix . $year . '_ArtPieces';
+        $exists = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $check_table));
+        if ($exists !== $check_table) {
+            error_log('AIH: dbDelta failed, falling back to direct SQL queries');
+            foreach ($all_sql as $key => $sql) {
+                // Add IF NOT EXISTS for safety
+                $sql = str_replace('CREATE TABLE ', 'CREATE TABLE IF NOT EXISTS ', $sql);
+                $result = $wpdb->query($sql);
+                if ($result === false) {
+                    error_log('AIH: Direct SQL failed for ' . $key . ': ' . $wpdb->last_error);
+                }
+            }
         }
 
         // Migrate: Add bid_status column if it doesn't exist
