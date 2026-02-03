@@ -101,10 +101,6 @@ $event_date = get_option('aih_event_date', '');
                     <td><input type="number" id="aih_bid_increment" name="aih_bid_increment" value="<?php echo esc_attr(get_option('aih_bid_increment', '1')); ?>" min="0.01" step="0.01" class="small-text"></td>
                 </tr>
                 <tr>
-                    <th scope="row"><label for="aih_tax_rate"><?php _e('Tax Rate (%)', 'art-in-heaven'); ?></label></th>
-                    <td><input type="number" id="aih_tax_rate" name="aih_tax_rate" value="<?php echo esc_attr(get_option('aih_tax_rate', '0')); ?>" min="0" step="0.01" class="small-text"></td>
-                </tr>
-                <tr>
                     <th scope="row"><label for="aih_watermark_text"><?php _e('Watermark Text', 'art-in-heaven'); ?></label></th>
                     <td>
                         <input type="text" id="aih_watermark_text" name="aih_watermark_text" value="<?php echo esc_attr(get_option('aih_watermark_text', 'SILENT AUCTION')); ?>" class="regular-text">
@@ -318,8 +314,9 @@ $event_date = get_option('aih_event_date', '');
 
 <style>
 /* settings minimal overrides - main styles in aih-admin.css */
-.aih-color-text { width: 80px !important; font-family: monospace; text-align: center; }
-.aih-color-picker { vertical-align: middle; width: 40px; height: 32px; padding: 0; border: 1px solid #8c8f94; cursor: pointer; }
+.aih-color-text { width: 90px !important; font-family: monospace; text-align: center; vertical-align: middle; height: 30px; box-sizing: border-box; }
+.aih-color-picker { vertical-align: middle; width: 40px; height: 30px; padding: 0; border: 1px solid #8c8f94; cursor: pointer; }
+.aih-color-reset { vertical-align: middle; height: 30px; line-height: 28px; }
 </style>
 
 <script>
