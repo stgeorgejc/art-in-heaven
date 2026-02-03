@@ -225,13 +225,18 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
 
                 // Proper status calculation - check computed_status first, then calculate from dates
                 $computed_status = isset($piece->computed_status) ? $piece->computed_status : null;
+                $is_ended = false;
+                $is_upcoming = false;
                 if ($computed_status === 'ended') {
                     $is_ended = true;
+                } elseif ($computed_status === 'upcoming') {
+                    $is_upcoming = true;
                 } elseif ($computed_status === 'active') {
                     $is_ended = false;
                 } else {
                     // Fallback: calculate from status and dates
                     $is_ended = $piece->status === 'ended' || (!empty($piece->auction_end) && strtotime($piece->auction_end) && strtotime($piece->auction_end) <= current_time('timestamp'));
+                    $is_upcoming = !$is_ended && !empty($piece->auction_start) && strtotime($piece->auction_start) && strtotime($piece->auction_start) > current_time('timestamp');
                 }
 
                 $status_class = '';
@@ -240,6 +245,9 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
                 if ($is_ended) {
                     $status_class = 'ended';
                     $status_text = 'Ended';
+                } elseif ($is_upcoming) {
+                    $status_class = 'upcoming';
+                    $status_text = 'Upcoming';
                 } elseif ($is_winning) {
                     $status_class = 'winning';
                     $status_text = 'Winning';
@@ -296,7 +304,13 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
                     <?php endif; ?>
                 </div>
 
-                <?php if (!$is_ended): ?>
+                <?php if ($is_upcoming): ?>
+                <div class="aih-card-footer">
+                    <div class="aih-upcoming-notice" style="padding: 8px; text-align: center; color: #888; font-size: 0.85em;">
+                        Bidding starts <?php echo date('M j, g:i A', strtotime($piece->auction_start)); ?>
+                    </div>
+                </div>
+                <?php elseif (!$is_ended): ?>
                 <div class="aih-card-footer">
                     <div class="aih-bid-form">
                         <input type="text" inputmode="numeric" pattern="[0-9]*" class="aih-bid-input" data-min="<?php echo $min_bid; ?>" placeholder="$">

@@ -150,11 +150,16 @@ class AIH_Checkout {
         $order_items_table = AIH_Database::get_table('order_items');
         $art_table = AIH_Database::get_table('art_pieces');
         $bidders_table = AIH_Database::get_table('bidders');
-        
+        $registrants_table = AIH_Database::get_table('registrants');
+
         $order = $wpdb->get_row($wpdb->prepare(
-            "SELECT o.*, bd.name_first, bd.name_last, bd.phone_mobile as phone
+            "SELECT o.*,
+                    COALESCE(bd.name_first, rg.name_first) as name_first,
+                    COALESCE(bd.name_last, rg.name_last) as name_last,
+                    COALESCE(bd.phone_mobile, rg.phone_mobile) as phone
              FROM $orders_table o
              LEFT JOIN $bidders_table bd ON o.bidder_id = bd.confirmation_code
+             LEFT JOIN $registrants_table rg ON o.bidder_id = rg.confirmation_code
              WHERE o.id = %d",
             $order_id
         ));
@@ -207,6 +212,7 @@ class AIH_Checkout {
 
         $orders_table = AIH_Database::get_table('orders');
         $bidders_table = AIH_Database::get_table('bidders');
+        $registrants_table = AIH_Database::get_table('registrants');
         $order_items_table = AIH_Database::get_table('order_items');
         $art_table = AIH_Database::get_table('art_pieces');
 
@@ -222,11 +228,16 @@ class AIH_Checkout {
         if (!empty($args['bidder_id'])) $where .= $wpdb->prepare(" AND o.bidder_id = %s", $args['bidder_id']);
 
         // Use derived table for item_count instead of correlated subquery
+        // Join both bidders and registrants tables, prefer bidders data but fall back to registrants
         return $wpdb->get_results(
-            "SELECT o.*, bd.name_first, bd.name_last, bd.phone_mobile as phone,
+            "SELECT o.*,
+                    COALESCE(bd.name_first, rg.name_first) as name_first,
+                    COALESCE(bd.name_last, rg.name_last) as name_last,
+                    COALESCE(bd.phone_mobile, rg.phone_mobile) as phone,
                     COALESCE(oic.item_count, 0) as item_count
              FROM $orders_table o
              LEFT JOIN $bidders_table bd ON o.bidder_id = bd.confirmation_code
+             LEFT JOIN $registrants_table rg ON o.bidder_id = rg.confirmation_code
              LEFT JOIN (
                  SELECT oi.order_id, COUNT(*) as item_count
                  FROM $order_items_table oi

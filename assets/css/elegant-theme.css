@@ -990,6 +990,11 @@ html body {
     color: white;
 }
 
+.aih-badge-upcoming {
+    background: #b08d57;
+    color: white;
+}
+
 .aih-fav-btn {
     position: absolute;
     top: 8px;
@@ -1617,9 +1622,29 @@ html body {
     line-height: 1.7;
     color: var(--color-secondary);
     margin-bottom: 24px;
+    padding: 20px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
     overflow-wrap: break-word;
     word-wrap: break-word;
     word-break: break-word;
+}
+
+.aih-description-label {
+    display: block;
+    color: var(--color-muted);
+    font-size: clamp(11px, 2.5vw, 12px);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.aih-description p:first-child {
+    margin-top: 0;
+}
+
+.aih-description p:last-child {
+    margin-bottom: 0;
 }
 
 .aih-bid-section {

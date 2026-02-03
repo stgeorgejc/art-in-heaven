@@ -288,10 +288,15 @@ $won_without_orders = $wpdb->get_results(
                     </a>
                 </td>
                 <td data-label="<?php esc_attr_e('Bidder', 'art-in-heaven'); ?>">
-                    <?php echo esc_html(trim($order->name_first . ' ' . $order->name_last) ?: $order->bidder_id); ?>
-                    <?php if ($order->email): ?>
-                    <br><small><?php echo esc_html($order->email); ?></small>
-                    <?php endif; ?>
+                    <?php
+                        $bidder_name = trim(($order->name_first ?? '') . ' ' . ($order->name_last ?? ''));
+                        if ($bidder_name) {
+                            echo esc_html($bidder_name);
+                            echo '<br><small>' . esc_html($order->bidder_id) . '</small>';
+                        } else {
+                            echo esc_html($order->bidder_id);
+                        }
+                    ?>
                 </td>
                 <td data-label="<?php esc_attr_e('Items', 'art-in-heaven'); ?>"><?php echo intval($order->item_count); ?></td>
                 <td data-label="<?php esc_attr_e('Total', 'art-in-heaven'); ?>"><strong>$<?php echo number_format($order->total, 2); ?></strong></td>

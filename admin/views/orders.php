@@ -354,8 +354,15 @@ if (!defined('ABSPATH')) {
                         data-date="<?php echo esc_attr(strtotime($order->created_at)); ?>">
                         <td data-label="<?php esc_attr_e('Order #', 'art-in-heaven'); ?>"><strong><a href="?page=art-in-heaven-orders&order_id=<?php echo $order->id; ?>"><?php echo esc_html($order->order_number); ?></a></strong></td>
                         <td data-label="<?php esc_attr_e('Bidder', 'art-in-heaven'); ?>">
-                            <?php echo esc_html(trim(($order->name_first ?? '') . ' ' . ($order->name_last ?? '')) ?: $order->bidder_id); ?>
-                            <br><small><?php echo esc_html($order->bidder_id); ?></small>
+                            <?php
+                                $bidder_name = trim(($order->name_first ?? '') . ' ' . ($order->name_last ?? ''));
+                                if ($bidder_name) {
+                                    echo esc_html($bidder_name);
+                                    echo '<br><small>' . esc_html($order->bidder_id) . '</small>';
+                                } else {
+                                    echo esc_html($order->bidder_id);
+                                }
+                            ?>
                         </td>
                         <td data-label="<?php esc_attr_e('Items', 'art-in-heaven'); ?>"><?php echo intval($order->item_count); ?></td>
                         <td data-label="<?php esc_attr_e('Total', 'art-in-heaven'); ?>"><strong>$<?php echo number_format($order->total, 2); ?></strong></td>

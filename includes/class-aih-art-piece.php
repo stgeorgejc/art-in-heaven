@@ -71,8 +71,10 @@ class AIH_Art_Piece {
         // Also handles NULL values: NULL auction_start = already started, NULL auction_end = never ends
         if (!empty($args['status'])) {
             if ($args['status'] === 'active') {
-                // Active = status is active AND auction has started (or no start time) AND hasn't ended (or no end time)
-                $where[] = "(a.status = 'active' AND (a.auction_start IS NULL OR a.auction_start <= %s) AND (a.auction_end IS NULL OR a.auction_end > %s))";
+                // Active = (status is active OR draft with passed start time) AND auction has started AND hasn't ended
+                $where[] = "((a.status = 'active' AND (a.auction_start IS NULL OR a.auction_start <= %s) AND (a.auction_end IS NULL OR a.auction_end > %s)) OR (a.status = 'draft' AND a.auction_start IS NOT NULL AND a.auction_start <= %s AND (a.auction_end IS NULL OR a.auction_end > %s)))";
+                $values[] = $now;
+                $values[] = $now;
                 $values[] = $now;
                 $values[] = $now;
             } elseif ($args['status'] === 'upcoming') {
@@ -164,7 +166,8 @@ class AIH_Art_Piece {
         }
         
         // Build computed auction_status field (handles NULL dates)
-        $auction_status_case = "CASE 
+        $auction_status_case = "CASE
+            WHEN a.status = 'draft' AND a.auction_start IS NOT NULL AND a.auction_start <= %s AND (a.auction_end IS NULL OR a.auction_end > %s) THEN 'active'
             WHEN a.status = 'draft' THEN 'draft'
             WHEN a.status = 'ended' THEN 'ended'
             WHEN a.auction_end IS NOT NULL AND a.auction_end <= %s THEN 'ended'
@@ -193,8 +196,10 @@ class AIH_Art_Piece {
                       $limit_clause";
             // Add values for computed_status CASE
             array_unshift($values, $args['bidder_id']);
-            array_unshift($values, $now); // for auction_start > check
-            array_unshift($values, $now); // for auction_end <= check
+            array_unshift($values, $now); // for auction_start > check (upcoming)
+            array_unshift($values, $now); // for auction_end <= check (ended)
+            array_unshift($values, $now); // for draft auto-active auction_end check
+            array_unshift($values, $now); // for draft auto-active auction_start check
             array_unshift($values, $now); // seconds_until_start
             array_unshift($values, $now); // seconds_remaining
         } else {
@@ -214,8 +219,10 @@ class AIH_Art_Piece {
                       ORDER BY $order_clause
                       $limit_clause";
             // Add values for computed_status CASE
-            array_unshift($values, $now); // for auction_start > check
-            array_unshift($values, $now); // for auction_end <= check
+            array_unshift($values, $now); // for auction_start > check (upcoming)
+            array_unshift($values, $now); // for auction_end <= check (ended)
+            array_unshift($values, $now); // for draft auto-active auction_end check
+            array_unshift($values, $now); // for draft auto-active auction_start check
             array_unshift($values, $now); // seconds_until_start
             array_unshift($values, $now); // seconds_remaining
         }
@@ -239,7 +246,9 @@ class AIH_Art_Piece {
         
         if (!empty($args['status'])) {
             if ($args['status'] === 'active') {
-                $where[] = "(status = 'active' AND auction_start <= %s AND auction_end > %s)";
+                $where[] = "((status = 'active' AND auction_start <= %s AND auction_end > %s) OR (status = 'draft' AND auction_start IS NOT NULL AND auction_start <= %s AND (auction_end IS NULL OR auction_end > %s)))";
+                $values[] = $now;
+                $values[] = $now;
                 $values[] = $now;
                 $values[] = $now;
             } elseif ($args['status'] === 'ended') {
@@ -276,15 +285,16 @@ class AIH_Art_Piece {
             "SELECT *, 
              TIMESTAMPDIFF(SECOND, %s, auction_end) as seconds_remaining,
              TIMESTAMPDIFF(SECOND, %s, auction_start) as seconds_until_start,
-             CASE 
+             CASE
+                WHEN status = 'draft' AND auction_start IS NOT NULL AND auction_start <= %s AND (auction_end IS NULL OR auction_end > %s) THEN 'active'
                 WHEN status = 'draft' THEN 'draft'
                 WHEN status = 'ended' THEN 'ended'
                 WHEN auction_end <= %s THEN 'ended'
                 WHEN auction_start > %s THEN 'upcoming'
                 ELSE 'active'
              END as computed_status
-             FROM {$this->table} WHERE id = %d", 
-            $now, $now, $now, $now, $id
+             FROM {$this->table} WHERE id = %d",
+            $now, $now, $now, $now, $now, $now, $id
         ));
     }
     
@@ -297,15 +307,16 @@ class AIH_Art_Piece {
             "SELECT *, 
              TIMESTAMPDIFF(SECOND, %s, auction_end) as seconds_remaining,
              TIMESTAMPDIFF(SECOND, %s, auction_start) as seconds_until_start,
-             CASE 
+             CASE
+                WHEN status = 'draft' AND auction_start IS NOT NULL AND auction_start <= %s AND (auction_end IS NULL OR auction_end > %s) THEN 'active'
                 WHEN status = 'draft' THEN 'draft'
                 WHEN status = 'ended' THEN 'ended'
                 WHEN auction_end <= %s THEN 'ended'
                 WHEN auction_start > %s THEN 'upcoming'
                 ELSE 'active'
              END as computed_status
-             FROM {$this->table} WHERE UPPER(art_id) = %s", 
-            $now, $now, $now, $now, $art_id_upper
+             FROM {$this->table} WHERE UPPER(art_id) = %s",
+            $now, $now, $now, $now, $now, $now, $art_id_upper
         ));
     }
     

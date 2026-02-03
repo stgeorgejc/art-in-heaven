@@ -84,21 +84,28 @@ $my_bid_history = $bidder_id ? $bid_model->get_bidder_bids_for_art_piece($art_pi
 
 // Proper status calculation - check computed_status first, then calculate from dates
 $computed_status = isset($art_piece->computed_status) ? $art_piece->computed_status : null;
+$is_ended = false;
+$is_upcoming = false;
 if ($computed_status === 'ended') {
     $is_ended = true;
+} elseif ($computed_status === 'upcoming') {
+    $is_upcoming = true;
 } elseif ($computed_status === 'active') {
     $is_ended = false;
 } else {
     // Fallback: calculate from status and dates
     $is_ended = $art_piece->status === 'ended' || (!empty($art_piece->auction_end) && strtotime($art_piece->auction_end) && strtotime($art_piece->auction_end) <= current_time('timestamp'));
+    $is_upcoming = !$is_ended && !empty($art_piece->auction_start) && strtotime($art_piece->auction_start) && strtotime($art_piece->auction_start) > current_time('timestamp');
 }
 
 $images = $art_images->get_images($art_piece->id);
 $primary_image = !empty($images) ? $images[0]->watermarked_url : ($art_piece->watermarked_url ?: $art_piece->image_url);
 
-// Navigation - include all pieces (active and ended) so navigation works for ended items too
+// Navigation - include active and ended pieces, exclude upcoming
 $art_model = new AIH_Art_Piece();
-$all_pieces = $art_model->get_all(array('bidder_id' => $bidder_id));
+$nav_active = $art_model->get_all(array('status' => 'active', 'bidder_id' => $bidder_id));
+$nav_ended = $art_model->get_all(array('status' => 'ended', 'bidder_id' => $bidder_id));
+$all_pieces = array_merge($nav_active, $nav_ended);
 $current_index = -1;
 foreach ($all_pieces as $i => $p) {
     if ($p->id == $art_piece->id) { $current_index = $i; break; }
@@ -226,11 +233,18 @@ $cart_count = count($checkout->get_won_items($bidder_id));
                     
                     <?php if ($art_piece->description): ?>
                     <div class="aih-description">
+                        <span class="aih-description-label">Description</span>
                         <?php echo wpautop(esc_html($art_piece->description)); ?>
                     </div>
                     <?php endif; ?>
                     
-                    <?php if (!$is_ended): ?>
+                    <?php if ($is_upcoming): ?>
+                    <div class="aih-bid-section">
+                        <div class="aih-upcoming-notice" style="padding: 16px; background: #f0f0f0; border-radius: 8px; text-align: center; color: #555;">
+                            Bidding starts <?php echo date('M j, Y \a\t g:i A', strtotime($art_piece->auction_start)); ?>
+                        </div>
+                    </div>
+                    <?php elseif (!$is_ended): ?>
                     <div class="aih-bid-section">
                         <?php if ($art_piece->auction_end && !empty($art_piece->show_end_time)): ?>
                         <div class="aih-time-remaining-single" data-end="<?php echo esc_attr($art_piece->auction_end); ?>">

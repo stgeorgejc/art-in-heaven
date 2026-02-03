@@ -109,7 +109,7 @@ class AIH_Shortcodes {
             $art_model = new AIH_Art_Piece();
             $art_piece = $art_model->get(intval($_GET['art_id']));
             
-            if ($art_piece) {
+            if ($art_piece && (!isset($art_piece->computed_status) || $art_piece->computed_status !== 'upcoming')) {
                 ob_start();
                 include AIH_PLUGIN_DIR . 'templates/single-item.php';
                 return ob_get_clean();

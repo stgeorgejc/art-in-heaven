@@ -41,7 +41,8 @@ class AIH_Bid {
             // Lock the art piece row and get current highest bid atomically
             $art_piece = $wpdb->get_row($wpdb->prepare(
                 "SELECT a.id, a.starting_bid, a.auction_start, a.auction_end, a.status,
-                        CASE 
+                        CASE
+                            WHEN a.status = 'draft' AND a.auction_start IS NOT NULL AND a.auction_start <= %s AND (a.auction_end IS NULL OR a.auction_end > %s) THEN 'active'
                             WHEN a.status = 'draft' THEN 'draft'
                             WHEN a.status = 'ended' THEN 'ended'
                             WHEN a.auction_end <= %s THEN 'ended'
@@ -50,7 +51,7 @@ class AIH_Bid {
                         END as computed_status,
                         (SELECT MAX(bid_amount) FROM {$this->table} WHERE art_piece_id = a.id AND bid_status = 'valid') as current_highest
                  FROM $art_table a WHERE a.id = %d FOR UPDATE",
-                $now, $now, $art_piece_id
+                $now, $now, $now, $now, $art_piece_id
             ));
             
             if (!$art_piece) {
@@ -374,15 +375,20 @@ class AIH_Bid {
         
         $art_table = AIH_Database::get_table('art_pieces');
         $bidders_table = AIH_Database::get_table('bidders');
+        $registrants_table = AIH_Database::get_table('registrants');
         $orders_table = AIH_Database::get_table('orders');
         $order_items_table = AIH_Database::get_table('order_items');
         $now = current_time('mysql');
-        
+
         return $wpdb->get_results($wpdb->prepare(
             "SELECT b.*,
                     a.art_id, a.title, a.artist, a.starting_bid,
                     a.auction_end, a.status as art_status,
-                    bd.name_first, bd.name_last, bd.email_primary, bd.phone_mobile, bd.confirmation_code,
+                    COALESCE(bd.name_first, rg.name_first) as name_first,
+                    COALESCE(bd.name_last, rg.name_last) as name_last,
+                    COALESCE(bd.email_primary, rg.email_primary) as email_primary,
+                    COALESCE(bd.phone_mobile, rg.phone_mobile) as phone_mobile,
+                    COALESCE(bd.confirmation_code, rg.confirmation_code) as confirmation_code,
                     (SELECT oi2.id FROM $order_items_table oi2 WHERE oi2.art_piece_id = a.id LIMIT 1) IS NOT NULL as is_in_order,
                     (SELECT o2.order_number FROM $order_items_table oi2 JOIN $orders_table o2 ON oi2.order_id = o2.id WHERE oi2.art_piece_id = a.id ORDER BY o2.id DESC LIMIT 1) as order_number,
                     (SELECT o2.payment_status FROM $order_items_table oi2 JOIN $orders_table o2 ON oi2.order_id = o2.id WHERE oi2.art_piece_id = a.id ORDER BY o2.id DESC LIMIT 1) as payment_status,
@@ -396,6 +402,7 @@ class AIH_Bid {
              FROM {$this->table} b
              JOIN $art_table a ON b.art_piece_id = a.id
              LEFT JOIN $bidders_table bd ON b.bidder_id = bd.confirmation_code
+             LEFT JOIN $registrants_table rg ON b.bidder_id = rg.confirmation_code
              WHERE b.is_winning = 1
              ORDER BY a.auction_end DESC",
             $now

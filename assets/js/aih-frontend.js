@@ -206,7 +206,7 @@
                     $('#aih-bid-notice').removeClass('error success').hide();
                     
                     // Show/hide bid form based on auction status
-                    if (data.auction_ended) {
+                    if (data.auction_ended || data.auction_upcoming) {
                         $('#aih-bid-form-container').hide();
                     } else {
                         $('#aih-bid-form-container').show();
@@ -236,7 +236,7 @@
                     $('#aih-detail-modal').fadeIn(200);
                     
                     // Focus on bid input if bid button was clicked
-                    if (focusBid && !data.auction_ended) {
+                    if (focusBid && !data.auction_ended && !data.auction_upcoming) {
                         setTimeout(function() {
                             $('#aih-bid-amount').focus();
                         }, 300);

@@ -183,6 +183,8 @@ class AIH_Template_Helper {
             'seconds_remaining' => $secs,
             'status' => $piece->status,
             'auction_ended' => $secs <= 0,
+            'auction_upcoming' => isset($piece->computed_status) && $piece->computed_status === 'upcoming',
+            'computed_status' => isset($piece->computed_status) ? $piece->computed_status : null,
             'is_favorite' => isset($piece->is_favorite) ? (bool)$piece->is_favorite : false,
         );
 

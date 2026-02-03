@@ -15,6 +15,22 @@ $settings = $pushpay->get_settings();
 $filter_status = isset($_GET['status']) ? sanitize_text_field($_GET['status']) : '';
 $filter_matched = isset($_GET['matched']) ? sanitize_text_field($_GET['matched']) : '';
 $search = isset($_GET['s']) ? sanitize_text_field($_GET['s']) : '';
+$orderby = isset($_GET['orderby']) ? sanitize_text_field($_GET['orderby']) : 'payment_date';
+$order = isset($_GET['order']) ? strtoupper(sanitize_text_field($_GET['order'])) : 'DESC';
+$order = $order === 'ASC' ? 'ASC' : 'DESC';
+
+// Map sortable columns to SQL columns
+$sortable_columns = array(
+    'id' => 't.id',
+    'payment_date' => 't.payment_date',
+    'payer_name' => 't.payer_name',
+    'amount' => 't.amount',
+    'status' => 't.status',
+    'fund' => 't.fund',
+    'order_number' => 'o.order_number',
+);
+$order_sql = isset($sortable_columns[$orderby]) ? $sortable_columns[$orderby] : 't.payment_date';
+
 $per_page = 50;
 $current_page = isset($_GET['paged']) ? max(1, intval($_GET['paged'])) : 1;
 $offset = ($current_page - 1) * $per_page;
@@ -57,7 +73,7 @@ $query = "SELECT t.*, o.order_number, o.bidder_id
           FROM {$transactions_table} t 
           LEFT JOIN {$orders_table} o ON t.order_id = o.id 
           WHERE {$where} 
-          ORDER BY t.payment_date DESC 
+          ORDER BY {$order_sql} {$order}
           LIMIT %d OFFSET %d";
 $query_values = array_merge($where_values, array($per_page, $offset));
 $transactions = $wpdb->get_results($wpdb->prepare($query, $query_values));
@@ -178,14 +194,33 @@ $matchable_orders = $wpdb->get_results(
         <table class="wp-list-table widefat fixed striped aih-transactions-table">
             <thead>
                 <tr>
-                    <th style="width: 50px;"><?php _e('ID', 'art-in-heaven'); ?></th>
+                    <?php
+                    $sort_columns = array(
+                        'id'           => array('label' => __('ID', 'art-in-heaven'), 'width' => '50px'),
+                        'payment_date' => array('label' => __('Date', 'art-in-heaven'), 'width' => '140px'),
+                        'payer_name'   => array('label' => __('Payer', 'art-in-heaven'), 'width' => ''),
+                        'amount'       => array('label' => __('Amount', 'art-in-heaven'), 'width' => '100px'),
+                        'status'       => array('label' => __('Status', 'art-in-heaven'), 'width' => '100px'),
+                        'fund'         => array('label' => __('Fund', 'art-in-heaven'), 'width' => '120px'),
+                        'order_number' => array('label' => __('Order', 'art-in-heaven'), 'width' => '120px'),
+                    );
+                    foreach ($sort_columns as $col_key => $col) :
+                        $is_active = ($orderby === $col_key);
+                        $next_order = ($is_active && $order === 'ASC') ? 'desc' : 'asc';
+                        $sort_url = add_query_arg(array('orderby' => $col_key, 'order' => $next_order));
+                        $sort_url = remove_query_arg('paged', $sort_url);
+                        $style = $col['width'] ? ' style="width: ' . $col['width'] . ';"' : '';
+                        if ($is_active) {
+                            $icon = ($order === 'ASC') ? '↑' : '↓';
+                        } else {
+                            $icon = '⇅';
+                        }
+                    ?>
+                    <th class="sortable"<?php echo $style; ?>>
+                        <a href="<?php echo esc_url($sort_url); ?>"><?php echo $col['label']; ?> <span class="aih-sort-icon"><?php echo $icon; ?></span></a>
+                    </th>
+                    <?php endforeach; ?>
                     <th style="width: 180px;"><?php _e('PushPay ID', 'art-in-heaven'); ?></th>
-                    <th style="width: 140px;"><?php _e('Date', 'art-in-heaven'); ?></th>
-                    <th><?php _e('Payer', 'art-in-heaven'); ?></th>
-                    <th style="width: 100px;"><?php _e('Amount', 'art-in-heaven'); ?></th>
-                    <th style="width: 100px;"><?php _e('Status', 'art-in-heaven'); ?></th>
-                    <th style="width: 120px;"><?php _e('Fund', 'art-in-heaven'); ?></th>
-                    <th style="width: 120px;"><?php _e('Order', 'art-in-heaven'); ?></th>
                     <th style="width: 100px;"><?php _e('Actions', 'art-in-heaven'); ?></th>
                 </tr>
             </thead>
@@ -204,11 +239,6 @@ $matchable_orders = $wpdb->get_results(
                 <?php foreach ($transactions as $txn): ?>
                 <tr data-id="<?php echo $txn->id; ?>">
                     <td><?php echo $txn->id; ?></td>
-                    <td>
-                        <code class="aih-pushpay-id" title="<?php echo esc_attr($txn->pushpay_id); ?>">
-                            <?php echo esc_html(substr($txn->pushpay_id, 0, 20)); ?>...
-                        </code>
-                    </td>
                     <td>
                         <?php if ($txn->payment_date): ?>
                             <?php echo date_i18n('M j, Y', strtotime($txn->payment_date)); ?><br>
@@ -249,6 +279,11 @@ $matchable_orders = $wpdb->get_results(
                         <?php else: ?>
                         <span class="aih-unmatched">—</span>
                         <?php endif; ?>
+                    </td>
+                    <td>
+                        <code class="aih-pushpay-id" title="<?php echo esc_attr($txn->pushpay_id); ?>">
+                            <?php echo esc_html(substr($txn->pushpay_id, 0, 20)); ?>...
+                        </code>
                     </td>
                     <td>
                         <div class="aih-row-actions">
@@ -359,6 +394,12 @@ $matchable_orders = $wpdb->get_results(
 .aih-filters-bar select, .aih-filters-bar input[type="search"] { padding: 6px 12px; border: 1px solid #d1d5db; border-radius: 4px; }
 .aih-filters-bar input[type="search"] { min-width: 200px; }
 
+.aih-transactions-table th.sortable { cursor: pointer; }
+.aih-transactions-table th.sortable a { text-decoration: none; color: #1d2327; display: inline-flex; align-items: center; gap: 4px; }
+.aih-transactions-table th.sortable a:hover { color: #135e96; }
+.aih-transactions-table .aih-sort-icon { opacity: 0.4; font-size: 12px; }
+.aih-transactions-table th.sortable a:hover .aih-sort-icon { opacity: 0.8; }
+
 .aih-transactions-table .aih-pushpay-id { font-size: 11px; background: #f3f4f6; padding: 2px 6px; border-radius: 3px; }
 .aih-transactions-table .aih-time { color: #8a8a8a; }
 .aih-transactions-table .aih-amount { color: #4a7c59; font-size: 15px; }
@@ -390,6 +431,7 @@ $matchable_orders = $wpdb->get_results(
 .aih-txn-raw { background: #f9fafb; padding: 15px; border-radius: 6px; max-height: 200px; overflow: auto; font-family: monospace; font-size: 11px; white-space: pre-wrap; word-break: break-all; }
 
 .aih-loading { text-align: center; padding: 40px; color: #8a8a8a; }
+
 </style>
 
 <script>

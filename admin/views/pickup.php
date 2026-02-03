@@ -20,6 +20,7 @@ $orders_table = AIH_Database::get_table('orders');
 $order_items_table = AIH_Database::get_table('order_items');
 $art_table = AIH_Database::get_table('art_pieces');
 $bidders_table = AIH_Database::get_table('bidders');
+$registrants_table = AIH_Database::get_table('registrants');
 
 // Handle tab
 $current_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'ready';
@@ -41,10 +42,15 @@ $picked_up_count = $wpdb->get_var(
 // Get orders based on tab - only orders with at least one item
 if ($current_tab === 'picked_up') {
     $orders = $wpdb->get_results(
-        "SELECT DISTINCT o.*, 
-                b.name_first, b.name_last, b.email_primary, b.phone_mobile, b.confirmation_code
+        "SELECT DISTINCT o.*,
+                COALESCE(b.name_first, rg.name_first) as name_first,
+                COALESCE(b.name_last, rg.name_last) as name_last,
+                COALESCE(b.email_primary, rg.email_primary) as email_primary,
+                COALESCE(b.phone_mobile, rg.phone_mobile) as phone_mobile,
+                COALESCE(b.confirmation_code, rg.confirmation_code) as confirmation_code
          FROM {$orders_table} o
          LEFT JOIN {$bidders_table} b ON o.bidder_id = b.confirmation_code
+         LEFT JOIN {$registrants_table} rg ON o.bidder_id = rg.confirmation_code
          INNER JOIN {$order_items_table} oi ON o.id = oi.order_id
          INNER JOIN {$art_table} a ON oi.art_piece_id = a.id
          WHERE o.payment_status = 'paid' AND o.pickup_status = 'picked_up'
@@ -52,10 +58,15 @@ if ($current_tab === 'picked_up') {
     );
 } else {
     $orders = $wpdb->get_results(
-        "SELECT DISTINCT o.*, 
-                b.name_first, b.name_last, b.email_primary, b.phone_mobile, b.confirmation_code
+        "SELECT DISTINCT o.*,
+                COALESCE(b.name_first, rg.name_first) as name_first,
+                COALESCE(b.name_last, rg.name_last) as name_last,
+                COALESCE(b.email_primary, rg.email_primary) as email_primary,
+                COALESCE(b.phone_mobile, rg.phone_mobile) as phone_mobile,
+                COALESCE(b.confirmation_code, rg.confirmation_code) as confirmation_code
          FROM {$orders_table} o
          LEFT JOIN {$bidders_table} b ON o.bidder_id = b.confirmation_code
+         LEFT JOIN {$registrants_table} rg ON o.bidder_id = rg.confirmation_code
          INNER JOIN {$order_items_table} oi ON o.id = oi.order_id
          INNER JOIN {$art_table} a ON oi.art_piece_id = a.id
          WHERE o.payment_status = 'paid' AND (o.pickup_status IS NULL OR o.pickup_status = 'pending' OR o.pickup_status = '')

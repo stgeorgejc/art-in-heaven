@@ -64,7 +64,7 @@ $event_date = get_option('aih_event_date', '');
                     <th scope="row"><label for="aih_auction_year"><?php _e('Auction Year', 'art-in-heaven'); ?></label></th>
                     <td>
                         <input type="number" id="aih_auction_year" name="aih_auction_year" 
-                               value="<?php echo esc_attr($current_year); ?>" min="2020" max="2099" class="small-text">
+                               value="<?php echo esc_attr($current_year); ?>" min="2020" max="2099" style="width: 80px;">
                         <p class="description"><?php printf(__('Tables use this year prefix (e.g., %d_Bidders)', 'art-in-heaven'), $current_year); ?></p>
                     </td>
                 </tr>
