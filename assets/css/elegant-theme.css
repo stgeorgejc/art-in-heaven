@@ -656,12 +656,13 @@ html body {
 
     /* Mobile card body */
     .aih-card-body {
-        min-height: 62px;
+        min-height: auto;
         height: auto;
         padding: 6px 6px 2px;
         min-width: 0;
         max-width: 100%;
         overflow: visible;
+        flex: 1;
     }
 
     .aih-card-title {
@@ -791,7 +792,6 @@ html body {
 
     .aih-gallery-grid.single-view .aih-card-body {
         height: auto;
-        min-height: 70px;
         padding: 12px 14px;
     }
 
@@ -1049,15 +1049,21 @@ html body {
     max-width: 100%;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
+    flex: 1;
 }
 
 .aih-card-bid {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 2px;
+    margin-top: auto;
+    padding-top: 4px;
     gap: 4px;
+}
+
+.aih-card-bid.aih-bid-hidden {
+    visibility: hidden;
 }
 
 .aih-card-bid .aih-bid-label {
@@ -2571,8 +2577,6 @@ html body {
     }
 
     .aih-card-body {
-        min-height: 58px;
-        height: auto;
         padding: 6px 5px;
     }
 
@@ -2598,8 +2602,6 @@ html body {
     }
 
     .aih-card-body {
-        min-height: 62px;
-        height: auto;
         padding: 8px 6px;
     }
 
@@ -2615,8 +2617,6 @@ html body {
     }
 
     .aih-card-body {
-        min-height: 66px;
-        height: auto;
         padding: 8px 8px;
     }
 

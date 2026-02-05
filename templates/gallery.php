@@ -296,12 +296,10 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
                         <a href="?art_id=<?php echo $piece->id; ?>"><?php echo esc_html($piece->title); ?></a>
                     </h3>
                     <p class="aih-card-artist"><?php echo esc_html($piece->artist); ?></p>
-                    <?php if (!$has_bids): ?>
-                    <p class="aih-card-bid">
+                    <p class="aih-card-bid<?php echo $has_bids ? ' aih-bid-hidden' : ''; ?>">
                         <span class="aih-bid-label">Starting Bid</span>
                         <span class="aih-bid-amount">$<?php echo number_format($piece->starting_bid, 2); ?></span>
                     </p>
-                    <?php endif; ?>
                 </div>
 
                 <?php if ($is_upcoming): ?>
