@@ -229,14 +229,13 @@ $cart_count = count($checkout->get_won_items($bidder_id));
                             <span><?php echo esc_html($art_piece->dimensions); ?></span>
                         </div>
                         <?php endif; ?>
+                        <?php if ($art_piece->description): ?>
+                        <div class="aih-info-row aih-description-row">
+                            <span class="aih-info-label">Description</span>
+                            <div class="aih-description-text"><?php echo wpautop(esc_html($art_piece->description)); ?></div>
+                        </div>
+                        <?php endif; ?>
                     </div>
-                    
-                    <?php if ($art_piece->description): ?>
-                    <div class="aih-description">
-                        <span class="aih-description-label">Description</span>
-                        <?php echo wpautop(esc_html($art_piece->description)); ?>
-                    </div>
-                    <?php endif; ?>
                     
                     <?php if ($is_upcoming): ?>
                     <div class="aih-bid-section">
@@ -254,16 +253,8 @@ $cart_count = count($checkout->get_won_items($bidder_id));
                         <?php endif; ?>
 
                         <div class="aih-bid-info">
-                            <div class="aih-bid-info-row">
-                                <span class="aih-bid-label">Starting Bid</span>
-                                <span class="aih-bid-amount">$<?php echo number_format($art_piece->starting_bid); ?></span>
-                            </div>
-                            <?php if ($has_bids): ?>
-                            <div class="aih-bid-info-row aih-current-bid-row">
-                                <span class="aih-bid-label">Current Bid</span>
-                                <span class="aih-bid-amount">$<?php echo number_format($current_bid); ?></span>
-                            </div>
-                            <?php endif; ?>
+                            <span class="aih-bid-label">Starting Bid</span>
+                            <span class="aih-bid-amount">$<?php echo number_format($art_piece->starting_bid); ?></span>
                         </div>
 
                         <div class="aih-bid-form-single">
@@ -825,6 +816,7 @@ jQuery(document).ready(function($) {
 
 .aih-piece-info {
     padding: 16px;
+    padding-bottom: 12px;
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     margin-bottom: 20px;
@@ -855,54 +847,62 @@ jQuery(document).ready(function($) {
     word-wrap: break-word;
 }
 
-.aih-description {
+.aih-description-row {
+    flex-direction: column !important;
+    align-items: flex-start;
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.aih-description-row .aih-info-label {
+    margin-bottom: 4px;
+}
+
+.aih-description-text {
     color: var(--color-secondary);
     line-height: 1.6;
-    margin-bottom: 20px;
     font-size: clamp(13px, 3vw, 14px);
     overflow-wrap: break-word;
     word-wrap: break-word;
+    width: 100%;
+}
+
+.aih-description-text p {
+    margin: 0;
+}
+
+.aih-description-text p + p {
+    margin-top: 10px;
 }
 
 .aih-bid-section {
     background: var(--color-bg);
-    padding: 20px;
+    padding: 16px;
     border: 1px solid var(--color-border);
     margin-bottom: 20px;
 }
 
 .aih-bid-info {
     display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-bottom: 20px;
-    padding-bottom: 16px;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
     border-bottom: 1px solid var(--color-border);
 }
 
-.aih-bid-info-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.aih-bid-info-row .aih-bid-label {
+.aih-bid-info .aih-bid-label {
     font-size: 12px;
     text-transform: uppercase;
     letter-spacing: 1px;
     color: var(--color-muted);
 }
 
-.aih-bid-info-row .aih-bid-amount {
+.aih-bid-info .aih-bid-amount {
     font-family: var(--font-display);
-    font-size: 20px;
+    font-size: 24px;
     font-weight: 600;
     color: var(--color-primary);
-}
-
-.aih-bid-info-row.aih-current-bid-row .aih-bid-amount {
-    color: var(--color-accent);
-    font-size: 24px;
 }
 
 .aih-current-bid {
