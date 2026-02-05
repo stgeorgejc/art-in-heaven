@@ -95,7 +95,7 @@ $my_orders = $checkout->get_bidder_orders($bidder_id);
                 </a>
                 <?php endif; ?>
                 <div class="aih-user-menu">
-                    <span class="aih-user-name"><?php echo esc_html($bidder_name); ?></span>
+                    <a href="<?php echo esc_url($gallery_url); ?>" class="aih-user-name aih-user-name-link"><?php echo esc_html($bidder_name); ?></a>
                     <button type="button" class="aih-logout-btn" id="aih-logout">Sign Out</button>
                 </div>
             </div>

@@ -95,7 +95,11 @@ $total = $subtotal + $tax;
             </nav>
             <div class="aih-header-actions">
                 <div class="aih-user-menu">
+                    <?php if ($my_bids_url): ?>
+                    <a href="<?php echo esc_url($my_bids_url); ?>" class="aih-user-name aih-user-name-link"><?php echo esc_html($bidder_name); ?></a>
+                    <?php else: ?>
                     <span class="aih-user-name"><?php echo esc_html($bidder_name); ?></span>
+                    <?php endif; ?>
                     <button type="button" class="aih-logout-btn" id="aih-logout">Sign Out</button>
                 </div>
             </div>

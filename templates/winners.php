@@ -9,8 +9,13 @@ if (!AIH_Database::tables_exist()) {
     return;
 }
 
-// Use consolidated helper for page URLs
+// Use consolidated helper for bidder info and page URLs
+$bidder_info = AIH_Template_Helper::get_current_bidder_info();
+$is_logged_in = $bidder_info['is_logged_in'];
+$bidder_name = $bidder_info['name'];
+
 $gallery_url = AIH_Template_Helper::get_gallery_url();
+$my_bids_url = AIH_Template_Helper::get_my_bids_url();
 
 $bid_model = new AIH_Bid();
 $all_winning_bids = $bid_model->get_all_winning_bids();
@@ -26,6 +31,15 @@ if ($all_winning_bids) {
 
 $art_images = new AIH_Art_Images();
 ?>
+<script>
+if (typeof aihAjax === 'undefined') {
+    var aihAjax = {
+        ajaxurl: '<?php echo admin_url('admin-ajax.php'); ?>',
+        nonce: '<?php echo wp_create_nonce('aih_nonce'); ?>',
+        isLoggedIn: <?php echo $is_logged_in ? 'true' : 'false'; ?>
+    };
+}
+</script>
 
 <div class="aih-page aih-winners-page">
     <header class="aih-header">
@@ -33,9 +47,22 @@ $art_images = new AIH_Art_Images();
             <a href="<?php echo esc_url($gallery_url); ?>" class="aih-logo">Art in Heaven</a>
             <nav class="aih-nav">
                 <a href="<?php echo esc_url($gallery_url); ?>" class="aih-nav-link">Gallery</a>
-                <a href="#" class="aih-nav-link aih-nav-active">Winners</a>
+                <?php if ($my_bids_url): ?>
+                <a href="<?php echo esc_url($my_bids_url); ?>" class="aih-nav-link">My Bids</a>
+                <?php endif; ?>
             </nav>
-            <div class="aih-header-actions"></div>
+            <div class="aih-header-actions">
+                <?php if ($is_logged_in): ?>
+                <div class="aih-user-menu">
+                    <?php if ($my_bids_url): ?>
+                    <a href="<?php echo esc_url($my_bids_url); ?>" class="aih-user-name aih-user-name-link"><?php echo esc_html($bidder_name); ?></a>
+                    <?php else: ?>
+                    <span class="aih-user-name"><?php echo esc_html($bidder_name); ?></span>
+                    <?php endif; ?>
+                    <button type="button" class="aih-logout-btn" id="aih-logout">Sign Out</button>
+                </div>
+                <?php endif; ?>
+            </div>
         </div>
     </header>
 
@@ -113,6 +140,14 @@ $art_images = new AIH_Art_Images();
         <p>&copy; <?php echo date('Y'); ?> Art in Heaven. All rights reserved.</p>
     </footer>
 </div>
+
+<script>
+jQuery(document).ready(function($) {
+    $('#aih-logout').on('click', function() {
+        $.post(aihAjax.ajaxurl, {action:'aih_logout', nonce:aihAjax.nonce}, function() { location.reload(); });
+    });
+});
+</script>
 
 <?php include(dirname(__FILE__) . '/../assets/css/elegant-theme.php'); ?>
 
