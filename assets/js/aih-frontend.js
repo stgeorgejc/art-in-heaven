@@ -624,4 +624,63 @@
         openLightbox(images, startIndex);
     });
     
+    // =============================================
+    // DARK MODE THEME TOGGLE
+    // =============================================
+
+    (function initThemeToggle() {
+        var $page = $('.aih-page').first();
+        var $toggle = $('#aih-theme-toggle');
+        if (!$page.length || !$toggle.length) return;
+
+        var STORAGE_KEY = 'aih-theme';
+
+        function isDark() {
+            return $page.hasClass('dark-mode');
+        }
+
+        function setTheme(dark) {
+            if (dark) {
+                $page.addClass('dark-mode');
+            } else {
+                $page.removeClass('dark-mode');
+            }
+        }
+
+        function applyInitialTheme() {
+            var saved = localStorage.getItem(STORAGE_KEY);
+            if (saved === 'dark') {
+                setTheme(true);
+            } else if (saved === 'light') {
+                setTheme(false);
+            } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                setTheme(true);
+            }
+        }
+
+        // Apply theme (FOUC script handles initial, this is a fallback)
+        applyInitialTheme();
+
+        // Toggle click handler
+        $toggle.on('click', function() {
+            var newDark = !isDark();
+            setTheme(newDark);
+            localStorage.setItem(STORAGE_KEY, newDark ? 'dark' : 'light');
+        });
+
+        // Listen for system preference changes (only if no manual override)
+        if (window.matchMedia) {
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+                if (!localStorage.getItem(STORAGE_KEY)) {
+                    setTheme(e.matches);
+                }
+            });
+        }
+
+        // Add transition class after initial paint to prevent FOUC
+        setTimeout(function() {
+            $page.addClass('dark-mode-transition');
+        }, 100);
+    })();
+
 })(jQuery);
