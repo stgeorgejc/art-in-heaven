@@ -83,7 +83,8 @@ class AIH_Ajax {
         add_action('wp_ajax_aih_admin_cleanup_tables', array($this, 'admin_cleanup_tables'));
         add_action('wp_ajax_aih_admin_purge_data', array($this, 'admin_purge_data'));
         add_action('wp_ajax_aih_admin_regenerate_watermarks', array($this, 'admin_regenerate_watermarks'));
-        
+        add_action('wp_ajax_aih_admin_import_csv', array($this, 'admin_import_csv'));
+
         // Pushpay API
         add_action('wp_ajax_aih_admin_test_pushpay', array($this, 'admin_test_pushpay'));
         add_action('wp_ajax_aih_admin_sync_pushpay', array($this, 'admin_sync_pushpay'));
@@ -842,7 +843,7 @@ class AIH_Ajax {
     
     public function admin_apply_event_date() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
-        if (!AIH_Roles::can_manage_settings()) wp_send_json_error(array('message' => __('Permission denied.', 'art-in-heaven')));
+        if (!AIH_Roles::can_manage_art()) wp_send_json_error(array('message' => __('Permission denied.', 'art-in-heaven')));
         $event_date = get_option('aih_event_date', '');
         if (empty($event_date)) wp_send_json_error(array('message' => __('Event date not set.', 'art-in-heaven')));
         
@@ -1129,7 +1130,221 @@ class AIH_Ajax {
         
         wp_send_json_success(array('data' => $data));
     }
-    
+
+    public function admin_import_csv() {
+        check_ajax_referer('aih_admin_nonce', 'nonce');
+        if (!AIH_Roles::can_manage_art()) {
+            wp_send_json_error(array('message' => __('Permission denied.', 'art-in-heaven')));
+        }
+
+        // Check file upload
+        if (empty($_FILES['csv_file']) || $_FILES['csv_file']['error'] !== UPLOAD_ERR_OK) {
+            wp_send_json_error(array('message' => __('No file uploaded or upload error.', 'art-in-heaven')));
+        }
+
+        $file = $_FILES['csv_file'];
+
+        // Validate MIME type
+        $finfo = new finfo(FILEINFO_MIME_TYPE);
+        $mime = $finfo->file($file['tmp_name']);
+        $allowed = array('text/plain', 'text/csv', 'application/csv', 'application/vnd.ms-excel');
+        if (!in_array($mime, $allowed)) {
+            wp_send_json_error(array('message' => __('Invalid file type. Please upload a CSV file.', 'art-in-heaven')));
+        }
+
+        // Validate size (2MB)
+        if ($file['size'] > 2 * 1024 * 1024) {
+            wp_send_json_error(array('message' => __('File exceeds 2MB limit.', 'art-in-heaven')));
+        }
+
+        $update_existing = !empty($_POST['update_existing']) && $_POST['update_existing'] === '1';
+
+        // Read file contents and strip BOM
+        $contents = file_get_contents($file['tmp_name']);
+        $contents = preg_replace('/^\xEF\xBB\xBF/', '', $contents);
+
+        $lines = preg_split('/\r\n|\r|\n/', $contents);
+        $lines = array_filter($lines, function($line) { return trim($line) !== ''; });
+        $lines = array_values($lines);
+
+        if (count($lines) < 2) {
+            wp_send_json_error(array('message' => __('CSV file must have a header row and at least one data row.', 'art-in-heaven')));
+        }
+
+        // Parse header row
+        $headers = str_getcsv($lines[0]);
+        $headers = array_map(function($h) { return strtolower(trim($h)); }, $headers);
+        $col_map = array_flip($headers);
+
+        // Validate required headers
+        $required_headers = array('art_id', 'title', 'artist', 'medium', 'tier');
+        $missing = array();
+        foreach ($required_headers as $rh) {
+            if (!isset($col_map[$rh])) {
+                $missing[] = $rh;
+            }
+        }
+        if (!empty($missing)) {
+            wp_send_json_error(array('message' => sprintf(__('Missing required columns: %s', 'art-in-heaven'), implode(', ', $missing))));
+        }
+
+        // Get default dates from settings
+        $settings = get_option('aih_settings', array());
+        $default_start = isset($settings['event_date']) ? $settings['event_date'] : '';
+        $default_end = isset($settings['event_end_date']) ? $settings['event_end_date'] : '';
+
+        $art_model = new AIH_Art_Piece();
+        $valid_statuses = array('active', 'draft', 'ended');
+        $summary = array('created' => 0, 'updated' => 0, 'skipped' => 0, 'errors' => 0, 'total' => 0);
+        $row_results = array();
+        $max_rows = 500;
+        $data_lines = array_slice($lines, 1, $max_rows);
+
+        foreach ($data_lines as $i => $line) {
+            $row_num = $i + 2; // 1-indexed, accounting for header
+            $summary['total']++;
+            $fields = str_getcsv($line);
+
+            // Helper to get column value
+            $get = function($col) use ($fields, $col_map) {
+                if (!isset($col_map[$col])) return '';
+                $idx = $col_map[$col];
+                return isset($fields[$idx]) ? trim($fields[$idx]) : '';
+            };
+
+            $art_id = strtoupper($get('art_id'));
+            $title = $get('title');
+            $artist = $get('artist');
+            $medium = $get('medium');
+            $tier = $get('tier');
+
+            // Validate required fields
+            $errors = array();
+            if ($art_id === '') $errors[] = 'art_id is empty';
+            if ($title === '') $errors[] = 'title is empty';
+            if ($artist === '') $errors[] = 'artist is empty';
+            if ($medium === '') $errors[] = 'medium is empty';
+            if ($tier === '') {
+                $errors[] = 'tier is empty';
+            } elseif (!in_array($tier, array('1', '2', '3', '4'))) {
+                $errors[] = 'tier must be 1-4';
+            }
+
+            // Validate optional fields
+            $starting_bid = $get('starting_bid');
+            if ($starting_bid !== '' && (!is_numeric($starting_bid) || floatval($starting_bid) < 0)) {
+                $errors[] = 'starting_bid must be a non-negative number';
+            }
+
+            $auction_start = $get('auction_start');
+            if ($auction_start !== '' && !preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $auction_start)) {
+                $errors[] = 'auction_start must be YYYY-MM-DD HH:MM:SS';
+            }
+
+            $auction_end = $get('auction_end');
+            if ($auction_end !== '' && !preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $auction_end)) {
+                $errors[] = 'auction_end must be YYYY-MM-DD HH:MM:SS';
+            }
+
+            $show_end_time = $get('show_end_time');
+            if ($show_end_time !== '' && !in_array($show_end_time, array('0', '1'))) {
+                $errors[] = 'show_end_time must be 0 or 1';
+            }
+
+            $status = strtolower($get('status'));
+            if ($status !== '' && !in_array($status, $valid_statuses)) {
+                $errors[] = 'status must be active, draft, or ended';
+            }
+
+            if (!empty($errors)) {
+                $summary['errors']++;
+                $row_results[] = array(
+                    'row' => $row_num,
+                    'art_id' => $art_id,
+                    'status' => 'error',
+                    'message' => implode('; ', $errors),
+                );
+                continue;
+            }
+
+            // Build data array with defaults
+            $data = array(
+                'art_id'        => $art_id,
+                'title'         => $title,
+                'artist'        => $artist,
+                'medium'        => $medium,
+                'dimensions'    => $get('dimensions'),
+                'description'   => $get('description'),
+                'starting_bid'  => $starting_bid !== '' ? floatval($starting_bid) : 0.00,
+                'tier'          => intval($tier),
+                'auction_start' => $auction_start !== '' ? $auction_start : $default_start,
+                'auction_end'   => $auction_end !== '' ? $auction_end : $default_end,
+                'show_end_time' => $show_end_time !== '' ? intval($show_end_time) : 0,
+                'status'        => $status !== '' ? $status : 'active',
+                'force_status'  => true,
+            );
+
+            // Check for existing piece
+            $existing = $art_model->get_by_art_id($art_id);
+
+            if ($existing) {
+                if ($update_existing) {
+                    unset($data['art_id']); // Don't update art_id itself
+                    $result = $art_model->update($existing->id, $data);
+                    if ($result !== false) {
+                        $summary['updated']++;
+                        $row_results[] = array(
+                            'row' => $row_num,
+                            'art_id' => $art_id,
+                            'status' => 'updated',
+                            'message' => __('Updated existing piece.', 'art-in-heaven'),
+                        );
+                    } else {
+                        $summary['errors']++;
+                        $row_results[] = array(
+                            'row' => $row_num,
+                            'art_id' => $art_id,
+                            'status' => 'error',
+                            'message' => __('Failed to update piece.', 'art-in-heaven'),
+                        );
+                    }
+                } else {
+                    $summary['skipped']++;
+                    $row_results[] = array(
+                        'row' => $row_num,
+                        'art_id' => $art_id,
+                        'status' => 'skipped',
+                        'message' => __('Art ID already exists.', 'art-in-heaven'),
+                    );
+                }
+            } else {
+                $result = $art_model->create($data);
+                if ($result) {
+                    $summary['created']++;
+                    $row_results[] = array(
+                        'row' => $row_num,
+                        'art_id' => $art_id,
+                        'status' => 'created',
+                        'message' => __('Created successfully.', 'art-in-heaven'),
+                    );
+                } else {
+                    $summary['errors']++;
+                    $row_results[] = array(
+                        'row' => $row_num,
+                        'art_id' => $art_id,
+                        'status' => 'error',
+                        'message' => __('Failed to create piece.', 'art-in-heaven'),
+                    );
+                }
+            }
+        }
+
+        wp_send_json_success(array(
+            'summary' => $summary,
+            'rows'    => $row_results,
+        ));
+    }
+
     public function admin_sync_bidders() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
         if (!AIH_Roles::can_manage_bidders()) wp_send_json_error(array('message' => __('Permission denied.', 'art-in-heaven')));

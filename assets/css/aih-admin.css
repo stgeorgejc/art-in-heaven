@@ -1672,6 +1672,181 @@ button.aih-action-btn .dashicons {
 }
 
 /* ============================================
+   CSV IMPORT MODAL
+   ============================================ */
+.aih-import-modal-content {
+    max-width: 600px;
+}
+
+.aih-import-actions-row {
+    margin-bottom: var(--aih-space-md);
+}
+
+.aih-import-file-area {
+    margin-bottom: var(--aih-space-md);
+}
+
+.aih-import-file-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--aih-space-sm);
+    padding: var(--aih-space-lg);
+    border: 2px dashed #c3c4c7;
+    border-radius: var(--aih-radius-md);
+    cursor: pointer;
+    color: #646970;
+    transition: border-color 0.2s, background-color 0.2s;
+}
+
+.aih-import-file-label:hover {
+    border-color: var(--aih-color-primary, #b8956b);
+    background: #f9f6f3;
+}
+
+.aih-import-file-label .dashicons {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+}
+
+.aih-import-options {
+    margin-bottom: var(--aih-space-md);
+}
+
+.aih-import-options label {
+    display: flex;
+    align-items: center;
+    gap: var(--aih-space-xs);
+    cursor: pointer;
+}
+
+/* Progress bar */
+.aih-import-progress-bar {
+    width: 100%;
+    height: 20px;
+    background: #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: var(--aih-space-sm);
+}
+
+.aih-import-progress-fill {
+    height: 100%;
+    background: var(--aih-color-primary, #b8956b);
+    border-radius: 10px;
+    transition: width 0.3s ease;
+}
+
+.aih-import-progress-text {
+    text-align: center;
+    color: #646970;
+    font-style: italic;
+}
+
+/* Summary grid */
+.aih-import-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: var(--aih-space-sm);
+    margin-bottom: var(--aih-space-md);
+}
+
+.aih-import-stat {
+    text-align: center;
+    padding: var(--aih-space-sm);
+    background: #f0f0f1;
+    border-radius: var(--aih-radius-md);
+}
+
+.aih-import-stat-num {
+    display: block;
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.aih-import-stat-label {
+    display: block;
+    font-size: 12px;
+    color: #646970;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.aih-stat-created .aih-import-stat-num { color: #00a32a; }
+.aih-stat-updated .aih-import-stat-num { color: #0073aa; }
+.aih-stat-skipped .aih-import-stat-num { color: #996800; }
+.aih-stat-errors .aih-import-stat-num { color: #d63638; }
+
+/* Per-row results list */
+.aih-import-rows-list {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #e5e7eb;
+    border-radius: var(--aih-radius-md);
+}
+
+.aih-import-row-item {
+    display: flex;
+    align-items: center;
+    gap: var(--aih-space-sm);
+    padding: var(--aih-space-xs) var(--aih-space-sm);
+    border-bottom: 1px solid #f0f0f1;
+    font-size: 13px;
+}
+
+.aih-import-row-item:last-child {
+    border-bottom: none;
+}
+
+.aih-import-row-num {
+    flex: 0 0 32px;
+    color: #8c8f94;
+    font-size: 12px;
+}
+
+.aih-import-row-artid {
+    flex: 0 0 80px;
+    font-weight: 600;
+    font-family: monospace;
+}
+
+.aih-import-row-status {
+    flex: 0 0 60px;
+    font-size: 11px;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.aih-import-row-msg {
+    flex: 1;
+    color: #646970;
+}
+
+.aih-import-row-created { background: #f0fdf4; }
+.aih-import-row-created .aih-import-row-status { color: #00a32a; }
+
+.aih-import-row-updated { background: #eff6ff; }
+.aih-import-row-updated .aih-import-row-status { color: #0073aa; }
+
+.aih-import-row-skipped { background: #fffbeb; }
+.aih-import-row-skipped .aih-import-row-status { color: #996800; }
+
+.aih-import-row-error { background: #fef2f2; }
+.aih-import-row-error .aih-import-row-status { color: #d63638; }
+
+/* Responsive summary grid */
+@media (max-width: 480px) {
+    .aih-import-summary-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    .aih-import-row-artid {
+        display: none;
+    }
+}
+
+/* ============================================
    PRINT STYLES
    ============================================ */
 @media print {

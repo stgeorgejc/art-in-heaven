@@ -53,6 +53,7 @@ $art_pieces = $art_model->get_all_with_stats($filter_args);
 <div class="wrap aih-admin-wrap">
     <h1 class="wp-heading-inline"><?php _e('Art Pieces', 'art-in-heaven'); ?></h1>
     <a href="<?php echo admin_url('admin.php?page=art-in-heaven-add'); ?>" class="page-title-action"><?php _e('Add New', 'art-in-heaven'); ?></a>
+    <button type="button" class="page-title-action" id="aih-import-csv-btn"><?php _e('Import CSV', 'art-in-heaven'); ?></button>
     <hr class="wp-header-end">
     
     <!-- Tabs -->
@@ -152,7 +153,63 @@ $art_pieces = $art_model->get_all_with_stats($filter_args);
             </div>
         </div>
     </div>
-    
+
+    <!-- Import CSV Modal -->
+    <div id="aih-import-csv-modal" class="aih-modal" style="display:none;">
+        <div class="aih-modal-content aih-import-modal-content">
+            <span class="aih-modal-close">&times;</span>
+
+            <!-- Upload View -->
+            <div id="aih-import-upload-view">
+                <h2><?php _e('Import Art Pieces from CSV', 'art-in-heaven'); ?></h2>
+                <p class="description"><?php _e('Upload a CSV file to bulk-import art pieces. Download the template to see the required format.', 'art-in-heaven'); ?></p>
+
+                <div class="aih-import-actions-row">
+                    <button type="button" class="button" id="aih-download-template"><?php _e('Download Template', 'art-in-heaven'); ?></button>
+                </div>
+
+                <div class="aih-import-file-area">
+                    <label for="aih-import-file" class="aih-import-file-label">
+                        <span class="dashicons dashicons-upload"></span>
+                        <span id="aih-import-file-text"><?php _e('Choose CSV file (max 2MB)', 'art-in-heaven'); ?></span>
+                    </label>
+                    <input type="file" id="aih-import-file" accept=".csv" style="display:none;">
+                </div>
+
+                <div class="aih-import-options">
+                    <label>
+                        <input type="checkbox" id="aih-import-update-existing">
+                        <?php _e('Update existing pieces if Art ID matches', 'art-in-heaven'); ?>
+                    </label>
+                </div>
+
+                <div class="aih-modal-actions">
+                    <button type="button" class="button button-primary" id="aih-import-submit" disabled><?php _e('Import', 'art-in-heaven'); ?></button>
+                    <button type="button" class="button" id="aih-import-cancel"><?php _e('Cancel', 'art-in-heaven'); ?></button>
+                </div>
+            </div>
+
+            <!-- Progress View -->
+            <div id="aih-import-progress-view" style="display:none;">
+                <h2><?php _e('Importing...', 'art-in-heaven'); ?></h2>
+                <div class="aih-import-progress-bar">
+                    <div class="aih-import-progress-fill" style="width:0%"></div>
+                </div>
+                <p class="aih-import-progress-text"><?php _e('Uploading file...', 'art-in-heaven'); ?></p>
+            </div>
+
+            <!-- Results View -->
+            <div id="aih-import-results-view" style="display:none;">
+                <h2><?php _e('Import Complete', 'art-in-heaven'); ?></h2>
+                <div class="aih-import-summary"></div>
+                <div class="aih-import-row-details"></div>
+                <div class="aih-modal-actions">
+                    <button type="button" class="button button-primary" id="aih-import-done"><?php _e('Done', 'art-in-heaven'); ?></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="aih-table-wrap">
     <table class="wp-list-table widefat fixed striped aih-art-table aih-inline-editable" id="aih-sortable-table">
         <thead>
@@ -820,6 +877,163 @@ jQuery(document).ready(function($) {
             if (r.success) { $row.fadeOut(300, function() { $(this).remove(); }); }
             else { alert(r.data.message); }
         });
+    });
+
+    // ========== CSV IMPORT ==========
+
+    var $importModal = $('#aih-import-csv-modal');
+    var $uploadView = $('#aih-import-upload-view');
+    var $progressView = $('#aih-import-progress-view');
+    var $resultsView = $('#aih-import-results-view');
+    var importHadChanges = false;
+
+    // Open modal
+    $('#aih-import-csv-btn').on('click', function() {
+        // Reset state
+        $uploadView.show();
+        $progressView.hide();
+        $resultsView.hide();
+        $('#aih-import-file').val('');
+        $('#aih-import-file-text').text('<?php echo esc_js(__('Choose CSV file (max 2MB)', 'art-in-heaven')); ?>');
+        $('#aih-import-update-existing').prop('checked', false);
+        $('#aih-import-submit').prop('disabled', true);
+        importHadChanges = false;
+        $importModal.fadeIn(200);
+    });
+
+    // Close modal
+    $importModal.find('.aih-modal-close, #aih-import-cancel').on('click', function() {
+        $importModal.fadeOut(200);
+    });
+
+    // File selection
+    $('#aih-import-file').on('change', function() {
+        var file = this.files[0];
+        if (file) {
+            if (file.size > 2 * 1024 * 1024) {
+                alert('<?php echo esc_js(__('File exceeds 2MB limit.', 'art-in-heaven')); ?>');
+                $(this).val('');
+                $('#aih-import-submit').prop('disabled', true);
+                $('#aih-import-file-text').text('<?php echo esc_js(__('Choose CSV file (max 2MB)', 'art-in-heaven')); ?>');
+                return;
+            }
+            $('#aih-import-file-text').text(file.name);
+            $('#aih-import-submit').prop('disabled', false);
+        } else {
+            $('#aih-import-file-text').text('<?php echo esc_js(__('Choose CSV file (max 2MB)', 'art-in-heaven')); ?>');
+            $('#aih-import-submit').prop('disabled', true);
+        }
+    });
+
+    // Click file label area
+    $('.aih-import-file-label').on('click', function() {
+        $('#aih-import-file').trigger('click');
+    });
+
+    // Download template
+    $('#aih-download-template').on('click', function() {
+        var bom = '\uFEFF';
+        var headers = 'art_id,title,artist,medium,dimensions,description,starting_bid,tier,auction_start,auction_end,show_end_time,status';
+        var example = 'ART-001,Sunset Over Mountains,Jane Doe,Oil on Canvas,24 x 36 in,A vibrant sunset landscape,150.00,2,2026-03-01 18:00:00,2026-03-01 21:00:00,0,active';
+        var csv = bom + headers + '\n' + example + '\n';
+        var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'art-import-template.csv';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    });
+
+    // Submit import
+    $('#aih-import-submit').on('click', function() {
+        var file = $('#aih-import-file')[0].files[0];
+        if (!file) return;
+
+        var formData = new FormData();
+        formData.append('action', 'aih_admin_import_csv');
+        formData.append('nonce', aihAdmin.nonce);
+        formData.append('csv_file', file);
+        formData.append('update_existing', $('#aih-import-update-existing').is(':checked') ? '1' : '0');
+
+        // Switch to progress view
+        $uploadView.hide();
+        $progressView.show();
+        $('.aih-import-progress-fill').css('width', '0%');
+        $('.aih-import-progress-text').text('<?php echo esc_js(__('Uploading file...', 'art-in-heaven')); ?>');
+
+        $.ajax({
+            url: aihAdmin.ajaxurl,
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            xhr: function() {
+                var xhr = new window.XMLHttpRequest();
+                xhr.upload.addEventListener('progress', function(e) {
+                    if (e.lengthComputable) {
+                        var pct = Math.round((e.loaded / e.total) * 100);
+                        $('.aih-import-progress-fill').css('width', pct + '%');
+                        if (pct >= 100) {
+                            $('.aih-import-progress-text').text('<?php echo esc_js(__('Processing rows...', 'art-in-heaven')); ?>');
+                        }
+                    }
+                });
+                return xhr;
+            },
+            success: function(r) {
+                $progressView.hide();
+                $resultsView.show();
+
+                if (r.success) {
+                    var s = r.data.summary;
+                    importHadChanges = (s.created > 0 || s.updated > 0);
+
+                    // Build summary grid
+                    var summaryHtml = '<div class="aih-import-summary-grid">' +
+                        '<div class="aih-import-stat"><span class="aih-import-stat-num">' + s.total + '</span><span class="aih-import-stat-label"><?php echo esc_js(__('Total', 'art-in-heaven')); ?></span></div>' +
+                        '<div class="aih-import-stat aih-stat-created"><span class="aih-import-stat-num">' + s.created + '</span><span class="aih-import-stat-label"><?php echo esc_js(__('Created', 'art-in-heaven')); ?></span></div>' +
+                        '<div class="aih-import-stat aih-stat-updated"><span class="aih-import-stat-num">' + s.updated + '</span><span class="aih-import-stat-label"><?php echo esc_js(__('Updated', 'art-in-heaven')); ?></span></div>' +
+                        '<div class="aih-import-stat aih-stat-skipped"><span class="aih-import-stat-num">' + s.skipped + '</span><span class="aih-import-stat-label"><?php echo esc_js(__('Skipped', 'art-in-heaven')); ?></span></div>' +
+                        '<div class="aih-import-stat aih-stat-errors"><span class="aih-import-stat-num">' + s.errors + '</span><span class="aih-import-stat-label"><?php echo esc_js(__('Errors', 'art-in-heaven')); ?></span></div>' +
+                        '</div>';
+                    $('.aih-import-summary').html(summaryHtml);
+
+                    // Build per-row details
+                    var rowsHtml = '<div class="aih-import-rows-list">';
+                    $.each(r.data.rows, function(i, row) {
+                        var cls = 'aih-import-row-' + row.status;
+                        rowsHtml += '<div class="aih-import-row-item ' + cls + '">' +
+                            '<span class="aih-import-row-num">' + row.row + '</span>' +
+                            '<span class="aih-import-row-artid">' + escapeHtml(row.art_id) + '</span>' +
+                            '<span class="aih-import-row-status">' + row.status + '</span>' +
+                            '<span class="aih-import-row-msg">' + escapeHtml(row.message) + '</span>' +
+                            '</div>';
+                    });
+                    rowsHtml += '</div>';
+                    $('.aih-import-row-details').html(rowsHtml);
+                } else {
+                    $('.aih-import-summary').html('<div class="notice notice-error"><p>' + escapeHtml(r.data.message || '<?php echo esc_js(__('Import failed.', 'art-in-heaven')); ?>') + '</p></div>');
+                    $('.aih-import-row-details').html('');
+                }
+            },
+            error: function() {
+                $progressView.hide();
+                $resultsView.show();
+                $('.aih-import-summary').html('<div class="notice notice-error"><p><?php echo esc_js(__('Request failed. Please try again.', 'art-in-heaven')); ?></p></div>');
+                $('.aih-import-row-details').html('');
+            }
+        });
+    });
+
+    // Done button
+    $('#aih-import-done').on('click', function() {
+        $importModal.fadeOut(200);
+        if (importHadChanges) {
+            location.reload();
+        }
     });
 });
 </script>
