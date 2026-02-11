@@ -939,11 +939,6 @@ jQuery(document).ready(function($) {
         }
     });
 
-    // Click file label area
-    $('.aih-import-file-label').on('click', function() {
-        $('#aih-import-file').trigger('click');
-    });
-
     // Download template
     $('#aih-download-template').on('click', function() {
         var bom = '\uFEFF';
