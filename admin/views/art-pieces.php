@@ -246,33 +246,57 @@ $art_pieces = $art_model->get_all_with_stats($filter_args);
             <?php if (empty($art_pieces)): ?>
                 <tr><td colspan="<?php echo $can_view_bids ? '13' : '11'; ?>"><?php _e('No art pieces found.', 'art-in-heaven'); ?> <a href="<?php echo admin_url('admin.php?page=art-in-heaven-add'); ?>"><?php _e('Add your first art piece', 'art-in-heaven'); ?></a></td></tr>
             <?php else: ?>
-                <?php foreach ($art_pieces as $piece):
-                    // Get current bid from bids table (since we removed current_bid column)
-                    global $wpdb;
-                    $bids_table = AIH_Database::get_table('bids');
-                    $highest_bid = $wpdb->get_var($wpdb->prepare(
-                        "SELECT MAX(bid_amount) FROM $bids_table WHERE art_piece_id = %d",
-                        $piece->id
-                    ));
-                    $current_bid = $highest_bid ?: $piece->starting_bid;
+                <?php
+                // Batch load bid data and images to avoid N+1 queries
+                global $wpdb;
+                $bids_table = AIH_Database::get_table('bids');
+                $art_images_table = AIH_Database::get_table('art_images');
+                $piece_ids = array_map(function($p) { return $p->id; }, $art_pieces);
+                $ids_placeholder = implode(',', array_map('intval', $piece_ids));
 
-                    // Get unique bidder count
-                    $unique_bidders = $wpdb->get_var($wpdb->prepare(
-                        "SELECT COUNT(DISTINCT bidder_id) FROM $bids_table WHERE art_piece_id = %d",
-                        $piece->id
-                    ));
+                // Batch: highest bids per piece
+                $bid_data = array();
+                if ($ids_placeholder) {
+                    $bid_rows = $wpdb->get_results(
+                        "SELECT art_piece_id, MAX(bid_amount) as highest_bid, COUNT(DISTINCT bidder_id) as unique_bidders
+                         FROM $bids_table WHERE art_piece_id IN ($ids_placeholder) GROUP BY art_piece_id"
+                    );
+                    foreach ($bid_rows as $row) {
+                        $bid_data[$row->art_piece_id] = $row;
+                    }
+                }
 
-                    // Get primary image from art_images table if not set directly
-                    $image_url = $piece->watermarked_url ?: $piece->image_url;
-                    if (empty($image_url)) {
-                        $art_images_table = AIH_Database::get_table('art_images');
-                        $primary_img = $wpdb->get_row($wpdb->prepare(
-                            "SELECT watermarked_url, image_url FROM $art_images_table WHERE art_piece_id = %d ORDER BY is_primary DESC, sort_order ASC LIMIT 1",
-                            $piece->id
-                        ));
-                        if ($primary_img) {
-                            $image_url = $primary_img->watermarked_url ?: $primary_img->image_url;
+                // Batch: primary images per piece
+                $image_data = array();
+                if ($ids_placeholder) {
+                    $image_rows = $wpdb->get_results(
+                        "SELECT ai.art_piece_id, ai.watermarked_url, ai.image_url
+                         FROM $art_images_table ai
+                         INNER JOIN (
+                             SELECT art_piece_id, MIN(CASE WHEN is_primary = 1 THEN sort_order ELSE sort_order + 10000 END) as min_order
+                             FROM $art_images_table WHERE art_piece_id IN ($ids_placeholder) GROUP BY art_piece_id
+                         ) best ON ai.art_piece_id = best.art_piece_id
+                         WHERE ai.art_piece_id IN ($ids_placeholder)
+                         ORDER BY ai.is_primary DESC, ai.sort_order ASC"
+                    );
+                    foreach ($image_rows as $row) {
+                        if (!isset($image_data[$row->art_piece_id])) {
+                            $image_data[$row->art_piece_id] = $row;
                         }
+                    }
+                }
+                ?>
+                <?php foreach ($art_pieces as $piece):
+                    // Use batch-loaded data instead of per-row queries
+                    $highest_bid = isset($bid_data[$piece->id]) ? $bid_data[$piece->id]->highest_bid : null;
+                    $current_bid = $highest_bid ?: $piece->starting_bid;
+                    $unique_bidders = isset($bid_data[$piece->id]) ? $bid_data[$piece->id]->unique_bidders : 0;
+
+                    // Use batch-loaded image or fall back to piece properties
+                    $image_url = $piece->watermarked_url ?: $piece->image_url;
+                    if (empty($image_url) && isset($image_data[$piece->id])) {
+                        $img = $image_data[$piece->id];
+                        $image_url = $img->watermarked_url ?: $img->image_url;
                     }
 
                     // Format dates for datetime-local input

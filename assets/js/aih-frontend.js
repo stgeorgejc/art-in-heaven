@@ -52,7 +52,8 @@
         $('[data-seconds]').each(function() {
             var $el = $(this);
             var seconds = parseInt($el.attr('data-seconds'), 10);
-            
+            if (isNaN(seconds)) return;
+
             if (seconds > 0) {
                 seconds--;
                 $el.attr('data-seconds', seconds);
@@ -78,9 +79,17 @@
         });
     }
     
-    // Initialize countdown timer
-    setInterval(updateCountdowns, 1000);
+    // Initialize countdown timer, pausing when tab is hidden
+    var countdownInterval = setInterval(updateCountdowns, 1000);
     updateCountdowns();
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            clearInterval(countdownInterval);
+        } else {
+            updateCountdowns();
+            countdownInterval = setInterval(updateCountdowns, 1000);
+        }
+    });
     
     // Search functionality
     var searchTimeout;
@@ -396,8 +405,16 @@
     // Sort on load
     sortGallery();
     
-    // Re-sort periodically (every minute)
-    setInterval(sortGallery, 60000);
+    // Re-sort periodically (every minute), pausing when tab is hidden
+    var sortTimer = setInterval(sortGallery, 60000);
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            clearInterval(sortTimer);
+        } else {
+            sortGallery();
+            sortTimer = setInterval(sortGallery, 60000);
+        }
+    });
     
     // =============================================
     // LIGHTBOX / SPOTLIGHT

@@ -158,8 +158,9 @@ jQuery(document).ready(function($) {
     
     $('.aih-switch-year').on('click', function() {
         if (!confirm('<?php _e('Switch to this year? You will need to save settings.', 'art-in-heaven'); ?>')) return;
-        var year = $(this).data('year');
-        window.location.href = '<?php echo admin_url('admin.php?page=art-in-heaven-settings'); ?>&switch_year=' + year;
+        var year = parseInt($(this).data('year'), 10);
+        if (isNaN(year) || year < 2020 || year > 2099) return;
+        window.location.href = '<?php echo esc_url(admin_url('admin.php?page=art-in-heaven-settings')); ?>&switch_year=' + year;
     });
 });
 </script>

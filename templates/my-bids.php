@@ -26,7 +26,7 @@ if (typeof aihAjax === 'undefined') {
 
 <?php if (!$is_logged_in): ?>
 <div class="aih-page">
-<script>(function(){var t=localStorage.getItem('aih-theme');if(t==='dark'||(t===null&&window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches)){document.currentScript.parentElement.classList.add('dark-mode');}})();</script>
+<script>(function(){var t=localStorage.getItem('aih-theme');if(t==='dark'||(t===null&&window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches)){document.currentScript.parentElement.classList.add('dark-mode');}else if(t!==null&&t!=='light'){localStorage.removeItem('aih-theme');}})();</script>
     <header class="aih-header">
         <div class="aih-header-inner">
             <a href="<?php echo esc_url($gallery_url); ?>" class="aih-logo">Art in Heaven</a>
@@ -81,7 +81,7 @@ $my_orders = $checkout->get_bidder_orders($bidder_id);
 ?>
 
 <div class="aih-page aih-mybids-page">
-<script>(function(){var t=localStorage.getItem('aih-theme');if(t==='dark'||(t===null&&window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches)){document.currentScript.parentElement.classList.add('dark-mode');}})();</script>
+<script>(function(){var t=localStorage.getItem('aih-theme');if(t==='dark'||(t===null&&window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches)){document.currentScript.parentElement.classList.add('dark-mode');}else if(t!==null&&t!=='light'){localStorage.removeItem('aih-theme');}})();</script>
     <header class="aih-header">
         <div class="aih-header-inner">
             <a href="<?php echo esc_url($gallery_url); ?>" class="aih-logo">Art in Heaven</a>
@@ -135,14 +135,14 @@ $my_orders = $checkout->get_bidder_orders($bidder_id);
                 $status_class = $is_ended ? 'ended' : ($is_winning ? 'winning' : 'outbid');
                 $status_text = $is_ended ? ($is_winning ? 'Won' : 'Ended') : ($is_winning ? 'Winning' : 'Outbid');
             ?>
-            <article class="aih-card <?php echo $status_class; ?>" data-id="<?php echo $bid->art_piece_id; ?>">
+            <article class="aih-card <?php echo $status_class; ?>" data-id="<?php echo intval($bid->art_piece_id); ?>">
                 <div class="aih-card-image">
                     <?php if ($image_url): ?>
-                    <a href="<?php echo esc_url($gallery_url); ?>?art_id=<?php echo $bid->art_piece_id; ?>">
+                    <a href="<?php echo esc_url($gallery_url); ?>?art_id=<?php echo intval($bid->art_piece_id); ?>">
                         <img src="<?php echo esc_url($image_url); ?>" alt="<?php echo esc_attr($bid_title); ?>" loading="lazy">
                     </a>
                     <?php else: ?>
-                    <a href="<?php echo esc_url($gallery_url); ?>?art_id=<?php echo $bid->art_piece_id; ?>" class="aih-placeholder-link">
+                    <a href="<?php echo esc_url($gallery_url); ?>?art_id=<?php echo intval($bid->art_piece_id); ?>" class="aih-placeholder-link">
                         <div class="aih-placeholder">
                             <span class="aih-placeholder-id"><?php echo esc_html(isset($bid->art_id) ? $bid->art_id : ''); ?></span>
                             <span class="aih-placeholder-text">No Image</span>
@@ -157,7 +157,7 @@ $my_orders = $checkout->get_bidder_orders($bidder_id);
 
                 <div class="aih-card-body">
                     <h3 class="aih-card-title">
-                        <a href="<?php echo esc_url($gallery_url); ?>?art_id=<?php echo $bid->art_piece_id; ?>"><?php echo esc_html($bid_title); ?></a>
+                        <a href="<?php echo esc_url($gallery_url); ?>?art_id=<?php echo intval($bid->art_piece_id); ?>"><?php echo esc_html($bid_title); ?></a>
                     </h3>
                     <p class="aih-card-artist"><?php echo esc_html(isset($bid->artist) ? $bid->artist : ''); ?></p>
                 </div>
@@ -172,8 +172,8 @@ $my_orders = $checkout->get_bidder_orders($bidder_id);
 
                     <?php if (!$is_ended && !$is_winning): ?>
                     <div class="aih-bid-form">
-                        <input type="text" inputmode="numeric" pattern="[0-9]*" class="aih-bid-input" data-min="<?php echo $min_bid; ?>" placeholder="$">
-                        <button type="button" class="aih-bid-btn" data-id="<?php echo $bid->art_piece_id; ?>">Bid</button>
+                        <input type="text" inputmode="numeric" pattern="[0-9]*" class="aih-bid-input" data-min="<?php echo esc_attr($min_bid); ?>" placeholder="$">
+                        <button type="button" class="aih-bid-btn" data-id="<?php echo intval($bid->art_piece_id); ?>">Bid</button>
                     </div>
                     <?php endif; ?>
                 </div>
@@ -192,13 +192,13 @@ $my_orders = $checkout->get_bidder_orders($bidder_id);
                 <div class="aih-order-card aih-order-clickable" data-order="<?php echo esc_attr($order->order_number); ?>">
                     <div class="aih-order-header">
                         <strong><?php echo esc_html($order->order_number); ?></strong>
-                        <span class="aih-order-status aih-status-<?php echo $order->payment_status; ?>">
-                            <?php echo ucfirst($order->payment_status); ?>
+                        <span class="aih-order-status aih-status-<?php echo esc_attr($order->payment_status); ?>">
+                            <?php echo esc_html(ucfirst($order->payment_status)); ?>
                         </span>
                     </div>
                     <div class="aih-order-details">
-                        <p><?php echo $order->item_count; ?> item<?php echo $order->item_count != 1 ? 's' : ''; ?> &bull; $<?php echo number_format($order->total); ?></p>
-                        <p class="aih-order-date"><?php echo date('M j, Y', strtotime($order->created_at)); ?></p>
+                        <p><?php echo intval($order->item_count); ?> item<?php echo $order->item_count != 1 ? 's' : ''; ?> &bull; $<?php echo number_format($order->total); ?></p>
+                        <p class="aih-order-date"><?php echo esc_html(date('M j, Y', strtotime($order->created_at))); ?></p>
                     </div>
                     <div class="aih-order-view-link">
                         <span>View Details →</span>
@@ -209,12 +209,12 @@ $my_orders = $checkout->get_bidder_orders($bidder_id);
         </div>
 
         <!-- Order Details Modal -->
-        <div id="aih-order-modal" class="aih-modal" style="display: none;">
-            <div class="aih-modal-backdrop"></div>
+        <div id="aih-order-modal" class="aih-modal" role="dialog" aria-modal="true" aria-labelledby="aih-modal-title" style="display: none;">
+            <div class="aih-modal-backdrop" aria-hidden="true"></div>
             <div class="aih-modal-content">
                 <div class="aih-modal-header">
                     <h3 id="aih-modal-title">Order Details</h3>
-                    <button type="button" class="aih-modal-close">&times;</button>
+                    <button type="button" class="aih-modal-close" aria-label="Close">&times;</button>
                 </div>
                 <div class="aih-modal-body" id="aih-modal-body">
                     <div class="aih-loading">Loading...</div>
@@ -241,12 +241,15 @@ jQuery(document).ready(function($) {
     });
     
     // Order details modal
+    var lastFocusedElement;
     $('.aih-order-clickable').on('click', function() {
+        lastFocusedElement = this;
         var orderNumber = $(this).data('order');
         var $modal = $('#aih-order-modal');
         var $body = $('#aih-modal-body');
 
         $modal.show();
+        $modal.find('.aih-modal-close').focus();
         $body.html('<div class="aih-loading">Loading order details...</div>');
         $('#aih-modal-title').text('Order ' + orderNumber);
 
@@ -260,7 +263,8 @@ jQuery(document).ready(function($) {
                 var html = '<div class="aih-order-modal-info">';
                 html += '<div class="aih-order-meta">';
                 var safeStatus = escapeHtml(data.payment_status);
-                html += '<span class="aih-order-status aih-status-' + safeStatus + '">' + safeStatus.charAt(0).toUpperCase() + safeStatus.slice(1) + '</span>';
+                var statusClass = ['paid', 'pending', 'refunded', 'cancelled'].indexOf(safeStatus) > -1 ? safeStatus : 'pending';
+                html += '<span class="aih-order-status aih-status-' + statusClass + '">' + safeStatus.charAt(0).toUpperCase() + safeStatus.slice(1) + '</span>';
                 if (data.pickup_status === 'picked_up') {
                     html += ' <span class="aih-pickup-badge">Picked Up</span>';
                 }
@@ -308,13 +312,14 @@ jQuery(document).ready(function($) {
                 $body.html('<p class="aih-error">Error: ' + escapeHtml(msg) + '</p>');
             }
         }).fail(function(xhr) {
-            $body.html('<p class="aih-error">Request failed: ' + xhr.status + ' ' + xhr.statusText + '</p>');
+            $body.html('<p class="aih-error">Request failed: ' + escapeHtml(xhr.status + ' ' + xhr.statusText) + '</p>');
         });
     });
 
-    // Close modal
+    // Close modal and restore focus
     $('.aih-modal-close, .aih-modal-backdrop').on('click', function() {
         $('#aih-order-modal').hide();
+        if (lastFocusedElement) lastFocusedElement.focus();
     });
 
     $('.aih-bid-btn').on('click', function() {
@@ -333,11 +338,15 @@ jQuery(document).ready(function($) {
         $.post(aihAjax.ajaxurl, {action:'aih_place_bid', nonce:aihAjax.nonce, art_piece_id:id, bid_amount:amount}, function(r) {
             if (r.success) {
                 $msg.removeClass('error').addClass('success').text('Bid placed!').show();
+                $btn.prop('disabled', true);
                 setTimeout(function() { location.reload(); }, 1500);
             } else {
                 $msg.removeClass('success').addClass('error').text(r.data.message || 'Failed').show();
                 $btn.prop('disabled', false).text('Bid');
             }
+        }).fail(function() {
+            $msg.removeClass('success').addClass('error').text('Connection error. Please try again.').show();
+            $btn.prop('disabled', false).text('Bid');
         });
     });
 });

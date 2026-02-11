@@ -6,6 +6,8 @@ if (!defined('ABSPATH')) exit;
 
 global $wpdb;
 
+$redirect_to = isset($_GET['redirect_to']) ? esc_url($_GET['redirect_to']) : '';
+
 // Gallery URL - try settings first, then search for shortcode
 $gallery_page = get_option('aih_gallery_page', '');
 if (!$gallery_page) {
@@ -24,7 +26,7 @@ if (typeof aihAjax === 'undefined') {
 </script>
 
 <div class="aih-page">
-<script>(function(){var t=localStorage.getItem('aih-theme');if(t==='dark'||(t===null&&window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches)){document.currentScript.parentElement.classList.add('dark-mode');}})();</script>
+<script>(function(){var t=localStorage.getItem('aih-theme');if(t==='dark'||(t===null&&window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches)){document.currentScript.parentElement.classList.add('dark-mode');}else if(t!==null&&t!=='light'){localStorage.removeItem('aih-theme');}})();</script>
     <header class="aih-header">
         <div class="aih-header-inner">
             <a href="<?php echo esc_url($gallery_url); ?>" class="aih-logo">Art in Heaven</a>
@@ -48,7 +50,7 @@ if (typeof aihAjax === 'undefined') {
             <div class="aih-login-form">
                 <div class="aih-field">
                     <label for="aih-login-code">Confirmation Code</label>
-                    <input type="text" id="aih-login-code" placeholder="XXXXXXXX" autocomplete="off" spellcheck="false">
+                    <input type="text" id="aih-login-code" placeholder="XXXXXXXX" autocomplete="off" spellcheck="false" autofocus>
                 </div>
                 <input type="hidden" id="aih-redirect-to" value="<?php echo esc_attr($redirect_to); ?>">
                 <button type="button" id="aih-login-submit" class="aih-btn">Sign In</button>

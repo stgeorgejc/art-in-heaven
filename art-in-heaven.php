@@ -440,12 +440,22 @@ class Art_In_Heaven {
      * Generate custom color CSS from settings
      */
     public function get_custom_color_css() {
-        $primary = get_option('aih_color_primary', '#b8956b');
-        $secondary = get_option('aih_color_secondary', '#1c1c1c');
-        $success = get_option('aih_color_success', '#4a7c59');
-        $error = get_option('aih_color_error', '#a63d40');
-        $text = get_option('aih_color_text', '#1c1c1c');
-        $muted = get_option('aih_color_muted', '#8a8a8a');
+        $color_defaults = array(
+            'primary' => '#b8956b', 'secondary' => '#1c1c1c', 'success' => '#4a7c59',
+            'error' => '#a63d40', 'text' => '#1c1c1c', 'muted' => '#8a8a8a',
+        );
+        $colors = array();
+        foreach ($color_defaults as $key => $default) {
+            $val = get_option('aih_color_' . $key, $default);
+            // Validate hex color format
+            $colors[$key] = preg_match('/^#[0-9A-Fa-f]{6}$/', $val) ? $val : $default;
+        }
+        $primary = $colors['primary'];
+        $secondary = $colors['secondary'];
+        $success = $colors['success'];
+        $error = $colors['error'];
+        $text = $colors['text'];
+        $muted = $colors['muted'];
 
         // Only generate if colors differ from defaults
         $defaults = array('#b8956b', '#1c1c1c', '#4a7c59', '#a63d40', '#1c1c1c', '#8a8a8a');

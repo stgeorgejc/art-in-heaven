@@ -339,11 +339,15 @@ class AIH_REST_API {
         $art_model = new AIH_Art_Piece();
         $piece = $art_model->get($art_piece_id);
         
+        // Get highest bid for this art piece
+        $bid_model_check = new AIH_Bid();
+        $highest = $bid_model_check->get_highest_bid_amount($art_piece_id);
+
         return rest_ensure_response(array(
             'success' => true,
             'message' => $result['message'],
             'bid_id' => $result['bid_id'],
-            'current_bid' => floatval($piece->current_bid),
+            'current_bid' => floatval($highest ?: 0),
         ));
     }
     
@@ -423,7 +427,7 @@ class AIH_REST_API {
         }
         
         // Log in the bidder
-        $auth->login_bidder($result['bidder']['email']);
+        $auth->login_bidder($result['bidder']['confirmation_code']);
         
         return rest_ensure_response(array(
             'success' => true,

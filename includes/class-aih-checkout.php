@@ -90,7 +90,7 @@ class AIH_Checkout {
         }
         
         $totals = $this->calculate_totals($won_items);
-        $order_number = 'AIH-' . strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 8));
+        $order_number = 'AIH-' . strtoupper(wp_generate_password(8, false));
         
         $wpdb->query('START TRANSACTION');
         

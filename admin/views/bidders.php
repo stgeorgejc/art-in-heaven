@@ -94,22 +94,22 @@ if ($current_tab === 'not_logged_in') {
         <div class="aih-stat-card" style="border-left: 4px solid #ef4444;">
             <div class="aih-stat-number"><?php echo number_format($not_logged_in_count); ?></div>
             <div class="aih-stat-label"><?php _e('Not Logged In', 'art-in-heaven'); ?></div>
-            <div class="aih-stat-icon">🔴</div>
+            <div class="aih-stat-icon"><span class="dashicons dashicons-dismiss" style="color: #ef4444;" aria-hidden="true"></span></div>
         </div>
         <div class="aih-stat-card" style="border-left: 4px solid #f59e0b;">
             <div class="aih-stat-number"><?php echo number_format($logged_in_no_bids_count); ?></div>
             <div class="aih-stat-label"><?php _e('Logged In - No Bids', 'art-in-heaven'); ?></div>
-            <div class="aih-stat-icon">🟡</div>
+            <div class="aih-stat-icon"><span class="dashicons dashicons-clock" style="color: #f59e0b;" aria-hidden="true"></span></div>
         </div>
         <div class="aih-stat-card" style="border-left: 4px solid #10b981;">
             <div class="aih-stat-number"><?php echo number_format($logged_in_has_bids_count); ?></div>
             <div class="aih-stat-label"><?php _e('Logged In - Has Bids', 'art-in-heaven'); ?></div>
-            <div class="aih-stat-icon">🟢</div>
+            <div class="aih-stat-icon"><span class="dashicons dashicons-yes-alt" style="color: #10b981;" aria-hidden="true"></span></div>
         </div>
         <div class="aih-stat-card" style="border-left: 4px solid #6366f1;">
             <div class="aih-stat-number"><?php echo number_format($all_registrants_count); ?></div>
             <div class="aih-stat-label"><?php _e('All Registrants', 'art-in-heaven'); ?></div>
-            <div class="aih-stat-icon">📋</div>
+            <div class="aih-stat-icon"><span class="dashicons dashicons-groups" style="color: #6366f1;" aria-hidden="true"></span></div>
         </div>
     </div>
     

@@ -24,13 +24,14 @@
     --aih-warning: #c4873a;
     --aih-info: #4a6fa5;
     --aih-text: #1c1c1c;
-    --aih-text-muted: #8a8a8a;
-    --aih-border: #e5e7eb;
+    --aih-text-muted: #6b6b6b;
+    --aih-border: #d1d5db;
     --aih-bg: #f9fafb;
     --aih-bg-white: #ffffff;
     --aih-shadow: 0 1px 3px rgba(0,0,0,0.1);
     --aih-shadow-md: 0 4px 6px rgba(0,0,0,0.1);
     --aih-radius: 8px;
+    --aih-radius-md: 6px;
     --aih-radius-sm: 4px;
     
     /* Fluid Typography - using clamp() for all sizes */
@@ -525,6 +526,7 @@ button.aih-action-btn .dashicons {
     background: var(--aih-bg-white) url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23374151' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") no-repeat right 8px center;
     background-size: 10px;
     -webkit-appearance: none;
+    -moz-appearance: none;
     appearance: none;
     cursor: pointer;
     min-height: 36px;

@@ -78,7 +78,7 @@ $total_bid_value = $wpdb->get_var("SELECT SUM(bid_amount) FROM {$bids_table}");
 <div class="wrap aih-admin-wrap">
     <h1><?php _e('Bids Management', 'art-in-heaven'); ?></h1>
     
-    <?php if (isset($_GET['debug'])): ?>
+    <?php if (isset($_GET['debug']) && current_user_can('manage_options')): ?>
     <div class="notice notice-info">
         <p><strong>Debug Info:</strong></p>
         <p>Bids Table: <?php echo esc_html($bids_table); ?></p>

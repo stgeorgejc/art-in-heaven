@@ -174,7 +174,7 @@ $current_tab = isset($_GET['tab']) ? sanitize_key($_GET['tab']) : 'items';
                                 </td>
                                 <td data-label="<?php esc_attr_e('Order #', 'art-in-heaven'); ?>">
                                     <?php if ($bid->order_number): ?>
-                                        <a href="<?php echo admin_url('admin.php?page=art-in-heaven-orders&order=' . $bid->order_number); ?>">
+                                        <a href="<?php echo admin_url('admin.php?page=art-in-heaven-orders&order_number=' . $bid->order_number); ?>">
                                             <?php echo esc_html($bid->order_number); ?>
                                         </a>
                                     <?php else: ?>

@@ -84,6 +84,16 @@ $options_to_delete = array(
     'aih_last_bidder_sync',
     'aih_last_sync_count',
     'aih_delete_data_on_uninstall',
+    'aih_color_primary',
+    'aih_color_secondary',
+    'aih_color_success',
+    'aih_color_error',
+    'aih_color_text',
+    'aih_color_muted',
+    'aih_auto_sync_enabled',
+    'aih_watermark_overlay_id',
+    'aih_event_end_date',
+    'aih_settings',
 );
 
 foreach ($options_to_delete as $option) {
@@ -155,21 +165,25 @@ function aih_uninstall_remove_capabilities() {
  * @param string $dir Directory path
  * @return bool
  */
-function aih_uninstall_recursive_delete($dir) {
-    if (!is_dir($dir)) {
+function aih_uninstall_recursive_delete($dir, $depth = 0) {
+    if (!is_dir($dir) || $depth > 10) {
         return false;
     }
-    
-    $files = array_diff(scandir($dir), array('.', '..'));
-    
+
+    $files = @scandir($dir);
+    if ($files === false) {
+        return false;
+    }
+    $files = array_diff($files, array('.', '..'));
+
     foreach ($files as $file) {
         $path = $dir . '/' . $file;
         if (is_dir($path)) {
-            aih_uninstall_recursive_delete($path);
+            aih_uninstall_recursive_delete($path, $depth + 1);
         } else {
-            unlink($path);
+            @unlink($path);
         }
     }
-    
-    return rmdir($dir);
+
+    return @rmdir($dir);
 }

@@ -23,7 +23,7 @@ if (typeof aihAjax === 'undefined') {
 <?php if (!$is_logged_in): ?>
 <!-- Login Gate -->
 <div class="aih-page">
-<script>(function(){var t=localStorage.getItem('aih-theme');if(t==='dark'||(t===null&&window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches)){document.currentScript.parentElement.classList.add('dark-mode');}})();</script>
+<script>(function(){var t=localStorage.getItem('aih-theme');if(t==='dark'||(t===null&&window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches)){document.currentScript.parentElement.classList.add('dark-mode');}else if(t!==null&&t!=='light'){localStorage.removeItem('aih-theme');}})();</script>
     <header class="aih-header">
         <div class="aih-header-inner">
             <a href="<?php echo home_url(); ?>" class="aih-logo">Art in Heaven</a>
@@ -103,7 +103,7 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
 ?>
 
 <div class="aih-page aih-gallery-page">
-<script>(function(){var t=localStorage.getItem('aih-theme');if(t==='dark'||(t===null&&window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches)){document.currentScript.parentElement.classList.add('dark-mode');}})();</script>
+<script>(function(){var t=localStorage.getItem('aih-theme');if(t==='dark'||(t===null&&window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches)){document.currentScript.parentElement.classList.add('dark-mode');}else if(t!==null&&t!=='light'){localStorage.removeItem('aih-theme');}})();</script>
     <header class="aih-header">
         <div class="aih-header-inner">
             <a href="<?php echo esc_url($gallery_url); ?>" class="aih-logo">Art in Heaven</a>
@@ -257,7 +257,7 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
                 }
             ?>
             <article class="aih-card <?php echo $status_class; ?>"
-                     data-id="<?php echo $piece->id; ?>"
+                     data-id="<?php echo intval($piece->id); ?>"
                      data-art-id="<?php echo esc_attr($piece->art_id); ?>"
                      data-title="<?php echo esc_attr($piece->title); ?>"
                      data-artist="<?php echo esc_attr($piece->artist); ?>"
@@ -265,11 +265,11 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
 
                 <div class="aih-card-image" data-favorite="<?php echo $is_favorite ? '1' : '0'; ?>">
                     <?php if ($primary_image): ?>
-                    <a href="?art_id=<?php echo $piece->id; ?>">
+                    <a href="?art_id=<?php echo intval($piece->id); ?>">
                         <img src="<?php echo esc_url($primary_image); ?>" alt="<?php echo esc_attr($piece->title); ?>" loading="lazy">
                     </a>
                     <?php else: ?>
-                    <a href="?art_id=<?php echo $piece->id; ?>" class="aih-placeholder-link">
+                    <a href="?art_id=<?php echo intval($piece->id); ?>" class="aih-placeholder-link">
                         <div class="aih-placeholder">
                             <span class="aih-placeholder-id"><?php echo esc_html($piece->art_id); ?></span>
                             <span class="aih-placeholder-text">No Image</span>
@@ -283,7 +283,7 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
                     <div class="aih-badge aih-badge-<?php echo $status_class; ?>"><?php echo $status_text; ?></div>
                     <?php endif; ?>
 
-                    <button type="button" class="aih-fav-btn <?php echo $is_favorite ? 'active' : ''; ?>" data-id="<?php echo $piece->id; ?>">
+                    <button type="button" class="aih-fav-btn <?php echo $is_favorite ? 'active' : ''; ?>" data-id="<?php echo intval($piece->id); ?>">
                         <span class="aih-fav-icon">♥</span>
                     </button>
 
@@ -296,7 +296,7 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
                 
                 <div class="aih-card-body">
                     <h3 class="aih-card-title">
-                        <a href="?art_id=<?php echo $piece->id; ?>"><?php echo esc_html($piece->title); ?></a>
+                        <a href="?art_id=<?php echo intval($piece->id); ?>"><?php echo esc_html($piece->title); ?></a>
                     </h3>
                     <p class="aih-card-artist"><?php echo esc_html($piece->artist); ?></p>
                     <?php if (!$has_bids): ?>
@@ -310,14 +310,14 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
                 <?php if ($is_upcoming): ?>
                 <div class="aih-card-footer">
                     <div class="aih-upcoming-notice" style="padding: 8px; text-align: center; color: #888; font-size: 0.85em;">
-                        Bidding starts <?php echo date('M j, g:i A', strtotime($piece->auction_start)); ?>
+                        Bidding starts <?php echo esc_html(date('M j, g:i A', strtotime($piece->auction_start))); ?>
                     </div>
                 </div>
                 <?php elseif (!$is_ended): ?>
                 <div class="aih-card-footer">
                     <div class="aih-bid-form">
-                        <input type="text" inputmode="numeric" pattern="[0-9]*" class="aih-bid-input" data-min="<?php echo $min_bid; ?>" placeholder="$">
-                        <button type="button" class="aih-bid-btn" data-id="<?php echo $piece->id; ?>">Bid</button>
+                        <input type="text" inputmode="numeric" pattern="[0-9]*" class="aih-bid-input" data-min="<?php echo esc_attr($min_bid); ?>" placeholder="$">
+                        <button type="button" class="aih-bid-btn" data-id="<?php echo intval($piece->id); ?>">Bid</button>
                     </div>
                 </div>
                 <?php endif; ?>
@@ -489,8 +489,12 @@ jQuery(document).ready(function($) {
         $grid.append($cards);
     }
 
-    // Bind filter events
-    $('#aih-search').on('input keyup change', function() {
+    // Bind filter events with debounce for search input
+    var filterTimer;
+    $('#aih-search').on('input keyup', function() {
+        clearTimeout(filterTimer);
+        filterTimer = setTimeout(filterCards, 200);
+    }).on('change', function() {
         filterCards();
     });
 
@@ -506,24 +510,27 @@ jQuery(document).ready(function($) {
     // Run filter on page load
     filterCards();
     
-    // Favorite toggle
+    // Favorite toggle - only update UI after server confirmation
     $('.aih-fav-btn').on('click', function(e) {
         e.preventDefault();
         e.stopPropagation();
         var $btn = $(this);
+        if ($btn.hasClass('loading')) return;
         var id = $btn.data('id');
+        $btn.addClass('loading');
 
         $.post(aihAjax.ajaxurl, {action:'aih_toggle_favorite', nonce:aihAjax.nonce, art_piece_id:id}, function(r) {
             if (r.success) {
                 $btn.toggleClass('active');
-                // Icon stays the same, CSS handles the visual difference
-                // Update data attribute for filtering
                 var $cardImage = $btn.closest('.aih-card-image');
                 $cardImage.attr('data-favorite', $btn.hasClass('active') ? '1' : '0');
-                // Update favorites filter visibility
                 updateFavoritesFilterVisibility();
                 filterCards();
             }
+        }).fail(function() {
+            // Silently fail - don't change UI state
+        }).always(function() {
+            $btn.removeClass('loading');
         });
     });
     
@@ -559,6 +566,9 @@ jQuery(document).ready(function($) {
             } else {
                 $msg.removeClass('success').addClass('error').text(r.data.message || 'Bid failed').show();
             }
+            $btn.prop('disabled', false).text('Bid');
+        }).fail(function() {
+            $msg.removeClass('success').addClass('error').text('Connection error. Please try again.').show();
             $btn.prop('disabled', false).text('Bid');
         });
     });

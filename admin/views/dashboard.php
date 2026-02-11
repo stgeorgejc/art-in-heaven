@@ -20,9 +20,9 @@ $can_view_bids = AIH_Roles::can_view_bids();
             <span class="aih-stat-label"><?php _e('Active Auctions', 'art-in-heaven'); ?></span>
         </div>
         <div class="aih-stat-card aih-stat-bids">
-            <span class="aih-stat-number"><?php echo $counts->bid_rate_percent; ?>%</span>
+            <span class="aih-stat-number"><?php echo isset($counts->bid_rate_percent) ? $counts->bid_rate_percent : 0; ?>%</span>
             <span class="aih-stat-label"><?php _e('With Bids', 'art-in-heaven'); ?></span>
-            <span class="aih-stat-sublabel"><?php printf(__('%d of %d pieces', 'art-in-heaven'), $counts->pieces_with_bids, $counts->total); ?></span>
+            <span class="aih-stat-sublabel"><?php printf(__('%d of %d pieces', 'art-in-heaven'), isset($counts->pieces_with_bids) ? $counts->pieces_with_bids : 0, isset($counts->total) ? $counts->total : 0); ?></span>
         </div>
         <div class="aih-stat-card aih-stat-nobids">
             <span class="aih-stat-number"><?php echo $counts->active_no_bids; ?></span>

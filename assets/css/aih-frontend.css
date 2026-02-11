@@ -12,7 +12,7 @@
     --sa-success: #4a7c59;
     --sa-error: #a63d40;
     --sa-text: #1c1c1c;
-    --sa-text-muted: #8a8a8a;
+    --sa-text-muted: #6b6b6b;
     --sa-bg: #fafafa;
     --sa-bg-card: #fff;
     --sa-border: #e0e0e0;
@@ -657,30 +657,7 @@ html {
     color: var(--sa-primary);
 }
 
-/* Toast */
-.aih-toast {
-    position: fixed;
-    bottom: 30px;
-    right: 30px;
-    padding: 15px 25px;
-    background: var(--sa-primary);
-    color: white;
-    border-radius: 10px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-    opacity: 0;
-    transform: translateY(20px);
-    transition: var(--sa-transition);
-    z-index: 100000;
-    max-width: 350px;
-}
-
-.aih-toast.show {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-.aih-toast.success { background: var(--sa-success); }
-.aih-toast.error { background: var(--sa-error); }
+/* Toast - defined in TOAST NOTIFICATIONS section below */
 
 /* Single Item */
 .aih-single-item {
@@ -1248,6 +1225,7 @@ html {
     width: 10px;
     height: 10px;
     border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.6);
     background: rgba(255, 255, 255, 0.4);
     cursor: pointer;
     transition: background 0.2s ease, transform 0.2s ease;
@@ -1518,6 +1496,7 @@ html {
 .aih-login-gate input:focus {
     outline: none;
     border-color: var(--sa-accent);
+    box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.15);
 }
 
 .aih-login-gate .aih-btn-primary {
@@ -1567,6 +1546,7 @@ html {
 
 /* ============================================
    TOAST NOTIFICATIONS
+   Note: Toast element should have role="status" aria-live="polite" in HTML
    ============================================ */
 .aih-toast {
     position: fixed;

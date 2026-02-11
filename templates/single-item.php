@@ -26,7 +26,7 @@ if (typeof aihAjax === 'undefined') {
 
 <?php if (!$is_logged_in): ?>
 <div class="aih-page">
-<script>(function(){var t=localStorage.getItem('aih-theme');if(t==='dark'||(t===null&&window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches)){document.currentScript.parentElement.classList.add('dark-mode');}})();</script>
+<script>(function(){var t=localStorage.getItem('aih-theme');if(t==='dark'||(t===null&&window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches)){document.currentScript.parentElement.classList.add('dark-mode');}else if(t!==null&&t!=='light'){localStorage.removeItem('aih-theme');}})();</script>
     <header class="aih-header">
         <div class="aih-header-inner">
             <a href="<?php echo esc_url($gallery_url); ?>" class="aih-logo">Art in Heaven</a>
@@ -122,7 +122,7 @@ $cart_count = count($checkout->get_won_items($bidder_id));
 ?>
 
 <div class="aih-page aih-single-page">
-<script>(function(){var t=localStorage.getItem('aih-theme');if(t==='dark'||(t===null&&window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches)){document.currentScript.parentElement.classList.add('dark-mode');}})();</script>
+<script>(function(){var t=localStorage.getItem('aih-theme');if(t==='dark'||(t===null&&window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches)){document.currentScript.parentElement.classList.add('dark-mode');}else if(t!==null&&t!=='light'){localStorage.removeItem('aih-theme');}})();</script>
     <header class="aih-header">
         <div class="aih-header-inner">
             <a href="<?php echo esc_url($gallery_url); ?>" class="aih-logo">Art in Heaven</a>
@@ -157,13 +157,13 @@ $cart_count = count($checkout->get_won_items($bidder_id));
             <a href="<?php echo esc_url($gallery_url); ?>" class="aih-back-link">← Back to Gallery</a>
             <div class="aih-nav-center">
                 <?php if ($prev_id): ?>
-                <a href="?art_id=<?php echo $prev_id; ?>" class="aih-nav-arrow" title="Previous">←</a>
+                <a href="?art_id=<?php echo intval($prev_id); ?>" class="aih-nav-arrow" title="Previous">←</a>
                 <?php else: ?>
                 <span class="aih-nav-arrow disabled">←</span>
                 <?php endif; ?>
                 <span class="aih-piece-counter"><?php echo $current_index + 1; ?> / <?php echo count($all_pieces); ?></span>
                 <?php if ($next_id): ?>
-                <a href="?art_id=<?php echo $next_id; ?>" class="aih-nav-arrow" title="Next">→</a>
+                <a href="?art_id=<?php echo intval($next_id); ?>" class="aih-nav-arrow" title="Next">→</a>
                 <?php else: ?>
                 <span class="aih-nav-arrow disabled">→</span>
                 <?php endif; ?>
@@ -198,7 +198,7 @@ $cart_count = count($checkout->get_won_items($bidder_id));
                     <!-- Art ID Badge on image -->
                     <span class="aih-art-id-badge-single"><?php echo esc_html($art_piece->art_id); ?></span>
 
-                    <button type="button" class="aih-fav-btn <?php echo $is_favorite ? 'active' : ''; ?>" data-id="<?php echo $art_piece->id; ?>">
+                    <button type="button" class="aih-fav-btn <?php echo $is_favorite ? 'active' : ''; ?>" data-id="<?php echo intval($art_piece->id); ?>">
                         <span class="aih-fav-icon">♥</span>
                     </button>
 
@@ -243,7 +243,7 @@ $cart_count = count($checkout->get_won_items($bidder_id));
                     <?php if ($is_upcoming): ?>
                     <div class="aih-bid-section">
                         <div class="aih-upcoming-notice" style="padding: 16px; background: #f0f0f0; border-radius: 8px; text-align: center; color: #555;">
-                            Bidding starts <?php echo date('M j, Y \a\t g:i A', strtotime($art_piece->auction_start)); ?>
+                            Bidding starts <?php echo esc_html(date('M j, Y \a\t g:i A', strtotime($art_piece->auction_start))); ?>
                         </div>
                     </div>
                     <?php elseif (!$is_ended): ?>
@@ -263,9 +263,9 @@ $cart_count = count($checkout->get_won_items($bidder_id));
                         <div class="aih-bid-form-single">
                             <div class="aih-field">
                                 <label>Your Bid</label>
-                                <input type="text" inputmode="numeric" pattern="[0-9]*" id="bid-amount" data-min="<?php echo $min_bid; ?>" placeholder="$">
+                                <input type="text" inputmode="numeric" pattern="[0-9]*" id="bid-amount" data-min="<?php echo esc_attr($min_bid); ?>" placeholder="$">
                             </div>
-                            <button type="button" id="place-bid" class="aih-bid-btn" data-id="<?php echo $art_piece->id; ?>">
+                            <button type="button" id="place-bid" class="aih-bid-btn" data-id="<?php echo intval($art_piece->id); ?>">
                                 Bid
                             </button>
                         </div>
@@ -280,7 +280,7 @@ $cart_count = count($checkout->get_won_items($bidder_id));
                             <?php foreach ($my_bid_history as $bid): ?>
                             <div class="aih-bid-history-item <?php echo $bid->is_winning ? 'winning' : ''; ?>">
                                 <span class="aih-bid-history-amount">$<?php echo number_format($bid->bid_amount); ?></span>
-                                <span class="aih-bid-history-time"><?php echo date('M j, g:i A', strtotime($bid->bid_time)); ?></span>
+                                <span class="aih-bid-history-time"><?php echo esc_html(date('M j, g:i A', strtotime($bid->bid_time))); ?></span>
                                 <?php if ($bid->is_winning): ?>
                                 <span class="aih-bid-history-status">✓ Winning</span>
                                 <?php endif; ?>
@@ -376,14 +376,14 @@ jQuery(document).ready(function($) {
         if (empty($image_urls) && $primary_image) {
             $image_urls = array($primary_image);
         }
-        echo json_encode($image_urls);
+        echo wp_json_encode($image_urls);
     ?>;
     // Additional fallback if PHP array is still empty
     if (!allImages || allImages.length === 0) {
         var mainSrc = $('#aih-main-image').attr('src');
         if (mainSrc) allImages = [mainSrc];
     }
-    console.log('Lightbox images:', allImages.length, allImages);
+
 
     // Generate lightbox dots dynamically based on actual image count
     var $dotsContainer = $lightbox.find('.aih-lightbox-dots');
@@ -407,9 +407,9 @@ jQuery(document).ready(function($) {
     }
 
     function openLightbox(index) {
-        console.log('Opening lightbox, index:', index, 'total images:', allImages.length, 'images:', allImages);
+
         if (allImages.length === 0) {
-            console.log('No images available, cannot open lightbox');
+
             return;
         }
         // Ensure index is valid
@@ -427,10 +427,10 @@ jQuery(document).ready(function($) {
 
         // Show/hide navigation based on image count
         if (allImages.length > 1) {
-            console.log('Showing nav buttons');
+
             $lightbox.addClass('has-multiple');
         } else {
-            console.log('Hiding nav buttons (single image)');
+
             $lightbox.removeClass('has-multiple');
         }
     }
@@ -455,7 +455,7 @@ jQuery(document).ready(function($) {
     $('#aih-main-image').on('click', function(e) {
         e.preventDefault();
         e.stopPropagation();
-        console.log('Main image clicked, currentImgIndex:', currentImgIndex, 'allImages:', allImages);
+
         openLightbox(currentImgIndex);
     });
 
@@ -509,6 +509,9 @@ jQuery(document).ready(function($) {
                 $msg.removeClass('success').addClass('error').text(r.data.message || 'Failed').show();
             }
             $btn.prop('disabled', false).removeClass('loading');
+        }).fail(function() {
+            $msg.removeClass('success').addClass('error').text('Connection error. Please try again.').show();
+            $btn.prop('disabled', false).removeClass('loading');
         });
     });
     
@@ -556,7 +559,15 @@ jQuery(document).ready(function($) {
     }
 
     updateCountdown();
-    setInterval(updateCountdown, 1000);
+    var countdownTimer = setInterval(updateCountdown, 1000);
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            clearInterval(countdownTimer);
+        } else {
+            updateCountdown();
+            countdownTimer = setInterval(updateCountdown, 1000);
+        }
+    });
 
     // Scroll to Top functionality
     var $scrollBtn = $('#aih-scroll-top');

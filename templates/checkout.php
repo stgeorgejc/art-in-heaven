@@ -26,7 +26,7 @@ if (typeof aihAjax === 'undefined') {
 
 <?php if (!$is_logged_in): ?>
 <div class="aih-page">
-<script>(function(){var t=localStorage.getItem('aih-theme');if(t==='dark'||(t===null&&window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches)){document.currentScript.parentElement.classList.add('dark-mode');}})();</script>
+<script>(function(){var t=localStorage.getItem('aih-theme');if(t==='dark'||(t===null&&window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches)){document.currentScript.parentElement.classList.add('dark-mode');}else if(t!==null&&t!=='light'){localStorage.removeItem('aih-theme');}})();</script>
     <header class="aih-header">
         <div class="aih-header-inner">
             <a href="<?php echo esc_url($gallery_url); ?>" class="aih-logo">Art in Heaven</a>
@@ -85,7 +85,7 @@ $total = $subtotal + $tax;
 ?>
 
 <div class="aih-page aih-checkout-page">
-<script>(function(){var t=localStorage.getItem('aih-theme');if(t==='dark'||(t===null&&window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches)){document.currentScript.parentElement.classList.add('dark-mode');}})();</script>
+<script>(function(){var t=localStorage.getItem('aih-theme');if(t==='dark'||(t===null&&window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches)){document.currentScript.parentElement.classList.add('dark-mode');}else if(t!==null&&t!=='light'){localStorage.removeItem('aih-theme');}})();</script>
     <header class="aih-header">
         <div class="aih-header-inner">
             <a href="<?php echo esc_url($gallery_url); ?>" class="aih-logo">Art in Heaven</a>
@@ -191,13 +191,13 @@ $total = $subtotal + $tax;
                 <div class="aih-order-card aih-order-clickable" data-order="<?php echo esc_attr($order->order_number); ?>">
                     <div class="aih-order-header">
                         <strong><?php echo esc_html($order->order_number); ?></strong>
-                        <span class="aih-order-status aih-status-<?php echo $order->payment_status; ?>">
-                            <?php echo ucfirst($order->payment_status); ?>
+                        <span class="aih-order-status aih-status-<?php echo esc_attr($order->payment_status); ?>">
+                            <?php echo esc_html(ucfirst($order->payment_status)); ?>
                         </span>
                     </div>
                     <div class="aih-order-details">
-                        <p><?php echo $order->item_count; ?> items • $<?php echo number_format($order->total); ?></p>
-                        <p class="aih-order-date"><?php echo date('M j, Y', strtotime($order->created_at)); ?></p>
+                        <p><?php echo intval($order->item_count); ?> items • $<?php echo number_format($order->total); ?></p>
+                        <p class="aih-order-date"><?php echo esc_html(date('M j, Y', strtotime($order->created_at))); ?></p>
                     </div>
                     <div class="aih-order-view-link">
                         <span>View Details →</span>
@@ -209,12 +209,12 @@ $total = $subtotal + $tax;
         <?php endif; ?>
 
         <!-- Order Details Modal -->
-        <div id="aih-order-modal" class="aih-modal" style="display: none;">
-            <div class="aih-modal-backdrop"></div>
+        <div id="aih-order-modal" class="aih-modal" role="dialog" aria-modal="true" aria-labelledby="aih-modal-title" style="display: none;">
+            <div class="aih-modal-backdrop" aria-hidden="true"></div>
             <div class="aih-modal-content">
                 <div class="aih-modal-header">
                     <h3 id="aih-modal-title">Order Details</h3>
-                    <button type="button" class="aih-modal-close">&times;</button>
+                    <button type="button" class="aih-modal-close" aria-label="Close">&times;</button>
                 </div>
                 <div class="aih-modal-body" id="aih-modal-body">
                     <div class="aih-loading">Loading...</div>
@@ -248,18 +248,31 @@ jQuery(document).ready(function($) {
                 alert(r.data.message || 'Error creating order. Payment URL could not be generated.');
                 $btn.prop('disabled', false).removeClass('loading');
             }
+        }).fail(function() {
+            alert('Connection error. Please try again.');
+            $btn.prop('disabled', false).removeClass('loading');
         });
     });
 
-    // Order details modal
+    // Order details modal with caching
+    var orderCache = {};
     $('.aih-order-clickable').on('click', function() {
+        lastFocusedElement = this;
         var orderNumber = $(this).data('order');
         var $modal = $('#aih-order-modal');
         var $body = $('#aih-modal-body');
 
         $modal.show();
-        $body.html('<div class="aih-loading">Loading order details...</div>');
+        $modal.find('.aih-modal-close').focus();
         $('#aih-modal-title').text('Order ' + orderNumber);
+
+        // Use cached data if available
+        if (orderCache[orderNumber]) {
+            $body.html(orderCache[orderNumber]);
+            return;
+        }
+
+        $body.html('<div class="aih-loading">Loading order details...</div>');
 
         $.post(aihAjax.ajaxurl, {
             action: 'aih_get_order_details',
@@ -271,7 +284,8 @@ jQuery(document).ready(function($) {
                 var html = '<div class="aih-order-modal-info">';
                 html += '<div class="aih-order-meta">';
                 var safeStatus = escapeHtml(data.payment_status);
-                html += '<span class="aih-order-status aih-status-' + safeStatus + '">' + safeStatus.charAt(0).toUpperCase() + safeStatus.slice(1) + '</span>';
+                var statusClass = ['paid', 'pending', 'refunded', 'cancelled'].indexOf(safeStatus) > -1 ? safeStatus : 'pending';
+                html += '<span class="aih-order-status aih-status-' + statusClass + '">' + safeStatus.charAt(0).toUpperCase() + safeStatus.slice(1) + '</span>';
                 if (data.pickup_status === 'picked_up') {
                     html += ' <span class="aih-pickup-badge">Picked Up</span>';
                 }
@@ -316,24 +330,28 @@ jQuery(document).ready(function($) {
                 html += '</div>';
 
                 $body.html(html);
+                orderCache[orderNumber] = html;
             } else {
                 var msg = (r.data && r.data.message) ? r.data.message : 'Unknown error';
                 $body.html('<p class="aih-error">Error: ' + escapeHtml(msg) + '</p>');
             }
         }).fail(function(xhr) {
-            $body.html('<p class="aih-error">Request failed: ' + xhr.status + ' ' + xhr.statusText + '</p>');
+            $body.html('<p class="aih-error">Request failed: ' + escapeHtml(xhr.status + ' ' + xhr.statusText) + '</p>');
         });
     });
 
-    // Close modal
+    // Close modal and restore focus
+    var lastFocusedElement;
     $('.aih-modal-close, .aih-modal-backdrop').on('click', function() {
         $('#aih-order-modal').hide();
+        if (lastFocusedElement) lastFocusedElement.focus();
     });
 
     // Close on escape key
     $(document).on('keydown', function(e) {
         if (e.key === 'Escape') {
             $('#aih-order-modal').hide();
+            if (lastFocusedElement) lastFocusedElement.focus();
         }
     });
 });

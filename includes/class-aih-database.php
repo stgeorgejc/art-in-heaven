@@ -595,7 +595,7 @@ class AIH_Database {
             'object_type' => isset($data['object_type']) ? sanitize_key($data['object_type']) : '',
             'object_id' => isset($data['object_id']) ? absint($data['object_id']) : null,
             'user_id' => get_current_user_id() ?: null,
-            'bidder_id' => isset($data['bidder_id']) ? sanitize_email($data['bidder_id']) : '',
+            'bidder_id' => isset($data['bidder_id']) ? sanitize_text_field($data['bidder_id']) : '',
             'ip_address' => class_exists('AIH_Security') ? AIH_Security::get_client_ip() : '',
             'user_agent' => isset($_SERVER['HTTP_USER_AGENT']) ? substr(sanitize_text_field($_SERVER['HTTP_USER_AGENT']), 0, 500) : '',
             'details' => isset($data['details']) ? wp_json_encode($data['details']) : '',

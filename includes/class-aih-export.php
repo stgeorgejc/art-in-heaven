@@ -55,36 +55,42 @@ class AIH_Export {
             );
         }
         
+        // Use confirmation_code (bidder_id) for bids/orders/favorites queries
+        $confirmation_code = $bidder ? $bidder->confirmation_code : '';
+
         // Export bids
-        $bids_table = AIH_Database::get_table('bids');
-        $art_table = AIH_Database::get_table('art_pieces');
-        $bids = $wpdb->get_results($wpdb->prepare(
-            "SELECT b.*, a.title, a.art_id FROM $bids_table b
-             LEFT JOIN $art_table a ON b.art_piece_id = a.id
-             WHERE b.bidder_id = %s ORDER BY b.bid_time DESC",
-            $email_address
-        ));
-        
-        foreach ($bids as $bid) {
-            $export_items[] = array(
-                'group_id' => 'art-in-heaven-bids',
-                'group_label' => __('Auction Bids', 'art-in-heaven'),
-                'item_id' => 'bid-' . $bid->id,
-                'data' => array(
-                    array('name' => __('Art Piece', 'art-in-heaven'), 'value' => $bid->title . ' (' . $bid->art_id . ')'),
-                    array('name' => __('Bid Amount', 'art-in-heaven'), 'value' => '$' . number_format($bid->bid_amount, 2)),
-                    array('name' => __('Bid Time', 'art-in-heaven'), 'value' => $bid->bid_time),
-                    array('name' => __('Winning Bid', 'art-in-heaven'), 'value' => $bid->is_winning ? __('Yes', 'art-in-heaven') : __('No', 'art-in-heaven')),
-                ),
-            );
+        if ($confirmation_code) {
+            $bids_table = AIH_Database::get_table('bids');
+            $art_table = AIH_Database::get_table('art_pieces');
+            $bids = $wpdb->get_results($wpdb->prepare(
+                "SELECT b.*, a.title, a.art_id FROM $bids_table b
+                 LEFT JOIN $art_table a ON b.art_piece_id = a.id
+                 WHERE b.bidder_id = %s ORDER BY b.bid_time DESC",
+                $confirmation_code
+            ));
+
+            foreach ($bids as $bid) {
+                $export_items[] = array(
+                    'group_id' => 'art-in-heaven-bids',
+                    'group_label' => __('Auction Bids', 'art-in-heaven'),
+                    'item_id' => 'bid-' . $bid->id,
+                    'data' => array(
+                        array('name' => __('Art Piece', 'art-in-heaven'), 'value' => ($bid->title ?: '') . ' (' . ($bid->art_id ?: '') . ')'),
+                        array('name' => __('Bid Amount', 'art-in-heaven'), 'value' => '$' . number_format($bid->bid_amount, 2)),
+                        array('name' => __('Bid Time', 'art-in-heaven'), 'value' => $bid->bid_time),
+                        array('name' => __('Winning Bid', 'art-in-heaven'), 'value' => $bid->is_winning ? __('Yes', 'art-in-heaven') : __('No', 'art-in-heaven')),
+                    ),
+                );
+            }
         }
-        
+
         // Export orders
-        $orders_table = AIH_Database::get_table('orders');
-        $orders = $wpdb->get_results($wpdb->prepare(
-            "SELECT * FROM $orders_table WHERE bidder_id = %s",
-            $email_address
-        ));
+        if ($confirmation_code) {
+            $orders_table = AIH_Database::get_table('orders');
+            $orders = $wpdb->get_results($wpdb->prepare(
+                "SELECT * FROM $orders_table WHERE bidder_id = %s",
+                $confirmation_code
+            ));
         
         foreach ($orders as $order) {
             $export_items[] = array(
@@ -98,14 +104,15 @@ class AIH_Export {
                     array('name' => __('Date', 'art-in-heaven'), 'value' => $order->created_at),
                 ),
             );
+            }
         }
-        
+
         return array(
             'data' => $export_items,
             'done' => true,
         );
     }
-    
+
     /**
      * Erase personal data for GDPR
      * 
@@ -147,25 +154,36 @@ class AIH_Export {
             $messages[] = __('Bidder profile anonymized.', 'art-in-heaven');
         }
         
-        // Delete favorites
-        $favorites_table = AIH_Database::get_table('favorites');
-        $deleted = $wpdb->delete($favorites_table, array('bidder_id' => $email_address), array('%s'));
-        if ($deleted) {
-            $items_removed += $deleted;
-            $messages[] = sprintf(__('%d favorites removed.', 'art-in-heaven'), $deleted);
-        }
-        
-        // Retain bids and orders for business records (anonymized via bidder)
-        $bids_table = AIH_Database::get_table('bids');
-        $bid_count = $wpdb->get_var($wpdb->prepare(
-            "SELECT COUNT(*) FROM $bids_table WHERE bidder_id = %s",
+        // Look up confirmation_code for favorites/bids queries
+        $bidder = $wpdb->get_row($wpdb->prepare(
+            "SELECT confirmation_code FROM $bidders_table WHERE email_primary = %s",
             $email_address
         ));
-        if ($bid_count > 0) {
-            $items_retained += $bid_count;
-            $messages[] = sprintf(__('%d bids retained for records (anonymized).', 'art-in-heaven'), $bid_count);
+        $confirmation_code = $bidder ? $bidder->confirmation_code : '';
+
+        // Delete favorites
+        if ($confirmation_code) {
+            $favorites_table = AIH_Database::get_table('favorites');
+            $deleted = $wpdb->delete($favorites_table, array('bidder_id' => $confirmation_code), array('%s'));
+            if ($deleted) {
+                $items_removed += $deleted;
+                $messages[] = sprintf(__('%d favorites removed.', 'art-in-heaven'), $deleted);
+            }
         }
-        
+
+        // Retain bids and orders for business records (anonymized via bidder)
+        if ($confirmation_code) {
+            $bids_table = AIH_Database::get_table('bids');
+            $bid_count = $wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(*) FROM $bids_table WHERE bidder_id = %s",
+                $confirmation_code
+            ));
+            if ($bid_count > 0) {
+                $items_retained += $bid_count;
+                $messages[] = sprintf(__('%d bids retained for records (anonymized).', 'art-in-heaven'), $bid_count);
+            }
+        }
+
         return array(
             'items_removed' => $items_removed,
             'items_retained' => $items_retained,
@@ -191,8 +209,8 @@ class AIH_Export {
             case 'art_pieces':
                 $table = AIH_Database::get_table('art_pieces');
                 $data = $wpdb->get_results("SELECT * FROM $table ORDER BY id ASC", ARRAY_A);
-                $headers = array('ID', 'Art ID', 'Title', 'Artist', 'Medium', 'Dimensions', 'Starting Bid', 'Current Bid', 'Status', 'Auction End', 'Created');
-                $fields = array('id', 'art_id', 'title', 'artist', 'medium', 'dimensions', 'starting_bid', 'current_bid', 'status', 'auction_end', 'created_at');
+                $headers = array('ID', 'Art ID', 'Title', 'Artist', 'Medium', 'Dimensions', 'Starting Bid', 'Status', 'Auction End', 'Created');
+                $fields = array('id', 'art_id', 'title', 'artist', 'medium', 'dimensions', 'starting_bid', 'status', 'auction_end', 'created_at');
                 break;
                 
             case 'bids':
@@ -287,9 +305,19 @@ class AIH_Export {
                 "SELECT
                     COUNT(*) AS total,
                     SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) AS active,
-                    SUM(CASE WHEN status = 'ended' THEN 1 ELSE 0 END) AS ended,
-                    COALESCE(SUM(CASE WHEN current_bid > 0 THEN current_bid ELSE 0 END), 0) AS bid_value
+                    SUM(CASE WHEN status = 'ended' THEN 1 ELSE 0 END) AS ended
                  FROM $art_table"
+            );
+
+            // Get total bid value from bids table (current_bid column doesn't exist in art_pieces)
+            $bid_value = $wpdb->get_var(
+                "SELECT COALESCE(SUM(b.bid_amount), 0)
+                 FROM $bids_table b
+                 INNER JOIN (
+                     SELECT art_piece_id, MAX(bid_amount) as max_bid
+                     FROM $bids_table
+                     GROUP BY art_piece_id
+                 ) mb ON b.art_piece_id = mb.art_piece_id AND b.bid_amount = mb.max_bid"
             );
 
             // Consolidate bid counts into a single query
@@ -311,7 +339,7 @@ class AIH_Export {
                 'total_art_pieces'  => $art_counts ? (int) $art_counts->total : 0,
                 'active_auctions'   => $art_counts ? (int) $art_counts->active : 0,
                 'ended_auctions'    => $art_counts ? (int) $art_counts->ended : 0,
-                'total_bid_value'   => $art_counts ? (float) $art_counts->bid_value : 0,
+                'total_bid_value'   => (float) $bid_value,
                 'total_bids'        => $bid_counts ? (int) $bid_counts->total : 0,
                 'unique_bidders'    => $bid_counts ? (int) $bid_counts->unique_bidders : 0,
                 'total_registrants' => (int) $wpdb->get_var("SELECT COUNT(*) FROM $registrants_table"),
