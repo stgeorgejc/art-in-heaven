@@ -1159,8 +1159,9 @@ class AIH_Ajax {
 
         $update_existing = !empty($_POST['update_existing']) && $_POST['update_existing'] === '1';
 
-        // Read file contents and strip BOM
+        // Read file contents, strip BOM, then delete temp file
         $contents = file_get_contents($file['tmp_name']);
+        @unlink($file['tmp_name']);
         $contents = preg_replace('/^\xEF\xBB\xBF/', '', $contents);
 
         $lines = preg_split('/\r\n|\r|\n/', $contents);
@@ -1194,7 +1195,6 @@ class AIH_Ajax {
         $default_end = isset($settings['event_end_date']) ? $settings['event_end_date'] : '';
 
         $art_model = new AIH_Art_Piece();
-        $valid_statuses = array('active', 'draft', 'ended');
         $summary = array('created' => 0, 'updated' => 0, 'skipped' => 0, 'errors' => 0, 'total' => 0);
         $row_results = array();
         $max_rows = 500;
@@ -1246,16 +1246,6 @@ class AIH_Ajax {
                 $errors[] = 'auction_end must be YYYY-MM-DD HH:MM:SS';
             }
 
-            $show_end_time = $get('show_end_time');
-            if ($show_end_time !== '' && !in_array($show_end_time, array('0', '1'))) {
-                $errors[] = 'show_end_time must be 0 or 1';
-            }
-
-            $status = strtolower($get('status'));
-            if ($status !== '' && !in_array($status, $valid_statuses)) {
-                $errors[] = 'status must be active, draft, or ended';
-            }
-
             if (!empty($errors)) {
                 $summary['errors']++;
                 $row_results[] = array(
@@ -1279,8 +1269,8 @@ class AIH_Ajax {
                 'tier'          => intval($tier),
                 'auction_start' => $auction_start !== '' ? $auction_start : $default_start,
                 'auction_end'   => $auction_end !== '' ? $auction_end : $default_end,
-                'show_end_time' => $show_end_time !== '' ? intval($show_end_time) : 0,
-                'status'        => $status !== '' ? $status : 'active',
+                'show_end_time' => 0,
+                'status'        => 'draft',
                 'force_status'  => true,
             );
 

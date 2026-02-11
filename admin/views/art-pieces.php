@@ -933,8 +933,8 @@ jQuery(document).ready(function($) {
     // Download template
     $('#aih-download-template').on('click', function() {
         var bom = '\uFEFF';
-        var headers = 'art_id,title,artist,medium,dimensions,description,starting_bid,tier,auction_start,auction_end,show_end_time,status';
-        var example = 'ART-001,Sunset Over Mountains,Jane Doe,Oil on Canvas,24 x 36 in,A vibrant sunset landscape,150.00,2,2026-03-01 18:00:00,2026-03-01 21:00:00,0,active';
+        var headers = 'art_id,title,artist,medium,dimensions,description,starting_bid,tier,auction_start,auction_end';
+        var example = 'ART-001,Sunset Over Mountains,Jane Doe,Oil on Canvas,24 x 36 in,A vibrant sunset landscape,150.00,2,2026-03-01 18:00:00,2026-03-01 21:00:00';
         var csv = bom + headers + '\n' + example + '\n';
         var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         var url = URL.createObjectURL(blob);
