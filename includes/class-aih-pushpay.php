@@ -34,10 +34,10 @@ class AIH_Pushpay_API {
      */
     public function get_settings() {
         $is_sandbox = get_option('aih_pushpay_sandbox', 0);
-        
+        $decrypt = class_exists('AIH_Security') ? array('AIH_Security', 'decrypt') : null;
+
         if ($is_sandbox) {
-            // Sandbox credentials
-            return array(
+            $raw = array(
                 'client_id' => get_option('aih_pushpay_sandbox_client_id', ''),
                 'client_secret' => get_option('aih_pushpay_sandbox_client_secret', ''),
                 'organization_key' => get_option('aih_pushpay_sandbox_organization_key', ''),
@@ -47,8 +47,7 @@ class AIH_Pushpay_API {
                 'sandbox_mode' => true,
             );
         } else {
-            // Production credentials
-            return array(
+            $raw = array(
                 'client_id' => get_option('aih_pushpay_client_id', ''),
                 'client_secret' => get_option('aih_pushpay_client_secret', ''),
                 'organization_key' => get_option('aih_pushpay_organization_key', ''),
@@ -58,6 +57,14 @@ class AIH_Pushpay_API {
                 'sandbox_mode' => false,
             );
         }
+
+        // Decrypt sensitive credentials stored encrypted at rest
+        if ($decrypt) {
+            $raw['client_id'] = call_user_func($decrypt, $raw['client_id']);
+            $raw['client_secret'] = call_user_func($decrypt, $raw['client_secret']);
+        }
+
+        return $raw;
     }
     
     /**
@@ -552,7 +559,14 @@ class AIH_Pushpay_API {
         );
         
         $args = wp_parse_args($args, $defaults);
-        
+
+        // Sanitize orderby/order to prevent SQL injection
+        $allowed_orderby = array('payment_date', 'amount', 'status', 'payer_name', 'synced_at', 'id');
+        if (!in_array($args['orderby'], $allowed_orderby, true)) {
+            $args['orderby'] = 'payment_date';
+        }
+        $args['order'] = strtoupper($args['order']) === 'ASC' ? 'ASC' : 'DESC';
+
         $where = "1=1";
         if ($args['status']) {
             $where .= $wpdb->prepare(" AND t.status = %s", $args['status']);
@@ -562,13 +576,13 @@ class AIH_Pushpay_API {
         } elseif ($args['matched'] === 'no') {
             $where .= " AND t.order_id IS NULL";
         }
-        
+
         return $wpdb->get_results($wpdb->prepare(
             "SELECT t.*, o.order_number, o.bidder_id
              FROM {$transactions_table} t
              LEFT JOIN {$orders_table} o ON t.order_id = o.id
              WHERE {$where}
-             ORDER BY {$args['orderby']} {$args['order']}
+             ORDER BY t.{$args['orderby']} {$args['order']}
              LIMIT %d OFFSET %d",
             $args['limit'],
             $args['offset']

@@ -75,10 +75,11 @@ class AIH_Bid {
             $current_highest = floatval($art_piece->current_highest);
             $ip_address = !empty($_SERVER['REMOTE_ADDR']) ? sanitize_text_field($_SERVER['REMOTE_ADDR']) : '';
             $bid_amount = floatval($amount);
-            
-            // Check if bid is too low
+            $min_increment = floatval(get_option('aih_min_bid_increment', 5));
+
+            // Check if bid is too low (must meet minimum increment above current highest)
             if ($current_highest > 0) {
-                $is_too_low = $bid_amount <= $current_highest;
+                $is_too_low = $bid_amount < ($current_highest + $min_increment);
             } else {
                 $is_too_low = $bid_amount < floatval($art_piece->starting_bid);
             }

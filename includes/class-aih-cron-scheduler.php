@@ -223,13 +223,21 @@ class AIH_Cron_Scheduler {
     public function handle_scheduled_activation($art_id) {
         global $wpdb;
 
+        // Transient-based lock to prevent concurrent cron runs from double-processing
+        $lock_key = 'aih_cron_activate_' . intval($art_id);
+        if (get_transient($lock_key)) {
+            return;
+        }
+        set_transient($lock_key, 1, 60);
+
         try {
             if (!class_exists('AIH_Database') || !AIH_Database::tables_exist()) {
+                delete_transient($lock_key);
                 return;
             }
 
             $table = AIH_Database::get_table('art_pieces');
-            if (!$table) return;
+            if (!$table) { delete_transient($lock_key); return; }
 
             $now = current_time('mysql');
 
@@ -258,6 +266,8 @@ class AIH_Cron_Scheduler {
         } catch (Exception $e) {
             error_log('AIH Cron: Error in scheduled activation - ' . $e->getMessage());
         }
+
+        delete_transient($lock_key);
     }
 
     /**
@@ -268,13 +278,21 @@ class AIH_Cron_Scheduler {
     public function handle_scheduled_end($art_id) {
         global $wpdb;
 
+        // Transient-based lock to prevent concurrent cron runs from double-processing
+        $lock_key = 'aih_cron_end_' . intval($art_id);
+        if (get_transient($lock_key)) {
+            return;
+        }
+        set_transient($lock_key, 1, 60);
+
         try {
             if (!class_exists('AIH_Database') || !AIH_Database::tables_exist()) {
+                delete_transient($lock_key);
                 return;
             }
 
             $table = AIH_Database::get_table('art_pieces');
-            if (!$table) return;
+            if (!$table) { delete_transient($lock_key); return; }
 
             // End the piece if it's currently active
             $result = $wpdb->query($wpdb->prepare(
@@ -299,6 +317,8 @@ class AIH_Cron_Scheduler {
         } catch (Exception $e) {
             error_log('AIH Cron: Error in scheduled end - ' . $e->getMessage());
         }
+
+        delete_transient($lock_key);
     }
 
     /**

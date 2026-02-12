@@ -68,8 +68,11 @@ class AIH_CCB_API {
     private function load_settings() {
         $this->base_url = get_option('aih_api_base_url', '');
         $this->form_id  = get_option('aih_api_form_id', '');
-        $this->username = get_option('aih_api_username', '');
-        $this->password = get_option('aih_api_password', '');
+        $raw_username = get_option('aih_api_username', '');
+        $raw_password = get_option('aih_api_password', '');
+        // Decrypt credentials if stored encrypted
+        $this->username = class_exists('AIH_Security') ? AIH_Security::decrypt($raw_username) : $raw_username;
+        $this->password = class_exists('AIH_Security') ? AIH_Security::decrypt($raw_password) : $raw_password;
     }
     
     /**

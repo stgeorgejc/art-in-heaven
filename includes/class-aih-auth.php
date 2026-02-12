@@ -598,6 +598,14 @@ class AIH_Auth {
             );
         }
         
+        // Regenerate session ID to prevent session fixation attacks
+        if (session_status() !== PHP_SESSION_ACTIVE && !headers_sent()) {
+            session_start();
+        }
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_regenerate_id(true);
+        }
+
         // Store confirmation_code in session (NOT email)
         $this->write_session(array(
             'confirmation_code' => $confirmation_code,

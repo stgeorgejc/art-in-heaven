@@ -449,6 +449,97 @@ class AIH_Security {
     }
     
     /**
+     * Encrypt a value for storage at rest
+     *
+     * @param string $value Plaintext value
+     * @return string Base64-encoded encrypted value prefixed with 'enc:'
+     */
+    public static function encrypt($value) {
+        if (empty($value)) {
+            return $value;
+        }
+
+        // Already encrypted
+        if (strpos($value, 'enc:') === 0) {
+            return $value;
+        }
+
+        if (!function_exists('openssl_encrypt')) {
+            return $value; // Graceful fallback - store plaintext
+        }
+
+        $key = substr(hash('sha256', self::get_encryption_key()), 0, 32);
+        $iv = openssl_random_pseudo_bytes(16);
+        $encrypted = openssl_encrypt($value, 'AES-256-CBC', $key, 0, $iv);
+
+        if ($encrypted === false) {
+            return $value;
+        }
+
+        return 'enc:' . base64_encode($iv . $encrypted);
+    }
+
+    /**
+     * Decrypt a value from storage
+     *
+     * @param string $value Encrypted value (base64 with 'enc:' prefix)
+     * @return string Decrypted plaintext
+     */
+    public static function decrypt($value) {
+        if (empty($value)) {
+            return $value;
+        }
+
+        // Not encrypted
+        if (strpos($value, 'enc:') !== 0) {
+            return $value;
+        }
+
+        if (!function_exists('openssl_decrypt')) {
+            return '';
+        }
+
+        $key = substr(hash('sha256', self::get_encryption_key()), 0, 32);
+        $data = base64_decode(substr($value, 4));
+
+        if ($data === false || strlen($data) < 17) {
+            return '';
+        }
+
+        $iv = substr($data, 0, 16);
+        $encrypted = substr($data, 16);
+        $decrypted = openssl_decrypt($encrypted, 'AES-256-CBC', $key, 0, $iv);
+
+        return $decrypted !== false ? $decrypted : '';
+    }
+
+    /**
+     * Get the encryption key from WordPress salts
+     *
+     * @return string
+     */
+    private static function get_encryption_key() {
+        if (defined('LOGGED_IN_KEY') && LOGGED_IN_KEY) {
+            return LOGGED_IN_KEY;
+        }
+        if (defined('AUTH_KEY') && AUTH_KEY) {
+            return AUTH_KEY;
+        }
+        return 'aih-fallback-key-' . DB_NAME;
+    }
+
+    /**
+     * Sanitize callback that encrypts a value before storing in wp_options
+     *
+     * @param string $value The option value
+     * @return string Encrypted value
+     */
+    public static function sanitize_encrypt($value) {
+        $value = sanitize_text_field($value);
+        return self::encrypt($value);
+    }
+
+    /**
      * Check if this is a REST API request
      * 
      * @return bool

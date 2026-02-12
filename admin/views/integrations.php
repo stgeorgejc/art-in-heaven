@@ -85,13 +85,13 @@ $is_sandbox = get_option('aih_pushpay_sandbox', 0);
                 <tr>
                     <th scope="row"><label for="aih_api_username"><?php _e('API Username', 'art-in-heaven'); ?></label></th>
                     <td>
-                        <input type="text" id="aih_api_username" name="aih_api_username" value="<?php echo esc_attr(get_option('aih_api_username', '')); ?>" class="regular-text" autocomplete="off">
+                        <input type="text" id="aih_api_username" name="aih_api_username" value="<?php echo esc_attr(AIH_Security::decrypt(get_option('aih_api_username', ''))); ?>" class="regular-text" autocomplete="off">
                     </td>
                 </tr>
                 <tr>
                     <th scope="row"><label for="aih_api_password"><?php _e('API Password', 'art-in-heaven'); ?></label></th>
                     <td>
-                        <input type="password" id="aih_api_password" name="aih_api_password" value="<?php echo esc_attr(get_option('aih_api_password', '')); ?>" class="regular-text" autocomplete="off">
+                        <input type="password" id="aih_api_password" name="aih_api_password" value="<?php echo esc_attr(AIH_Security::decrypt(get_option('aih_api_password', ''))); ?>" class="regular-text" autocomplete="off">
                     </td>
                 </tr>
                 <tr>
@@ -217,13 +217,13 @@ $is_sandbox = get_option('aih_pushpay_sandbox', 0);
                     <tr>
                         <th scope="row"><label for="aih_pushpay_sandbox_client_id"><?php _e('Client ID', 'art-in-heaven'); ?></label></th>
                         <td>
-                            <input type="text" id="aih_pushpay_sandbox_client_id" name="aih_pushpay_sandbox_client_id" value="<?php echo esc_attr(get_option('aih_pushpay_sandbox_client_id', '')); ?>" class="regular-text">
+                            <input type="text" id="aih_pushpay_sandbox_client_id" name="aih_pushpay_sandbox_client_id" value="<?php echo esc_attr(AIH_Security::decrypt(get_option('aih_pushpay_sandbox_client_id', ''))); ?>" class="regular-text">
                         </td>
                     </tr>
                     <tr>
                         <th scope="row"><label for="aih_pushpay_sandbox_client_secret"><?php _e('Client Secret', 'art-in-heaven'); ?></label></th>
                         <td>
-                            <input type="password" id="aih_pushpay_sandbox_client_secret" name="aih_pushpay_sandbox_client_secret" value="<?php echo esc_attr(get_option('aih_pushpay_sandbox_client_secret', '')); ?>" class="regular-text">
+                            <input type="password" id="aih_pushpay_sandbox_client_secret" name="aih_pushpay_sandbox_client_secret" value="<?php echo esc_attr(AIH_Security::decrypt(get_option('aih_pushpay_sandbox_client_secret', ''))); ?>" class="regular-text">
                         </td>
                     </tr>
                     <tr>
@@ -265,13 +265,13 @@ $is_sandbox = get_option('aih_pushpay_sandbox', 0);
                     <tr>
                         <th scope="row"><label for="aih_pushpay_client_id"><?php _e('Client ID', 'art-in-heaven'); ?></label></th>
                         <td>
-                            <input type="text" id="aih_pushpay_client_id" name="aih_pushpay_client_id" value="<?php echo esc_attr(get_option('aih_pushpay_client_id', '')); ?>" class="regular-text">
+                            <input type="text" id="aih_pushpay_client_id" name="aih_pushpay_client_id" value="<?php echo esc_attr(AIH_Security::decrypt(get_option('aih_pushpay_client_id', ''))); ?>" class="regular-text">
                         </td>
                     </tr>
                     <tr>
                         <th scope="row"><label for="aih_pushpay_client_secret"><?php _e('Client Secret', 'art-in-heaven'); ?></label></th>
                         <td>
-                            <input type="password" id="aih_pushpay_client_secret" name="aih_pushpay_client_secret" value="<?php echo esc_attr(get_option('aih_pushpay_client_secret', '')); ?>" class="regular-text">
+                            <input type="password" id="aih_pushpay_client_secret" name="aih_pushpay_client_secret" value="<?php echo esc_attr(AIH_Security::decrypt(get_option('aih_pushpay_client_secret', ''))); ?>" class="regular-text">
                         </td>
                     </tr>
                     <tr>

@@ -125,9 +125,18 @@ class AIH_Export {
         $items_removed = 0;
         $items_retained = 0;
         $messages = array();
-        
-        // Anonymize bidder data (don't delete for order integrity)
+
         $bidders_table = AIH_Database::get_table('bidders');
+        $registrants_table = AIH_Database::get_table('registrants');
+
+        // Look up confirmation_code BEFORE anonymizing (needed for bids/favorites queries)
+        $bidder = $wpdb->get_row($wpdb->prepare(
+            "SELECT confirmation_code FROM $bidders_table WHERE email_primary = %s",
+            $email_address
+        ));
+        $confirmation_code = $bidder ? $bidder->confirmation_code : '';
+
+        // Anonymize bidder data (don't delete for order integrity)
         $updated = $wpdb->update(
             $bidders_table,
             array(
@@ -148,18 +157,37 @@ class AIH_Export {
             array('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s'),
             array('%s')
         );
-        
+
         if ($updated) {
             $items_removed++;
             $messages[] = __('Bidder profile anonymized.', 'art-in-heaven');
         }
-        
-        // Look up confirmation_code for favorites/bids queries
-        $bidder = $wpdb->get_row($wpdb->prepare(
-            "SELECT confirmation_code FROM $bidders_table WHERE email_primary = %s",
-            $email_address
-        ));
-        $confirmation_code = $bidder ? $bidder->confirmation_code : '';
+
+        // Also anonymize registrants table
+        $reg_updated = $wpdb->update(
+            $registrants_table,
+            array(
+                'email_primary' => 'anonymized_' . wp_generate_password(8, false),
+                'name_first' => 'Anonymized',
+                'name_last' => 'User',
+                'phone_mobile' => '',
+                'phone_home' => '',
+                'phone_work' => '',
+                'mailing_street' => '',
+                'mailing_city' => '',
+                'mailing_state' => '',
+                'mailing_zip' => '',
+                'birthday' => '',
+                'individual_name' => '',
+                'api_data' => '',
+            ),
+            array('email_primary' => $email_address)
+        );
+
+        if ($reg_updated) {
+            $items_removed++;
+            $messages[] = __('Registrant profile anonymized.', 'art-in-heaven');
+        }
 
         // Delete favorites
         if ($confirmation_code) {

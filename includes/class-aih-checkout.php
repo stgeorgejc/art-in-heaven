@@ -140,7 +140,8 @@ class AIH_Checkout {
             
         } catch (Exception $e) {
             $wpdb->query('ROLLBACK');
-            return array('success' => false, 'message' => $e->getMessage());
+            error_log('AIH Checkout Error: ' . $e->getMessage());
+            return array('success' => false, 'message' => __('An error occurred while creating your order. Please try again.', 'art-in-heaven'));
         }
     }
     

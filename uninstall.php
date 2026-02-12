@@ -36,12 +36,14 @@ $years = range(2020, date('Y') + 5);
 // Tables to delete for each year
 $table_suffixes = array(
     '_ArtPieces',
+    '_ArtImages',
     '_Bids',
     '_Favorites',
     '_Bidders',
     '_Registrants',
     '_Orders',
     '_OrderItems',
+    '_PushpayTransactions',
     '_AuditLog'
 );
 
@@ -91,9 +93,33 @@ $options_to_delete = array(
     'aih_color_text',
     'aih_color_muted',
     'aih_auto_sync_enabled',
+    'aih_auto_sync_interval',
     'aih_watermark_overlay_id',
     'aih_event_end_date',
     'aih_settings',
+    'aih_disable_image_sizes',
+    // Pushpay settings
+    'aih_pushpay_client_id',
+    'aih_pushpay_client_secret',
+    'aih_pushpay_organization_key',
+    'aih_pushpay_merchant_handle',
+    'aih_pushpay_sandbox',
+    'aih_pushpay_sandbox_client_id',
+    'aih_pushpay_sandbox_client_secret',
+    'aih_pushpay_sandbox_organization_key',
+    'aih_pushpay_sandbox_merchant_key',
+    'aih_pushpay_sandbox_merchant_handle',
+    'aih_pushpay_fund',
+    'aih_pushpay_base_url',
+    'aih_pushpay_return_url',
+    'aih_pushpay_last_sync',
+    'aih_pushpay_last_sync_count',
+    // Login/page settings
+    'aih_login_page',
+    'aih_my_bids_page',
+    'aih_currency_symbol',
+    'aih_bid_increment',
+    'aih_min_bid_increment',
 );
 
 foreach ($options_to_delete as $option) {
@@ -125,10 +151,38 @@ if (is_dir($aih_upload_dir)) {
     aih_uninstall_recursive_delete($aih_upload_dir);
 }
 
-// Clear scheduled events
+// Clear all scheduled events
 wp_clear_scheduled_hook('aih_hourly_cleanup');
 wp_clear_scheduled_hook('aih_check_expired_auctions');
 wp_clear_scheduled_hook('aih_send_ending_reminders');
+wp_clear_scheduled_hook('aih_five_minute_check');
+wp_clear_scheduled_hook('aih_auto_sync_registrants');
+
+// Clear all piece-specific scheduled cron events
+$crons = _get_cron_array();
+if (!empty($crons)) {
+    foreach ($crons as $timestamp => $cron) {
+        if (isset($cron['aih_scheduled_activate_piece'])) {
+            foreach ($cron['aih_scheduled_activate_piece'] as $event) {
+                wp_unschedule_event($timestamp, 'aih_scheduled_activate_piece', $event['args']);
+            }
+        }
+        if (isset($cron['aih_scheduled_end_piece'])) {
+            foreach ($cron['aih_scheduled_end_piece'] as $event) {
+                wp_unschedule_event($timestamp, 'aih_scheduled_end_piece', $event['args']);
+            }
+        }
+    }
+}
+
+// Delete rate limit transients
+$wpdb->query(
+    "DELETE FROM {$wpdb->options}
+     WHERE option_name LIKE '_transient_aih_rate_%'
+     OR option_name LIKE '_transient_timeout_aih_rate_%'
+     OR option_name LIKE '_transient_aih_cron_%'
+     OR option_name LIKE '_transient_timeout_aih_cron_%'"
+);
 
 // Flush rewrite rules
 flush_rewrite_rules();
