@@ -126,7 +126,7 @@ class AIH_Bid {
             
             $wpdb->query('COMMIT');
             
-            // Fire action (notifications hook into this) - after commit
+            // Fire action for cache invalidation and extensions - after commit
             do_action('aih_bid_placed', $bid_id, $art_piece_id, $bidder_id, $amount);
             
             return array(

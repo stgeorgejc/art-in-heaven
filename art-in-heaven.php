@@ -104,7 +104,6 @@ class Art_In_Heaven {
         require_once AIH_PLUGIN_DIR . 'includes/class-aih-pushpay.php';
         require_once AIH_PLUGIN_DIR . 'includes/class-aih-ajax.php';
         require_once AIH_PLUGIN_DIR . 'includes/class-aih-shortcodes.php';
-        require_once AIH_PLUGIN_DIR . 'includes/class-aih-notifications.php';
         require_once AIH_PLUGIN_DIR . 'includes/class-aih-cron-scheduler.php';
 
         // Defer loading of classes only needed in specific contexts
@@ -285,7 +284,6 @@ class Art_In_Heaven {
         AIH_Shortcodes::get_instance();
         AIH_Checkout::get_instance();
         AIH_Assets::get_instance();
-        if (class_exists('AIH_Notifications')) AIH_Notifications::get_instance();
         if (class_exists('AIH_Cron_Scheduler')) AIH_Cron_Scheduler::get_instance();
         
         if (is_admin()) {
