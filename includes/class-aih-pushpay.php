@@ -748,9 +748,18 @@ class AIH_Pushpay_API {
         // Build return URL - redirect back to the site after payment
         $return_url = get_option('aih_pushpay_return_url', '');
         if (empty($return_url)) {
-            // Default to gallery page or home
-            $gallery_page = get_option('aih_gallery_page', '');
-            $return_url = $gallery_page ?: home_url('/');
+            // Default to my-bids page (so user sees their orders), then gallery, then home
+            $my_bids_page = get_option('aih_my_bids_page', '');
+            if (!empty($my_bids_page)) {
+                $return_url = get_permalink((int) $my_bids_page);
+            }
+            if (empty($return_url)) {
+                $gallery_page = get_option('aih_gallery_page', '');
+                $return_url = !empty($gallery_page) ? get_permalink((int) $gallery_page) : '';
+            }
+            if (empty($return_url)) {
+                $return_url = home_url('/');
+            }
         }
 
         $params = array(

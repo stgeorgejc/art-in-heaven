@@ -2790,6 +2790,72 @@ html:has(.aih-page.dark-mode) body {
     background: rgba(0, 0, 0, 0.7);
 }
 
+/* Order modal dark mode overrides */
+.aih-page.dark-mode .aih-modal-header h3,
+.aih-page.dark-mode .aih-order-items-list h4,
+.aih-page.dark-mode .aih-order-total-row,
+.aih-page.dark-mode .aih-modal-body {
+    color: var(--color-primary);
+}
+
+.aih-page.dark-mode .aih-modal-close {
+    color: var(--color-muted);
+}
+
+.aih-page.dark-mode .aih-modal-close:hover {
+    color: var(--color-primary);
+}
+
+.aih-page.dark-mode .aih-status-paid {
+    background: rgba(45, 90, 61, 0.2);
+}
+
+.aih-page.dark-mode .aih-status-pending {
+    background: rgba(230, 81, 0, 0.15);
+    color: #ffb74d;
+}
+
+.aih-page.dark-mode .aih-order-totals {
+    background: var(--color-surface);
+}
+
+.aih-page.dark-mode .aih-order-item-info h5 {
+    color: var(--color-primary);
+}
+
+.aih-page.dark-mode .aih-order-item-info p {
+    color: var(--color-muted);
+}
+
+.aih-page.dark-mode .aih-order-item-price {
+    color: var(--color-primary);
+}
+
+.aih-page.dark-mode .aih-txn-label {
+    color: var(--color-muted);
+}
+
+.aih-page.dark-mode .aih-txn-value {
+    color: var(--color-secondary);
+}
+
+.aih-page.dark-mode .aih-order-details p {
+    color: var(--color-secondary);
+}
+
+.aih-page.dark-mode .aih-order-card {
+    background: var(--color-surface);
+    border-color: var(--color-border);
+}
+
+.aih-page.dark-mode .aih-order-card:hover {
+    border-color: var(--color-accent);
+}
+
+.aih-page.dark-mode .aih-order-view-link span {
+    color: var(--color-accent);
+}
+
 /* Scroll to top button */
 .aih-page.dark-mode .aih-scroll-top {
     box-shadow: 0 4px 12px rgba(0,0,0,0.4);
