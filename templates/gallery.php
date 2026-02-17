@@ -458,8 +458,10 @@ jQuery(document).ready(function($) {
     });
 
     // Sort gallery cards
-    // Store original card order for reset
-    var $originalCards = $('#aih-gallery').children('.aih-card').clone();
+    // Store original card order as array of IDs for reset
+    var originalOrder = $('#aih-gallery').children('.aih-card').map(function() {
+        return $(this).data('id');
+    }).get();
 
     function sortCards() {
         var sortBy = $('#aih-sort').val();
@@ -499,7 +501,7 @@ jQuery(document).ready(function($) {
 
     // Bind filter events with debounce for search input
     var filterTimer;
-    $('#aih-search').on('input keyup', function() {
+    $('#aih-search').on('input', function() {
         clearTimeout(filterTimer);
         filterTimer = setTimeout(filterCards, 200);
     }).on('change', function() {
@@ -522,9 +524,17 @@ jQuery(document).ready(function($) {
         $('#aih-filter-artist').val('');
         $('#aih-filter-medium').val('');
         $('#aih-filter-favorites').val('');
-        // Restore original card order
+        // Restore original card order by re-sorting live DOM elements
         var $grid = $('#aih-gallery');
-        $grid.empty().append($originalCards.clone());
+        var $cards = $grid.children('.aih-card').detach();
+        originalOrder.forEach(function(id) {
+            $cards.each(function() {
+                if ($(this).data('id') === id) {
+                    $grid.append(this);
+                    return false;
+                }
+            });
+        });
         filterCards();
     });
 
@@ -629,6 +639,10 @@ jQuery(document).ready(function($) {
             if (diff <= 0) {
                 $el.find('.aih-time-value').text('Ended');
                 $el.addClass('ended');
+                // Disable bid form on this card
+                var $card = $el.closest('.aih-card');
+                $card.find('.aih-bid-input').prop('disabled', true).attr('placeholder', 'Ended');
+                $card.find('.aih-bid-btn').prop('disabled', true).text('Ended');
                 return;
             }
 

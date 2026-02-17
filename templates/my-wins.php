@@ -59,6 +59,9 @@ jQuery(document).ready(function($) {
         $.post(aihAjax.ajaxurl, {action:'aih_verify_code', nonce:aihAjax.nonce, code:code}, function(r) {
             if (r.success) location.reload();
             else { $('#aih-login-msg').addClass('error').text(r.data.message).show(); $('#aih-login-btn').prop('disabled', false).removeClass('loading'); }
+        }).fail(function() {
+            $('#aih-login-msg').addClass('error').text('Connection error. Please try again.').show();
+            $('#aih-login-btn').prop('disabled', false).removeClass('loading');
         });
     });
     $('#aih-login-code').on('keypress', function(e) { if (e.which === 13) $('#aih-login-btn').click(); })

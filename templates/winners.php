@@ -108,13 +108,13 @@ if (typeof aihAjax === 'undefined') {
                         <div class="aih-card-image">
                             <?php if ($image_url): ?>
                             <img src="<?php echo esc_url($image_url); ?>" alt="<?php echo esc_attr($bid->title); ?>" loading="lazy">
+                            <span class="aih-art-id-badge"><?php echo esc_html($bid->art_id); ?></span>
                             <?php else: ?>
                             <div class="aih-placeholder">
                                 <span class="aih-placeholder-id"><?php echo esc_html($bid->art_id); ?></span>
                                 <span class="aih-placeholder-text">No Image</span>
                             </div>
                             <?php endif; ?>
-                            <span class="aih-art-id-badge"><?php echo esc_html($bid->art_id); ?></span>
                             <div class="aih-badge aih-badge-ended">Ended</div>
                         </div>
 
@@ -127,7 +127,7 @@ if (typeof aihAjax === 'undefined') {
                             <div class="aih-winner-info aih-winner-info-full">
                                 <div class="aih-winner-info-item">
                                     <span class="aih-bid-label">Winner</span>
-                                    <span class="aih-winner-code"><?php echo esc_html($bid->bidder_id); ?></span>
+                                    <span class="aih-winner-code"><?php echo esc_html(substr($bid->bidder_id, 0, 3) . '***'); ?></span>
                                 </div>
                             </div>
                         </div>

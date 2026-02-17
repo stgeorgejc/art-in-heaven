@@ -141,53 +141,12 @@
         $('#aih-search-input').trigger('input');
     });
     
-    // Favorite toggle
-    $(document).on('click', '.aih-favorite-btn', function(e) {
+    // View details button (only for .aih-detail-btn, not .aih-bid-btn or .aih-view-btn which are handled by templates)
+    $(document).on('click', '.aih-detail-btn', function(e) {
         e.preventDefault();
-        e.stopPropagation();
-        
-        var $btn = $(this);
-        var artId = $btn.data('id');
-        
-        $.ajax({
-            url: aihAjax.ajaxurl,
-            type: 'POST',
-            data: {
-                action: 'aih_toggle_favorite',
-                nonce: aihAjax.nonce,
-                art_piece_id: artId
-            },
-            success: function(response) {
-                if (response.success) {
-                    if (response.data.is_favorite) {
-                        $btn.addClass('active');
-                        $btn.find('svg').attr('fill', 'currentColor');
-                        $btn.closest('.aih-art-card').addClass('is-favorite');
-                        showToast(aihAjax.strings.favoriteAdded, 'success');
-                    } else {
-                        $btn.removeClass('active');
-                        $btn.find('svg').attr('fill', 'none');
-                        $btn.closest('.aih-art-card').removeClass('is-favorite');
-                        showToast(aihAjax.strings.favoriteRemoved, 'success');
-                    }
-                } else if (response.data && response.data.login_required) {
-                    showToast(aihAjax.strings.loginRequired, 'error');
-                }
-            },
-            error: function() {
-                showToast('Network error. Please try again.', 'error');
-            }
-        });
-    });
-    
-    // View details button
-    $(document).on('click', '.aih-view-btn, .aih-bid-btn', function(e) {
-        e.preventDefault();
-        
+
         var artId = $(this).data('id');
-        var isBidClick = $(this).hasClass('aih-bid-btn');
-        
-        loadArtDetails(artId, isBidClick);
+        loadArtDetails(artId, false);
     });
     
     // Load art details into modal
@@ -319,9 +278,11 @@
                     // Clear input
                     $('#aih-bid-amount, #aih-single-bid-amount').val('');
                     
-                    // Reload details to update user bids
+                    // Reload details to update user bids (only if modal is still open)
                     setTimeout(function() {
-                        loadArtDetails(artId, false);
+                        if ($('#aih-detail-modal').is(':visible')) {
+                            loadArtDetails(artId, false);
+                        }
                     }, 1000);
                     
                     // Update card if visible
@@ -674,11 +635,15 @@
         }
 
         function applyInitialTheme() {
-            var saved = localStorage.getItem(STORAGE_KEY);
-            if (saved === 'dark') {
-                setTheme(true);
-            } else if (saved === 'light') {
-                setTheme(false);
+            try {
+                var saved = localStorage.getItem(STORAGE_KEY);
+                if (saved === 'dark') {
+                    setTheme(true);
+                } else if (saved === 'light') {
+                    setTheme(false);
+                }
+            } catch (e) {
+                // localStorage unavailable (private browsing, etc.)
             }
         }
 
@@ -689,7 +654,11 @@
         $toggle.on('click', function() {
             var newDark = !isDark();
             setTheme(newDark);
-            localStorage.setItem(STORAGE_KEY, newDark ? 'dark' : 'light');
+            try {
+                localStorage.setItem(STORAGE_KEY, newDark ? 'dark' : 'light');
+            } catch (e) {
+                // localStorage unavailable
+            }
         });
 
         // Add transition class after initial paint to prevent FOUC

@@ -262,8 +262,8 @@ $cart_count = count($checkout->get_won_items($bidder_id));
                         <?php endif; ?>
 
                         <div class="aih-bid-info">
-                            <span class="aih-bid-label">Starting Bid</span>
-                            <span class="aih-bid-amount">$<?php echo number_format($art_piece->starting_bid); ?></span>
+                            <span class="aih-bid-label"><?php echo $has_bids ? 'Current Bid' : 'Starting Bid'; ?></span>
+                            <span class="aih-bid-amount">$<?php echo number_format($display_bid); ?></span>
                         </div>
 
                         <div class="aih-bid-form-single">
@@ -330,11 +330,14 @@ jQuery(document).ready(function($) {
     // Favorite
     $('.aih-fav-btn').on('click', function() {
         var $btn = $(this);
+        if ($btn.hasClass('loading')) return;
+        $btn.addClass('loading');
         $.post(aihAjax.ajaxurl, {action:'aih_toggle_favorite', nonce:aihAjax.nonce, art_piece_id:$btn.data('id')}, function(r) {
             if (r.success) {
                 $btn.toggleClass('active');
-                // Icon stays the same, CSS handles the visual difference
             }
+        }).always(function() {
+            $btn.removeClass('loading');
         });
     });
 
@@ -503,7 +506,7 @@ jQuery(document).ready(function($) {
         if (!amount) { $msg.addClass('error').text('Enter a bid amount').show(); return; }
 
         $btn.prop('disabled', true).addClass('loading');
-        $msg.hide();
+        $msg.hide().removeClass('error success');
 
         $.post(aihAjax.ajaxurl, {action:'aih_place_bid', nonce:aihAjax.nonce, art_piece_id:$btn.data('id'), bid_amount:amount}, function(r) {
             if (r.success) {
@@ -511,6 +514,12 @@ jQuery(document).ready(function($) {
                 $('.aih-single-image').find('.aih-badge').remove();
                 $('.aih-single-image').prepend('<span class="aih-badge aih-badge-winning aih-badge-single">Winning</span>');
                 $('#bid-amount').val('');
+                // Update bid display and minimum
+                var increment = <?php echo intval($bid_increment); ?>;
+                var newMin = amount + increment;
+                $('#bid-amount').data('min', newMin).attr('data-min', newMin);
+                $('.aih-bid-label').text('Current Bid');
+                $('.aih-bid-amount').text('$' + amount.toLocaleString());
             } else {
                 $msg.removeClass('success').addClass('error').text(r.data.message || 'Failed').show();
             }
@@ -542,6 +551,9 @@ jQuery(document).ready(function($) {
             if (diff <= 0) {
                 $el.find('.aih-time-value').text('Ended');
                 $el.addClass('ended');
+                // Disable bid form
+                $('#bid-amount').prop('disabled', true).attr('placeholder', 'Ended');
+                $('#place-bid').prop('disabled', true).text('Ended');
                 return;
             }
 

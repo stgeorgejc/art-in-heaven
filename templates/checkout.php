@@ -58,6 +58,9 @@ jQuery(document).ready(function($) {
         $.post(aihAjax.ajaxurl, {action:'aih_verify_code', nonce:aihAjax.nonce, code:code}, function(r) {
             if (r.success) location.reload();
             else { $('#aih-login-msg').addClass('error').text(r.data.message).show(); $('#aih-login-btn').prop('disabled', false).removeClass('loading'); }
+        }).fail(function() {
+            $('#aih-login-msg').addClass('error').text('Connection error. Please try again.').show();
+            $('#aih-login-btn').prop('disabled', false).removeClass('loading');
         });
     });
     $('#aih-login-code').on('keypress', function(e) { if (e.which === 13) $('#aih-login-btn').click(); })
@@ -177,6 +180,7 @@ $total = $subtotal + $tax;
                 <button type="button" id="aih-create-order" class="aih-btn" style="margin-top: 24px;">
                     Proceed to Payment
                 </button>
+                <div id="aih-checkout-msg" class="aih-message" style="display:none; margin-top: 12px;"></div>
                 <p class="aih-checkout-note">You'll be redirected to our secure payment portal.</p>
             </div>
         </div>
@@ -228,12 +232,11 @@ $total = $subtotal + $tax;
 </div>
 
 <script>
-function escapeHtml(text) {
-    if (!text) return '';
-    return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-
 jQuery(document).ready(function($) {
+    function escapeHtml(text) {
+        if (!text) return '';
+        return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
     $('#aih-logout').on('click', function() {
         $.post(aihAjax.ajaxurl, {action:'aih_logout', nonce:aihAjax.nonce}, function() { location.reload(); });
     });
@@ -244,11 +247,11 @@ jQuery(document).ready(function($) {
             if (r.success && r.data.pushpay_url) {
                 window.location.href = r.data.pushpay_url;
             } else {
-                alert(r.data.message || 'Error creating order. Payment URL could not be generated.');
+                $('#aih-checkout-msg').addClass('error').text(r.data.message || 'Error creating order. Payment URL could not be generated.').show();
                 $btn.prop('disabled', false).removeClass('loading');
             }
         }).fail(function() {
-            alert('Connection error. Please try again.');
+            $('#aih-checkout-msg').addClass('error').text('Connection error. Please try again.').show();
             $btn.prop('disabled', false).removeClass('loading');
         });
     });

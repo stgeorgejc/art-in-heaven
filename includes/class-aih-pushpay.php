@@ -170,7 +170,7 @@ class AIH_Pushpay_API {
             $args['body'] = json_encode($data);
         }
         
-        error_log('Pushpay API Request: ' . $method . ' ' . $url);
+        if (defined('WP_DEBUG') && WP_DEBUG) error_log('Pushpay API Request: ' . $method . ' ' . $url);
         $response = wp_remote_request($url, $args);
 
         if (is_wp_error($response)) {
@@ -181,7 +181,7 @@ class AIH_Pushpay_API {
         $code = wp_remote_retrieve_response_code($response);
         $raw_body = wp_remote_retrieve_body($response);
         $body = json_decode($raw_body, true);
-        error_log('Pushpay API Response (' . $code . '): ' . substr($raw_body, 0, 500));
+        if (defined('WP_DEBUG') && WP_DEBUG) error_log('Pushpay API Response (' . $code . '): ' . substr($raw_body, 0, 500));
         
         if ($code === 401) {
             // Token expired, try refreshing once
@@ -387,7 +387,7 @@ class AIH_Pushpay_API {
             $fund_names_found = array_map(function($p) {
                 return isset($p['fund']['name']) ? $p['fund']['name'] : '(no fund)';
             }, $payments);
-            error_log('Pushpay sync: ' . $before_count . ' payments before fund filter. Fund names in response: ' . implode(', ', array_unique($fund_names_found)) . ' | Filtering for: "' . $fund_name . '"');
+            if (defined('WP_DEBUG') && WP_DEBUG) error_log('Pushpay sync: ' . $before_count . ' payments before fund filter. Fund names in response: ' . implode(', ', array_unique($fund_names_found)) . ' | Filtering for: "' . $fund_name . '"');
 
             // Filter by fund/category (API doesn't support fund filtering)
             if (!empty($fund_name)) {
@@ -395,7 +395,7 @@ class AIH_Pushpay_API {
                     $payment_fund = isset($payment['fund']['name']) ? $payment['fund']['name'] : '';
                     return strcasecmp($payment_fund, $fund_name) === 0;
                 });
-                error_log('Pushpay sync: ' . count($payments) . ' payments after fund filter.');
+                if (defined('WP_DEBUG') && WP_DEBUG) error_log('Pushpay sync: ' . count($payments) . ' payments after fund filter.');
             }
 
             foreach ($payments as $payment) {
@@ -743,7 +743,7 @@ class AIH_Pushpay_API {
         }
 
         $auth = AIH_Auth::get_instance();
-        $bidder = $auth->get_bidder_by_email($order->bidder_id);
+        $bidder = $auth->get_bidder_by_confirmation_code($order->bidder_id);
 
         // Build return URL - redirect back to the site after payment
         $return_url = get_option('aih_pushpay_return_url', '');

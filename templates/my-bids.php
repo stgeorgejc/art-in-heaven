@@ -58,6 +58,9 @@ jQuery(document).ready(function($) {
         $.post(aihAjax.ajaxurl, {action:'aih_verify_code', nonce:aihAjax.nonce, code:code}, function(r) {
             if (r.success) location.reload();
             else { $('#aih-login-msg').addClass('error').text(r.data.message).show(); $('#aih-login-btn').prop('disabled', false).removeClass('loading'); }
+        }).fail(function() {
+            $('#aih-login-msg').addClass('error').text('Connection error. Please try again.').show();
+            $('#aih-login-btn').prop('disabled', false).removeClass('loading');
         });
     });
     $('#aih-login-code').on('keypress', function(e) { if (e.which === 13) $('#aih-login-btn').click(); })
@@ -229,12 +232,11 @@ $my_orders = $checkout->get_bidder_orders($bidder_id);
 </div>
 
 <script>
-function escapeHtml(text) {
-    if (!text) return '';
-    return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-
 jQuery(document).ready(function($) {
+    function escapeHtml(text) {
+        if (!text) return '';
+        return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
     $('#aih-logout').on('click', function() {
         $.post(aihAjax.ajaxurl, {action:'aih_logout', nonce:aihAjax.nonce}, function() { location.reload(); });
     });
@@ -319,6 +321,13 @@ jQuery(document).ready(function($) {
     $('.aih-modal-close, .aih-modal-backdrop').on('click', function() {
         $('#aih-order-modal').hide();
         if (lastFocusedElement) lastFocusedElement.focus();
+    });
+
+    $(document).on('keyup', function(e) {
+        if (e.key === 'Escape' && $('#aih-order-modal').is(':visible')) {
+            $('#aih-order-modal').hide();
+            if (lastFocusedElement) lastFocusedElement.focus();
+        }
     });
 
     $('.aih-bid-btn').on('click', function() {

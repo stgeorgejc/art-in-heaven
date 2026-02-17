@@ -178,7 +178,10 @@ class AIH_Ajax {
         if ($bid_amount < 1) wp_send_json_error(array('message' => __('Bid must be at least $1.', 'art-in-heaven')));
         
         $result = (new AIH_Bid())->place_bid($art_piece_id, $auth->get_current_bidder_id(), $bid_amount);
-        if ($result['success']) wp_send_json_success($result);
+        if ($result['success']) {
+            $auth->mark_registrant_has_bid($auth->get_current_bidder_id());
+            wp_send_json_success($result);
+        }
         wp_send_json_error($result);
     }
     
