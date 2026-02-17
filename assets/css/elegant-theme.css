@@ -1182,8 +1182,8 @@ body.filter-open {
 
 .aih-bid-btn {
     flex-shrink: 0;
-    width: 32px;
-    padding: 6px 2px;
+    width: 42px;
+    padding: 6px 4px;
     font-family: var(--font-body);
     font-size: 10px;
     font-weight: 600;
