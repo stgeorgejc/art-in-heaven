@@ -809,8 +809,9 @@ class AIH_Ajax {
                         o.payment_status, o.pickup_status,
                         CASE
                             WHEN a.status = 'draft' THEN 'draft'
-                            WHEN a.status = 'ended' THEN 'ended'
                             WHEN a.auction_end IS NOT NULL AND a.auction_end <= %s THEN 'ended'
+                            WHEN a.status = 'ended' AND (a.auction_end IS NULL OR a.auction_end > %s) AND (a.auction_start IS NULL OR a.auction_start <= %s) THEN 'active'
+                            WHEN a.status = 'ended' THEN 'ended'
                             WHEN a.auction_start IS NOT NULL AND a.auction_start > %s THEN 'upcoming'
                             ELSE 'active'
                         END as computed_status
@@ -820,7 +821,7 @@ class AIH_Ajax {
                  LEFT JOIN $orders_table o ON oi.order_id = o.id
                  WHERE a.id = %d
                  GROUP BY a.id",
-                $now, $now, $id
+                $now, $now, $now, $now, $id
             ));
 
             if ($piece) {

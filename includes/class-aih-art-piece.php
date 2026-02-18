@@ -166,11 +166,13 @@ class AIH_Art_Piece {
         }
         
         // Build computed auction_status field (handles NULL dates)
+        // Dates take priority over stored status so extending times re-activates ended pieces
         $auction_status_case = "CASE
             WHEN a.status = 'draft' AND a.auction_start IS NOT NULL AND a.auction_start <= %s AND (a.auction_end IS NULL OR a.auction_end > %s) THEN 'active'
             WHEN a.status = 'draft' THEN 'draft'
-            WHEN a.status = 'ended' THEN 'ended'
             WHEN a.auction_end IS NOT NULL AND a.auction_end <= %s THEN 'ended'
+            WHEN a.status = 'ended' AND (a.auction_end IS NULL OR a.auction_end > %s) AND (a.auction_start IS NULL OR a.auction_start <= %s) THEN 'active'
+            WHEN a.status = 'ended' THEN 'ended'
             WHEN a.auction_start IS NOT NULL AND a.auction_start > %s THEN 'upcoming'
             ELSE 'active'
         END";
@@ -196,7 +198,9 @@ class AIH_Art_Piece {
                       $limit_clause";
             // Add values for computed_status CASE
             array_unshift($values, $args['bidder_id']);
-            array_unshift($values, $now); // for auction_start > check (upcoming)
+            array_unshift($values, $now); // for upcoming: auction_start > check
+            array_unshift($values, $now); // for ended reactivate: auction_start <= check
+            array_unshift($values, $now); // for ended reactivate: auction_end > check
             array_unshift($values, $now); // for auction_end <= check (ended)
             array_unshift($values, $now); // for draft auto-active auction_end check
             array_unshift($values, $now); // for draft auto-active auction_start check
@@ -219,7 +223,9 @@ class AIH_Art_Piece {
                       ORDER BY $order_clause
                       $limit_clause";
             // Add values for computed_status CASE
-            array_unshift($values, $now); // for auction_start > check (upcoming)
+            array_unshift($values, $now); // for upcoming: auction_start > check
+            array_unshift($values, $now); // for ended reactivate: auction_start <= check
+            array_unshift($values, $now); // for ended reactivate: auction_end > check
             array_unshift($values, $now); // for auction_end <= check (ended)
             array_unshift($values, $now); // for draft auto-active auction_end check
             array_unshift($values, $now); // for draft auto-active auction_start check
@@ -282,19 +288,20 @@ class AIH_Art_Piece {
         global $wpdb;
         $now = current_time('mysql');
         return $wpdb->get_row($wpdb->prepare(
-            "SELECT *, 
+            "SELECT *,
              TIMESTAMPDIFF(SECOND, %s, auction_end) as seconds_remaining,
              TIMESTAMPDIFF(SECOND, %s, auction_start) as seconds_until_start,
              CASE
                 WHEN status = 'draft' AND auction_start IS NOT NULL AND auction_start <= %s AND (auction_end IS NULL OR auction_end > %s) THEN 'active'
                 WHEN status = 'draft' THEN 'draft'
+                WHEN auction_end IS NOT NULL AND auction_end <= %s THEN 'ended'
+                WHEN status = 'ended' AND (auction_end IS NULL OR auction_end > %s) AND (auction_start IS NULL OR auction_start <= %s) THEN 'active'
                 WHEN status = 'ended' THEN 'ended'
-                WHEN auction_end <= %s THEN 'ended'
-                WHEN auction_start > %s THEN 'upcoming'
+                WHEN auction_start IS NOT NULL AND auction_start > %s THEN 'upcoming'
                 ELSE 'active'
              END as computed_status
              FROM {$this->table} WHERE id = %d",
-            $now, $now, $now, $now, $now, $now, $id
+            $now, $now, $now, $now, $now, $now, $now, $now, $id
         ));
     }
     
@@ -304,19 +311,20 @@ class AIH_Art_Piece {
         // Use UPPER() to make comparison case-insensitive
         $art_id_upper = strtoupper(trim($art_id));
         return $wpdb->get_row($wpdb->prepare(
-            "SELECT *, 
+            "SELECT *,
              TIMESTAMPDIFF(SECOND, %s, auction_end) as seconds_remaining,
              TIMESTAMPDIFF(SECOND, %s, auction_start) as seconds_until_start,
              CASE
                 WHEN status = 'draft' AND auction_start IS NOT NULL AND auction_start <= %s AND (auction_end IS NULL OR auction_end > %s) THEN 'active'
                 WHEN status = 'draft' THEN 'draft'
+                WHEN auction_end IS NOT NULL AND auction_end <= %s THEN 'ended'
+                WHEN status = 'ended' AND (auction_end IS NULL OR auction_end > %s) AND (auction_start IS NULL OR auction_start <= %s) THEN 'active'
                 WHEN status = 'ended' THEN 'ended'
-                WHEN auction_end <= %s THEN 'ended'
-                WHEN auction_start > %s THEN 'upcoming'
+                WHEN auction_start IS NOT NULL AND auction_start > %s THEN 'upcoming'
                 ELSE 'active'
              END as computed_status
              FROM {$this->table} WHERE UPPER(art_id) = %s",
-            $now, $now, $now, $now, $now, $now, $art_id_upper
+            $now, $now, $now, $now, $now, $now, $now, $now, $art_id_upper
         ));
     }
     
@@ -660,9 +668,10 @@ class AIH_Art_Piece {
                     o.pickup_date,
                     CASE
                         WHEN a.status = 'draft' THEN 'draft'
+                        WHEN a.auction_end IS NOT NULL AND a.auction_end <= %s THEN 'ended'
+                        WHEN a.status = 'ended' AND (a.auction_end IS NULL OR a.auction_end > %s) AND (a.auction_start IS NULL OR a.auction_start <= %s) THEN 'active'
                         WHEN a.status = 'ended' THEN 'ended'
-                        WHEN a.auction_end <= %s THEN 'ended'
-                        WHEN a.auction_start > %s THEN 'upcoming'
+                        WHEN a.auction_start IS NOT NULL AND a.auction_start > %s THEN 'upcoming'
                         ELSE 'active'
                     END as computed_status
              FROM {$this->table} a
@@ -674,7 +683,7 @@ class AIH_Art_Piece {
              GROUP BY a.id
              $having
              ORDER BY a.auction_end ASC",
-            $now, $now, $now, $now
+            $now, $now, $now, $now, $now, $now
         ));
     }
     
@@ -780,6 +789,20 @@ class AIH_Art_Piece {
         ));
     }
     
+    /**
+     * Auto-reactivate ended auctions whose end time was extended
+     * Changes status from 'ended' to 'active' when auction_end is now in the future
+     */
+    public function auto_reactivate_auctions() {
+        global $wpdb;
+        $now = current_time('mysql');
+        return $wpdb->query($wpdb->prepare(
+            "UPDATE {$this->table} SET status = 'active' WHERE status = 'ended' AND auction_end > %s AND (auction_start IS NULL OR auction_start <= %s)",
+            $now,
+            $now
+        ));
+    }
+
     /**
      * Auto-draft future auctions
      * Changes status from 'active' to 'draft' when auction_start is in the future

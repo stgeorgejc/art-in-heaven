@@ -45,14 +45,15 @@ class AIH_Bid {
                             WHEN a.status = 'draft' AND a.auction_start IS NOT NULL AND a.auction_start <= %s AND (a.auction_end IS NULL OR a.auction_end > %s) THEN 'active'
                             WHEN a.status = 'draft' AND a.auction_end IS NOT NULL AND a.auction_end <= %s THEN 'ended'
                             WHEN a.status = 'draft' THEN 'draft'
+                            WHEN a.auction_end IS NOT NULL AND a.auction_end <= %s THEN 'ended'
+                            WHEN a.status = 'ended' AND (a.auction_end IS NULL OR a.auction_end > %s) AND (a.auction_start IS NULL OR a.auction_start <= %s) THEN 'active'
                             WHEN a.status = 'ended' THEN 'ended'
-                            WHEN a.auction_end <= %s THEN 'ended'
-                            WHEN a.auction_start > %s THEN 'upcoming'
+                            WHEN a.auction_start IS NOT NULL AND a.auction_start > %s THEN 'upcoming'
                             ELSE 'active'
                         END as computed_status,
                         (SELECT MAX(bid_amount) FROM {$this->table} WHERE art_piece_id = a.id AND bid_status = 'valid') as current_highest
                  FROM $art_table a WHERE a.id = %d FOR UPDATE",
-                $now, $now, $now, $now, $now, $art_piece_id
+                $now, $now, $now, $now, $now, $now, $now, $art_piece_id
             ));
             
             if (!$art_piece) {
@@ -248,8 +249,9 @@ class AIH_Bid {
                     a.watermarked_url, a.watermarked_url as image_url, a.image_url as original_image_url,
                     a.starting_bid,
                     CASE
-                        WHEN a.status = 'ended' THEN 'ended'
                         WHEN a.auction_end IS NOT NULL AND a.auction_end <= %s THEN 'ended'
+                        WHEN a.status = 'ended' AND (a.auction_end IS NULL OR a.auction_end > %s) AND (a.auction_start IS NULL OR a.auction_start <= %s) THEN 'active'
+                        WHEN a.status = 'ended' THEN 'ended'
                         WHEN a.auction_start IS NOT NULL AND a.auction_start > %s THEN 'upcoming'
                         ELSE 'active'
                     END as computed_status
@@ -266,7 +268,7 @@ class AIH_Bid {
              WHERE b.bidder_id = %s AND b.bid_status = 'valid'
              GROUP BY b.art_piece_id
              ORDER BY b.bid_time DESC",
-            $now, $now, $bidder_id, $bidder_id, $bidder_id
+            $now, $now, $now, $now, $bidder_id, $bidder_id, $bidder_id
         ));
     }
     
@@ -422,8 +424,9 @@ class AIH_Bid {
                     (SELECT o2.pickup_status FROM $order_items_table oi2 JOIN $orders_table o2 ON oi2.order_id = o2.id WHERE oi2.art_piece_id = a.id ORDER BY o2.id DESC LIMIT 1) as pickup_status,
                     (SELECT o2.pickup_date FROM $order_items_table oi2 JOIN $orders_table o2 ON oi2.order_id = o2.id WHERE oi2.art_piece_id = a.id ORDER BY o2.id DESC LIMIT 1) as pickup_date,
                     CASE
+                        WHEN a.auction_end IS NOT NULL AND a.auction_end <= %s THEN 'ended'
+                        WHEN a.status = 'ended' AND (a.auction_end IS NULL OR a.auction_end > %s) AND (a.auction_start IS NULL OR a.auction_start <= %s) THEN 'active'
                         WHEN a.status = 'ended' THEN 'ended'
-                        WHEN a.auction_end <= %s THEN 'ended'
                         ELSE 'active'
                     END as auction_computed_status
              FROM {$this->table} b
@@ -432,7 +435,7 @@ class AIH_Bid {
              LEFT JOIN $registrants_table rg ON b.bidder_id = rg.confirmation_code
              WHERE b.is_winning = 1
              ORDER BY a.auction_end DESC",
-            $now
+            $now, $now, $now
         ));
     }
     
