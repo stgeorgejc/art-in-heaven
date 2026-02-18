@@ -565,6 +565,7 @@ class AIH_Art_Piece {
 
         $wpdb->delete(AIH_Database::get_table('bids'), array('art_piece_id' => $id), array('%d'));
         $wpdb->delete(AIH_Database::get_table('favorites'), array('art_piece_id' => $id), array('%d'));
+        $wpdb->delete(AIH_Database::get_table('art_images'), array('art_piece_id' => $id), array('%d'));
 
         // Clean up order items and orphaned orders
         $order_items_table = AIH_Database::get_table('order_items');
