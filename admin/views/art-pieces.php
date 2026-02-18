@@ -116,6 +116,9 @@ $art_pieces = $art_model->get_all_with_stats($filter_args);
                 <button type="button" class="button" id="aih-bulk-hide-end-btn" disabled>
                     <?php _e('Hide Timer', 'art-in-heaven'); ?>
                 </button>
+                <button type="button" class="button" id="aih-bulk-delete-btn" disabled style="color: #d63638; border-color: #d63638;">
+                    <?php _e('Delete', 'art-in-heaven'); ?>
+                </button>
             </div>
             <span class="aih-toolbar-counts"><span id="aih-selected-num">0</span> <?php _e('sel', 'art-in-heaven'); ?> / <span id="aih-visible-count"><?php echo count($art_pieces); ?></span> <?php _e('items', 'art-in-heaven'); ?></span>
         </div>
@@ -784,7 +787,7 @@ jQuery(document).ready(function($) {
     function updateSelectedCount() {
         var count = $('.aih-art-checkbox:checked').length;
         $('#aih-selected-num').text(count);
-        $('#aih-bulk-time-btn, #aih-bulk-start-btn, #aih-bulk-show-end-btn, #aih-bulk-hide-end-btn').prop('disabled', count === 0);
+        $('#aih-bulk-time-btn, #aih-bulk-start-btn, #aih-bulk-show-end-btn, #aih-bulk-hide-end-btn, #aih-bulk-delete-btn').prop('disabled', count === 0);
     }
     
     // ========== MODALS ==========
@@ -903,8 +906,28 @@ jQuery(document).ready(function($) {
         });
     });
     
+    // ========== BULK DELETE ==========
+
+    $('#aih-bulk-delete-btn').on('click', function() {
+        var ids = $('.aih-art-checkbox:checked').map(function() { return $(this).val(); }).get();
+        if (!ids.length) return;
+        if (!confirm('Delete ' + ids.length + ' selected art pieces? This cannot be undone.')) return;
+        var $btn = $(this).prop('disabled', true).text('<?php echo esc_js(__('Deleting...', 'art-in-heaven')); ?>');
+        var deleted = 0, failed = 0, total = ids.length;
+        ids.forEach(function(id) {
+            $.post(aihAdmin.ajaxurl, { action: 'aih_admin_delete_art', nonce: aihAdmin.nonce, id: id }, function(r) {
+                if (r.success) deleted++; else failed++;
+            }).fail(function() { failed++; }).always(function() {
+                if (deleted + failed === total) {
+                    alert(deleted + ' deleted' + (failed ? ', ' + failed + ' failed' : ''));
+                    location.reload();
+                }
+            });
+        });
+    });
+
     // ========== DELETE ==========
-    
+
     $('.aih-delete-art').on('click', function() {
         if (!confirm(aihAdmin.strings.confirmDelete)) return;
         var $row = $(this).closest('tr'), id = $(this).data('id');
