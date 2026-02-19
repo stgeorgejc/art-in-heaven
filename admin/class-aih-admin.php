@@ -216,6 +216,15 @@ class AIH_Admin {
                 'art-in-heaven-settings',
                 array($this, 'render_settings')
             );
+
+            add_submenu_page(
+                $default_slug,
+                __('Log Viewer', 'art-in-heaven'),
+                __('Log Viewer', 'art-in-heaven'),
+                AIH_Roles::CAP_MANAGE_SETTINGS,
+                'art-in-heaven-logs',
+                array($this, 'render_logs')
+            );
         }
     }
     
@@ -593,5 +602,12 @@ class AIH_Admin {
             wp_die(__('You do not have permission to access this page.', 'art-in-heaven'));
         }
         include AIH_PLUGIN_DIR . 'admin/views/settings.php';
+    }
+
+    public function render_logs() {
+        if (!AIH_Roles::can_manage_settings()) {
+            wp_die(__('You do not have permission to access this page.', 'art-in-heaven'));
+        }
+        include AIH_PLUGIN_DIR . 'admin/views/logs.php';
     }
 }

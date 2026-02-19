@@ -105,6 +105,10 @@ class AIH_Ajax {
         
         // Image upload flag (to disable intermediate sizes)
         add_action('wp_ajax_aih_set_upload_flag', array($this, 'set_upload_flag'));
+
+        // Log Viewer
+        add_action('wp_ajax_aih_admin_get_logs',   array($this, 'admin_get_logs'));
+        add_action('wp_ajax_aih_admin_clear_logs', array($this, 'admin_clear_logs'));
     }
     
     // ========== AUTH ==========
@@ -2075,5 +2079,104 @@ class AIH_Ajax {
         }
         
         wp_send_json_success(array('message' => $message, 'success' => $success_count, 'errors' => $error_count, 'skipped' => $skipped_count));
+    }
+
+    // ========== LOG VIEWER ==========
+
+    public function admin_get_logs() {
+        check_ajax_referer('aih_admin_nonce', 'nonce');
+
+        if (!AIH_Roles::can_manage_settings()) {
+            wp_send_json_error(array('message' => __('Permission denied.', 'art-in-heaven')));
+        }
+
+        $log_file = WP_CONTENT_DIR . '/debug.log';
+
+        if (!file_exists($log_file)) {
+            wp_send_json_success(array(
+                'entries'   => array(),
+                'total'     => 0,
+                'file_size' => '0 B',
+            ));
+        }
+
+        $lines  = isset($_POST['lines']) ? absint($_POST['lines']) : 200;
+        $lines  = min($lines, 1000);
+        $filter = isset($_POST['filter']) ? sanitize_text_field($_POST['filter']) : 'aih';
+
+        $file_size = filesize($log_file);
+        $size_label = size_format($file_size);
+
+        // Read last N lines efficiently
+        $all_lines = array();
+        $fp = fopen($log_file, 'r');
+        if ($fp) {
+            // For files under 2MB, just read the whole thing
+            if ($file_size < 2 * 1024 * 1024) {
+                $content = fread($fp, $file_size);
+                $all_lines = explode("\n", $content);
+            } else {
+                // For larger files, read from the end
+                $chunk_size = 8192;
+                $buffer = '';
+                fseek($fp, 0, SEEK_END);
+                $pos = ftell($fp);
+
+                while ($pos > 0 && count($all_lines) < $lines + 100) {
+                    $read_size = min($chunk_size, $pos);
+                    $pos -= $read_size;
+                    fseek($fp, $pos);
+                    $buffer = fread($fp, $read_size) . $buffer;
+                    $all_lines = explode("\n", $buffer);
+                }
+            }
+            fclose($fp);
+        }
+
+        // Remove empty trailing line
+        if (!empty($all_lines) && $all_lines[count($all_lines) - 1] === '') {
+            array_pop($all_lines);
+        }
+
+        $total = count($all_lines);
+
+        // Filter if requested
+        if ($filter === 'aih') {
+            $all_lines = array_values(array_filter($all_lines, function($line) {
+                $lower = strtolower($line);
+                return strpos($lower, 'aih') !== false || strpos($lower, 'art in heaven') !== false;
+            }));
+        }
+
+        // Take last N lines and reverse (newest first)
+        $all_lines = array_slice($all_lines, -$lines);
+        $all_lines = array_reverse($all_lines);
+
+        wp_send_json_success(array(
+            'entries'   => $all_lines,
+            'total'     => $total,
+            'file_size' => $size_label,
+        ));
+    }
+
+    public function admin_clear_logs() {
+        check_ajax_referer('aih_admin_nonce', 'nonce');
+
+        if (!AIH_Roles::can_manage_settings()) {
+            wp_send_json_error(array('message' => __('Permission denied.', 'art-in-heaven')));
+        }
+
+        $log_file = WP_CONTENT_DIR . '/debug.log';
+
+        if (file_exists($log_file)) {
+            $fp = fopen($log_file, 'w');
+            if ($fp) {
+                fclose($fp);
+            } else {
+                wp_send_json_error(array('message' => __('Could not clear log file.', 'art-in-heaven')));
+            }
+        }
+
+        wp_send_json_success(array('message' => __('Log file cleared.', 'art-in-heaven')));
     }
 }
