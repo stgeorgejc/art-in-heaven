@@ -134,7 +134,7 @@ $my_orders = $checkout->get_bidder_orders($bidder_id);
                 $highest_bid = $bid_model->get_highest_bid_amount($bid->art_piece_id);
                 $min_bid = $highest_bid + $bid_increment;
 
-                $status_class = $is_ended ? 'ended' : ($is_winning ? 'winning' : 'outbid');
+                $status_class = $is_ended ? ($is_winning ? 'won' : 'ended') : ($is_winning ? 'winning' : 'outbid');
                 $status_text = $is_ended ? ($is_winning ? 'Won' : 'Ended') : ($is_winning ? 'Winning' : 'Outbid');
             ?>
             <article class="aih-card <?php echo $status_class; ?>" data-id="<?php echo intval($bid->art_piece_id); ?>">
