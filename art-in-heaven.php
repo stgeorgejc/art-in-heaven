@@ -213,7 +213,14 @@ class Art_In_Heaven {
      */
     public function activate() {
         if (!current_user_can('activate_plugins')) return;
-        
+
+        // Suppress PHP warnings/deprecations during activation to prevent
+        // WordPress from reporting "unexpected output" (especially with Xdebug
+        // installed, which generates verbose HTML for each PHP notice/deprecation)
+        $prev_error_reporting = error_reporting(0);
+        $prev_display_errors  = @ini_get('display_errors');
+        @ini_set('display_errors', '0');
+
         AIH_Database::activate();
         AIH_Roles::install();
         
@@ -250,10 +257,14 @@ class Art_In_Heaven {
         $this->create_upload_directories();
         $this->set_default_options();
         flush_rewrite_rules();
-        
+
         if (class_exists('AIH_Cache')) AIH_Cache::flush_all();
+
+        // Restore previous error reporting settings
+        error_reporting($prev_error_reporting);
+        @ini_set('display_errors', $prev_display_errors);
     }
-    
+
     /**
      * Plugin deactivation
      */

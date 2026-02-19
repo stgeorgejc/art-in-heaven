@@ -112,12 +112,12 @@ if (!defined('ABSPATH')) {
 
                         <div class="aih-form-row">
                             <label><?php _e('Reference/Check #', 'art-in-heaven'); ?></label>
-                            <input type="text" name="reference" value="<?php echo esc_attr($single_order->payment_reference); ?>">
+                            <input type="text" name="reference" value="<?php echo esc_attr($single_order->payment_reference ?? ''); ?>">
                         </div>
 
                         <div class="aih-form-row">
                             <label><?php _e('Notes', 'art-in-heaven'); ?></label>
-                            <textarea name="notes" rows="3"><?php echo esc_textarea($single_order->notes); ?></textarea>
+                            <textarea name="notes" rows="3"><?php echo esc_textarea($single_order->notes ?? ''); ?></textarea>
                         </div>
 
                         <?php if ($single_order->payment_date): ?>

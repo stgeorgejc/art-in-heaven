@@ -1187,7 +1187,7 @@ class AIH_Ajax {
         }
 
         // Parse header row
-        $headers = str_getcsv($lines[0]);
+        $headers = str_getcsv($lines[0], ',', '"', '');
         $headers = array_map(function($h) { return strtolower(trim($h)); }, $headers);
         $col_map = array_flip($headers);
 
@@ -1217,7 +1217,7 @@ class AIH_Ajax {
         foreach ($data_lines as $i => $line) {
             $row_num = $i + 2; // 1-indexed, accounting for header
             $summary['total']++;
-            $fields = str_getcsv($line);
+            $fields = str_getcsv($line, ',', '"', '');
 
             // Helper to get column value
             $get = function($col) use ($fields, $col_map) {
