@@ -315,10 +315,10 @@ $is_sandbox = get_option('aih_pushpay_sandbox', 0);
                     </td>
                 </tr>
                 <tr>
-                    <th scope="row"><label for="aih_pushpay_return_url"><?php _e('Return URL', 'art-in-heaven'); ?></label></th>
+                    <th scope="row"><label for="aih_pushpay_redirect_key"><?php _e('Redirect Key', 'art-in-heaven'); ?></label></th>
                     <td>
-                        <input type="url" id="aih_pushpay_return_url" name="aih_pushpay_return_url" value="<?php echo esc_attr(get_option('aih_pushpay_return_url', '')); ?>" class="regular-text" placeholder="<?php echo esc_attr(home_url('/')); ?>">
-                        <p class="description"><?php _e('Where to redirect users after completing payment. Leave blank to use the gallery page or homepage.', 'art-in-heaven'); ?></p>
+                        <input type="text" id="aih_pushpay_redirect_key" name="aih_pushpay_redirect_key" value="<?php echo esc_attr(get_option('aih_pushpay_redirect_key', '')); ?>" class="regular-text" placeholder="e.g. auction-return">
+                        <p class="description"><?php _e('The redirect key configured in PushPay merchant portal (Settings > API Settings > Preconfigured Redirects). Users will be sent to the URL mapped to this key after payment.', 'art-in-heaven'); ?></p>
                     </td>
                 </tr>
             </table>

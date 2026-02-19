@@ -346,7 +346,7 @@ class AIH_Admin {
         register_setting('aih_integrations', 'aih_pushpay_merchant_key', array('sanitize_callback' => 'sanitize_text_field'));
         register_setting('aih_integrations', 'aih_pushpay_merchant_handle', array('sanitize_callback' => 'sanitize_text_field'));
         register_setting('aih_integrations', 'aih_pushpay_fund', array('sanitize_callback' => 'sanitize_text_field'));
-        register_setting('aih_integrations', 'aih_pushpay_return_url', array('sanitize_callback' => 'esc_url_raw'));
+        register_setting('aih_integrations', 'aih_pushpay_redirect_key', array('sanitize_callback' => 'sanitize_text_field'));
         register_setting('aih_integrations', 'aih_pushpay_client_id', array('sanitize_callback' => array('AIH_Security', 'sanitize_encrypt')));
         register_setting('aih_integrations', 'aih_pushpay_client_secret', array('sanitize_callback' => array('AIH_Security', 'sanitize_encrypt')));
         register_setting('aih_integrations', 'aih_pushpay_organization_key', array('sanitize_callback' => 'sanitize_text_field'));

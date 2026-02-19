@@ -111,7 +111,7 @@ $options_to_delete = array(
     'aih_pushpay_sandbox_merchant_handle',
     'aih_pushpay_fund',
     'aih_pushpay_base_url',
-    'aih_pushpay_return_url',
+    'aih_pushpay_redirect_key',
     'aih_pushpay_last_sync',
     'aih_pushpay_last_sync_count',
     // Login/page settings

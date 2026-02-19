@@ -69,6 +69,21 @@ jQuery(document).ready(function($) {
 </script>
 <?php return; endif;
 
+// Handle PushPay redirect - check for payment token
+$payment_result = null;
+if (!empty($_GET['paymentToken'])) {
+    $pushpay = AIH_Pushpay_API::get_instance();
+    $payment_data = $pushpay->get_payment_by_token(sanitize_text_field($_GET['paymentToken']));
+    if (!is_wp_error($payment_data)) {
+        $payment_result = 'success';
+    } else {
+        $payment_result = 'error';
+    }
+} elseif (isset($_GET['sr']) && !isset($_GET['paymentToken'])) {
+    // Source reference present but no payment token = payment was cancelled/failed
+    $payment_result = 'cancelled';
+}
+
 // Get won items
 $checkout = AIH_Checkout::get_instance();
 $won_items = $checkout->get_won_items($bidder_id);
@@ -112,6 +127,32 @@ $total = $subtotal + $tax;
     </header>
 
     <main class="aih-main">
+        <?php if ($payment_result === 'success'): ?>
+        <div class="aih-payment-banner aih-payment-success">
+            <span class="aih-payment-icon">&#10003;</span>
+            <div>
+                <strong>Payment Successful</strong>
+                <p>Thank you! Your payment has been received. You can view your order details below.</p>
+            </div>
+        </div>
+        <?php elseif ($payment_result === 'cancelled'): ?>
+        <div class="aih-payment-banner aih-payment-cancelled">
+            <span class="aih-payment-icon">!</span>
+            <div>
+                <strong>Payment Not Completed</strong>
+                <p>It looks like the payment was not completed. You can try again below.</p>
+            </div>
+        </div>
+        <?php elseif ($payment_result === 'error'): ?>
+        <div class="aih-payment-banner aih-payment-error">
+            <span class="aih-payment-icon">&#10007;</span>
+            <div>
+                <strong>Payment Issue</strong>
+                <p>There was a problem verifying your payment. Please contact support if you were charged.</p>
+            </div>
+        </div>
+        <?php endif; ?>
+
         <div class="aih-gallery-header">
             <div class="aih-gallery-title">
                 <h1>Checkout</h1>
@@ -926,5 +967,73 @@ jQuery(document).ready(function($) {
     .aih-order-item-price {
         font-size: 14px;
     }
+}
+
+/* Payment result banners */
+.aih-payment-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 20px 24px;
+    border-radius: 8px;
+    margin-bottom: 32px;
+}
+
+.aih-payment-banner strong {
+    display: block;
+    font-size: 16px;
+    margin-bottom: 4px;
+}
+
+.aih-payment-banner p {
+    font-size: 14px;
+    margin: 0;
+    opacity: 0.85;
+}
+
+.aih-payment-icon {
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1;
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.aih-payment-success {
+    background: #e8f5e9;
+    border: 1px solid #a5d6a7;
+    color: #2e7d32;
+}
+
+.aih-payment-success .aih-payment-icon {
+    background: #2e7d32;
+    color: #fff;
+}
+
+.aih-payment-cancelled {
+    background: #fff3e0;
+    border: 1px solid #ffcc80;
+    color: #e65100;
+}
+
+.aih-payment-cancelled .aih-payment-icon {
+    background: #e65100;
+    color: #fff;
+}
+
+.aih-payment-error {
+    background: #fce4ec;
+    border: 1px solid #ef9a9a;
+    color: #c62828;
+}
+
+.aih-payment-error .aih-payment-icon {
+    background: #c62828;
+    color: #fff;
 }
 </style>

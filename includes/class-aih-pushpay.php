@@ -745,22 +745,8 @@ class AIH_Pushpay_API {
         $auth = AIH_Auth::get_instance();
         $bidder = $auth->get_bidder_by_confirmation_code($order->bidder_id);
 
-        // Build return URL - redirect back to the site after payment
-        $return_url = get_option('aih_pushpay_return_url', '');
-        if (empty($return_url)) {
-            // Default to my-bids page (so user sees their orders), then gallery, then home
-            $my_bids_page = get_option('aih_my_bids_page', '');
-            if (!empty($my_bids_page)) {
-                $return_url = get_permalink((int) $my_bids_page);
-            }
-            if (empty($return_url)) {
-                $gallery_page = get_option('aih_gallery_page', '');
-                $return_url = !empty($gallery_page) ? get_permalink((int) $gallery_page) : '';
-            }
-            if (empty($return_url)) {
-                $return_url = home_url('/');
-            }
-        }
+        // Redirect key - must be configured in PushPay merchant portal under API Settings > Preconfigured Redirects
+        $redirect_key = get_option('aih_pushpay_redirect_key', '');
 
         $params = array(
             'a' => number_format($order->total, 2, '.', ''),
@@ -770,8 +756,11 @@ class AIH_Pushpay_API {
             'fndv' => 'lock',        // Lock the fund selection
             'sr' => $order->order_number, // Source reference for tracking
             'nt' => $order->order_number, // Note field with order number
-            'r' => $return_url,      // Return URL after payment
         );
+
+        if (!empty($redirect_key)) {
+            $params['ru'] = $redirect_key; // PushPay redirect key (configured in merchant portal)
+        }
 
         if ($bidder) {
             if (!empty($bidder->email_primary)) $params['ue'] = $bidder->email_primary;
@@ -782,5 +771,17 @@ class AIH_Pushpay_API {
 
         $base_url = $settings['sandbox_mode'] ? 'https://sandbox.pushpay.io/g/' : 'https://pushpay.com/g/';
         return $base_url . $settings['merchant_handle'] . '?' . http_build_query($params);
+    }
+
+    /**
+     * Look up a payment by token (returned in redirect URL after successful payment)
+     */
+    public function get_payment_by_token($payment_token) {
+        $settings = $this->get_settings();
+        if (empty($settings['merchant_key'])) {
+            return new WP_Error('no_merchant_key', 'Merchant key not configured.');
+        }
+
+        return $this->api_request('/merchant/' . $settings['merchant_key'] . '/payment/' . $payment_token);
     }
 }
