@@ -315,6 +315,33 @@ $is_sandbox = get_option('aih_pushpay_sandbox', 0);
                     </td>
                 </tr>
                 <tr>
+                    <th scope="row"><?php _e('Auto Sync', 'art-in-heaven'); ?></th>
+                    <td>
+                        <label>
+                            <input type="checkbox" name="aih_pushpay_auto_sync_enabled" value="1" <?php checked(get_option('aih_pushpay_auto_sync_enabled', false)); ?>>
+                            <?php _e('Enable automatic sync of transactions from Pushpay', 'art-in-heaven'); ?>
+                        </label>
+                        <p class="description"><?php _e('Automatically sync payment transactions at the selected interval.', 'art-in-heaven'); ?></p>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="aih_pushpay_auto_sync_interval"><?php _e('Sync Interval', 'art-in-heaven'); ?></label></th>
+                    <td>
+                        <?php $pp_sync_interval = get_option('aih_pushpay_auto_sync_interval', 'hourly'); ?>
+                        <select name="aih_pushpay_auto_sync_interval" id="aih_pushpay_auto_sync_interval">
+                            <option value="hourly" <?php selected($pp_sync_interval, 'hourly'); ?>><?php _e('Every Hour', 'art-in-heaven'); ?></option>
+                            <option value="every_thirty_seconds" <?php selected($pp_sync_interval, 'every_thirty_seconds'); ?>><?php _e('Every 30 Seconds', 'art-in-heaven'); ?></option>
+                        </select>
+                        <p class="description"><?php _e('Choose how often to sync transactions. Use 30 seconds during live events for near real-time payment updates.', 'art-in-heaven'); ?></p>
+                        <?php if ($pp_sync_interval === 'every_thirty_seconds'): ?>
+                        <p class="description" style="color: #b45309; margin-top: 8px;">
+                            <strong><?php _e('⚠️ Note:', 'art-in-heaven'); ?></strong>
+                            <?php _e('30-second sync increases API calls significantly. Only use during active payment periods.', 'art-in-heaven'); ?>
+                        </p>
+                        <?php endif; ?>
+                    </td>
+                </tr>
+                <tr>
                     <th scope="row"><label for="aih_pushpay_redirect_key"><?php _e('Redirect Key', 'art-in-heaven'); ?></label></th>
                     <td>
                         <input type="text" id="aih_pushpay_redirect_key" name="aih_pushpay_redirect_key" value="<?php echo esc_attr(get_option('aih_pushpay_redirect_key', '')); ?>" class="regular-text" placeholder="e.g. auction-return">

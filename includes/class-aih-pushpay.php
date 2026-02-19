@@ -784,4 +784,43 @@ class AIH_Pushpay_API {
 
         return $this->api_request('/merchant/' . $settings['merchant_key'] . '/payment/' . $payment_token);
     }
+
+    /**
+     * Schedule auto sync cron job for Pushpay transactions
+     */
+    public static function schedule_auto_sync($interval = null) {
+        wp_clear_scheduled_hook('aih_auto_sync_pushpay');
+
+        if ($interval === null) {
+            $interval = get_option('aih_pushpay_auto_sync_interval', 'hourly');
+        }
+
+        wp_schedule_event(time(), $interval, 'aih_auto_sync_pushpay');
+    }
+
+    /**
+     * Unschedule auto sync cron job
+     */
+    public static function unschedule_auto_sync() {
+        wp_clear_scheduled_hook('aih_auto_sync_pushpay');
+    }
+
+    /**
+     * Reschedule auto sync with new interval
+     */
+    public static function reschedule_auto_sync($interval) {
+        if (get_option('aih_pushpay_auto_sync_enabled', false)) {
+            self::schedule_auto_sync($interval);
+        }
+    }
+
+    /**
+     * Run auto sync (called by cron)
+     */
+    public static function run_auto_sync() {
+        $pushpay = self::get_instance();
+        if ($pushpay->is_configured()) {
+            $pushpay->sync_payments(30);
+        }
+    }
 }

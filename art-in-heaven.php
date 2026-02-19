@@ -141,6 +141,7 @@ class Art_In_Heaven {
         // Cron
         add_action('aih_hourly_cleanup', array($this, 'run_hourly_cleanup'));
         add_action('aih_check_expired_auctions', array($this, 'check_expired_auctions'));
+        add_action('aih_auto_sync_pushpay', array('AIH_Pushpay_API', 'run_auto_sync'));
         
         // Cache invalidation
         add_action('aih_art_created', array($this, 'invalidate_art_cache'));
@@ -236,6 +237,11 @@ class Art_In_Heaven {
             AIH_Auth::schedule_auto_sync();
         }
 
+        // Schedule auto-sync for Pushpay transactions (if enabled)
+        if (get_option('aih_pushpay_auto_sync_enabled', false)) {
+            AIH_Pushpay_API::schedule_auto_sync();
+        }
+
         // Schedule precise cron events for all existing art pieces
         if (class_exists('AIH_Cron_Scheduler')) {
             AIH_Cron_Scheduler::schedule_all_existing_pieces();
@@ -256,6 +262,7 @@ class Art_In_Heaven {
         wp_clear_scheduled_hook('aih_check_expired_auctions');
         wp_clear_scheduled_hook('aih_five_minute_check');
         AIH_Auth::unschedule_auto_sync();
+        AIH_Pushpay_API::unschedule_auto_sync();
 
         // Clear all scheduled piece-specific cron events
         if (class_exists('AIH_Cron_Scheduler')) {

@@ -358,6 +358,31 @@ class AIH_Admin {
         register_setting('aih_integrations', 'aih_pushpay_sandbox_merchant_key', array('sanitize_callback' => 'sanitize_text_field'));
         register_setting('aih_integrations', 'aih_pushpay_sandbox_merchant_handle', array('sanitize_callback' => 'sanitize_text_field'));
         
+        // Pushpay auto-sync settings
+        register_setting('aih_integrations', 'aih_pushpay_auto_sync_enabled', array(
+            'type' => 'boolean',
+            'default' => false,
+            'sanitize_callback' => function($value) {
+                $enabled = (bool) $value;
+                if ($enabled) {
+                    AIH_Pushpay_API::schedule_auto_sync();
+                } else {
+                    AIH_Pushpay_API::unschedule_auto_sync();
+                }
+                return $enabled;
+            }
+        ));
+        register_setting('aih_integrations', 'aih_pushpay_auto_sync_interval', array(
+            'type' => 'string',
+            'default' => 'hourly',
+            'sanitize_callback' => function($value) {
+                $valid = array('hourly', 'every_thirty_seconds');
+                $interval = in_array($value, $valid) ? $value : 'hourly';
+                AIH_Pushpay_API::reschedule_auto_sync($interval);
+                return $interval;
+            }
+        ));
+
         // Pushpay environment toggle (in aih_integrations group)
         register_setting('aih_integrations', 'aih_pushpay_sandbox', array(
             'type' => 'boolean',

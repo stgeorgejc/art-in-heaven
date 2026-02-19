@@ -99,6 +99,8 @@ $options_to_delete = array(
     'aih_settings',
     'aih_disable_image_sizes',
     // Pushpay settings
+    'aih_pushpay_auto_sync_enabled',
+    'aih_pushpay_auto_sync_interval',
     'aih_pushpay_client_id',
     'aih_pushpay_client_secret',
     'aih_pushpay_organization_key',
@@ -157,6 +159,7 @@ wp_clear_scheduled_hook('aih_check_expired_auctions');
 wp_clear_scheduled_hook('aih_send_ending_reminders');
 wp_clear_scheduled_hook('aih_five_minute_check');
 wp_clear_scheduled_hook('aih_auto_sync_registrants');
+wp_clear_scheduled_hook('aih_auto_sync_pushpay');
 
 // Clear all piece-specific scheduled cron events
 $crons = _get_cron_array();
