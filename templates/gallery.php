@@ -476,8 +476,8 @@ jQuery(document).ready(function($) {
         return $(this).data('id');
     }).get();
 
-    function sortCards() {
-        var sortBy = $('#aih-sort').val();
+    function sortCards(overrideSortBy) {
+        var sortBy = overrideSortBy || $('#aih-sort').val();
 
         var $grid = $('#aih-gallery');
         var $cards = $grid.children('.aih-card');
@@ -488,6 +488,14 @@ jQuery(document).ready(function($) {
             var aVal, bVal;
 
             switch (sortBy) {
+                case 'default':
+                    // Favorites first, then by soonest ending
+                    var aFav = $a.find('.aih-card-image').attr('data-favorite') === '1' ? 0 : 1;
+                    var bFav = $b.find('.aih-card-image').attr('data-favorite') === '1' ? 0 : 1;
+                    if (aFav !== bFav) return aFav - bFav;
+                    var aEnd = $a.attr('data-end') ? new Date($a.attr('data-end').replace(/-/g, '/')).getTime() : Infinity;
+                    var bEnd = $b.attr('data-end') ? new Date($b.attr('data-end').replace(/-/g, '/')).getTime() : Infinity;
+                    return aEnd - bEnd;
                 case 'artid-asc':
                     aVal = parseInt($a.attr('data-art-id')) || 0;
                     bVal = parseInt($b.attr('data-art-id')) || 0;
@@ -533,8 +541,12 @@ jQuery(document).ready(function($) {
         filterCards();
     });
 
+    // Track whether user has manually picked a sort
+    var userChangedSort = false;
+
     // Bind sort event
     $('#aih-sort').on('change', function() {
+        userChangedSort = true;
         sortCards();
     });
 
@@ -545,21 +557,13 @@ jQuery(document).ready(function($) {
         $('#aih-filter-artist').val('');
         $('#aih-filter-medium').val('');
         $('#aih-filter-favorites').val('');
-        // Restore original card order by re-sorting live DOM elements
-        var $grid = $('#aih-gallery');
-        var $cards = $grid.children('.aih-card').detach();
-        originalOrder.forEach(function(id) {
-            $cards.each(function() {
-                if ($(this).data('id') === id) {
-                    $grid.append(this);
-                    return false;
-                }
-            });
-        });
+        userChangedSort = false;
+        sortCards('default');
         filterCards();
     });
 
-    // Run filter on page load
+    // Apply default sort and filter on page load
+    sortCards('default');
     filterCards();
 
     // Favorite toggle - only update UI after server confirmation
@@ -577,6 +581,7 @@ jQuery(document).ready(function($) {
                 var $cardImage = $btn.closest('.aih-card-image');
                 $cardImage.attr('data-favorite', $btn.hasClass('active') ? '1' : '0');
                 updateFavoritesFilterVisibility();
+                if (!userChangedSort) sortCards('default');
                 filterCards();
             }
         }).fail(function() {
