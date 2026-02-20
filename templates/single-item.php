@@ -617,6 +617,87 @@ jQuery(document).ready(function($) {
     $scrollBtn.on('click', function() {
         $('html, body').animate({ scrollTop: 0 }, 400);
     });
+
+    // === Live bid status polling ===
+    var pieceId = <?php echo intval($art_piece->id); ?>;
+    var isEnded = <?php echo $is_ended ? 'true' : 'false'; ?>;
+    var pollTimer = null;
+    var POLL_INTERVAL = 5000;
+
+    function pollStatus() {
+        if (!aihAjax.isLoggedIn || isEnded) return;
+
+        $.post(aihAjax.ajaxurl, {
+            action: 'aih_poll_status',
+            nonce: aihAjax.nonce,
+            art_piece_ids: [pieceId]
+        }, function(r) {
+            if (!r.success || !r.data || !r.data.items) return;
+            var info = r.data.items[pieceId];
+            if (!info || info.status === 'ended') return;
+
+            var $badge = $('.aih-badge-single');
+            var wasWinning = $badge.length && $badge.text().trim() === 'Winning';
+
+            if (info.is_winning && !wasWinning) {
+                if ($badge.length) {
+                    $badge.attr('class', 'aih-badge aih-badge-winning aih-badge-single').text('Winning');
+                } else {
+                    $('.aih-single-image').prepend('<span class="aih-badge aih-badge-winning aih-badge-single">Winning</span>');
+                }
+            } else if (!info.is_winning && wasWinning) {
+                $badge.remove();
+            }
+
+            // Update min bid
+            var $bidInput = $('#bid-amount');
+            if ($bidInput.length) {
+                $bidInput.attr('data-min', info.min_bid).data('min', info.min_bid);
+            }
+
+            // Update cart count
+            var $cartCount = $('.aih-cart-count');
+            if (r.data.cart_count > 0) {
+                if ($cartCount.length) {
+                    $cartCount.text(r.data.cart_count);
+                } else {
+                    var checkoutUrl = '<?php echo esc_url($checkout_url); ?>';
+                    if (checkoutUrl) {
+                        $('.aih-header-actions .aih-theme-toggle').after(
+                            '<a href="' + checkoutUrl + '" class="aih-cart-link"><span>&#128722;</span><span class="aih-cart-count">' + r.data.cart_count + '</span></a>'
+                        );
+                    }
+                }
+            }
+        });
+    }
+
+    function startPolling() {
+        if (pollTimer) return;
+        pollTimer = setInterval(pollStatus, POLL_INTERVAL);
+    }
+
+    function stopPolling() {
+        if (pollTimer) {
+            clearInterval(pollTimer);
+            pollTimer = null;
+        }
+    }
+
+    if (!isEnded) {
+        setTimeout(function() {
+            startPolling();
+        }, POLL_INTERVAL);
+    }
+
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            stopPolling();
+        } else if (!isEnded) {
+            pollStatus();
+            startPolling();
+        }
+    });
 });
 </script>
 

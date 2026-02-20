@@ -744,5 +744,115 @@ jQuery(document).ready(function($) {
     $scrollBtn.on('click', function() {
         $('html, body').animate({ scrollTop: 0 }, 400);
     });
+
+    // === Live bid status polling ===
+    var pollTimer = null;
+    var POLL_INTERVAL = 5000;
+
+    function hasActiveAuctions() {
+        var hasActive = false;
+        $('.aih-card').each(function() {
+            var $card = $(this);
+            if (!$card.hasClass('ended') && !$card.hasClass('won') && !$card.hasClass('paid')) {
+                hasActive = true;
+                return false;
+            }
+        });
+        return hasActive;
+    }
+
+    function pollStatus() {
+        if (!aihAjax.isLoggedIn || !hasActiveAuctions()) return;
+
+        var ids = [];
+        $('.aih-card').each(function() {
+            var id = $(this).data('id');
+            if (id) ids.push(id);
+        });
+        if (ids.length === 0) return;
+
+        $.post(aihAjax.ajaxurl, {
+            action: 'aih_poll_status',
+            nonce: aihAjax.nonce,
+            art_piece_ids: ids
+        }, function(r) {
+            if (!r.success || !r.data || !r.data.items) return;
+            var items = r.data.items;
+
+            $.each(items, function(id, info) {
+                if (info.status === 'ended') return; // countdown handles ended transitions
+                var $card = $('.aih-card[data-id="' + id + '"]');
+                if (!$card.length) return;
+
+                // Update winning status
+                var wasWinning = $card.hasClass('winning');
+                if (info.is_winning && !wasWinning) {
+                    $card.addClass('winning');
+                    var $badge = $card.find('.aih-badge');
+                    if ($badge.length) {
+                        $badge.attr('class', 'aih-badge aih-badge-winning').text('Winning');
+                    } else {
+                        $card.find('.aih-card-image').append('<div class="aih-badge aih-badge-winning">Winning</div>');
+                    }
+                } else if (!info.is_winning && wasWinning) {
+                    $card.removeClass('winning');
+                    $card.find('.aih-badge').remove();
+                }
+
+                // Update min bid on input
+                var $input = $card.find('.aih-bid-input');
+                if ($input.length) {
+                    $input.attr('data-min', info.min_bid).data('min', info.min_bid);
+                }
+
+                // Hide "Starting Bid" label if bids now exist
+                if (info.has_bids) {
+                    $card.find('.aih-card-bid').hide();
+                }
+            });
+
+            // Update cart count
+            var $cartCount = $('.aih-cart-count');
+            if (r.data.cart_count > 0) {
+                if ($cartCount.length) {
+                    $cartCount.text(r.data.cart_count);
+                } else {
+                    var checkoutUrl = $('a.aih-cart-link').attr('href') || '<?php echo esc_url($checkout_url); ?>';
+                    if (checkoutUrl) {
+                        $('.aih-header-actions .aih-theme-toggle').after(
+                            '<a href="' + checkoutUrl + '" class="aih-cart-link"><span class="aih-cart-icon">&#128722;</span><span class="aih-cart-count">' + r.data.cart_count + '</span></a>'
+                        );
+                    }
+                }
+            }
+        });
+    }
+
+    function startPolling() {
+        if (pollTimer) return;
+        pollTimer = setInterval(pollStatus, POLL_INTERVAL);
+    }
+
+    function stopPolling() {
+        if (pollTimer) {
+            clearInterval(pollTimer);
+            pollTimer = null;
+        }
+    }
+
+    // Start polling after initial delay
+    setTimeout(function() {
+        startPolling();
+    }, POLL_INTERVAL);
+
+    // Pause/resume on tab visibility
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            stopPolling();
+        } else {
+            pollStatus();
+            startPolling();
+        }
+    });
 });
 </script>

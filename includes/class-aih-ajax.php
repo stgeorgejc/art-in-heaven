@@ -117,6 +117,9 @@ class AIH_Ajax {
         add_action('wp_ajax_nopriv_aih_push_unsubscribe', array($this, 'push_unsubscribe'));
         add_action('wp_ajax_aih_check_outbid', array($this, 'check_outbid'));
         add_action('wp_ajax_nopriv_aih_check_outbid', array($this, 'check_outbid'));
+
+        // Status polling
+        add_action('wp_ajax_aih_poll_status', array($this, 'poll_status'));
     }
     
     // ========== AUTH ==========
@@ -2304,5 +2307,98 @@ class AIH_Ajax {
         $events    = AIH_Push::consume_outbid_events($bidder_id);
 
         wp_send_json_success($events);
+    }
+
+    /**
+     * Lightweight polling endpoint for live bid status updates.
+     * Returns winning status, min bid, has_bids flag, and auction status
+     * for each requested art piece, plus the bidder's cart count.
+     */
+    public function poll_status() {
+        check_ajax_referer('aih_nonce', 'nonce');
+
+        $auth = AIH_Auth::get_instance();
+        if (!$auth->is_logged_in()) {
+            wp_send_json_error(array('message' => 'Not authenticated'));
+        }
+
+        $bidder_id = $auth->get_current_bidder_id();
+
+        $ids = isset($_POST['art_piece_ids']) ? array_map('intval', (array) $_POST['art_piece_ids']) : array();
+        $ids = array_filter($ids);
+        if (empty($ids)) {
+            wp_send_json_error(array('message' => 'No art piece IDs provided'));
+        }
+
+        // Cap to prevent abuse
+        $ids = array_slice($ids, 0, 200);
+
+        global $wpdb;
+        $bid_increment = floatval(get_option('aih_bid_increment', 1));
+        $now = current_time('mysql');
+        $art_table = AIH_Database::get_table('art_pieces');
+        $bids_table = AIH_Database::get_table('bids');
+
+        // Batch fetch art piece data
+        $placeholders = implode(',', array_fill(0, count($ids), '%d'));
+        $art_pieces = $wpdb->get_results($wpdb->prepare(
+            "SELECT id, status, auction_end, starting_bid FROM $art_table WHERE id IN ($placeholders)",
+            ...$ids
+        ), OBJECT_K);
+
+        // Batch fetch highest bids per piece
+        $highest_bids = $wpdb->get_results($wpdb->prepare(
+            "SELECT art_piece_id, MAX(bid_amount) as highest
+             FROM $bids_table
+             WHERE art_piece_id IN ($placeholders) AND (bid_status = 'valid' OR bid_status IS NULL)
+             GROUP BY art_piece_id",
+            ...$ids
+        ), OBJECT_K);
+
+        // Batch fetch winning status for this bidder
+        $winning_rows = $wpdb->get_results($wpdb->prepare(
+            "SELECT art_piece_id FROM $bids_table
+             WHERE art_piece_id IN ($placeholders) AND bidder_id = %s AND is_winning = 1",
+            ...array_merge($ids, array($bidder_id))
+        ));
+        $winning_ids = array();
+        foreach ($winning_rows as $row) {
+            $winning_ids[$row->art_piece_id] = true;
+        }
+
+        $items = array();
+        foreach ($ids as $id) {
+            $piece = isset($art_pieces[$id]) ? $art_pieces[$id] : null;
+            $highest = isset($highest_bids[$id]) ? floatval($highest_bids[$id]->highest) : 0;
+            $has_bids = $highest > 0;
+            $is_winning = isset($winning_ids[$id]);
+
+            $status = 'active';
+            $starting_bid = 0;
+            if ($piece) {
+                if ($piece->status === 'ended' || (!empty($piece->auction_end) && $piece->auction_end <= $now)) {
+                    $status = 'ended';
+                }
+                $starting_bid = floatval($piece->starting_bid);
+            }
+
+            $min_bid = $has_bids ? $highest + $bid_increment : $starting_bid;
+
+            $items[$id] = array(
+                'is_winning' => $is_winning,
+                'min_bid'    => $min_bid,
+                'has_bids'   => $has_bids,
+                'status'     => $status,
+            );
+        }
+
+        // Cart count
+        $checkout = AIH_Checkout::get_instance();
+        $cart_count = count($checkout->get_won_items($bidder_id));
+
+        wp_send_json_success(array(
+            'items'      => $items,
+            'cart_count'  => $cart_count,
+        ));
     }
 }

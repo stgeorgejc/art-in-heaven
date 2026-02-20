@@ -456,6 +456,126 @@ jQuery(document).ready(function($) {
 
     updateMyBidsCountdowns();
     setInterval(updateMyBidsCountdowns, 1000);
+
+    // === Live bid status polling ===
+    var pollTimer = null;
+    var POLL_INTERVAL = 5000;
+
+    function hasActiveAuctions() {
+        var hasActive = false;
+        $('.aih-card').each(function() {
+            var $card = $(this);
+            if (!$card.hasClass('ended') && !$card.hasClass('won') && !$card.hasClass('paid')) {
+                hasActive = true;
+                return false;
+            }
+        });
+        return hasActive;
+    }
+
+    function pollStatus() {
+        if (!aihAjax.isLoggedIn || !hasActiveAuctions()) return;
+
+        var ids = [];
+        $('.aih-card').each(function() {
+            var id = $(this).data('id');
+            if (id) ids.push(id);
+        });
+        if (ids.length === 0) return;
+
+        $.post(aihAjax.ajaxurl, {
+            action: 'aih_poll_status',
+            nonce: aihAjax.nonce,
+            art_piece_ids: ids
+        }, function(r) {
+            if (!r.success || !r.data || !r.data.items) return;
+            var items = r.data.items;
+
+            $.each(items, function(id, info) {
+                if (info.status === 'ended') return; // countdown handles ended transitions
+                var $card = $('.aih-card[data-id="' + id + '"]');
+                if (!$card.length) return;
+                // Skip cards already transitioned to ended/won/paid
+                if ($card.hasClass('ended') || $card.hasClass('won') || $card.hasClass('paid')) return;
+
+                var wasWinning = $card.hasClass('winning');
+                var wasOutbid = $card.hasClass('outbid');
+
+                if (info.is_winning && !wasWinning) {
+                    // Became winning
+                    $card.removeClass('outbid').addClass('winning');
+                    var $badge = $card.find('.aih-badge');
+                    $badge.attr('class', 'aih-badge aih-badge-winning').text('Winning');
+                    // Hide bid form when winning
+                    $card.find('.aih-bid-form').hide();
+                } else if (!info.is_winning && wasWinning) {
+                    // Got outbid
+                    $card.removeClass('winning').addClass('outbid');
+                    var $badge = $card.find('.aih-badge');
+                    $badge.attr('class', 'aih-badge aih-badge-outbid').text('Outbid');
+                    // Show bid form when outbid
+                    var $form = $card.find('.aih-bid-form');
+                    if ($form.length) {
+                        $form.show();
+                    } else {
+                        // Create bid form if it doesn't exist
+                        $card.find('.aih-card-footer').append(
+                            '<div class="aih-bid-form">' +
+                            '<input type="text" inputmode="numeric" pattern="[0-9]*" class="aih-bid-input" data-min="' + info.min_bid + '" placeholder="$">' +
+                            '<button type="button" class="aih-bid-btn" data-id="' + id + '">Bid</button>' +
+                            '</div>'
+                        );
+                    }
+                }
+
+                // Update min bid on input
+                var $input = $card.find('.aih-bid-input');
+                if ($input.length) {
+                    $input.attr('data-min', info.min_bid).data('min', info.min_bid);
+                }
+            });
+
+            // Update cart count
+            var $cartCount = $('.aih-cart-count');
+            if (r.data.cart_count > 0) {
+                if ($cartCount.length) {
+                    $cartCount.text(r.data.cart_count);
+                } else {
+                    var checkoutUrl = '<?php echo esc_url($checkout_url); ?>';
+                    if (checkoutUrl) {
+                        $('.aih-header-actions .aih-theme-toggle').after(
+                            '<a href="' + checkoutUrl + '" class="aih-cart-link"><span>🛒</span><span class="aih-cart-count">' + r.data.cart_count + '</span></a>'
+                        );
+                    }
+                }
+            }
+        });
+    }
+
+    function startPolling() {
+        if (pollTimer) return;
+        pollTimer = setInterval(pollStatus, POLL_INTERVAL);
+    }
+
+    function stopPolling() {
+        if (pollTimer) {
+            clearInterval(pollTimer);
+            pollTimer = null;
+        }
+    }
+
+    setTimeout(function() {
+        startPolling();
+    }, POLL_INTERVAL);
+
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            stopPolling();
+        } else {
+            pollStatus();
+            startPolling();
+        }
+    });
 });
 </script>
 
