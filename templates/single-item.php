@@ -248,7 +248,7 @@ $cart_count = count($checkout->get_won_items($bidder_id));
 
                     <?php if ($is_upcoming): ?>
                     <div class="aih-bid-section">
-                        <div class="aih-upcoming-notice" style="padding: 16px; background: #f0f0f0; border-radius: 8px; text-align: center; color: #555;">
+                        <div class="aih-upcoming-notice">
                             Bidding starts <?php echo esc_html(wp_date('M j, Y \a\t g:i A', strtotime($art_piece->auction_start))); ?>
                         </div>
                     </div>
@@ -286,7 +286,7 @@ $cart_count = count($checkout->get_won_items($bidder_id));
                             <?php foreach ($my_bid_history as $bid): ?>
                             <div class="aih-bid-history-item <?php echo $bid->is_winning ? 'winning' : ''; ?>">
                                 <span class="aih-bid-history-amount">$<?php echo number_format($bid->bid_amount); ?></span>
-                                <span class="aih-bid-history-time"><?php echo esc_html(wp_date('M j, g:i A', strtotime($bid->bid_time))); ?></span>
+                                <span class="aih-bid-history-time"><?php echo esc_html(date_i18n('M j, g:i A', strtotime($bid->bid_time))); ?></span>
                                 <?php if ($bid->is_winning): ?>
                                 <span class="aih-bid-history-status">&#10003; Winning</span>
                                 <?php endif; ?>
@@ -504,6 +504,10 @@ jQuery(document).ready(function($) {
         var $msg = $('#bid-message');
 
         if (!amount) { $msg.addClass('error').text('Enter a bid amount').show(); return; }
+
+        // Confirm bid amount to prevent fat-finger mistakes
+        var formatted = '$' + amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        if (!confirm('Please confirm your bid of ' + formatted)) { return; }
 
         $btn.prop('disabled', true).addClass('loading');
         $msg.hide().removeClass('error success');
@@ -1649,9 +1653,17 @@ html.aih-lightbox-open body {
     background: var(--color-primary);
 }
 
+.aih-upcoming-notice {
+    padding: 16px;
+    background: #f0f0f0;
+    border-radius: 8px;
+    text-align: center;
+    color: #555;
+}
+
 .aih-page.dark-mode .aih-upcoming-notice {
-    background: var(--color-surface) !important;
-    color: var(--color-secondary) !important;
+    background: var(--color-surface);
+    color: var(--color-secondary);
 }
 
 .aih-page.dark-mode .aih-art-id-badge-single {

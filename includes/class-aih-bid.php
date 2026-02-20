@@ -33,7 +33,7 @@ class AIH_Bid {
         
         $art_table = AIH_Database::get_table('art_pieces');
         $now = current_time('mysql');
-        $ms = substr(sprintf('%03d', (microtime(true) * 1000) % 1000), 0, 3);
+        $ms = substr(sprintf('%03d', (int)((microtime(true) * 1000) % 1000)), 0, 3);
         $bid_time = $now . '.' . $ms;
 
         // Start transaction to prevent race conditions

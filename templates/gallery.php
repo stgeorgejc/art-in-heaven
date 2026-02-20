@@ -589,6 +589,10 @@ jQuery(document).ready(function($) {
             return;
         }
 
+        // Confirm bid amount to prevent fat-finger mistakes
+        var formatted = '$' + amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        if (!confirm('Please confirm your bid of ' + formatted)) { return; }
+
         $btn.prop('disabled', true).text('...');
         $msg.hide();
 

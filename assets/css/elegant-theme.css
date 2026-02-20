@@ -142,23 +142,23 @@
 
 /* Reset plugin container itself */
 .aih-page {
-    background: transparent !important;
-    padding-left: 0 !important;
-    padding-right: 0 !important;
-    margin: 0 !important;
-    max-width: 100% !important;
-    width: 100% !important;
+    background: transparent;
+    padding-left: 0;
+    padding-right: 0;
+    margin: 0;
+    max-width: 100%;
+    width: 100%;
 }
 
 /* Reset gallery wrapper that sits between WordPress containers and .aih-page */
 #aih-gallery-wrapper,
 #aih-single-wrapper {
-    background: transparent !important;
-    padding-left: 0 !important;
-    padding-right: 0 !important;
-    margin: 0 !important;
-    max-width: 100% !important;
-    width: 100% !important;
+    background: transparent;
+    padding-left: 0;
+    padding-right: 0;
+    margin: 0;
+    max-width: 100%;
+    width: 100%;
 }
 
 /* Reset WordPress/theme ancestor containers that wrap our auction content */
@@ -201,8 +201,8 @@
     color: var(--color-primary);
     -webkit-font-smoothing: antialiased;
     flex: 1 1 auto;
-    width: 100% !important;
-    max-width: 100% !important;
+    width: 100%;
+    max-width: 100%;
     position: relative;
     overflow-x: hidden;
     overflow-wrap: break-word;
@@ -212,26 +212,26 @@
 /* ============================================
    HEADER - MOBILE FIRST
    ============================================ */
-.aih-header {
+.aih-page .aih-header {
     background: var(--color-surface);
     border-bottom: 1px solid var(--color-border);
     position: sticky;
     top: 0;
     z-index: 100;
-    width: 100% !important;
-    max-width: 100% !important;
+    width: 100%;
+    max-width: 100%;
 }
 
-.aih-header-inner {
+.aih-page .aih-header-inner {
     padding: 12px 24px;
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
     gap: 12px;
-    max-width: 100% !important;
+    max-width: 100%;
     margin: 0 auto;
-    width: 100% !important;
+    width: 100%;
 }
 
 .aih-logo {
@@ -254,13 +254,13 @@
     border-top: 1px solid var(--color-border);
 }
 
-.aih-nav-link {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
-    font-size: 11px !important;
-    font-weight: 500 !important;
-    color: var(--color-muted) !important;
-    text-decoration: none !important;
-    letter-spacing: 1.5px !important;
+.aih-page .aih-nav-link {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--color-muted);
+    text-decoration: none;
+    letter-spacing: 1.5px;
     text-transform: uppercase;
     transition: color var(--transition);
     padding: 6px 0;
@@ -315,16 +315,16 @@
     gap: 12px;
 }
 
-.aih-user-name {
+.aih-page .aih-user-name {
     display: block;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
-    font-size: 13px !important;
-    font-weight: 500 !important;
-    color: var(--color-secondary) !important;
-    background: var(--color-bg-alt) !important;
-    padding: 8px 14px !important;
-    border-radius: var(--radius) !important;
-    border: 1px solid var(--color-border) !important;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-secondary);
+    background: var(--color-bg-alt);
+    padding: 8px 14px;
+    border-radius: var(--radius);
+    border: 1px solid var(--color-border);
 }
 
 .aih-logout-btn {
@@ -345,27 +345,27 @@
 /* ============================================
    MAIN CONTENT - MOBILE FIRST
    ============================================ */
-.aih-main {
+.aih-page .aih-main {
     flex: 1 1 auto;
-    width: 100% !important;
+    width: 100%;
     padding: 20px 24px;
     background: var(--color-bg);
     min-height: 0;
     min-width: 0;
     overflow-wrap: break-word;
     word-wrap: break-word;
-    max-width: 100% !important;
+    max-width: 100%;
     margin: 0 auto;
     box-sizing: border-box;
 }
 
 /* Centered main for login pages */
-.aih-main-centered,
-.aih-main.aih-main-centered {
+.aih-page .aih-main-centered,
+.aih-page .aih-main.aih-main-centered {
     display: flex;
     align-items: center;
     justify-content: center;
-    max-width: 100% !important;
+    max-width: 100%;
 }
 
 .aih-gallery-header {
@@ -388,10 +388,10 @@
     word-wrap: break-word;
 }
 
-.aih-subtitle {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
-    font-size: 12px !important;
-    color: var(--color-muted) !important;
+.aih-page .aih-subtitle {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 12px;
+    color: var(--color-muted);
 }
 
 .aih-gallery-controls {
@@ -719,7 +719,7 @@ body.filter-open {
 
 /* Single Column View Mode - shows all items in one column */
 .aih-gallery-grid.single-view {
-    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-columns: minmax(0, 1fr);
     max-width: 100%;
     margin: 0 auto;
     gap: 16px;
@@ -1257,17 +1257,17 @@ body.filter-open {
     margin-bottom: 20px;
 }
 
-.aih-empty-state h2 {
-    font-family: 'Cormorant Garamond', Georgia, serif !important;
-    font-size: 26px !important;
-    font-weight: 500 !important;
-    margin-bottom: 10px !important;
+.aih-page .aih-empty-state h2 {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 26px;
+    font-weight: 500;
+    margin-bottom: 10px;
 }
 
-.aih-empty-state p {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
-    color: var(--color-muted) !important;
-    font-size: 14px !important;
+.aih-page .aih-empty-state p {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--color-muted);
+    font-size: 14px;
 }
 
 /* ============================================
@@ -1987,16 +1987,16 @@ body.filter-open {
    GALLERY PAGE - FULL WIDTH LAYOUT
    ============================================ */
 .aih-gallery-page .aih-main {
-    max-width: 100% !important;
-    width: 100% !important;
+    max-width: 100%;
+    width: 100%;
 }
 
 /* ============================================
    MY BIDS PAGE - FULL WIDTH LAYOUT
    ============================================ */
 .aih-mybids-page .aih-main {
-    max-width: 100% !important;
-    width: 100% !important;
+    max-width: 100%;
+    width: 100%;
 }
 
 /* ============================================
@@ -2642,7 +2642,7 @@ body {
 
     /* Ensure single-view still works at large screens */
     .aih-gallery-grid.single-view {
-        grid-template-columns: 1fr !important;
+        grid-template-columns: 1fr;
         max-width: 500px;
     }
 }
