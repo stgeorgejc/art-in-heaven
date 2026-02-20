@@ -176,8 +176,8 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
                 <div class="aih-filter-section">
                     <label class="aih-filter-label">Sort By</label>
                     <select id="aih-sort" class="aih-select">
-                        <option value="artid-asc">Art ID: 1 → X</option>
-                        <option value="artid-desc">Art ID: X → 1</option>
+                        <option value="artid-asc">Art ID: 1 → <?php echo count($art_pieces); ?></option>
+                        <option value="artid-desc">Art ID: <?php echo count($art_pieces); ?> → 1</option>
                         <option value="title-asc">Title: A to Z</option>
                         <option value="title-desc">Title: Z to A</option>
                         <option value="artist-asc">Artist: A to Z</option>
