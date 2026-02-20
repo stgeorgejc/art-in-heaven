@@ -176,6 +176,8 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
                 <div class="aih-filter-section">
                     <label class="aih-filter-label">Sort By</label>
                     <select id="aih-sort" class="aih-select">
+                        <option value="artid-asc">Art ID: 1 → X</option>
+                        <option value="artid-desc">Art ID: X → 1</option>
                         <option value="title-asc">Title: A to Z</option>
                         <option value="title-desc">Title: Z to A</option>
                         <option value="artist-asc">Artist: A to Z</option>
@@ -276,7 +278,8 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
                      data-art-id="<?php echo esc_attr($piece->art_id); ?>"
                      data-title="<?php echo esc_attr($piece->title); ?>"
                      data-artist="<?php echo esc_attr($piece->artist); ?>"
-                     data-medium="<?php echo esc_attr($piece->medium); ?>">
+                     data-medium="<?php echo esc_attr($piece->medium); ?>"
+                     <?php if (!empty($piece->auction_end)): ?>data-end="<?php echo esc_attr($piece->auction_end); ?>"<?php endif; ?>>
 
                 <div class="aih-card-image" data-favorite="<?php echo $is_favorite ? '1' : '0'; ?>">
                     <?php if ($primary_image): ?>
@@ -485,6 +488,14 @@ jQuery(document).ready(function($) {
             var aVal, bVal;
 
             switch (sortBy) {
+                case 'artid-asc':
+                    aVal = parseInt($a.attr('data-art-id')) || 0;
+                    bVal = parseInt($b.attr('data-art-id')) || 0;
+                    return aVal - bVal;
+                case 'artid-desc':
+                    aVal = parseInt($a.attr('data-art-id')) || 0;
+                    bVal = parseInt($b.attr('data-art-id')) || 0;
+                    return bVal - aVal;
                 case 'title-asc':
                     aVal = ($a.attr('data-title') || '').toLowerCase();
                     bVal = ($b.attr('data-title') || '').toLowerCase();
@@ -641,6 +652,7 @@ jQuery(document).ready(function($) {
     var timeOffset = serverTime - new Date().getTime();
 
     function updateCountdowns() {
+        // Update visible countdown timers
         $('.aih-time-remaining').each(function() {
             var $el = $(this);
             var endTime = $el.attr('data-end');
@@ -653,10 +665,6 @@ jQuery(document).ready(function($) {
             if (diff <= 0) {
                 $el.find('.aih-time-value').text('Ended');
                 $el.addClass('ended');
-                // Disable bid form on this card
-                var $card = $el.closest('.aih-card');
-                $card.find('.aih-bid-input').prop('disabled', true).attr('placeholder', 'Ended');
-                $card.find('.aih-bid-btn').prop('disabled', true).text('Ended');
                 return;
             }
 
@@ -679,6 +687,37 @@ jQuery(document).ready(function($) {
             // Add urgency class if less than 1 hour
             if (diff < 3600000) {
                 $el.addClass('urgent');
+            }
+        });
+
+        // Update badges and disable forms for all cards with data-end
+        $('.aih-card[data-end]').each(function() {
+            var $card = $(this);
+            if ($card.hasClass('ended') || $card.hasClass('won') || $card.hasClass('paid')) return;
+
+            var endTime = $card.attr('data-end');
+            var end = new Date(endTime.replace(/-/g, '/')).getTime();
+            var now = new Date().getTime() + timeOffset;
+            var diff = end - now;
+
+            if (diff <= 0) {
+                var wasWinning = $card.hasClass('winning');
+                var newStatus = wasWinning ? 'won' : 'ended';
+                var newText = wasWinning ? 'Won' : 'Ended';
+
+                $card.removeClass('winning').addClass(newStatus);
+
+                var $badge = $card.find('.aih-badge');
+                if ($badge.length) {
+                    $badge.attr('class', 'aih-badge aih-badge-' + newStatus).text(newText);
+                } else {
+                    $card.find('.aih-card-image').append('<div class="aih-badge aih-badge-' + newStatus + '">' + newText + '</div>');
+                }
+
+                // Disable bid form
+                $card.find('.aih-bid-input').prop('disabled', true).attr('placeholder', 'Ended');
+                $card.find('.aih-bid-btn').prop('disabled', true).text('Ended');
+                $card.find('.aih-card-footer').hide();
             }
         });
     }

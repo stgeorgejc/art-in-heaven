@@ -83,6 +83,7 @@ $my_orders = $checkout->get_bidder_orders($bidder_id);
 $payment_statuses = $checkout->get_bidder_payment_statuses($bidder_id);
 ?>
 
+<div id="aih-mybids-wrapper" data-server-time="<?php echo esc_attr(time() * 1000); ?>">
 <div class="aih-page aih-mybids-page">
 <script>(function(){var t=localStorage.getItem('aih-theme');if(t==='dark'){document.currentScript.parentElement.classList.add('dark-mode');}})();</script>
     <header class="aih-header">
@@ -154,7 +155,7 @@ $payment_statuses = $checkout->get_bidder_payment_statuses($bidder_id);
                     $status_text = 'Outbid';
                 }
             ?>
-            <article class="aih-card <?php echo $status_class; ?>" data-id="<?php echo intval($bid->art_piece_id); ?>">
+            <article class="aih-card <?php echo $status_class; ?>" data-id="<?php echo intval($bid->art_piece_id); ?>" <?php if (!empty($bid->auction_end)): ?>data-end="<?php echo esc_attr($bid->auction_end); ?>"<?php endif; ?>>
                 <div class="aih-card-image">
                     <?php if ($image_url): ?>
                     <a href="<?php echo esc_url($gallery_url); ?>?art_id=<?php echo intval($bid->art_piece_id); ?>">
@@ -172,6 +173,12 @@ $payment_statuses = $checkout->get_bidder_payment_statuses($bidder_id);
                     <span class="aih-art-id-badge"><?php echo esc_html(isset($bid->art_id) ? $bid->art_id : ''); ?></span>
                     <?php endif; ?>
                     <div class="aih-badge aih-badge-<?php echo $status_class; ?>"><?php echo $status_text; ?></div>
+
+                    <?php if (!$is_ended && !empty($bid->auction_end) && !empty($bid->show_end_time)): ?>
+                    <div class="aih-time-remaining" data-end="<?php echo esc_attr($bid->auction_end); ?>">
+                        <span class="aih-time-value">--:--:--</span>
+                    </div>
+                    <?php endif; ?>
                 </div>
 
                 <div class="aih-card-body">
@@ -246,6 +253,7 @@ $payment_statuses = $checkout->get_bidder_payment_statuses($bidder_id);
     <footer class="aih-footer">
         <p>&copy; <?php echo date('Y'); ?> Art in Heaven. All rights reserved.</p>
     </footer>
+</div>
 </div>
 
 <script>
@@ -354,12 +362,12 @@ jQuery(document).ready(function($) {
         var $msg = $card.find('.aih-bid-message');
         var id = $btn.data('id');
         var amount = parseInt($input.val());
-        
+
         if (!amount) { $msg.addClass('error').text('Enter a bid amount').show(); return; }
-        
+
         $btn.prop('disabled', true).text('...');
         $msg.hide();
-        
+
         $.post(aihAjax.ajaxurl, {action:'aih_place_bid', nonce:aihAjax.nonce, art_piece_id:id, bid_amount:amount}, function(r) {
             if (r.success) {
                 $msg.removeClass('error').addClass('success').text('Bid placed!').show();
@@ -374,6 +382,80 @@ jQuery(document).ready(function($) {
             $btn.prop('disabled', false).text('Bid');
         });
     });
+
+    // Countdown: update badges when auctions end
+    var serverTime = parseInt($('#aih-mybids-wrapper').data('server-time')) || new Date().getTime();
+    var timeOffset = serverTime - new Date().getTime();
+
+    function updateMyBidsCountdowns() {
+        // Update visible countdown timers
+        $('.aih-time-remaining').each(function() {
+            var $el = $(this);
+            var endTime = $el.attr('data-end');
+            if (!endTime) return;
+
+            var end = new Date(endTime.replace(/-/g, '/')).getTime();
+            var now = new Date().getTime() + timeOffset;
+            var diff = end - now;
+
+            if (diff <= 0) {
+                $el.find('.aih-time-value').text('Ended');
+                $el.addClass('ended');
+                return;
+            }
+
+            var days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            var hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            var minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            var seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+            var timeStr = '';
+            if (days > 0) {
+                timeStr = days + 'd ' + hours + 'h';
+            } else if (hours > 0) {
+                timeStr = hours + 'h ' + minutes + 'm';
+            } else {
+                timeStr = minutes + 'm ' + seconds + 's';
+            }
+
+            $el.find('.aih-time-value').text(timeStr);
+
+            if (diff < 3600000) {
+                $el.addClass('urgent');
+            }
+        });
+
+        // Update badges and hide forms when auctions end
+        $('.aih-card[data-end]').each(function() {
+            var $card = $(this);
+            if ($card.hasClass('ended') || $card.hasClass('won') || $card.hasClass('paid')) return;
+
+            var endTime = $card.attr('data-end');
+            var end = new Date(endTime.replace(/-/g, '/')).getTime();
+            var now = new Date().getTime() + timeOffset;
+            var diff = end - now;
+
+            if (diff <= 0) {
+                var wasWinning = $card.hasClass('winning');
+                var newStatus = wasWinning ? 'won' : 'ended';
+                var newText = wasWinning ? 'Won' : 'Ended';
+
+                $card.removeClass('winning outbid').addClass(newStatus);
+
+                var $badge = $card.find('.aih-badge');
+                if ($badge.length) {
+                    $badge.attr('class', 'aih-badge aih-badge-' + newStatus).text(newText);
+                }
+
+                // Hide bid form and countdown
+                $card.find('.aih-bid-form').hide();
+                $card.find('.aih-time-remaining').addClass('ended').find('.aih-time-value').text('Ended');
+            }
+        });
+    }
+
+    updateMyBidsCountdowns();
+    setInterval(updateMyBidsCountdowns, 1000);
 });
 </script>
 

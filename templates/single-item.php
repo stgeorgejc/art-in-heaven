@@ -556,6 +556,18 @@ jQuery(document).ready(function($) {
                 // Disable bid form
                 $('#bid-amount').prop('disabled', true).attr('placeholder', 'Ended');
                 $('#place-bid').prop('disabled', true).text('Ended');
+
+                // Update status badge
+                var $badge = $('.aih-badge-single');
+                if ($badge.length) {
+                    if ($badge.text().trim() === 'Winning') {
+                        $badge.attr('class', 'aih-badge aih-badge-won aih-badge-single').text('Won');
+                    } else {
+                        $badge.attr('class', 'aih-badge aih-badge-ended aih-badge-single').text('Ended');
+                    }
+                } else {
+                    $('.aih-single-image').append('<span class="aih-badge aih-badge-ended aih-badge-single">Ended</span>');
+                }
                 return;
             }
 

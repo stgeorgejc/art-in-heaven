@@ -260,7 +260,7 @@ class AIH_Bid {
         return $wpdb->get_results($wpdb->prepare(
             "SELECT b.*, a.title, a.title as art_title, a.artist, a.art_id, a.auction_end, a.status as auction_status,
                     a.watermarked_url, a.watermarked_url as image_url, a.image_url as original_image_url,
-                    a.starting_bid,
+                    a.starting_bid, a.show_end_time,
                     CASE
                         WHEN a.auction_end IS NOT NULL AND a.auction_end <= %s THEN 'ended'
                         WHEN a.status = 'ended' AND (a.auction_end IS NULL OR a.auction_end > %s) AND (a.auction_start IS NULL OR a.auction_start <= %s) THEN 'active'
