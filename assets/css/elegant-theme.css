@@ -1712,6 +1712,10 @@ body.filter-open {
     padding: 0 10px;
     font-family: var(--font-body);
     font-size: 14px;
+    letter-spacing: normal;
+    text-align: left;
+    text-transform: none;
+    font-weight: 400;
     text-align: left;
     color: var(--color-primary);
     background: var(--color-surface);
