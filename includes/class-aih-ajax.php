@@ -120,6 +120,7 @@ class AIH_Ajax {
 
         // Status polling
         add_action('wp_ajax_aih_poll_status', array($this, 'poll_status'));
+        add_action('wp_ajax_nopriv_aih_poll_status', array($this, 'poll_status'));
     }
     
     // ========== AUTH ==========
@@ -142,6 +143,10 @@ class AIH_Ajax {
         if ($result['success']) {
             // Login using confirmation_code as bidder ID (NOT email)
             $auth->login_bidder($result['bidder']['confirmation_code']);
+            AIH_Database::log_audit('login', array(
+                'bidder_id' => $result['bidder']['confirmation_code'],
+                'details'   => array('ip' => AIH_Security::get_client_ip()),
+            ));
             wp_send_json_success(array(
                 'message' => sprintf(__('Welcome, %s!', 'art-in-heaven'), $result['bidder']['first_name']),
                 'bidder' => $result['bidder']
@@ -195,6 +200,12 @@ class AIH_Ajax {
         $result = (new AIH_Bid())->place_bid($art_piece_id, $auth->get_current_bidder_id(), $bid_amount);
         if ($result['success']) {
             $auth->mark_registrant_has_bid($auth->get_current_bidder_id());
+            AIH_Database::log_audit('bid_placed', array(
+                'object_type' => 'bid',
+                'object_id'   => $result['bid_id'] ?? 0,
+                'bidder_id'   => $auth->get_current_bidder_id(),
+                'details'     => array('art_piece_id' => $art_piece_id, 'amount' => $bid_amount),
+            ));
             wp_send_json_success($result);
         }
         wp_send_json_error($result);
@@ -304,7 +315,15 @@ class AIH_Ajax {
         }
 
         $result = AIH_Checkout::get_instance()->create_order($auth->get_current_bidder_id());
-        if ($result['success']) wp_send_json_success($result);
+        if ($result['success']) {
+            AIH_Database::log_audit('order_created', array(
+                'object_type' => 'order',
+                'object_id'   => $result['order_id'] ?? 0,
+                'bidder_id'   => $auth->get_current_bidder_id(),
+                'details'     => array('order_number' => $result['order_number'] ?? ''),
+            ));
+            wp_send_json_success($result);
+        }
         wp_send_json_error($result);
     }
     
@@ -454,8 +473,8 @@ class AIH_Ajax {
         // Get default times from settings
         $event_date = get_option('aih_event_date', '');
         $event_end_date = get_option('aih_event_end_date', '');
-        $default_start = $event_date ? date('Y-m-d H:i:s', strtotime($event_date)) : current_time('mysql');
-        $default_end = $event_end_date ? date('Y-m-d H:i:s', strtotime($event_end_date)) : '';
+        $default_start = $event_date ? wp_date('Y-m-d H:i:s', strtotime($event_date)) : current_time('mysql');
+        $default_end = $event_end_date ? wp_date('Y-m-d H:i:s', strtotime($event_end_date)) : '';
         
         // Art ID is required for new pieces
         $record_id = intval($_POST['id'] ?? 0);
@@ -587,6 +606,11 @@ class AIH_Ajax {
             }
 
             $piece = $art_model->get($record_id);
+            AIH_Database::log_audit('art_updated', array(
+                'object_type' => 'art_piece',
+                'object_id'   => $record_id,
+                'details'     => array('art_id' => $piece->art_id, 'title' => $piece->title),
+            ));
             wp_send_json_success(array('message' => __('Updated successfully!', 'art-in-heaven'), 'id' => $record_id, 'art_id' => $piece->art_id, 'final_status' => $piece->status, 'updated_at' => $piece->updated_at));
         } else {
             // For new records, check if art_id already exists
@@ -618,6 +642,11 @@ class AIH_Ajax {
             }
             
             $piece = $art_model->get($new_id);
+            AIH_Database::log_audit('art_created', array(
+                'object_type' => 'art_piece',
+                'object_id'   => $new_id,
+                'details'     => array('art_id' => $piece->art_id, 'title' => $piece->title),
+            ));
             wp_send_json_success(array('message' => __('Created successfully!', 'art-in-heaven'), 'id' => $new_id, 'art_id' => $piece->art_id, 'final_status' => $piece->status));
         }
     }
@@ -628,6 +657,10 @@ class AIH_Ajax {
         $art_id = intval($_POST['id'] ?? 0);
         if (!$art_id) wp_send_json_error(array('message' => __('Invalid.', 'art-in-heaven')));
         (new AIH_Art_Piece())->delete($art_id);
+        AIH_Database::log_audit('art_deleted', array(
+            'object_type' => 'art_piece',
+            'object_id'   => $art_id,
+        ));
         wp_send_json_success(array('message' => __('Deleted.', 'art-in-heaven')));
     }
     
@@ -660,18 +693,7 @@ class AIH_Ajax {
         
         global $wpdb;
         $table = AIH_Database::get_table('art_pieces');
-        
-        // Check if column exists, if not add it
-        $column_exists = $wpdb->get_var($wpdb->prepare(
-            "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS 
-             WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s AND COLUMN_NAME = 'show_end_time'",
-            DB_NAME, $table
-        ));
-        
-        if (!$column_exists) {
-            $wpdb->query("ALTER TABLE `" . esc_sql($table) . "` ADD COLUMN `show_end_time` tinyint(1) DEFAULT 0 AFTER `auction_end`");
-        }
-        
+
         $placeholders = implode(',', array_fill(0, count($ids), '%d'));
         $result = $wpdb->query($wpdb->prepare(
             "UPDATE $table SET show_end_time = %d WHERE id IN ($placeholders)",
@@ -697,19 +719,7 @@ class AIH_Ajax {
         
         global $wpdb;
         $table = AIH_Database::get_table('art_pieces');
-        
-        // Check if column exists, if not run migration
-        $column_exists = $wpdb->get_var($wpdb->prepare(
-            "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS 
-             WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s AND COLUMN_NAME = 'show_end_time'",
-            DB_NAME, $table
-        ));
-        
-        if (!$column_exists) {
-            // Add the column
-            $wpdb->query("ALTER TABLE `" . esc_sql($table) . "` ADD COLUMN `show_end_time` tinyint(1) DEFAULT 0 AFTER `auction_end`");
-        }
-        
+
         $result = $wpdb->update($table, array('show_end_time' => $show), array('id' => $id), array('%d'), array('%d'));
         
         if ($result === false) {
@@ -878,7 +888,7 @@ class AIH_Ajax {
         
         global $wpdb;
         $table = AIH_Database::get_table('art_pieces');
-        $updated = $wpdb->query($wpdb->prepare("UPDATE $table SET auction_start = %s WHERE status = 'active'", date('Y-m-d H:i:s', strtotime($event_date))));
+        $updated = $wpdb->query($wpdb->prepare("UPDATE $table SET auction_start = %s WHERE status = 'active'", wp_date('Y-m-d H:i:s', strtotime($event_date))));
         if ($updated === false) {
             wp_send_json_error(array('message' => __('Database error applying event date.', 'art-in-heaven')));
         }
@@ -928,6 +938,10 @@ class AIH_Ajax {
         $order_id = intval($_POST['order_id'] ?? 0);
         if (!$order_id) wp_send_json_error(array('message' => __('Invalid.', 'art-in-heaven')));
         AIH_Checkout::get_instance()->delete_order($order_id);
+        AIH_Database::log_audit('order_deleted', array(
+            'object_type' => 'order',
+            'object_id'   => $order_id,
+        ));
         wp_send_json_success(array('message' => __('Deleted.', 'art-in-heaven')));
     }
     
@@ -1130,7 +1144,7 @@ class AIH_Ajax {
     public function admin_create_tables() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
         if (!AIH_Roles::can_manage_auction()) wp_send_json_error(array('message' => __('Permission denied.', 'art-in-heaven')));
-        $year = intval($_POST['year'] ?? date('Y'));
+        $year = intval($_POST['year'] ?? wp_date('Y'));
         AIH_Database::create_tables($year);
         wp_send_json_success(array('message' => sprintf('Tables created for %d.', $year)));
     }

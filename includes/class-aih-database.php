@@ -21,7 +21,7 @@ class AIH_Database {
      * @return string
      */
     public static function get_auction_year() {
-        return get_option('aih_auction_year', date('Y'));
+        return get_option('aih_auction_year', wp_date('Y'));
     }
     
     /**
@@ -46,7 +46,7 @@ class AIH_Database {
         // Validate year
         $year = absint($year);
         if ($year < 2020 || $year > 2100) {
-            $year = date('Y');
+            $year = wp_date('Y');
         }
         
         $charset_collate = $wpdb->get_charset_collate();
@@ -358,7 +358,7 @@ class AIH_Database {
         self::cleanup_bidders_table($year);
         
         // Store database version
-        update_option('aih_db_version', AIH_VERSION);
+        update_option('aih_db_version', AIH_DB_VERSION);
         update_option('aih_auction_year', $year);
         
         // Create upload directory

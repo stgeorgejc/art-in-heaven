@@ -449,11 +449,11 @@ class AIH_Bid {
                     COALESCE(bd.email_primary, rg.email_primary) as email_primary,
                     COALESCE(bd.phone_mobile, rg.phone_mobile) as phone_mobile,
                     COALESCE(bd.confirmation_code, rg.confirmation_code) as confirmation_code,
-                    (SELECT oi2.id FROM $order_items_table oi2 WHERE oi2.art_piece_id = a.id LIMIT 1) IS NOT NULL as is_in_order,
-                    (SELECT o2.order_number FROM $order_items_table oi2 JOIN $orders_table o2 ON oi2.order_id = o2.id WHERE oi2.art_piece_id = a.id ORDER BY o2.id DESC LIMIT 1) as order_number,
-                    (SELECT o2.payment_status FROM $order_items_table oi2 JOIN $orders_table o2 ON oi2.order_id = o2.id WHERE oi2.art_piece_id = a.id ORDER BY o2.id DESC LIMIT 1) as payment_status,
-                    (SELECT o2.pickup_status FROM $order_items_table oi2 JOIN $orders_table o2 ON oi2.order_id = o2.id WHERE oi2.art_piece_id = a.id ORDER BY o2.id DESC LIMIT 1) as pickup_status,
-                    (SELECT o2.pickup_date FROM $order_items_table oi2 JOIN $orders_table o2 ON oi2.order_id = o2.id WHERE oi2.art_piece_id = a.id ORDER BY o2.id DESC LIMIT 1) as pickup_date,
+                    order_info.order_number IS NOT NULL as is_in_order,
+                    order_info.order_number,
+                    order_info.payment_status,
+                    order_info.pickup_status,
+                    order_info.pickup_date,
                     CASE
                         WHEN a.auction_end IS NOT NULL AND a.auction_end <= %s THEN 'ended'
                         WHEN a.status = 'ended' AND (a.auction_end IS NULL OR a.auction_end > %s) AND (a.auction_start IS NULL OR a.auction_start <= %s) THEN 'active'
@@ -464,12 +464,96 @@ class AIH_Bid {
              JOIN $art_table a ON b.art_piece_id = a.id
              LEFT JOIN $bidders_table bd ON b.bidder_id = bd.confirmation_code
              LEFT JOIN $registrants_table rg ON b.bidder_id = rg.confirmation_code
+             LEFT JOIN (
+                 SELECT oi.art_piece_id, o.order_number, o.payment_status, o.pickup_status, o.pickup_date
+                 FROM $order_items_table oi
+                 JOIN $orders_table o ON oi.order_id = o.id
+                 WHERE o.id = (
+                     SELECT MAX(o2.id) FROM $order_items_table oi2 JOIN $orders_table o2 ON oi2.order_id = o2.id WHERE oi2.art_piece_id = oi.art_piece_id
+                 )
+             ) order_info ON a.id = order_info.art_piece_id
              WHERE b.is_winning = 1
              ORDER BY a.auction_end DESC",
             $now, $now, $now
         ));
     }
     
+    /**
+     * Batch fetch highest bids for multiple art pieces.
+     *
+     * @param array $piece_ids
+     * @return array Keyed by art_piece_id => highest bid amount
+     */
+    public function get_highest_bids_batch($piece_ids) {
+        global $wpdb;
+        if (empty($piece_ids)) return array();
+
+        $placeholders = implode(',', array_fill(0, count($piece_ids), '%d'));
+        $rows = $wpdb->get_results($wpdb->prepare(
+            "SELECT art_piece_id, MAX(bid_amount) as highest_bid
+             FROM {$this->table}
+             WHERE art_piece_id IN ($placeholders) AND (bid_status = 'valid' OR bid_status IS NULL)
+             GROUP BY art_piece_id",
+            $piece_ids
+        ));
+
+        $result = array();
+        foreach ($rows as $row) {
+            $result[(int) $row->art_piece_id] = floatval($row->highest_bid);
+        }
+        return $result;
+    }
+
+    /**
+     * Batch fetch art piece IDs where a bidder is currently winning.
+     *
+     * @param array  $piece_ids
+     * @param string $bidder_id
+     * @return array Keyed by art_piece_id => true
+     */
+    public function get_winning_ids_batch($piece_ids, $bidder_id) {
+        global $wpdb;
+        if (empty($piece_ids) || empty($bidder_id)) return array();
+
+        $placeholders = implode(',', array_fill(0, count($piece_ids), '%d'));
+        $rows = $wpdb->get_results($wpdb->prepare(
+            "SELECT art_piece_id FROM {$this->table}
+             WHERE art_piece_id IN ($placeholders) AND bidder_id = %s AND is_winning = 1",
+            array_merge($piece_ids, array($bidder_id))
+        ));
+
+        $result = array();
+        foreach ($rows as $row) {
+            $result[(int) $row->art_piece_id] = true;
+        }
+        return $result;
+    }
+
+    /**
+     * Batch fetch art piece IDs where a bidder has placed any valid bid.
+     *
+     * @param array  $piece_ids
+     * @param string $bidder_id
+     * @return array Keyed by art_piece_id => true
+     */
+    public function get_bidder_bid_ids_batch($piece_ids, $bidder_id) {
+        global $wpdb;
+        if (empty($piece_ids) || empty($bidder_id)) return array();
+
+        $placeholders = implode(',', array_fill(0, count($piece_ids), '%d'));
+        $rows = $wpdb->get_results($wpdb->prepare(
+            "SELECT DISTINCT art_piece_id FROM {$this->table}
+             WHERE art_piece_id IN ($placeholders) AND bidder_id = %s AND bid_status = 'valid'",
+            array_merge($piece_ids, array($bidder_id))
+        ));
+
+        $result = array();
+        foreach ($rows as $row) {
+            $result[(int) $row->art_piece_id] = true;
+        }
+        return $result;
+    }
+
     /**
      * Get bid statistics
      * Consolidated into a single query with conditional aggregation + caching

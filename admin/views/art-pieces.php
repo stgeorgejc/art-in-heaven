@@ -303,8 +303,8 @@ $art_pieces = $art_model->get_all_with_stats($filter_args);
                     }
 
                     // Format dates for datetime-local input
-                    $auction_start_value = !empty($piece->auction_start) ? date('Y-m-d\TH:i', strtotime($piece->auction_start)) : '';
-                    $auction_end_value = !empty($piece->auction_end) ? date('Y-m-d\TH:i', strtotime($piece->auction_end)) : '';
+                    $auction_start_value = !empty($piece->auction_start) ? wp_date('Y-m-d\TH:i', strtotime($piece->auction_start)) : '';
+                    $auction_end_value = !empty($piece->auction_end) ? wp_date('Y-m-d\TH:i', strtotime($piece->auction_end)) : '';
                 ?>
                     <tr data-id="<?php echo esc_attr($piece->id); ?>"
                         data-title="<?php echo esc_attr(strtolower($piece->title)); ?>"

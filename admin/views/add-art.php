@@ -174,7 +174,7 @@ $status_options = AIH_Status::get_status_options();
                     <div class="aih-form-row">
                         <label for="auction_end"><?php _e('Auction End', 'art-in-heaven'); ?> <span class="required">*</span></label>
                         <input type="datetime-local" id="auction_end" name="auction_end" required
-                               value="<?php echo esc_attr($is_edit ? aih_get_date_for_input($art_piece, 'auction_end') : date('Y-m-d\TH:i', strtotime('+7 days', current_time('timestamp')))); ?>">
+                               value="<?php echo esc_attr($is_edit ? aih_get_date_for_input($art_piece, 'auction_end') : wp_date('Y-m-d\TH:i', strtotime('+7 days', current_time('timestamp')))); ?>">
                         <p class="description aih-time-feedback" id="end-time-feedback"></p>
                     </div>
                     

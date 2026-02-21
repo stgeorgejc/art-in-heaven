@@ -31,7 +31,7 @@ if (!$delete_data) {
 global $wpdb;
 
 // Get all years that might have tables
-$years = range(2020, date('Y') + 5);
+$years = range(2020, wp_date('Y') + 5);
 
 // Tables to delete for each year
 $table_suffixes = array(

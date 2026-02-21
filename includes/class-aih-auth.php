@@ -333,16 +333,16 @@ class AIH_Auth {
         
         if ($existing) {
             $update = array('updated_at' => current_time('mysql'));
-            
+
             foreach ($fields as $field) {
                 $new_val = isset($data[$field]) ? $data[$field] : '';
                 $old_val = isset($existing->$field) ? $existing->$field : '';
-                
+
                 if ($field === 'api_data' || (!empty($new_val) && $new_val !== $old_val)) {
-                    $update[$field] = $new_val;
+                    $update[$field] = ($field === 'api_data' && !empty($new_val)) ? AIH_Security::encrypt($new_val) : $new_val;
                 }
             }
-            
+
             $wpdb->update($table, $update, array('id' => $existing->id));
             return 'updated';
         } else {
@@ -352,11 +352,12 @@ class AIH_Auth {
                 'has_logged_in' => 0,
                 'has_bid' => 0,
             );
-            
+
             foreach ($fields as $field) {
-                $insert[$field] = isset($data[$field]) ? $data[$field] : '';
+                $val = isset($data[$field]) ? $data[$field] : '';
+                $insert[$field] = ($field === 'api_data' && !empty($val)) ? AIH_Security::encrypt($val) : $val;
             }
-            
+
             $wpdb->insert($table, $insert);
             return $wpdb->insert_id ? 'inserted' : false;
         }
@@ -368,10 +369,14 @@ class AIH_Auth {
     public function get_registrant_by_confirmation_code($code) {
         global $wpdb;
         $table = AIH_Database::get_table('registrants');
-        return $wpdb->get_row($wpdb->prepare(
+        $row = $wpdb->get_row($wpdb->prepare(
             "SELECT * FROM $table WHERE confirmation_code = %s",
             trim(strtoupper($code))
         ));
+        if ($row && !empty($row->api_data)) {
+            $row->api_data = AIH_Security::decrypt($row->api_data);
+        }
+        return $row;
     }
     
     /**
@@ -380,7 +385,13 @@ class AIH_Auth {
     public function get_all_registrants() {
         global $wpdb;
         $table = AIH_Database::get_table('registrants');
-        return $wpdb->get_results("SELECT * FROM $table ORDER BY name_last, name_first ASC");
+        $rows = $wpdb->get_results("SELECT * FROM $table ORDER BY name_last, name_first ASC");
+        foreach ($rows as $row) {
+            if (!empty($row->api_data)) {
+                $row->api_data = AIH_Security::decrypt($row->api_data);
+            }
+        }
+        return $rows;
     }
     
     /**
@@ -455,12 +466,12 @@ class AIH_Auth {
             'mailing_zip' => $registrant->mailing_zip,
             'individual_id' => $registrant->individual_id,
             'individual_name' => $registrant->individual_name,
-            'api_data' => $registrant->api_data,
+            'api_data' => !empty($registrant->api_data) ? AIH_Security::encrypt($registrant->api_data) : '',
             'created_at' => current_time('mysql'),
             'updated_at' => current_time('mysql'),
             'last_login' => current_time('mysql'),
         );
-        
+
         $wpdb->insert($bidders_table, $insert);
         return $wpdb->insert_id ?: false;
     }
@@ -484,17 +495,20 @@ class AIH_Auth {
     public function get_bidder_by_confirmation_code($code) {
         global $wpdb;
         $code = trim(strtoupper($code));
-        
+
         $bidders_table = AIH_Database::get_table('bidders');
         $bidder = $wpdb->get_row($wpdb->prepare(
             "SELECT * FROM $bidders_table WHERE confirmation_code = %s",
             $code
         ));
-        
+
         if ($bidder) {
+            if (!empty($bidder->api_data)) {
+                $bidder->api_data = AIH_Security::decrypt($bidder->api_data);
+            }
             return $bidder;
         }
-        
+
         return $this->get_registrant_by_confirmation_code($code);
     }
     
@@ -516,7 +530,13 @@ class AIH_Auth {
     public function get_all_bidders() {
         global $wpdb;
         $table = AIH_Database::get_table('bidders');
-        return $wpdb->get_results("SELECT * FROM $table ORDER BY name_last, name_first ASC");
+        $rows = $wpdb->get_results("SELECT * FROM $table ORDER BY name_last, name_first ASC");
+        foreach ($rows as $row) {
+            if (!empty($row->api_data)) {
+                $row->api_data = AIH_Security::decrypt($row->api_data);
+            }
+        }
+        return $rows;
     }
     
     /**
@@ -705,6 +725,36 @@ class AIH_Auth {
         }
         
         return $result;
+    }
+
+    /**
+     * One-time migration: encrypt existing plaintext api_data values.
+     * Gated behind an option so it runs only once.
+     */
+    public static function maybe_encrypt_api_data() {
+        if (get_option('aih_api_data_encrypted')) {
+            return;
+        }
+
+        global $wpdb;
+        $tables = array(
+            AIH_Database::get_table('registrants'),
+            AIH_Database::get_table('bidders'),
+        );
+
+        foreach ($tables as $table) {
+            $rows = $wpdb->get_results("SELECT id, api_data FROM $table WHERE api_data IS NOT NULL AND api_data != ''");
+            foreach ($rows as $row) {
+                // Skip already-encrypted values
+                if (strpos($row->api_data, 'enc:') === 0) {
+                    continue;
+                }
+                $encrypted = AIH_Security::encrypt($row->api_data);
+                $wpdb->update($table, array('api_data' => $encrypted), array('id' => $row->id));
+            }
+        }
+
+        update_option('aih_api_data_encrypted', 1);
     }
 }
 

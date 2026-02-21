@@ -11,65 +11,12 @@ $bidder = $bidder_info['bidder'];
 $bidder_id = $bidder_info['id'];
 $bidder_name = $bidder_info['name'];
 ?>
-<script>
-if (typeof aihAjax === 'undefined') {
-    var aihAjax = {
-        ajaxurl: '<?php echo esc_url(admin_url('admin-ajax.php')); ?>',
-        nonce: '<?php echo wp_create_nonce('aih_nonce'); ?>',
-        isLoggedIn: <?php echo $is_logged_in ? 'true' : 'false'; ?>
-    };
-}
-</script>
-<?php if (!$is_logged_in): ?>
-<!-- Login Gate -->
-<div class="aih-page">
-    <header class="aih-header">
-        <div class="aih-header-inner">
-            <a href="<?php echo esc_url(home_url()); ?>" class="aih-logo">Art in Heaven</a>
-        </div>
-    </header>
-    <main class="aih-main">
-        <div class="aih-login-card">
-            <div class="aih-login-header">
-                <div class="aih-ornament">&#10022;</div>
-                <h1>Welcome</h1>
-                <p>Enter your confirmation code to access the auction</p>
-            </div>
-            <div class="aih-login-form">
-                <div class="aih-field">
-                    <label>Confirmation Code</label>
-                    <input type="text" id="aih-gate-code" placeholder="XXXXXXXX" autocomplete="off">
-                </div>
-                <button type="button" id="aih-gate-verify" class="aih-btn">Sign In</button>
-                <div id="aih-gate-message" class="aih-message"></div>
-            </div>
-        </div>
-    </main>
-</div>
-<script>
-jQuery(document).ready(function($) {
-    $('#aih-gate-verify').on('click', function() {
-        var code = $('#aih-gate-code').val().trim().toUpperCase();
-        var $btn = $(this);
-        var $msg = $('#aih-gate-message');
-        if (!code) { $msg.addClass('error').text('Please enter your code').show(); return; }
-        $btn.prop('disabled', true).addClass('loading');
-        $.post(aihAjax.ajaxurl, {action:'aih_verify_code', nonce:aihAjax.nonce, code:code}, function(r) {
-            if (r.success) { location.reload(); }
-            else { $msg.addClass('error').text(r.data.message || 'Invalid code').show(); $btn.prop('disabled', false).removeClass('loading'); }
-        }).fail(function() {
-            $btn.prop('disabled', false).removeClass('loading');
-            $msg.text('Network error. Please try again.').addClass('error').show();
-        });
-    });
-    $('#aih-gate-code').on('keypress', function(e) { if (e.which === 13) $('#aih-gate-verify').click(); })
-        .on('input', function() { this.value = this.value.toUpperCase(); });
-});
-</script>
+<?php if (!$is_logged_in):
+    $sub_heading = __('Enter your confirmation code to access the auction', 'art-in-heaven');
+    include AIH_PLUGIN_DIR . 'templates/partials/login-gate.php';
+    return;
+endif; ?>
 <?php
-return;
-endif;
-
 // Get page URLs using consolidated helper
 $gallery_url = AIH_Template_Helper::get_gallery_url();
 $my_bids_url = AIH_Template_Helper::get_my_bids_url();
@@ -106,62 +53,41 @@ if ($is_logged_in) {
 }
 
 $bid_increment = floatval(get_option('aih_bid_increment', 1));
+
+// Batch pre-fetch bid data to avoid N+1 queries in the loop
+$piece_ids = array_map(function($p) { return $p->id; }, $art_pieces);
+$highest_bids = $bid_model->get_highest_bids_batch($piece_ids);
+$winning_ids = $bid_model->get_winning_ids_batch($piece_ids, $bidder_id);
+$bidder_bid_ids = $bid_model->get_bidder_bid_ids_batch($piece_ids, $bidder_id);
 ?>
 
 <div id="aih-gallery-wrapper" data-server-time="<?php echo esc_attr(time() * 1000); ?>">
 <div class="aih-page aih-gallery-page">
 <script>(function(){var t=localStorage.getItem('aih-theme');if(t==='dark'){document.currentScript.parentElement.classList.add('dark-mode');}})();</script>
-    <header class="aih-header">
-        <div class="aih-header-inner">
-            <a href="<?php echo esc_url($gallery_url); ?>" class="aih-logo">Art in Heaven</a>
-            <nav class="aih-nav">
-                <a href="<?php echo esc_url($gallery_url); ?>" class="aih-nav-link aih-nav-active">Gallery</a>
-                <?php if ($my_bids_url): ?>
-                <a href="<?php echo esc_url($my_bids_url); ?>" class="aih-nav-link">My Bids</a>
-                <?php endif; ?>
-            </nav>
-            <div class="aih-header-actions">
-                <button type="button" class="aih-theme-toggle" id="aih-theme-toggle" title="Toggle dark mode"><svg class="aih-theme-icon aih-icon-sun" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg><svg class="aih-theme-icon aih-icon-moon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg><span class="aih-theme-toggle-label">Theme</span></button>
-                <?php if ($checkout_url && $cart_count > 0): ?>
-                <a href="<?php echo esc_url($checkout_url); ?>" class="aih-cart-link">
-                    <span class="aih-cart-icon">&#128722;</span>
-                    <span class="aih-cart-count"><?php echo $cart_count; ?></span>
-                </a>
-                <?php endif; ?>
-                <div class="aih-user-menu">
-                    <?php if ($my_bids_url): ?>
-                    <a href="<?php echo esc_url($my_bids_url); ?>" class="aih-user-name aih-user-name-link"><?php echo esc_html($bidder_name); ?></a>
-                    <?php else: ?>
-                    <span class="aih-user-name"><?php echo esc_html($bidder_name); ?></span>
-                    <?php endif; ?>
-                    <button type="button" class="aih-logout-btn" id="aih-logout">Sign Out</button>
-                </div>
-            </div>
-        </div>
-    </header>
+    <?php $active_page = 'gallery'; include AIH_PLUGIN_DIR . 'templates/partials/header.php'; ?>
 
     <div class="aih-ptr-indicator"><span class="aih-ptr-spinner"></span></div>
 
     <main class="aih-main">
         <div class="aih-gallery-header">
             <div class="aih-gallery-title">
-                <h1>Collection</h1>
-                <p class="aih-subtitle"><?php echo count($art_pieces); ?> pieces available</p>
+                <h1><?php _e('Collection', 'art-in-heaven'); ?></h1>
+                <p class="aih-subtitle"><?php printf(esc_html__('%d pieces available', 'art-in-heaven'), count($art_pieces)); ?></p>
             </div>
             <div class="aih-gallery-controls">
                 <div class="aih-search-box">
-                    <input type="text" id="aih-search" placeholder="Search collection..." class="aih-search-input">
+                    <input type="text" id="aih-search" placeholder="Search collection..." class="aih-search-input" aria-label="<?php esc_attr_e('Search collection', 'art-in-heaven'); ?>">
                 </div>
-                <button type="button" class="aih-filter-toggle" id="aih-filter-toggle">
+                <button type="button" class="aih-filter-toggle" id="aih-filter-toggle" aria-label="<?php esc_attr_e('Toggle filters', 'art-in-heaven'); ?>" aria-expanded="false">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
-                    <span>Sort & Filter</span>
+                    <span><?php _e('Sort &amp; Filter', 'art-in-heaven'); ?></span>
                     <svg class="aih-filter-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
                 </button>
                 <div class="aih-view-toggle">
-                    <button type="button" class="aih-view-btn active" data-view="grid" title="Grid View">
+                    <button type="button" class="aih-view-btn active" data-view="grid" title="<?php esc_attr_e('Grid View', 'art-in-heaven'); ?>">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
                     </button>
-                    <button type="button" class="aih-view-btn" data-view="single" title="Single View">
+                    <button type="button" class="aih-view-btn" data-view="single" title="<?php esc_attr_e('Single View', 'art-in-heaven'); ?>">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
                     </button>
                 </div>
@@ -169,59 +95,59 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
             <!-- Desktop: inline panel appears here in the header flow -->
             <div class="aih-filter-panel" id="aih-filter-panel">
             <div class="aih-filter-panel-header">
-                <span class="aih-filter-panel-title">Sort & Filter</span>
+                <span class="aih-filter-panel-title"><?php _e('Sort &amp; Filter', 'art-in-heaven'); ?></span>
                 <button type="button" class="aih-filter-panel-close" id="aih-filter-close">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                 </button>
             </div>
             <div class="aih-filter-panel-content">
                 <div class="aih-filter-section">
-                    <label class="aih-filter-label">Sort By</label>
+                    <label class="aih-filter-label" for="aih-sort"><?php _e('Sort By', 'art-in-heaven'); ?></label>
                     <select id="aih-sort" class="aih-select">
-                        <option value="artid-asc">Art ID: 1 → <?php echo count($art_pieces); ?></option>
-                        <option value="artid-desc">Art ID: <?php echo count($art_pieces); ?> → 1</option>
-                        <option value="title-asc">Title: A to Z</option>
-                        <option value="title-desc">Title: Z to A</option>
-                        <option value="artist-asc">Artist: A to Z</option>
-                        <option value="artist-desc">Artist: Z to A</option>
+                        <option value="artid-asc"><?php printf(__('Art ID: 1 → %d', 'art-in-heaven'), count($art_pieces)); ?></option>
+                        <option value="artid-desc"><?php printf(__('Art ID: %d → 1', 'art-in-heaven'), count($art_pieces)); ?></option>
+                        <option value="title-asc"><?php _e('Title: A to Z', 'art-in-heaven'); ?></option>
+                        <option value="title-desc"><?php _e('Title: Z to A', 'art-in-heaven'); ?></option>
+                        <option value="artist-asc"><?php _e('Artist: A to Z', 'art-in-heaven'); ?></option>
+                        <option value="artist-desc"><?php _e('Artist: Z to A', 'art-in-heaven'); ?></option>
                     </select>
                 </div>
                 <div class="aih-filter-section">
-                    <label class="aih-filter-label">Artist</label>
+                    <label class="aih-filter-label" for="aih-filter-artist"><?php _e('Artist', 'art-in-heaven'); ?></label>
                     <select id="aih-filter-artist" class="aih-select">
-                        <option value="">All Artists</option>
+                        <option value=""><?php _e('All Artists', 'art-in-heaven'); ?></option>
                         <?php foreach ($artists as $a): ?>
                         <option value="<?php echo esc_attr($a); ?>"><?php echo esc_html($a); ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
                 <div class="aih-filter-section">
-                    <label class="aih-filter-label">Medium</label>
+                    <label class="aih-filter-label" for="aih-filter-medium"><?php _e('Medium', 'art-in-heaven'); ?></label>
                     <select id="aih-filter-medium" class="aih-select">
-                        <option value="">All Mediums</option>
+                        <option value=""><?php _e('All Mediums', 'art-in-heaven'); ?></option>
                         <?php foreach ($mediums as $m): ?>
                         <option value="<?php echo esc_attr($m); ?>"><?php echo esc_html($m); ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
                 <div class="aih-filter-section aih-filter-favorites-section" style="display: none;">
-                    <label class="aih-filter-label">Show</label>
+                    <label class="aih-filter-label" for="aih-filter-favorites"><?php _e('Show', 'art-in-heaven'); ?></label>
                     <select id="aih-filter-favorites" class="aih-select">
-                        <option value="">All Items</option>
-                        <option value="favorites">Favorites Only</option>
+                        <option value=""><?php _e('All Items', 'art-in-heaven'); ?></option>
+                        <option value="favorites"><?php _e('Favorites Only', 'art-in-heaven'); ?></option>
                     </select>
                 </div>
                 <div class="aih-filter-section">
-                    <label class="aih-filter-label">Status</label>
+                    <label class="aih-filter-label" for="aih-filter-status"><?php _e('Status', 'art-in-heaven'); ?></label>
                     <select id="aih-filter-status" class="aih-select">
-                        <option value="">All</option>
-                        <option value="ending-soon">Ending Soon (&lt; 1 hour)</option>
-                        <option value="active">Active</option>
-                        <option value="ended">Ended</option>
+                        <option value=""><?php _e('All', 'art-in-heaven'); ?></option>
+                        <option value="ending-soon"><?php _e('Ending Soon (&lt; 1 hour)', 'art-in-heaven'); ?></option>
+                        <option value="active"><?php _e('Active', 'art-in-heaven'); ?></option>
+                        <option value="ended"><?php _e('Ended', 'art-in-heaven'); ?></option>
                     </select>
                 </div>
             </div>
-            <button type="button" class="aih-filter-reset" id="aih-filter-reset">Reset Filters</button>
+            <button type="button" class="aih-filter-reset" id="aih-filter-reset"><?php _e('Reset Filters', 'art-in-heaven'); ?></button>
             </div>
         </div>
 
@@ -231,21 +157,20 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
         <?php if (empty($art_pieces)): ?>
         <div class="aih-empty-state">
             <div class="aih-ornament">&#10022;</div>
-            <h2>Coming Soon</h2>
-            <p>Art pieces will be available here when the auction begins.</p>
+            <h2><?php _e('Coming Soon', 'art-in-heaven'); ?></h2>
+            <p><?php _e('Art pieces will be available here when the auction begins.', 'art-in-heaven'); ?></p>
         </div>
         <?php else: ?>
         <div class="aih-gallery-grid" id="aih-gallery">
             <?php foreach ($art_pieces as $piece):
                 $bidder_has_bid_check = false;
-                $is_favorite = $favorites->is_favorite($bidder_id, $piece->id);
-                $is_winning = $bid_model->is_bidder_winning($piece->id, $bidder_id);
-                $current_bid = $bid_model->get_highest_bid_amount($piece->id);
+                $is_favorite = !empty($piece->is_favorite);
+                $is_winning = isset($winning_ids[$piece->id]);
+                $current_bid = isset($highest_bids[$piece->id]) ? $highest_bids[$piece->id] : 0;
                 $has_bids = $current_bid > 0;
                 $display_bid = $has_bids ? $current_bid : $piece->starting_bid;
                 $min_bid = $has_bids ? $current_bid + $bid_increment : $piece->starting_bid;
-                $images = $art_images->get_images($piece->id);
-                $primary_image = !empty($images) ? $images[0]->watermarked_url : ($piece->watermarked_url ?: $piece->image_url);
+                $primary_image = $piece->watermarked_url ?: $piece->image_url;
 
                 // Proper status calculation - check computed_status first, then calculate from dates
                 $computed_status = isset($piece->computed_status) ? $piece->computed_status : null;
@@ -285,7 +210,7 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
                     $status_text = 'Winning';
                 } else {
                     // Check if bidder has placed a bid on this piece (outbid)
-                    $bidder_has_bid_check = $bid_model->has_bidder_bid($piece->id, $bidder_id);
+                    $bidder_has_bid_check = isset($bidder_bid_ids[$piece->id]);
                     if ($bidder_has_bid_check) {
                         $status_class = 'outbid';
                         $status_text = 'Outbid';
@@ -311,7 +236,7 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
                     <a href="?art_id=<?php echo intval($piece->id); ?>" class="aih-placeholder-link">
                         <div class="aih-placeholder">
                             <span class="aih-placeholder-id"><?php echo esc_html($piece->art_id); ?></span>
-                            <span class="aih-placeholder-text">No Image</span>
+                            <span class="aih-placeholder-text"><?php _e('No Image', 'art-in-heaven'); ?></span>
                         </div>
                     </a>
                     <?php endif; ?>
@@ -322,7 +247,7 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
                     <div class="aih-badge aih-badge-<?php echo $status_class; ?>"><?php echo esc_html($status_text); ?></div>
                     <?php endif; ?>
 
-                    <button type="button" class="aih-fav-btn <?php echo $is_favorite ? 'active' : ''; ?>" data-id="<?php echo intval($piece->id); ?>">
+                    <button type="button" class="aih-fav-btn <?php echo $is_favorite ? 'active' : ''; ?>" data-id="<?php echo intval($piece->id); ?>" aria-label="<?php echo $is_favorite ? esc_attr__('Remove from favorites', 'art-in-heaven') : esc_attr__('Add to favorites', 'art-in-heaven'); ?>" aria-pressed="<?php echo $is_favorite ? 'true' : 'false'; ?>">
                         <span class="aih-fav-icon">&#9829;</span>
                     </button>
 
@@ -340,7 +265,7 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
                     <p class="aih-card-artist"><?php echo esc_html($piece->artist); ?></p>
                     <?php if (!$has_bids): ?>
                     <p class="aih-card-bid">
-                        <span class="aih-bid-label">Starting Bid</span>
+                        <span class="aih-bid-label"><?php _e('Starting Bid', 'art-in-heaven'); ?></span>
                         <span class="aih-bid-amount">$<?php echo number_format($piece->starting_bid, 2); ?></span>
                     </p>
                     <?php endif; ?>
@@ -349,14 +274,14 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
                 <?php if ($is_upcoming): ?>
                 <div class="aih-card-footer">
                     <div class="aih-upcoming-notice aih-upcoming-notice--card">
-                        Bidding starts <?php echo esc_html(wp_date('M j, g:i A', strtotime($piece->auction_start))); ?>
+                        <?php printf(esc_html__('Bidding starts %s', 'art-in-heaven'), esc_html(wp_date('M j, g:i A', strtotime($piece->auction_start)))); ?>
                     </div>
                 </div>
                 <?php elseif (!$is_ended): ?>
                 <div class="aih-card-footer">
                     <div class="aih-bid-form">
-                        <input type="text" inputmode="numeric" pattern="[0-9]*" class="aih-bid-input" data-min="<?php echo esc_attr($min_bid); ?>" placeholder="$">
-                        <button type="button" class="aih-bid-btn" data-id="<?php echo intval($piece->id); ?>">Bid</button>
+                        <input type="text" inputmode="numeric" pattern="[0-9]*" class="aih-bid-input" data-min="<?php echo esc_attr($min_bid); ?>" placeholder="$" aria-label="<?php printf(esc_attr__('Bid amount for %s', 'art-in-heaven'), esc_attr($piece->title)); ?>">
+                        <button type="button" class="aih-bid-btn" data-id="<?php echo intval($piece->id); ?>" aria-label="<?php printf(esc_attr__('Place bid on %s', 'art-in-heaven'), esc_attr($piece->title)); ?>"><?php _e('Bid', 'art-in-heaven'); ?></button>
                     </div>
                 </div>
                 <?php endif; ?>
@@ -369,7 +294,7 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
     </main>
 
     <footer class="aih-footer">
-        <p>&copy; <?php echo esc_html(wp_date('Y')); ?> Art in Heaven. All rights reserved.</p>
+        <p><?php printf(esc_html__('© %s Art in Heaven. All rights reserved.', 'art-in-heaven'), wp_date('Y')); ?></p>
     </footer>
 </div>
 </div>
@@ -378,540 +303,4 @@ $bid_increment = floatval(get_option('aih_bid_increment', 1));
 <div id="aih-toast" class="aih-toast"></div>
 
 <!-- Scroll to Top Button -->
-<button type="button" class="aih-scroll-top" id="aih-scroll-top" title="Scroll to top">&uarr;</button>
-
-<script>
-jQuery(document).ready(function($) {
-    // Logout
-    $('#aih-logout').on('click', function() {
-        $.post(aihAjax.ajaxurl, {action:'aih_logout', nonce:aihAjax.nonce}, function() {
-            location.reload();
-        });
-    });
-
-    // Search & Filter
-    function filterCards() {
-        var search = $('#aih-search').val().toLowerCase().trim();
-        var artist = $('#aih-filter-artist').val();
-        var medium = $('#aih-filter-medium').val();
-        var favoritesOnly = $('#aih-filter-favorites').val() === 'favorites';
-        var statusFilter = $('#aih-filter-status').val();
-
-        var visibleCount = 0;
-
-        $('.aih-card').each(function() {
-            var $card = $(this);
-            var show = true;
-
-            // Get data attributes
-            var cardArtId = ($card.attr('data-art-id') || '').toLowerCase();
-            var cardTitle = ($card.attr('data-title') || '').toLowerCase();
-            var cardArtist = ($card.attr('data-artist') || '');
-            var cardMedium = ($card.attr('data-medium') || '');
-            var isFavorite = $card.find('.aih-card-image').attr('data-favorite') === '1';
-
-            // Search filter - check against art ID, title, and artist
-            if (search) {
-                var searchText = cardArtId + ' ' + cardTitle + ' ' + cardArtist.toLowerCase();
-                if (searchText.indexOf(search) === -1) {
-                    show = false;
-                }
-            }
-
-            // Artist filter - exact match (case-insensitive)
-            if (show && artist) {
-                if (cardArtist.toLowerCase() !== artist.toLowerCase()) {
-                    show = false;
-                }
-            }
-
-            // Medium filter - exact match (case-insensitive)
-            if (show && medium) {
-                if (cardMedium.toLowerCase() !== medium.toLowerCase()) {
-                    show = false;
-                }
-            }
-
-            // Favorites filter
-            if (show && favoritesOnly && !isFavorite) {
-                show = false;
-            }
-
-            // Status filter
-            if (show && statusFilter) {
-                var isCardEnded = $card.hasClass('ended') || $card.hasClass('won') || $card.hasClass('paid');
-                if (statusFilter === 'ended') {
-                    if (!isCardEnded) show = false;
-                } else if (statusFilter === 'active') {
-                    if (isCardEnded) show = false;
-                } else if (statusFilter === 'ending-soon') {
-                    if (isCardEnded) { show = false; }
-                    else {
-                        var cardEnd = $card.attr('data-end');
-                        if (!cardEnd) { show = false; }
-                        else {
-                            var endMs = new Date(cardEnd.replace(/-/g, '/')).getTime();
-                            var nowMs = new Date().getTime() + timeOffset;
-                            var remaining = endMs - nowMs;
-                            if (remaining <= 0 || remaining >= 3600000) show = false;
-                        }
-                    }
-                }
-            }
-
-            // Show or hide the card
-            if (show) {
-                $card.css('display', '');
-                visibleCount++;
-            } else {
-                $card.css('display', 'none');
-            }
-        });
-    }
-
-    // Check if any favorites exist and show/hide favorites filter section
-    function updateFavoritesFilterVisibility() {
-        var hasFavorites = $('.aih-card-image[data-favorite="1"]').length > 0;
-        if (hasFavorites) {
-            $('.aih-filter-favorites-section').show();
-        } else {
-            $('.aih-filter-favorites-section').hide();
-            $('#aih-filter-favorites').val('');
-        }
-    }
-    updateFavoritesFilterVisibility();
-
-    // Sort & Filter Panel Toggle
-    function isMobile() {
-        return window.innerWidth <= 600;
-    }
-
-    function openFilterPanel() {
-        $('#aih-filter-toggle').addClass('active');
-        $('#aih-filter-panel').addClass('open');
-        if (isMobile()) {
-            $('#aih-filter-overlay').addClass('open');
-            $('body').addClass('filter-open');
-        }
-    }
-
-    function closeFilterPanel() {
-        $('#aih-filter-toggle').removeClass('active');
-        $('#aih-filter-panel').removeClass('open');
-        $('#aih-filter-overlay').removeClass('open');
-        $('body').removeClass('filter-open');
-    }
-
-    $('#aih-filter-toggle').on('click', function() {
-        if ($('#aih-filter-panel').hasClass('open')) {
-            closeFilterPanel();
-        } else {
-            openFilterPanel();
-        }
-    });
-
-    $('#aih-filter-close, #aih-filter-overlay').on('click', function() {
-        closeFilterPanel();
-    });
-
-    // Sort gallery cards
-    // Store original card order as array of IDs for reset
-    var originalOrder = $('#aih-gallery').children('.aih-card').map(function() {
-        return $(this).data('id');
-    }).get();
-
-    function sortCards(overrideSortBy) {
-        var sortBy = overrideSortBy || $('#aih-sort').val();
-
-        var $grid = $('#aih-gallery');
-        var $cards = $grid.children('.aih-card');
-
-        $cards.sort(function(a, b) {
-            var $a = $(a);
-            var $b = $(b);
-            var aVal, bVal;
-
-            switch (sortBy) {
-                case 'default':
-                    // Favorites first, then by soonest ending
-                    var aFav = $a.find('.aih-card-image').attr('data-favorite') === '1' ? 0 : 1;
-                    var bFav = $b.find('.aih-card-image').attr('data-favorite') === '1' ? 0 : 1;
-                    if (aFav !== bFav) return aFav - bFav;
-                    var aEnd = $a.attr('data-end') ? new Date($a.attr('data-end').replace(/-/g, '/')).getTime() : Infinity;
-                    var bEnd = $b.attr('data-end') ? new Date($b.attr('data-end').replace(/-/g, '/')).getTime() : Infinity;
-                    return aEnd - bEnd;
-                case 'artid-asc':
-                    aVal = parseInt($a.attr('data-art-id')) || 0;
-                    bVal = parseInt($b.attr('data-art-id')) || 0;
-                    return aVal - bVal;
-                case 'artid-desc':
-                    aVal = parseInt($a.attr('data-art-id')) || 0;
-                    bVal = parseInt($b.attr('data-art-id')) || 0;
-                    return bVal - aVal;
-                case 'title-asc':
-                    aVal = ($a.attr('data-title') || '').toLowerCase();
-                    bVal = ($b.attr('data-title') || '').toLowerCase();
-                    return aVal.localeCompare(bVal);
-                case 'title-desc':
-                    aVal = ($a.attr('data-title') || '').toLowerCase();
-                    bVal = ($b.attr('data-title') || '').toLowerCase();
-                    return bVal.localeCompare(aVal);
-                case 'artist-asc':
-                    aVal = ($a.attr('data-artist') || '').toLowerCase();
-                    bVal = ($b.attr('data-artist') || '').toLowerCase();
-                    return aVal.localeCompare(bVal);
-                case 'artist-desc':
-                    aVal = ($a.attr('data-artist') || '').toLowerCase();
-                    bVal = ($b.attr('data-artist') || '').toLowerCase();
-                    return bVal.localeCompare(aVal);
-                default:
-                    return 0;
-            }
-        });
-
-        $grid.append($cards);
-    }
-
-    // Bind filter events with debounce for search input
-    var filterTimer;
-    $('#aih-search').on('input', function() {
-        clearTimeout(filterTimer);
-        filterTimer = setTimeout(filterCards, 200);
-    }).on('change', function() {
-        filterCards();
-    });
-
-    $('#aih-filter-artist, #aih-filter-medium, #aih-filter-favorites, #aih-filter-status').on('change', function() {
-        filterCards();
-    });
-
-    // Track whether user has manually picked a sort
-    var userChangedSort = false;
-
-    // Bind sort event
-    $('#aih-sort').on('change', function() {
-        userChangedSort = true;
-        sortCards();
-    });
-
-    // Reset filters
-    $('#aih-filter-reset').on('click', function() {
-        $('#aih-search').val('');
-        $('#aih-sort').prop('selectedIndex', 0);
-        $('#aih-filter-artist').val('');
-        $('#aih-filter-medium').val('');
-        $('#aih-filter-favorites').val('');
-        $('#aih-filter-status').val('');
-        userChangedSort = false;
-        sortCards('default');
-        filterCards();
-    });
-
-    // Apply default sort and filter on page load
-    sortCards('default');
-    filterCards();
-
-    // Favorite toggle - only update UI after server confirmation
-    $('#aih-gallery').on('click', '.aih-fav-btn', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        var $btn = $(this);
-        if ($btn.hasClass('loading')) return;
-        var id = $btn.data('id');
-        $btn.addClass('loading');
-
-        $.post(aihAjax.ajaxurl, {action:'aih_toggle_favorite', nonce:aihAjax.nonce, art_piece_id:id}, function(r) {
-            if (r.success) {
-                $btn.toggleClass('active');
-                var $cardImage = $btn.closest('.aih-card-image');
-                $cardImage.attr('data-favorite', $btn.hasClass('active') ? '1' : '0');
-                updateFavoritesFilterVisibility();
-                if (!userChangedSort) sortCards('default');
-                filterCards();
-            }
-        }).fail(function() {
-            // Silently fail - don't change UI state
-        }).always(function() {
-            $btn.removeClass('loading');
-        });
-    });
-
-    // Place bid
-    $('#aih-gallery').on('click', '.aih-bid-btn', function() {
-        var $btn = $(this);
-        var $card = $btn.closest('.aih-card');
-        var $input = $card.find('.aih-bid-input');
-        var $msg = $card.find('.aih-bid-message');
-        var id = $btn.data('id');
-        var amount = parseInt($input.val());
-
-        if (!amount || amount < 1) {
-            $msg.text('Enter a valid bid').addClass('error').show();
-            return;
-        }
-
-        // Confirm bid amount to prevent fat-finger mistakes
-        var formatted = '$' + amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        window.aihConfirmBid(formatted, function() {
-            $btn.prop('disabled', true).text('...');
-            $msg.hide();
-
-            $.post(aihAjax.ajaxurl, {action:'aih_place_bid', nonce:aihAjax.nonce, art_piece_id:id, bid_amount:amount}, function(r) {
-                if (r.success) {
-                    if (navigator.vibrate) navigator.vibrate(100);
-                    $msg.removeClass('error').addClass('success').text('Bid placed!').show();
-                    $card.removeClass('outbid').addClass('winning').attr('data-has-bid', '1');
-                    var $badge = $card.find('.aih-badge');
-                    if ($badge.length) {
-                        $badge.attr('class', 'aih-badge aih-badge-winning').text('Winning');
-                    } else {
-                        $card.find('.aih-card-image').append('<div class="aih-badge aih-badge-winning">Winning</div>');
-                    }
-                    $input.val('');
-                    setTimeout(function() { $msg.fadeOut(); }, 2000);
-                } else {
-                    $msg.removeClass('success').addClass('error').text(r.data.message || 'Bid failed').show();
-                }
-                $btn.prop('disabled', false).text('Bid');
-            }).fail(function() {
-                $msg.removeClass('success').addClass('error').text('Connection error. Please try again.').show();
-                $btn.prop('disabled', false).text('Bid');
-            });
-        });
-    });
-
-    // Enter key to bid
-    $('#aih-gallery').on('keypress', '.aih-bid-input', function(e) {
-        if (e.which === 13) $(this).closest('.aih-card').find('.aih-bid-btn').click();
-    });
-
-    // View toggle (grid vs single column)
-    $('.aih-view-btn').on('click', function() {
-        var view = $(this).data('view');
-        $('.aih-view-btn').removeClass('active');
-        $(this).addClass('active');
-
-        if (view === 'single') {
-            $('#aih-gallery').addClass('single-view');
-        } else {
-            $('#aih-gallery').removeClass('single-view');
-        }
-    });
-
-    // Countdown timer functionality
-    var serverTime = parseInt($('#aih-gallery-wrapper').data('server-time')) || new Date().getTime();
-    var timeOffset = serverTime - new Date().getTime();
-
-    function updateCountdowns() {
-        // Update visible countdown timers
-        $('.aih-time-remaining').each(function() {
-            var $el = $(this);
-            var endTime = $el.attr('data-end');
-            if (!endTime) return;
-
-            var end = new Date(endTime.replace(/-/g, '/')).getTime();
-            var now = new Date().getTime() + timeOffset;
-            var diff = end - now;
-
-            if (diff <= 0) {
-                $el.find('.aih-time-value').text('Ended');
-                $el.addClass('ended');
-                return;
-            }
-
-            var days = Math.floor(diff / (1000 * 60 * 60 * 24));
-            var hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            var minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-            var seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-            var timeStr = '';
-            if (days > 0) {
-                timeStr = days + 'd ' + hours + 'h';
-            } else if (hours > 0) {
-                timeStr = hours + 'h ' + minutes + 'm';
-            } else {
-                timeStr = minutes + 'm ' + seconds + 's';
-            }
-
-            $el.find('.aih-time-value').text(timeStr);
-
-            // Add urgency class if less than 1 hour
-            if (diff < 3600000) {
-                $el.addClass('urgent');
-            }
-        });
-
-        // Update badges and disable forms for all cards with data-end
-        $('.aih-card[data-end]').each(function() {
-            var $card = $(this);
-            if ($card.hasClass('ended') || $card.hasClass('won') || $card.hasClass('paid')) return;
-
-            var endTime = $card.attr('data-end');
-            var end = new Date(endTime.replace(/-/g, '/')).getTime();
-            var now = new Date().getTime() + timeOffset;
-            var diff = end - now;
-
-            if (diff <= 0) {
-                var wasWinning = $card.hasClass('winning');
-                var newStatus = wasWinning ? 'won' : 'ended';
-                var newText = wasWinning ? 'Won' : 'Ended';
-
-                $card.removeClass('winning').addClass(newStatus);
-
-                var $badge = $card.find('.aih-badge');
-                if ($badge.length) {
-                    $badge.attr('class', 'aih-badge aih-badge-' + newStatus).text(newText);
-                } else {
-                    $card.find('.aih-card-image').append('<div class="aih-badge aih-badge-' + newStatus + '">' + newText + '</div>');
-                }
-
-                // Disable bid form
-                $card.find('.aih-bid-input').prop('disabled', true).attr('placeholder', 'Ended');
-                $card.find('.aih-bid-btn').prop('disabled', true).text('Ended');
-                $card.find('.aih-card-footer').hide();
-            }
-        });
-    }
-
-    // Update countdowns immediately and every second
-    updateCountdowns();
-    setInterval(updateCountdowns, 1000);
-
-    // Scroll to Top functionality
-    var $scrollBtn = $('#aih-scroll-top');
-    $(window).on('scroll', function() {
-        if ($(this).scrollTop() > 300) {
-            $scrollBtn.addClass('visible');
-        } else {
-            $scrollBtn.removeClass('visible');
-        }
-    });
-
-    $scrollBtn.on('click', function() {
-        $('html, body').animate({ scrollTop: 0 }, 400);
-    });
-
-    // === Live bid status polling ===
-    var pollTimer = null;
-    var POLL_INTERVAL = 5000;
-
-    function hasActiveAuctions() {
-        var hasActive = false;
-        $('.aih-card').each(function() {
-            var $card = $(this);
-            if (!$card.hasClass('ended') && !$card.hasClass('won') && !$card.hasClass('paid')) {
-                hasActive = true;
-                return false;
-            }
-        });
-        return hasActive;
-    }
-
-    function pollStatus() {
-        if (!aihAjax.isLoggedIn || !hasActiveAuctions()) return;
-
-        var ids = [];
-        $('.aih-card').each(function() {
-            var id = $(this).data('id');
-            if (id) ids.push(id);
-        });
-        if (ids.length === 0) return;
-
-        $.post(aihAjax.ajaxurl, {
-            action: 'aih_poll_status',
-            nonce: aihAjax.nonce,
-            art_piece_ids: ids
-        }, function(r) {
-            if (!r.success || !r.data || !r.data.items) return;
-            var items = r.data.items;
-
-            $.each(items, function(id, info) {
-                if (info.status === 'ended') return; // countdown handles ended transitions
-                var $card = $('.aih-card[data-id="' + id + '"]');
-                if (!$card.length) return;
-
-                // Update winning/outbid status
-                var wasWinning = $card.hasClass('winning');
-                var hasBid = $card.attr('data-has-bid') === '1' || info.has_bid;
-                if (info.has_bid) $card.attr('data-has-bid', '1');
-
-                if (info.is_winning && !wasWinning) {
-                    $card.removeClass('outbid').addClass('winning');
-                    var $badge = $card.find('.aih-badge');
-                    if ($badge.length) {
-                        $badge.attr('class', 'aih-badge aih-badge-winning').text('Winning');
-                    } else {
-                        $card.find('.aih-card-image').append('<div class="aih-badge aih-badge-winning">Winning</div>');
-                    }
-                } else if (!info.is_winning && wasWinning) {
-                    $card.removeClass('winning');
-                    if (hasBid) {
-                        $card.addClass('outbid');
-                        var $badge = $card.find('.aih-badge');
-                        if ($badge.length) {
-                            $badge.attr('class', 'aih-badge aih-badge-outbid').text('Outbid');
-                        } else {
-                            $card.find('.aih-card-image').append('<div class="aih-badge aih-badge-outbid">Outbid</div>');
-                        }
-                    } else {
-                        $card.find('.aih-badge').remove();
-                    }
-                }
-
-                // Update min bid on input
-                var $input = $card.find('.aih-bid-input');
-                if ($input.length) {
-                    $input.attr('data-min', info.min_bid).data('min', info.min_bid);
-                }
-
-                // Hide "Starting Bid" label if bids now exist
-                if (info.has_bids) {
-                    $card.find('.aih-card-bid').hide();
-                }
-            });
-
-            // Update cart count
-            var $cartCount = $('.aih-cart-count');
-            if (r.data.cart_count > 0) {
-                if ($cartCount.length) {
-                    $cartCount.text(r.data.cart_count);
-                } else {
-                    var checkoutUrl = $('a.aih-cart-link').attr('href') || '<?php echo esc_url($checkout_url); ?>';
-                    if (checkoutUrl) {
-                        $('.aih-header-actions .aih-theme-toggle').after(
-                            '<a href="' + checkoutUrl + '" class="aih-cart-link"><span class="aih-cart-icon">&#128722;</span><span class="aih-cart-count">' + r.data.cart_count + '</span></a>'
-                        );
-                    }
-                }
-            }
-        });
-    }
-
-    function startPolling() {
-        if (pollTimer) return;
-        pollTimer = setInterval(pollStatus, POLL_INTERVAL);
-    }
-
-    function stopPolling() {
-        if (pollTimer) {
-            clearInterval(pollTimer);
-            pollTimer = null;
-        }
-    }
-
-    // Start polling after initial delay
-    setTimeout(function() {
-        startPolling();
-    }, POLL_INTERVAL);
-
-    // Pause/resume on tab visibility
-    document.addEventListener('visibilitychange', function() {
-        if (document.hidden) {
-            stopPolling();
-        } else {
-            pollStatus();
-            startPolling();
-        }
-    });
-});
-</script>
+<button type="button" class="aih-scroll-top" id="aih-scroll-top" title="<?php esc_attr_e('Scroll to top', 'art-in-heaven'); ?>">&uarr;</button>

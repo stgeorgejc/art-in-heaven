@@ -38,7 +38,7 @@ rsort($years);
             <tr>
                 <th><?php _e('Target Year', 'art-in-heaven'); ?></th>
                 <td>
-                    <input type="number" id="aih-target-year" value="<?php echo date('Y') + 1; ?>" min="2020" max="2099">
+                    <input type="number" id="aih-target-year" value="<?php echo wp_date('Y') + 1; ?>" min="2020" max="2099">
                 </td>
             </tr>
             <tr>
@@ -107,7 +107,7 @@ rsort($years);
             <tr>
                 <th><?php _e('Create New Year Tables', 'art-in-heaven'); ?></th>
                 <td>
-                    <input type="number" id="aih-new-year" value="<?php echo date('Y'); ?>" min="2020" max="2099" style="width: 100px;">
+                    <input type="number" id="aih-new-year" value="<?php echo wp_date('Y'); ?>" min="2020" max="2099" style="width: 100px;">
                     <button type="button" id="aih-create-year-btn" class="button"><?php _e('Create Tables', 'art-in-heaven'); ?></button>
                     <span id="aih-create-result"></span>
                 </td>

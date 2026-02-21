@@ -128,6 +128,7 @@ class Art_In_Heaven {
         register_deactivation_hook(__FILE__, array($this, 'deactivate'));
         
         add_action('init', array($this, 'maybe_update_db'), 0);
+        add_action('init', array('AIH_Auth', 'maybe_encrypt_api_data'), 1);
         add_action('init', array($this, 'init'), 0);
         add_action('rest_api_init', array($this, 'init_rest_api'));
         add_action('wp_enqueue_scripts', array($this, 'enqueue_frontend_assets'));
@@ -185,7 +186,7 @@ class Art_In_Heaven {
      */
     public function maybe_update_db() {
         $installed_version = get_option('aih_db_version', '0');
-        if (version_compare($installed_version, AIH_VERSION, '<')) {
+        if (version_compare($installed_version, AIH_DB_VERSION, '<')) {
             AIH_Database::activate();
         }
     }
@@ -429,20 +430,26 @@ class Art_In_Heaven {
     }
     
     /**
-     * Add body class on plugin pages for CSS targeting
+     * Check if the current page contains an AIH shortcode.
      */
-    public function add_body_class($classes) {
+    private function is_aih_page() {
         global $post;
-        if (!$post || empty($post->post_content)) return $classes;
+        if (!$post || empty($post->post_content)) return false;
 
-        if (has_shortcode($post->post_content, 'art_in_heaven_gallery')
+        return has_shortcode($post->post_content, 'art_in_heaven_gallery')
             || has_shortcode($post->post_content, 'art_in_heaven_item')
             || has_shortcode($post->post_content, 'art_in_heaven_my_bids')
             || has_shortcode($post->post_content, 'art_in_heaven_checkout')
             || has_shortcode($post->post_content, 'art_in_heaven_login')
             || has_shortcode($post->post_content, 'art_in_heaven_winners')
-            || has_shortcode($post->post_content, 'art_in_heaven_my_wins')
-        ) {
+            || has_shortcode($post->post_content, 'art_in_heaven_my_wins');
+    }
+
+    /**
+     * Add body class on plugin pages for CSS targeting
+     */
+    public function add_body_class($classes) {
+        if ($this->is_aih_page()) {
             $classes[] = 'aih-active';
         }
 
@@ -453,6 +460,8 @@ class Art_In_Heaven {
      * Enqueue frontend assets
      */
     public function enqueue_frontend_assets() {
+        if (!$this->is_aih_page()) return;
+
         // Google Fonts
         wp_enqueue_style(
             'aih-google-fonts',
@@ -484,6 +493,8 @@ class Art_In_Heaven {
             'bidderId'       => $auth->get_current_bidder_id(),
             'vapidPublicKey' => $vapid['publicKey'],
             'swUrl'          => home_url('/?aih-sw=1'),
+            'checkoutUrl'    => AIH_Template_Helper::get_checkout_url(),
+            'bidIncrement'   => floatval(get_option('aih_bid_increment', 1)),
             'strings'        => array(
                 'bidTooLow'      => __('Your Bid is too Low.', 'art-in-heaven'),
                 'bidSuccess'     => __('Bid placed successfully!', 'art-in-heaven'),
@@ -497,14 +508,35 @@ class Art_In_Heaven {
                 'checkoutSuccess'=> __('Order created!', 'art-in-heaven'),
                 'loading'        => __('Loading...', 'art-in-heaven'),
                 'error'          => __('An error occurred.', 'art-in-heaven'),
+                'enterCode'      => __('Please enter your code', 'art-in-heaven'),
+                'enterValidBid'  => __('Please enter a valid bid amount', 'art-in-heaven'),
+                'bidPlaced'      => __('Your bid has been placed!', 'art-in-heaven'),
+                'connectionError'=> __('Connection error. Please try again.', 'art-in-heaven'),
+                'networkError'   => __('Network error. Please try again.', 'art-in-heaven'),
             )
         ));
+
+        // Conditionally enqueue page-specific JS
+        global $post;
+        if ($post) {
+            $content = $post->post_content;
+            if (has_shortcode($content, 'art_in_heaven_gallery')) {
+                wp_enqueue_script('aih-gallery', AIH_PLUGIN_URL . 'assets/js/aih-gallery.js', array('jquery', 'aih-frontend'), AIH_VERSION, true);
+            }
+            if (has_shortcode($content, 'art_in_heaven_item')) {
+                wp_enqueue_script('aih-single-item', AIH_PLUGIN_URL . 'assets/js/aih-single-item.js', array('jquery', 'aih-frontend'), AIH_VERSION, true);
+            }
+            if (has_shortcode($content, 'art_in_heaven_my_bids')) {
+                wp_enqueue_script('aih-my-bids', AIH_PLUGIN_URL . 'assets/js/aih-my-bids.js', array('jquery', 'aih-frontend'), AIH_VERSION, true);
+            }
+        }
     }
     
     /**
      * Add preconnect hints for Google Fonts
      */
     public function add_preconnect_hints() {
+        if (!$this->is_aih_page()) return;
         echo '<link rel="preconnect" href="https://fonts.googleapis.com">' . "\n";
         echo '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>' . "\n";
     }
@@ -677,7 +709,7 @@ class Art_In_Heaven {
     
     private function set_default_options() {
         $defaults = array(
-            'aih_auction_year' => date('Y'),
+            'aih_auction_year' => wp_date('Y'),
             'aih_tax_rate' => 0,
             'aih_currency' => 'USD',
             'aih_enable_favorites' => 1,

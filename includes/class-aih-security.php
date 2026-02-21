@@ -123,14 +123,14 @@ class AIH_Security {
                 if ($timestamp === false) {
                     return $args['default'] ?? '';
                 }
-                return date('Y-m-d', $timestamp);
+                return wp_date('Y-m-d', $timestamp);
                 
             case 'datetime':
                 $timestamp = strtotime($value);
                 if ($timestamp === false) {
                     return $args['default'] ?? '';
                 }
-                return date('Y-m-d H:i:s', $timestamp);
+                return wp_date('Y-m-d H:i:s', $timestamp);
                 
             case 'phone':
                 // Remove all non-numeric characters except + for international

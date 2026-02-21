@@ -5,7 +5,7 @@
 if (!defined('ABSPATH')) exit;
 
 if (!AIH_Database::tables_exist()) {
-    echo '<div style="text-align:center;padding:60px;">The auction system is being set up.</div>';
+    echo '<div style="text-align:center;padding:60px;">' . esc_html__('The auction system is being set up.', 'art-in-heaven') . '</div>';
     return;
 }
 
@@ -31,62 +31,30 @@ if ($all_winning_bids) {
 
 $art_images = new AIH_Art_Images();
 ?>
-<script>
-if (typeof aihAjax === 'undefined') {
-    var aihAjax = {
-        ajaxurl: '<?php echo admin_url('admin-ajax.php'); ?>',
-        nonce: '<?php echo wp_create_nonce('aih_nonce'); ?>',
-        isLoggedIn: <?php echo $is_logged_in ? 'true' : 'false'; ?>
-    };
-}
-</script>
 
 <div class="aih-page aih-winners-page">
 <script>(function(){var t=localStorage.getItem('aih-theme');if(t==='dark'){document.currentScript.parentElement.classList.add('dark-mode');}})();</script>
-    <header class="aih-header">
-        <div class="aih-header-inner">
-            <a href="<?php echo esc_url($gallery_url); ?>" class="aih-logo">Art in Heaven</a>
-            <nav class="aih-nav">
-                <a href="<?php echo esc_url($gallery_url); ?>" class="aih-nav-link">Gallery</a>
-                <?php if ($my_bids_url): ?>
-                <a href="<?php echo esc_url($my_bids_url); ?>" class="aih-nav-link">My Bids</a>
-                <?php endif; ?>
-            </nav>
-            <div class="aih-header-actions">
-                <?php if ($is_logged_in): ?>
-                <button type="button" class="aih-theme-toggle" id="aih-theme-toggle" title="Toggle dark mode"><svg class="aih-theme-icon aih-icon-sun" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg><svg class="aih-theme-icon aih-icon-moon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg><span class="aih-theme-toggle-label">Theme</span></button>
-                <div class="aih-user-menu">
-                    <?php if ($my_bids_url): ?>
-                    <a href="<?php echo esc_url($my_bids_url); ?>" class="aih-user-name aih-user-name-link"><?php echo esc_html($bidder_name); ?></a>
-                    <?php else: ?>
-                    <span class="aih-user-name"><?php echo esc_html($bidder_name); ?></span>
-                    <?php endif; ?>
-                    <button type="button" class="aih-logout-btn" id="aih-logout">Sign Out</button>
-                </div>
-                <?php endif; ?>
-            </div>
-        </div>
-    </header>
+    <?php $active_page = 'winners'; $cart_count = 0; include AIH_PLUGIN_DIR . 'templates/partials/header.php'; ?>
 
     <main class="aih-main">
         <div class="aih-gallery-header">
             <div class="aih-gallery-title">
-                <h1>Winners</h1>
-                <p class="aih-subtitle"><?php echo count($winning_bids); ?> pieces sold</p>
+                <h1><?php _e('Winners', 'art-in-heaven'); ?></h1>
+                <p class="aih-subtitle"><?php printf(esc_html__('%d pieces sold', 'art-in-heaven'), count($winning_bids)); ?></p>
             </div>
         </div>
 
         <?php if (empty($winning_bids)): ?>
         <div class="aih-empty-state">
             <div class="aih-ornament">✦</div>
-            <h2>Coming Soon</h2>
-            <p>Winners will be displayed here after the auction ends.</p>
+            <h2><?php _e('Coming Soon', 'art-in-heaven'); ?></h2>
+            <p><?php _e('Winners will be displayed here after the auction ends.', 'art-in-heaven'); ?></p>
         </div>
         <?php else: 
             // Group by end date
             $grouped = array();
             foreach ($winning_bids as $bid) {
-                $date_key = date('Y-m-d H:i', strtotime($bid->auction_end));
+                $date_key = wp_date('Y-m-d H:i', strtotime($bid->auction_end));
                 if (!isset($grouped[$date_key])) $grouped[$date_key] = array();
                 $grouped[$date_key][] = $bid;
             }
@@ -95,7 +63,7 @@ if (typeof aihAjax === 'undefined') {
             <?php foreach ($grouped as $date => $bids): ?>
             <div class="aih-winners-group">
                 <div class="aih-date-divider">
-                    <span><?php echo date('F j, Y \a\t g:i A', strtotime($date)); ?></span>
+                    <span><?php echo wp_date('F j, Y \a\t g:i A', strtotime($date)); ?></span>
                 </div>
                 <div class="aih-gallery-grid">
                     <?php foreach ($bids as $bid):
@@ -112,10 +80,10 @@ if (typeof aihAjax === 'undefined') {
                             <?php else: ?>
                             <div class="aih-placeholder">
                                 <span class="aih-placeholder-id"><?php echo esc_html($bid->art_id); ?></span>
-                                <span class="aih-placeholder-text">No Image</span>
+                                <span class="aih-placeholder-text"><?php _e('No Image', 'art-in-heaven'); ?></span>
                             </div>
                             <?php endif; ?>
-                            <div class="aih-badge aih-badge-ended">Ended</div>
+                            <div class="aih-badge aih-badge-ended"><?php _e('Ended', 'art-in-heaven'); ?></div>
                         </div>
 
                         <div class="aih-card-body">
@@ -126,7 +94,7 @@ if (typeof aihAjax === 'undefined') {
                         <div class="aih-card-footer">
                             <div class="aih-winner-info aih-winner-info-full">
                                 <div class="aih-winner-info-item">
-                                    <span class="aih-bid-label">Winner</span>
+                                    <span class="aih-bid-label"><?php _e('Winner', 'art-in-heaven'); ?></span>
                                     <span class="aih-winner-code"><?php echo esc_html(substr($bid->bidder_id, 0, 3) . '***'); ?></span>
                                 </div>
                             </div>
@@ -140,7 +108,7 @@ if (typeof aihAjax === 'undefined') {
     </main>
 
     <footer class="aih-footer">
-        <p>&copy; <?php echo date('Y'); ?> Art in Heaven. All rights reserved.</p>
+        <p><?php printf(esc_html__('&copy; %s Art in Heaven. All rights reserved.', 'art-in-heaven'), wp_date('Y')); ?></p>
     </footer>
 </div>
 

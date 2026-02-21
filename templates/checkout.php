@@ -14,60 +14,11 @@ $bidder_name = $bidder_info['name'];
 $gallery_url = AIH_Template_Helper::get_gallery_url();
 $my_bids_url = AIH_Template_Helper::get_my_bids_url();
 ?>
-<script>
-if (typeof aihAjax === 'undefined') {
-    var aihAjax = {
-        ajaxurl: '<?php echo admin_url('admin-ajax.php'); ?>',
-        nonce: '<?php echo wp_create_nonce('aih_nonce'); ?>',
-        isLoggedIn: <?php echo $is_logged_in ? 'true' : 'false'; ?>
-    };
-}
-</script>
-
-<?php if (!$is_logged_in): ?>
-<div class="aih-page">
-    <header class="aih-header">
-        <div class="aih-header-inner">
-            <a href="<?php echo esc_url($gallery_url); ?>" class="aih-logo">Art in Heaven</a>
-        </div>
-    </header>
-    <main class="aih-main aih-main-centered">
-        <div class="aih-login-card">
-            <div class="aih-login-header">
-                <div class="aih-ornament">✦</div>
-                <h1>Sign In Required</h1>
-                <p>Please sign in to complete your purchase</p>
-            </div>
-            <div class="aih-login-form">
-                <div class="aih-field">
-                    <label>Confirmation Code</label>
-                    <input type="text" id="aih-login-code" placeholder="XXXXXXXX" autocomplete="off">
-                </div>
-                <button type="button" id="aih-login-btn" class="aih-btn">Sign In</button>
-                <div id="aih-login-msg" class="aih-message"></div>
-            </div>
-        </div>
-    </main>
-</div>
-<script>
-jQuery(document).ready(function($) {
-    $('#aih-login-btn').on('click', function() {
-        var code = $('#aih-login-code').val().trim().toUpperCase();
-        if (!code) { $('#aih-login-msg').addClass('error').text('Enter your code').show(); return; }
-        $(this).prop('disabled', true).addClass('loading');
-        $.post(aihAjax.ajaxurl, {action:'aih_verify_code', nonce:aihAjax.nonce, code:code}, function(r) {
-            if (r.success) location.reload();
-            else { $('#aih-login-msg').addClass('error').text(r.data.message).show(); $('#aih-login-btn').prop('disabled', false).removeClass('loading'); }
-        }).fail(function() {
-            $('#aih-login-msg').addClass('error').text('Connection error. Please try again.').show();
-            $('#aih-login-btn').prop('disabled', false).removeClass('loading');
-        });
-    });
-    $('#aih-login-code').on('keypress', function(e) { if (e.which === 13) $('#aih-login-btn').click(); })
-        .on('input', function() { this.value = this.value.toUpperCase(); });
-});
-</script>
-<?php return; endif;
+<?php if (!$is_logged_in):
+    $sub_heading = __('Please sign in to complete your purchase', 'art-in-heaven');
+    include AIH_PLUGIN_DIR . 'templates/partials/login-gate.php';
+    return;
+endif;
 
 // Handle PushPay redirect - check for payment token
 $payment_result = null;
@@ -103,74 +54,53 @@ $total = $subtotal + $tax;
 
 <div class="aih-page aih-checkout-page">
 <script>(function(){var t=localStorage.getItem('aih-theme');if(t==='dark'){document.currentScript.parentElement.classList.add('dark-mode');}})();</script>
-    <header class="aih-header">
-        <div class="aih-header-inner">
-            <a href="<?php echo esc_url($gallery_url); ?>" class="aih-logo">Art in Heaven</a>
-            <nav class="aih-nav">
-                <a href="<?php echo esc_url($gallery_url); ?>" class="aih-nav-link">Gallery</a>
-                <?php if ($my_bids_url): ?>
-                <a href="<?php echo esc_url($my_bids_url); ?>" class="aih-nav-link">My Bids</a>
-                <?php endif; ?>
-            </nav>
-            <div class="aih-header-actions">
-                <button type="button" class="aih-theme-toggle" id="aih-theme-toggle" title="Toggle dark mode"><svg class="aih-theme-icon aih-icon-sun" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg><svg class="aih-theme-icon aih-icon-moon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg><span class="aih-theme-toggle-label">Theme</span></button>
-                <div class="aih-user-menu">
-                    <?php if ($my_bids_url): ?>
-                    <a href="<?php echo esc_url($my_bids_url); ?>" class="aih-user-name aih-user-name-link"><?php echo esc_html($bidder_name); ?></a>
-                    <?php else: ?>
-                    <span class="aih-user-name"><?php echo esc_html($bidder_name); ?></span>
-                    <?php endif; ?>
-                    <button type="button" class="aih-logout-btn" id="aih-logout">Sign Out</button>
-                </div>
-            </div>
-        </div>
-    </header>
+    <?php $active_page = 'checkout'; $cart_count = 0; include AIH_PLUGIN_DIR . 'templates/partials/header.php'; ?>
 
     <main class="aih-main">
         <?php if ($payment_result === 'success'): ?>
         <div class="aih-payment-banner aih-payment-success">
             <span class="aih-payment-icon">&#10003;</span>
             <div>
-                <strong>Payment Successful</strong>
-                <p>Thank you! Your payment has been received. You can view your order details below.</p>
+                <strong><?php _e('Payment Successful', 'art-in-heaven'); ?></strong>
+                <p><?php _e('Thank you! Your payment has been received. You can view your order details below.', 'art-in-heaven'); ?></p>
             </div>
         </div>
         <?php elseif ($payment_result === 'cancelled'): ?>
         <div class="aih-payment-banner aih-payment-cancelled">
             <span class="aih-payment-icon">!</span>
             <div>
-                <strong>Payment Not Completed</strong>
-                <p>It looks like the payment was not completed. You can try again below.</p>
+                <strong><?php _e('Payment Not Completed', 'art-in-heaven'); ?></strong>
+                <p><?php _e('It looks like the payment was not completed. You can try again below.', 'art-in-heaven'); ?></p>
             </div>
         </div>
         <?php elseif ($payment_result === 'error'): ?>
         <div class="aih-payment-banner aih-payment-error">
             <span class="aih-payment-icon">&#10007;</span>
             <div>
-                <strong>Payment Issue</strong>
-                <p>There was a problem verifying your payment. Please contact support if you were charged.</p>
+                <strong><?php _e('Payment Issue', 'art-in-heaven'); ?></strong>
+                <p><?php _e('There was a problem verifying your payment. Please contact support if you were charged.', 'art-in-heaven'); ?></p>
             </div>
         </div>
         <?php endif; ?>
 
         <div class="aih-gallery-header">
             <div class="aih-gallery-title">
-                <h1>Checkout</h1>
-                <p class="aih-subtitle"><?php echo count($won_items); ?> items won</p>
+                <h1><?php _e('Checkout', 'art-in-heaven'); ?></h1>
+                <p class="aih-subtitle"><?php printf(esc_html__('%d items won', 'art-in-heaven'), count($won_items)); ?></p>
             </div>
         </div>
 
         <?php if (empty($won_items)): ?>
         <div class="aih-empty-state">
             <div class="aih-ornament">✦</div>
-            <h2>No Items to Checkout</h2>
-            <p>You haven't won any auctions yet.</p>
-            <a href="<?php echo esc_url($gallery_url); ?>" class="aih-btn aih-btn--inline">Browse Gallery</a>
+            <h2><?php _e('No Items to Checkout', 'art-in-heaven'); ?></h2>
+            <p><?php _e("You haven't won any auctions yet.", 'art-in-heaven'); ?></p>
+            <a href="<?php echo esc_url($gallery_url); ?>" class="aih-btn aih-btn--inline"><?php _e('Browse Gallery', 'art-in-heaven'); ?></a>
         </div>
         <?php else: ?>
         <div class="aih-checkout-layout">
             <div class="aih-checkout-items">
-                <h2 class="aih-section-heading">Won Items</h2>
+                <h2 class="aih-section-heading"><?php _e('Won Items', 'art-in-heaven'); ?></h2>
                 <?php foreach ($won_items as $item):
                     // Support both id and art_piece_id property names
                     $art_piece_id = isset($item->art_piece_id) ? $item->art_piece_id : (isset($item->id) ? $item->id : 0);
@@ -195,7 +125,7 @@ $total = $subtotal + $tax;
                         <p><?php echo esc_html(isset($item->artist) ? $item->artist : ''); ?></p>
                     </div>
                     <div class="aih-checkout-item-price">
-                        <span>Winning Bid</span>
+                        <span><?php _e('Winning Bid', 'art-in-heaven'); ?></span>
                         <strong>$<?php echo number_format($winning_amount); ?></strong>
                     </div>
                 </div>
@@ -203,33 +133,33 @@ $total = $subtotal + $tax;
             </div>
             
             <div class="aih-checkout-summary">
-                <h3>Order Summary</h3>
+                <h3><?php _e('Order Summary', 'art-in-heaven'); ?></h3>
                 <div class="aih-summary-row">
-                    <span>Subtotal</span>
+                    <span><?php _e('Subtotal', 'art-in-heaven'); ?></span>
                     <span>$<?php echo number_format($subtotal); ?></span>
                 </div>
                 <?php if ($tax > 0): ?>
                 <div class="aih-summary-row">
-                    <span>Tax (<?php echo esc_html($tax_rate); ?>%)</span>
+                    <span><?php printf(esc_html__('Tax (%s%%)', 'art-in-heaven'), esc_html($tax_rate)); ?></span>
                     <span>$<?php echo number_format($tax, 2); ?></span>
                 </div>
                 <?php endif; ?>
                 <div class="aih-summary-row aih-summary-total">
-                    <span>Total</span>
+                    <span><?php _e('Total', 'art-in-heaven'); ?></span>
                     <span>$<?php echo number_format($total, 2); ?></span>
                 </div>
                 <button type="button" id="aih-create-order" class="aih-btn" style="margin-top: 24px;">
-                    Proceed to Payment
+                    <?php _e('Proceed to Payment', 'art-in-heaven'); ?>
                 </button>
                 <div id="aih-checkout-msg" class="aih-message" style="display:none; margin-top: 12px;"></div>
-                <p class="aih-checkout-note">You'll be redirected to our secure payment portal.</p>
+                <p class="aih-checkout-note"><?php _e("You'll be redirected to our secure payment portal.", 'art-in-heaven'); ?></p>
             </div>
         </div>
         <?php endif; ?>
         
         <?php if (!empty($orders)): ?>
         <div class="aih-previous-orders">
-            <h2 class="aih-section-heading" style="margin-top: 48px;">Previous Orders</h2>
+            <h2 class="aih-section-heading" style="margin-top: 48px;"><?php _e('Previous Orders', 'art-in-heaven'); ?></h2>
             <div class="aih-orders-grid">
                 <?php foreach ($orders as $order): ?>
                 <div class="aih-order-card aih-order-clickable" data-order="<?php echo esc_attr($order->order_number); ?>">
@@ -240,11 +170,11 @@ $total = $subtotal + $tax;
                         </span>
                     </div>
                     <div class="aih-order-details">
-                        <p><?php echo intval($order->item_count); ?> items • $<?php echo number_format($order->total); ?></p>
-                        <p class="aih-order-date"><?php echo esc_html(date('M j, Y', strtotime($order->created_at))); ?></p>
+                        <p><?php echo intval($order->item_count); ?> <?php echo $order->item_count != 1 ? __('items', 'art-in-heaven') : __('item', 'art-in-heaven'); ?> &bull; $<?php echo number_format($order->total); ?></p>
+                        <p class="aih-order-date"><?php echo esc_html(wp_date('M j, Y', strtotime($order->created_at))); ?></p>
                     </div>
                     <div class="aih-order-view-link">
-                        <span>View Details →</span>
+                        <span><?php _e('View Details', 'art-in-heaven'); ?> &rarr;</span>
                     </div>
                 </div>
                 <?php endforeach; ?>
@@ -257,18 +187,18 @@ $total = $subtotal + $tax;
             <div class="aih-modal-backdrop" aria-hidden="true"></div>
             <div class="aih-modal-content">
                 <div class="aih-modal-header">
-                    <h3 id="aih-modal-title">Order Details</h3>
+                    <h3 id="aih-modal-title"><?php _e('Order Details', 'art-in-heaven'); ?></h3>
                     <button type="button" class="aih-modal-close" aria-label="Close">&times;</button>
                 </div>
                 <div class="aih-modal-body" id="aih-modal-body">
-                    <div class="aih-loading">Loading...</div>
+                    <div class="aih-loading"><?php _e('Loading...', 'art-in-heaven'); ?></div>
                 </div>
             </div>
         </div>
     </main>
 
     <footer class="aih-footer">
-        <p>&copy; <?php echo date('Y'); ?> Art in Heaven. All rights reserved.</p>
+        <p><?php printf(esc_html__('&copy; %s Art in Heaven. All rights reserved.', 'art-in-heaven'), wp_date('Y')); ?></p>
     </footer>
 </div>
 

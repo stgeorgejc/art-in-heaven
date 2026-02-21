@@ -23,7 +23,7 @@ $event_date = get_option('aih_event_date', '');
                     <th scope="row"><label for="aih_event_date"><?php _e('Event Start Date & Time', 'art-in-heaven'); ?></label></th>
                     <td>
                         <input type="datetime-local" id="aih_event_date" name="aih_event_date" 
-                               value="<?php echo esc_attr($event_date ? date('Y-m-d\TH:i', strtotime($event_date)) : ''); ?>" 
+                               value="<?php echo esc_attr($event_date ? wp_date('Y-m-d\TH:i', strtotime($event_date)) : ''); ?>" 
                                class="regular-text">
                         <p class="description"><?php _e('Default start time for new art pieces.', 'art-in-heaven'); ?></p>
                         <?php if ($event_date): ?>
@@ -37,7 +37,7 @@ $event_date = get_option('aih_event_date', '');
                     <td>
                         <?php $event_end_date = get_option('aih_event_end_date', ''); ?>
                         <input type="datetime-local" id="aih_event_end_date" name="aih_event_end_date" 
-                               value="<?php echo esc_attr($event_end_date ? date('Y-m-d\TH:i', strtotime($event_end_date)) : ''); ?>" 
+                               value="<?php echo esc_attr($event_end_date ? wp_date('Y-m-d\TH:i', strtotime($event_end_date)) : ''); ?>" 
                                class="regular-text">
                         <p class="description"><?php _e('Default end time for new art pieces.', 'art-in-heaven'); ?></p>
                     </td>

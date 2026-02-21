@@ -25,9 +25,9 @@ class AIH_Watermark {
     private function get_watermark_text() {
         $custom_text = get_option('aih_watermark_text', '');
         if (!empty($custom_text)) {
-            return $custom_text . ' ' . date('Y');
+            return $custom_text . ' ' . wp_date('Y');
         }
-        return 'Art in Heaven ' . date('Y');
+        return 'Art in Heaven ' . wp_date('Y');
     }
     
     /**

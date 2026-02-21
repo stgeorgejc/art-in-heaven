@@ -344,7 +344,7 @@ class AIH_Art_Piece {
             'image_url' => '',
             'watermarked_url' => '',
             'auction_start' => current_time('mysql'),
-            'auction_end' => date('Y-m-d H:i:s', strtotime('+7 days')),
+            'auction_end' => wp_date('Y-m-d H:i:s', strtotime('+7 days')),
             'show_end_time' => 0,
             'status' => 'active'
         );

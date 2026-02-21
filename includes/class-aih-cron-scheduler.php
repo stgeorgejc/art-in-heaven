@@ -428,7 +428,7 @@ class AIH_Cron_Scheduler {
                         'type' => 'activate',
                         'art_id' => isset($event['args'][0]) ? $event['args'][0] : null,
                         'timestamp' => $timestamp,
-                        'datetime' => date('Y-m-d H:i:s', $timestamp)
+                        'datetime' => wp_date('Y-m-d H:i:s', $timestamp)
                     );
                 }
             }
@@ -440,7 +440,7 @@ class AIH_Cron_Scheduler {
                         'type' => 'end',
                         'art_id' => isset($event['args'][0]) ? $event['args'][0] : null,
                         'timestamp' => $timestamp,
-                        'datetime' => date('Y-m-d H:i:s', $timestamp)
+                        'datetime' => wp_date('Y-m-d H:i:s', $timestamp)
                     );
                 }
             }
