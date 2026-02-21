@@ -2326,7 +2326,10 @@ class AIH_Ajax {
     /**
      * Lightweight polling endpoint for live bid status updates.
      * Returns winning status, min bid, has_bids flag, and auction status
-     * for each requested art piece, plus the bidder's cart count.
+     * for each requested art piece.
+     *
+     * Results are cached per-bidder for 3 seconds to reduce DB load
+     * when many users are polling simultaneously.
      */
     public function poll_status() {
         check_ajax_referer('aih_nonce', 'nonce');
@@ -2346,6 +2349,14 @@ class AIH_Ajax {
 
         // Cap to prevent abuse
         $ids = array_slice($ids, 0, 200);
+        sort($ids);
+
+        // Check cache first (3 second TTL per bidder + ID set)
+        $cache_key = 'poll_' . md5($bidder_id . '_' . implode(',', $ids));
+        $cached = wp_cache_get($cache_key, 'aih_poll');
+        if ($cached !== false) {
+            wp_send_json_success($cached);
+        }
 
         global $wpdb;
         $bid_increment = floatval(get_option('aih_bid_increment', 1));
@@ -2418,13 +2429,14 @@ class AIH_Ajax {
             );
         }
 
-        // Cart count
-        $checkout = AIH_Checkout::get_instance();
-        $cart_count = count($checkout->get_won_items($bidder_id));
-
-        wp_send_json_success(array(
+        $result = array(
             'items'      => $items,
-            'cart_count'  => $cart_count,
-        ));
+            'cart_count'  => 0,
+        );
+
+        // Cache for 3 seconds
+        wp_cache_set($cache_key, $result, 'aih_poll', 3);
+
+        wp_send_json_success($result);
     }
 }

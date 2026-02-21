@@ -23,7 +23,7 @@ if (!defined('ABSPATH')) {
 
 // Define plugin constants
 define('AIH_VERSION', '0.9.6');
-define('AIH_DB_VERSION', '0.9.5');
+define('AIH_DB_VERSION', '0.9.6');
 define('AIH_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('AIH_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('AIH_PLUGIN_BASENAME', plugin_basename(__FILE__));
