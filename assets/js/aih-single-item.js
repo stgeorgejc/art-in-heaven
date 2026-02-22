@@ -326,6 +326,9 @@ jQuery(document).ready(function($) {
         return 30000;
     }
 
+    // Expose for push notification handler to trigger immediate refresh
+    window.aihPollStatus = pollStatus;
+
     function pollStatus() {
         if (!aihAjax.isLoggedIn || isEnded) return;
 

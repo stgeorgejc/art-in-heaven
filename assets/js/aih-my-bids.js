@@ -237,6 +237,9 @@ jQuery(document).ready(function($) {
         return 30000;                             // > 1 hour: poll every 30s
     }
 
+    // Expose for push notification handler to trigger immediate refresh
+    window.aihPollStatus = pollStatus;
+
     function pollStatus() {
         if (!aihAjax.isLoggedIn || !hasActiveAuctions()) return;
 

@@ -15,7 +15,7 @@
 
     var AIHPush = {
         pushSubscribed: false,
-        pollingInterval: null,
+        pollTimer: null,
         swRegistration: null,
 
         init: function() {
@@ -88,9 +88,9 @@
                 self.syncSubscription(subscription);
 
                 // Stop polling — push is active
-                if (self.pollingInterval) {
-                    clearInterval(self.pollingInterval);
-                    self.pollingInterval = null;
+                if (self.pollTimer) {
+                    clearTimeout(self.pollTimer);
+                    self.pollTimer = null;
                 }
             })
             .catch(function() {
@@ -119,36 +119,78 @@
         },
 
         /**
-         * Polling fallback: check for outbid events every 5 seconds
+         * Smart polling interval based on soonest-ending auction.
+         * Polls more frequently as auctions near their end.
          */
-        startPolling: function() {
-            if (this.pollingInterval) {
-                return;
+        getSmartInterval: function() {
+            var soonest = Infinity;
+            $('.aih-card[data-end]').each(function() {
+                var $c = $(this);
+                if ($c.hasClass('ended') || $c.hasClass('won') || $c.hasClass('paid')) return;
+                var endMs = new Date($c.attr('data-end').replace(/-/g, '/')).getTime();
+                var remaining = endMs - Date.now();
+                if (remaining > 0 && remaining < soonest) soonest = remaining;
+            });
+
+            // Also check single-item page timer
+            var $single = $('.aih-time-remaining-single[data-end]');
+            if ($single.length) {
+                var endMs = new Date($single.attr('data-end').replace(/-/g, '/')).getTime();
+                var remaining = endMs - Date.now();
+                if (remaining > 0 && remaining < soonest) soonest = remaining;
             }
 
-            var self = this;
+            if (soonest < 60000) return 3000;       // < 1 min: every 3s
+            if (soonest < 300000) return 5000;       // < 5 min: every 5s
+            if (soonest < 3600000) return 10000;     // < 1 hour: every 10s
+            return 30000;                             // > 1 hour: every 30s
+        },
 
-            this.pollingInterval = setInterval(function() {
-                $.ajax({
-                    url: aihAjax.ajaxurl,
-                    type: 'POST',
-                    data: {
-                        action: 'aih_check_outbid',
-                        nonce:  aihAjax.nonce
-                    },
-                    success: function(response) {
-                        if (response.success && response.data && response.data.length > 0) {
-                            for (var i = 0; i < response.data.length; i++) {
-                                var evt = response.data[i];
-                                var msg = 'You\'ve been outbid on "' + evt.title + '"!';
-                                if (typeof window.showToast === 'function') {
-                                    window.showToast(msg, 'error');
-                                }
+        /**
+         * Polling fallback: check for outbid events using smart intervals
+         */
+        pollOutbid: function() {
+            var self = this;
+            $.ajax({
+                url: aihAjax.ajaxurl,
+                type: 'POST',
+                data: {
+                    action: 'aih_check_outbid',
+                    nonce:  aihAjax.nonce
+                },
+                success: function(response) {
+                    if (response.success && response.data && response.data.length > 0) {
+                        for (var i = 0; i < response.data.length; i++) {
+                            var evt = response.data[i];
+                            var msg = 'You\'ve been outbid on "' + evt.title + '"!';
+                            if (typeof window.showToast === 'function') {
+                                window.showToast(msg, 'error');
                             }
                         }
+                        // Trigger immediate status poll to update badges
+                        if (typeof window.aihPollStatus === 'function') {
+                            window.aihPollStatus();
+                        }
                     }
-                });
-            }, 5000);
+                }
+            });
+        },
+
+        startPolling: function() {
+            if (this.pollTimer) clearTimeout(this.pollTimer);
+            var self = this;
+            var interval = document.hidden ? 60000 : this.getSmartInterval();
+            this.pollTimer = setTimeout(function() {
+                self.pollOutbid();
+                self.startPolling();
+            }, interval);
+        },
+
+        stopPolling: function() {
+            if (this.pollTimer) {
+                clearTimeout(this.pollTimer);
+                this.pollTimer = null;
+            }
         },
 
         /**
@@ -169,6 +211,21 @@
     // Initialize
     $(document).ready(function() {
         AIHPush.init();
+    });
+
+    // Pause/resume polling on tab visibility change
+    document.addEventListener('visibilitychange', function() {
+        if (!AIHPush.pollTimer) return; // not polling (push is active)
+        if (document.hidden) {
+            AIHPush.stopPolling();
+            AIHPush.pollTimer = setTimeout(function() {
+                AIHPush.pollOutbid();
+            }, 60000);
+        } else {
+            AIHPush.stopPolling();
+            AIHPush.pollOutbid();
+            AIHPush.startPolling();
+        }
     });
 
     // Expose for external triggering (e.g. after first bid)
