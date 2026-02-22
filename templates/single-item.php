@@ -73,6 +73,8 @@ $checkout_url = AIH_Template_Helper::get_checkout_url();
 $cart_count = 0;
 $checkout = AIH_Checkout::get_instance();
 $cart_count = count($checkout->get_won_items($bidder_id));
+$payment_statuses = $bidder_id ? $checkout->get_bidder_payment_statuses($bidder_id) : array();
+$is_paid = isset($payment_statuses[$art_piece->id]) && $payment_statuses[$art_piece->id] === 'paid';
 
 // Build image URLs array for JS (used by external aih-single-item.js)
 $image_urls = array_map(function($img) { return $img->watermarked_url; }, $images);
@@ -123,10 +125,14 @@ if (empty($image_urls) && $primary_image) {
                     <?php endif; ?>
 
                     <!-- Status Badge on image -->
-                    <?php if ($is_winning && !$is_ended): ?>
-                    <span class="aih-badge aih-badge-winning aih-badge-single"><?php _e('Winning', 'art-in-heaven'); ?></span>
+                    <?php if ($is_ended && $is_winning && $is_paid): ?>
+                    <span class="aih-badge aih-badge-paid aih-badge-single"><?php _e('Paid', 'art-in-heaven'); ?></span>
+                    <?php elseif ($is_ended && $is_winning): ?>
+                    <span class="aih-badge aih-badge-won aih-badge-single"><?php _e('Won', 'art-in-heaven'); ?></span>
                     <?php elseif ($is_ended): ?>
-                    <span class="aih-badge aih-badge-ended aih-badge-single"><?php echo $is_winning ? __('Won', 'art-in-heaven') : __('Ended', 'art-in-heaven'); ?></span>
+                    <span class="aih-badge aih-badge-ended aih-badge-single"><?php _e('Ended', 'art-in-heaven'); ?></span>
+                    <?php elseif ($is_winning): ?>
+                    <span class="aih-badge aih-badge-winning aih-badge-single"><?php _e('Winning', 'art-in-heaven'); ?></span>
                     <?php elseif (!empty($my_bid_history)): ?>
                     <span class="aih-badge aih-badge-outbid aih-badge-single"><?php _e('Outbid', 'art-in-heaven'); ?></span>
                     <?php endif; ?>
