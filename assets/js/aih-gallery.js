@@ -149,6 +149,11 @@ jQuery(document).ready(function($) {
             var $b = $(b);
             var aVal, bVal;
 
+            // Always push ended/won/paid/sold to the bottom
+            var aEnded = $a.hasClass('ended') || $a.hasClass('won') || $a.hasClass('paid') || $a.hasClass('sold') ? 1 : 0;
+            var bEnded = $b.hasClass('ended') || $b.hasClass('won') || $b.hasClass('paid') || $b.hasClass('sold') ? 1 : 0;
+            if (aEnded !== bEnded) return aEnded - bEnded;
+
             switch (sortBy) {
                 case 'default':
                     // Favorites first, then by soonest ending
