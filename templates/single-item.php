@@ -127,6 +127,8 @@ if (empty($image_urls) && $primary_image) {
                     <span class="aih-badge aih-badge-winning aih-badge-single"><?php _e('Winning', 'art-in-heaven'); ?></span>
                     <?php elseif ($is_ended): ?>
                     <span class="aih-badge aih-badge-ended aih-badge-single"><?php echo $is_winning ? __('Won', 'art-in-heaven') : __('Ended', 'art-in-heaven'); ?></span>
+                    <?php elseif (!empty($my_bid_history)): ?>
+                    <span class="aih-badge aih-badge-outbid aih-badge-single"><?php _e('Outbid', 'art-in-heaven'); ?></span>
                     <?php endif; ?>
 
                     <!-- Art ID Badge on image -->

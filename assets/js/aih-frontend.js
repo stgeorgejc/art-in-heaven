@@ -7,7 +7,11 @@
 (function($) {
     'use strict';
     
-    // Toast notification helper
+    // Toast notification helper — auto-inject element if missing
+    if (!$('#aih-toast').length) {
+        $('body').append('<div id="aih-toast" class="aih-toast"></div>');
+    }
+
     function showToast(message, type = 'info') {
         var $toast = $('#aih-toast');
         $toast.removeClass('show success error').text(message);

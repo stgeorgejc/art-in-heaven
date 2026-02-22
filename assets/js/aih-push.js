@@ -140,7 +140,7 @@
                         if (response.success && response.data && response.data.length > 0) {
                             for (var i = 0; i < response.data.length; i++) {
                                 var evt = response.data[i];
-                                var msg = 'You\'ve been outbid on "' + evt.title + '"! Current bid: ' + evt.amount;
+                                var msg = 'You\'ve been outbid on "' + evt.title + '"!';
                                 if (typeof window.showToast === 'function') {
                                     window.showToast(msg, 'error');
                                 }

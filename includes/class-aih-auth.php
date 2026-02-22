@@ -110,7 +110,9 @@ class AIH_Auth {
                     'aih_place_bid', 'aih_toggle_favorite', 'aih_get_gallery',
                     'aih_get_art_details', 'aih_search', 'aih_get_won_items',
                     'aih_create_order', 'aih_get_pushpay_link',
-                    'aih_get_order_details', 'aih_get_my_purchases'
+                    'aih_get_order_details', 'aih_get_my_purchases',
+                    'aih_poll_status', 'aih_check_outbid',
+                    'aih_push_subscribe', 'aih_push_unsubscribe'
                 );
                 return in_array($_POST['action'], $our_actions);
             }

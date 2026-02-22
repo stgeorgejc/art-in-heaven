@@ -349,8 +349,13 @@ jQuery(document).ready(function($) {
                 } else {
                     $('.aih-single-image').prepend('<span class="aih-badge aih-badge-winning aih-badge-single">Winning</span>');
                 }
-            } else if (!info.is_winning && wasWinning) {
-                $badge.remove();
+            } else if (!info.is_winning && info.has_bid) {
+                // Outbid — show or update badge
+                if ($badge.length) {
+                    $badge.attr('class', 'aih-badge aih-badge-outbid aih-badge-single').text('Outbid');
+                } else {
+                    $('.aih-single-image').prepend('<span class="aih-badge aih-badge-outbid aih-badge-single">Outbid</span>');
+                }
             }
 
             // Update min bid
@@ -380,10 +385,11 @@ jQuery(document).ready(function($) {
     }
 
     if (!isEnded) {
+        // First poll after 3 seconds, then use smart intervals
         setTimeout(function() {
             pollStatus();
             startPolling();
-        }, getSmartInterval());
+        }, 3000);
     }
 
     document.addEventListener('visibilitychange', function() {

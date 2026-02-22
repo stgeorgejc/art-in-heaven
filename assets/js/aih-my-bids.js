@@ -318,10 +318,11 @@ jQuery(document).ready(function($) {
         }
     }
 
+    // First poll after 3 seconds, then use smart intervals
     setTimeout(function() {
         pollStatus();
         startPolling();
-    }, getSmartInterval());
+    }, 3000);
 
     document.addEventListener('visibilitychange', function() {
         if (document.hidden) {

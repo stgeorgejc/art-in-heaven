@@ -22,7 +22,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('AIH_VERSION', '0.9.6');
+define('AIH_VERSION', '0.9.7');
 define('AIH_DB_VERSION', '0.9.6');
 define('AIH_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('AIH_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -154,8 +154,8 @@ class Art_In_Heaven {
         add_action('aih_art_updated', array($this, 'invalidate_art_cache'));
         add_action('aih_bid_placed', array($this, 'invalidate_bid_cache'));
 
-        // Push notifications for outbid alerts
-        add_action('aih_bid_placed', array(AIH_Push::get_instance(), 'notify_outbid'), 10, 4);
+        // Outbid alerts: record event synchronously (fast), defer push sending (slow)
+        add_action('aih_bid_placed', array(AIH_Push::get_instance(), 'handle_outbid_event'), 10, 4);
 
         // Serve service worker from site root scope
         add_action('template_redirect', array($this, 'serve_service_worker'));
@@ -521,7 +521,14 @@ class Art_In_Heaven {
         if ($post) {
             $content = $post->post_content;
             if (has_shortcode($content, 'art_in_heaven_gallery')) {
-                wp_enqueue_script('aih-gallery', AIH_PLUGIN_URL . 'assets/js/aih-gallery.js', array('jquery', 'aih-frontend'), AIH_VERSION, true);
+                // Gallery shortcode also serves single-item (?art_id=) and my-bids (?my_bids=1)
+                if (isset($_GET['art_id']) && !empty($_GET['art_id'])) {
+                    wp_enqueue_script('aih-single-item', AIH_PLUGIN_URL . 'assets/js/aih-single-item.js', array('jquery', 'aih-frontend'), AIH_VERSION, true);
+                } elseif (isset($_GET['my_bids']) && $_GET['my_bids'] == '1') {
+                    wp_enqueue_script('aih-my-bids', AIH_PLUGIN_URL . 'assets/js/aih-my-bids.js', array('jquery', 'aih-frontend'), AIH_VERSION, true);
+                } else {
+                    wp_enqueue_script('aih-gallery', AIH_PLUGIN_URL . 'assets/js/aih-gallery.js', array('jquery', 'aih-frontend'), AIH_VERSION, true);
+                }
             }
             if (has_shortcode($content, 'art_in_heaven_item')) {
                 wp_enqueue_script('aih-single-item', AIH_PLUGIN_URL . 'assets/js/aih-single-item.js', array('jquery', 'aih-frontend'), AIH_VERSION, true);

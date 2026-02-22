@@ -526,11 +526,11 @@ jQuery(document).ready(function($) {
         }
     }
 
-    // Start polling after initial delay
+    // First poll after 3 seconds, then use smart intervals
     setTimeout(function() {
         pollStatus();
         startPolling();
-    }, getSmartInterval());
+    }, 3000);
 
     // Pause/resume on tab visibility
     document.addEventListener('visibilitychange', function() {

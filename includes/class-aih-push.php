@@ -163,7 +163,11 @@ class AIH_Push {
      * @param string $new_bidder_id  The bidder who just placed the bid
      * @param float  $amount         The new bid amount
      */
-    public function notify_outbid($bid_id, $art_piece_id, $new_bidder_id, $amount) {
+    /**
+     * Record outbid event for polling fallback (runs synchronously).
+     * Called directly from aih_bid_placed hook so the event is available immediately.
+     */
+    public function handle_outbid_event($bid_id, $art_piece_id, $new_bidder_id, $amount) {
         global $wpdb;
 
         $bids_table = AIH_Database::get_table('bids');
@@ -195,12 +199,23 @@ class AIH_Push {
             $title = 'Art Piece #' . $art_piece_id;
         }
 
-        $formatted_amount = '$' . number_format((float) $amount, 2);
+        // Record event immediately for polling fallback (no bid amount shown)
+        self::record_outbid_event($outbid_bidder, $art_piece_id, $title);
 
-        // Always record the outbid event for polling fallback
-        self::record_outbid_event($outbid_bidder, $art_piece_id, $title, $formatted_amount);
+        // Defer push notification sending to after HTTP response
+        $push_data = compact('outbid_bidder', 'art_piece_id', 'title');
+        add_action('shutdown', function() use ($push_data) {
+            if (function_exists('fastcgi_finish_request')) {
+                fastcgi_finish_request();
+            }
+            AIH_Push::get_instance()->send_push($push_data['outbid_bidder'], $push_data['art_piece_id'], $push_data['title']);
+        });
+    }
 
-        // Send push notifications to all of the outbid bidder's devices
+    /**
+     * Send push notification to outbid bidder (runs deferred in shutdown hook).
+     */
+    public function send_push($outbid_bidder, $art_piece_id, $title) {
         $subscriptions = self::get_subscriptions($outbid_bidder);
         if (empty($subscriptions)) {
             return;
@@ -214,7 +229,7 @@ class AIH_Push {
         $payload = wp_json_encode(array(
             'type'         => 'outbid',
             'title'        => "You've been outbid!",
-            'body'         => sprintf('Someone outbid you on "%s". Current bid: %s', $title, $formatted_amount),
+            'body'         => sprintf('Someone outbid you on "%s".', $title),
             'art_piece_id' => $art_piece_id,
             'url'          => $url,
             'tag'          => 'outbid-' . $art_piece_id,
@@ -245,7 +260,6 @@ class AIH_Push {
             // Flush and handle responses
             foreach ($webPush->flush() as $report) {
                 if ($report->isSubscriptionExpired()) {
-                    // Remove stale subscription (410 Gone or 404)
                     self::delete_subscription($report->getEndpoint());
                 }
             }
@@ -262,9 +276,8 @@ class AIH_Push {
      * @param string $bidder_id
      * @param int    $art_piece_id
      * @param string $title
-     * @param string $amount  Already formatted (e.g. "$25.00")
      */
-    public static function record_outbid_event($bidder_id, $art_piece_id, $title, $amount) {
+    public static function record_outbid_event($bidder_id, $art_piece_id, $title) {
         $key    = 'aih_outbid_' . $bidder_id;
         $events = get_transient($key);
 
@@ -275,7 +288,6 @@ class AIH_Push {
         $events[] = array(
             'art_piece_id' => $art_piece_id,
             'title'        => $title,
-            'amount'       => $amount,
             'time'         => time(),
         );
 
