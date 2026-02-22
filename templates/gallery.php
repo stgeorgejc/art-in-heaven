@@ -71,7 +71,7 @@ $bidder_bid_ids = $bid_model->get_bidder_bid_ids_batch($piece_ids, $bidder_id);
     <main class="aih-main">
         <div class="aih-gallery-header">
             <div class="aih-gallery-title">
-                <h1><?php _e('Collection', 'art-in-heaven'); ?></h1>
+                <h1><?php _e('Gallery', 'art-in-heaven'); ?></h1>
                 <p class="aih-subtitle"><?php printf(esc_html__('%d pieces available', 'art-in-heaven'), count($art_pieces)); ?></p>
             </div>
             <div class="aih-gallery-controls">
