@@ -3032,6 +3032,81 @@ body {
 }
 
 /* ============================================
+   NOTIFICATION DENIED HELP MODAL
+   ============================================ */
+.aih-notify-help-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 10001;
+    background: rgba(0, 0, 0, 0.5);
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.aih-notify-help-overlay.active {
+    display: flex;
+}
+
+.aih-notify-help-card {
+    background: var(--color-surface, #fff);
+    border-radius: var(--radius, 8px);
+    padding: 28px 24px 24px;
+    max-width: 400px;
+    width: 100%;
+    position: relative;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+    font-family: var(--font-body, 'Inter', -apple-system, sans-serif);
+    color: var(--color-primary, #1a1a2e);
+}
+
+.aih-notify-help-card h3 {
+    margin: 0 0 8px;
+    font-size: 17px;
+    font-weight: 600;
+}
+
+.aih-notify-help-card p {
+    margin: 0 0 16px;
+    font-size: 13px;
+    color: var(--color-secondary, #666);
+    line-height: 1.5;
+}
+
+.aih-notify-help-card ol {
+    margin: 0;
+    padding-left: 20px;
+    font-size: 13px;
+    line-height: 1.8;
+}
+
+.aih-notify-help-card li {
+    margin-bottom: 4px;
+}
+
+.aih-notify-help-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: none;
+    border: none;
+    font-size: 22px;
+    color: var(--color-muted, #999);
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+}
+
+.aih-notify-help-close:hover {
+    color: var(--color-primary, #1a1a2e);
+}
+
+.aih-page.dark-mode .aih-notify-help-card {
+    background: var(--color-surface, #1e1e2e);
+}
+
+/* ============================================
    NOTIFICATION BELL BADGE
    ============================================ */
 .aih-notify-badge {

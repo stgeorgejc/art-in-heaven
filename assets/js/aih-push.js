@@ -130,14 +130,100 @@
             }
 
             if (permission === 'denied') {
-                if (typeof window.showToast === 'function') {
-                    window.showToast('Notifications are blocked. Please enable them in your browser settings.', 'error');
-                }
+                this.showDeniedHelp();
                 return;
             }
 
             // permission === 'default' — request it
             this.requestPermission();
+        },
+
+        // ========== DENIED HELP MODAL ==========
+
+        /**
+         * Show a help modal with browser-specific instructions to unblock notifications.
+         */
+        showDeniedHelp: function() {
+            if ($('#aih-notify-help').length) {
+                $('#aih-notify-help').addClass('active');
+                return;
+            }
+
+            var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+            var isAndroid = /Android/.test(navigator.userAgent);
+            var isChrome = /Chrome/.test(navigator.userAgent) && !/Edg/.test(navigator.userAgent);
+            var isSafari = /Safari/.test(navigator.userAgent) && !isChrome;
+            var isFirefox = /Firefox/.test(navigator.userAgent);
+
+            var steps;
+            if (isIOS && isSafari) {
+                steps =
+                    '<li>Open <strong>Settings</strong> on your device</li>' +
+                    '<li>Scroll down and tap <strong>Safari</strong></li>' +
+                    '<li>Tap <strong>Notifications</strong></li>' +
+                    '<li>Find this website and toggle notifications <strong>On</strong></li>' +
+                    '<li>Return here and refresh the page</li>';
+            } else if (isIOS) {
+                steps =
+                    '<li>Open <strong>Settings</strong> on your device</li>' +
+                    '<li>Scroll down and tap your browser app</li>' +
+                    '<li>Tap <strong>Notifications</strong> and enable them</li>' +
+                    '<li>Return here and refresh the page</li>';
+            } else if (isAndroid && isChrome) {
+                steps =
+                    '<li>Tap the <strong>lock icon</strong> in the address bar</li>' +
+                    '<li>Tap <strong>Permissions</strong></li>' +
+                    '<li>Set <strong>Notifications</strong> to <strong>Allow</strong></li>' +
+                    '<li>Refresh the page</li>';
+            } else if (isChrome) {
+                steps =
+                    '<li>Click the <strong>tune/lock icon</strong> in the address bar</li>' +
+                    '<li>Find <strong>Notifications</strong></li>' +
+                    '<li>Change from <strong>Block</strong> to <strong>Allow</strong></li>' +
+                    '<li>Refresh the page</li>';
+            } else if (isFirefox) {
+                steps =
+                    '<li>Click the <strong>lock icon</strong> in the address bar</li>' +
+                    '<li>Click <strong>Connection secure</strong> &rarr; <strong>More information</strong></li>' +
+                    '<li>Go to <strong>Permissions</strong> tab</li>' +
+                    '<li>Find <strong>Send Notifications</strong> and click <strong>Allow</strong></li>' +
+                    '<li>Refresh the page</li>';
+            } else if (isSafari) {
+                steps =
+                    '<li>Click <strong>Safari</strong> in the menu bar &rarr; <strong>Settings</strong></li>' +
+                    '<li>Go to the <strong>Websites</strong> tab</li>' +
+                    '<li>Click <strong>Notifications</strong> in the sidebar</li>' +
+                    '<li>Find this website and change to <strong>Allow</strong></li>' +
+                    '<li>Refresh the page</li>';
+            } else {
+                steps =
+                    '<li>Click the <strong>lock/info icon</strong> in the address bar</li>' +
+                    '<li>Find <strong>Notifications</strong> in site permissions</li>' +
+                    '<li>Change from <strong>Block</strong> to <strong>Allow</strong></li>' +
+                    '<li>Refresh the page</li>';
+            }
+
+            var $modal = $(
+                '<div id="aih-notify-help" class="aih-notify-help-overlay active">' +
+                    '<div class="aih-notify-help-card">' +
+                        '<button type="button" class="aih-notify-help-close" aria-label="Close">&times;</button>' +
+                        '<h3>Notifications are blocked</h3>' +
+                        '<p>To receive outbid alerts, enable notifications for this site:</p>' +
+                        '<ol>' + steps + '</ol>' +
+                    '</div>' +
+                '</div>'
+            );
+
+            function closeHelp() {
+                $modal.removeClass('active');
+            }
+
+            $modal.find('.aih-notify-help-close').on('click', closeHelp);
+            $modal.on('click', function(e) {
+                if (e.target === this) closeHelp();
+            });
+
+            $('body').append($modal);
         },
 
         // ========== PERMISSION & SUBSCRIPTION ==========
