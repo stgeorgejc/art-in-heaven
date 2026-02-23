@@ -287,7 +287,8 @@ body.aih-active .page-title {
     display: flex;
     align-items: center;
     gap: 4px;
-    padding: 8px 12px;
+    height: 32px;
+    padding: 0 12px;
     background: var(--color-bg);
     border: 1px solid var(--color-border);
     border-radius: var(--radius);
@@ -317,13 +318,15 @@ body.aih-active .page-title {
 }
 
 .aih-page .aih-user-name {
-    display: block;
+    display: flex;
+    align-items: center;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     font-size: 13px;
     font-weight: 500;
     color: var(--color-secondary);
     background: var(--color-bg-alt);
-    padding: 8px 14px;
+    height: 32px;
+    padding: 0 14px;
     border-radius: var(--radius);
     border: 1px solid var(--color-border);
 }
@@ -333,14 +336,17 @@ body.aih-active .page-title {
     font-weight: 500;
     color: var(--color-muted);
     background: none;
-    border: none;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
     cursor: pointer;
-    padding: 8px 0;
-    transition: color var(--transition);
+    height: 32px;
+    padding: 0 12px;
+    transition: all var(--transition);
 }
 
 .aih-logout-btn:hover {
     color: var(--color-error);
+    border-color: var(--color-error);
 }
 
 /* ============================================
@@ -2857,7 +2863,8 @@ body {
     align-items: center;
     justify-content: center;
     gap: 6px;
-    padding: 6px;
+    height: 32px;
+    padding: 0 6px;
     background: var(--color-bg);
     border: 1px solid var(--color-border);
     border-radius: var(--radius);
