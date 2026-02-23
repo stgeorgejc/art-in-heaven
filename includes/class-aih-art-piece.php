@@ -252,23 +252,25 @@ class AIH_Art_Piece {
         
         if (!empty($args['status'])) {
             if ($args['status'] === 'active') {
-                $where[] = "((status = 'active' AND auction_start <= %s AND auction_end > %s) OR (status = 'draft' AND auction_start IS NOT NULL AND auction_start <= %s AND (auction_end IS NULL OR auction_end > %s)))";
+                // Match get_all() WHERE clause: handle NULL auction_start/auction_end
+                $where[] = "((status = 'active' AND (auction_start IS NULL OR auction_start <= %s) AND (auction_end IS NULL OR auction_end > %s)) OR (status = 'draft' AND auction_start IS NOT NULL AND auction_start <= %s AND (auction_end IS NULL OR auction_end > %s)))";
                 $values[] = $now;
                 $values[] = $now;
                 $values[] = $now;
                 $values[] = $now;
             } elseif ($args['status'] === 'ended') {
-                $where[] = "(status = 'ended' OR (status = 'active' AND auction_end <= %s))";
+                $where[] = "(status = 'ended' OR (status = 'active' AND auction_end IS NOT NULL AND auction_end <= %s))";
                 $values[] = $now;
             } else {
                 $where[] = "status = %s";
                 $values[] = $args['status'];
             }
         }
-        
+
         if (!empty($args['search'])) {
             $search = '%' . $wpdb->esc_like($args['search']) . '%';
-            $where[] = "(art_id LIKE %s OR title LIKE %s OR artist LIKE %s)";
+            $where[] = "(art_id LIKE %s OR title LIKE %s OR artist LIKE %s OR medium LIKE %s)";
+            $values[] = $search;
             $values[] = $search;
             $values[] = $search;
             $values[] = $search;
