@@ -1,7 +1,7 @@
 /**
  * Art in Heaven - Frontend JavaScript
  * Silent Auction Frontend JavaScript
- * Version: 0.9.5
+ * Version: 0.9.7
  */
 
 (function($) {
