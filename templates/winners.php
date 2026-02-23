@@ -95,7 +95,7 @@ $art_images = new AIH_Art_Images();
                     <article class="aih-card aih-winner-card">
                         <div class="aih-card-image">
                             <?php if ($image_url): ?>
-                            <img src="<?php echo esc_url($image_url); ?>" alt="<?php echo esc_attr($bid->title); ?>" loading="lazy">
+                            <?php echo AIH_Template_Helper::picture_tag($image_url, $bid->title, '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw'); ?>
                             <span class="aih-art-id-badge"><?php echo esc_html($bid->art_id); ?></span>
                             <?php else: ?>
                             <div class="aih-placeholder">

@@ -100,6 +100,7 @@ class Art_In_Heaven {
         require_once AIH_PLUGIN_DIR . 'includes/class-aih-bid.php';
         require_once AIH_PLUGIN_DIR . 'includes/class-aih-favorites.php';
         require_once AIH_PLUGIN_DIR . 'includes/class-aih-watermark.php';
+        require_once AIH_PLUGIN_DIR . 'includes/class-aih-image-optimizer.php';
         require_once AIH_PLUGIN_DIR . 'includes/class-aih-checkout.php';
         require_once AIH_PLUGIN_DIR . 'includes/class-aih-pushpay.php';
         require_once AIH_PLUGIN_DIR . 'includes/class-aih-ajax.php';
@@ -746,7 +747,7 @@ class Art_In_Heaven {
     private function create_upload_directories() {
         $upload_dir = wp_upload_dir();
         $base = $upload_dir['basedir'] . '/art-in-heaven';
-        $dirs = array($base, $base . '/watermarked', $base . '/exports', $base . '/temp');
+        $dirs = array($base, $base . '/watermarked', $base . '/responsive', $base . '/exports', $base . '/temp');
         foreach ($dirs as $dir) {
             if (!file_exists($dir)) {
                 wp_mkdir_p($dir);

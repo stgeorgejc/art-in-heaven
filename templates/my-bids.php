@@ -101,7 +101,7 @@ $payment_statuses = $checkout->get_bidder_payment_statuses($bidder_id);
                 <div class="aih-card-image">
                     <?php if ($image_url): ?>
                     <a href="<?php echo esc_url($gallery_url); ?>?art_id=<?php echo intval($bid->art_piece_id); ?>">
-                        <img src="<?php echo esc_url($image_url); ?>" alt="<?php echo esc_attr($bid_title); ?>" loading="lazy">
+                        <?php echo AIH_Template_Helper::picture_tag($image_url, $bid_title, '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw'); ?>
                     </a>
                     <?php else: ?>
                     <a href="<?php echo esc_url($gallery_url); ?>?art_id=<?php echo intval($bid->art_piece_id); ?>" class="aih-placeholder-link">

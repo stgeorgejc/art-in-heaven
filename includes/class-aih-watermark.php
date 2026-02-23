@@ -555,6 +555,9 @@ class AIH_Watermark {
         $result = $this->apply_watermark($file_path, $output_path);
         
         if ($result) {
+            // Generate responsive AVIF/WebP variants
+            AIH_Image_Optimizer::generate_variants($output_path);
+
             // Return URL to watermarked image
             return $upload_dir['baseurl'] . '/art-in-heaven/watermarked/' . $filename;
         }
@@ -591,10 +594,14 @@ class AIH_Watermark {
         $upload_dir = wp_upload_dir();
         $watermarked_path = $upload_dir['basedir'] . '/art-in-heaven/watermarked/' . $filename;
         
+        // Clean up responsive variants
+        $watermarked_url = $upload_dir['baseurl'] . '/art-in-heaven/watermarked/' . $filename;
+        AIH_Image_Optimizer::cleanup_variants($watermarked_url);
+
         if (file_exists($watermarked_path)) {
             return unlink($watermarked_path);
         }
-        
+
         return true;
     }
 }

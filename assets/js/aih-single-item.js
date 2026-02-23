@@ -31,7 +31,7 @@ jQuery(document).ready(function($) {
         var $dot = $('.aih-image-dot[data-index="' + index + '"]');
         var src = $dot.data('src');
         if (src) {
-            $('#aih-main-image').attr('src', src);
+            aihUpdatePicture($('.aih-single-image'), src);
             $('.aih-image-dot').removeClass('active');
             $dot.addClass('active');
         }

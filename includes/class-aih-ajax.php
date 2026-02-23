@@ -2010,15 +2010,16 @@ class AIH_Ajax {
                     continue;
                 }
 
-                // Delete existing watermarked file
+                // Delete existing watermarked file and responsive variants
                 if (!empty($image->watermarked_url)) {
+                    AIH_Image_Optimizer::cleanup_variants($image->watermarked_url);
                     $watermarked_path = str_replace($upload_dir['baseurl'], $upload_dir['basedir'], $image->watermarked_url);
                     if (file_exists($watermarked_path)) {
                         @unlink($watermarked_path);
                     }
                 }
 
-                // Regenerate watermark
+                // Regenerate watermark (also generates responsive variants)
                 try {
                     $new_watermark_url = $watermark->process_upload($image->image_id);
 
@@ -2078,15 +2079,16 @@ class AIH_Ajax {
                     continue;
                 }
 
-                // Delete existing watermarked file
+                // Delete existing watermarked file and responsive variants
                 if (!empty($piece->watermarked_url)) {
+                    AIH_Image_Optimizer::cleanup_variants($piece->watermarked_url);
                     $watermarked_path = str_replace($upload_dir['baseurl'], $upload_dir['basedir'], $piece->watermarked_url);
                     if (file_exists($watermarked_path)) {
                         @unlink($watermarked_path);
                     }
                 }
 
-                // Regenerate watermark
+                // Regenerate watermark (also generates responsive variants)
                 try {
                     $new_watermark_url = $watermark->process_upload($piece->image_id);
 

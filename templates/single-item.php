@@ -123,7 +123,7 @@ if (empty($image_urls) && $primary_image) {
             <div class="aih-single-content">
                 <div class="aih-single-image <?php echo count($images) > 1 ? 'has-multiple-images' : ''; ?>">
                     <?php if ($primary_image): ?>
-                    <img src="<?php echo esc_url($primary_image); ?>" alt="<?php echo esc_attr($art_piece->title); ?>" id="aih-main-image">
+                    <?php echo AIH_Template_Helper::picture_tag($primary_image, $art_piece->title, '(max-width: 768px) 100vw, 60vw', array('id' => 'aih-main-image')); ?>
                     <?php if (count($images) > 1): ?>
                     <button type="button" class="aih-img-nav aih-img-nav-prev" aria-label="<?php esc_attr_e('Previous image', 'art-in-heaven'); ?>">&lsaquo;</button>
                     <button type="button" class="aih-img-nav aih-img-nav-next" aria-label="<?php esc_attr_e('Next image', 'art-in-heaven'); ?>">&rsaquo;</button>

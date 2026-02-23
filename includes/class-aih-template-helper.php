@@ -263,6 +263,62 @@ class AIH_Template_Helper {
     }
 
     /**
+     * Render a responsive <picture> element with AVIF/WebP srcset
+     *
+     * Falls back to plain <img> if no responsive variants exist.
+     *
+     * @param string $image_url  URL to the watermarked (or original) image
+     * @param string $alt        Alt text
+     * @param string $sizes      Sizes attribute value
+     * @param array  $attrs      Extra attributes for the <img> tag (e.g., ['id' => 'main-img'])
+     * @return string HTML markup
+     */
+    public static function picture_tag($image_url, $alt = '', $sizes = '100vw', $attrs = array()) {
+        if (empty($image_url)) {
+            return '';
+        }
+
+        $variants = AIH_Image_Optimizer::get_variant_urls($image_url);
+
+        // Build extra attributes string
+        $attr_str = '';
+        foreach ($attrs as $k => $v) {
+            $attr_str .= ' ' . esc_attr($k) . '="' . esc_attr($v) . '"';
+        }
+
+        // No variants — fall back to plain <img>
+        if (empty($variants)) {
+            return '<img src="' . esc_url($image_url) . '" alt="' . esc_attr($alt) . '"' . $attr_str . ' loading="lazy">';
+        }
+
+        $html = '<picture>';
+
+        // AVIF sources (best compression, served first)
+        if (!empty($variants['avif'])) {
+            $srcset_parts = array();
+            foreach ($variants['avif'] as $w => $url) {
+                $srcset_parts[] = esc_url($url) . ' ' . $w . 'w';
+            }
+            $html .= '<source type="image/avif" srcset="' . implode(', ', $srcset_parts) . '" sizes="' . esc_attr($sizes) . '">';
+        }
+
+        // WebP sources (wide support fallback)
+        if (!empty($variants['webp'])) {
+            $srcset_parts = array();
+            foreach ($variants['webp'] as $w => $url) {
+                $srcset_parts[] = esc_url($url) . ' ' . $w . 'w';
+            }
+            $html .= '<source type="image/webp" srcset="' . implode(', ', $srcset_parts) . '" sizes="' . esc_attr($sizes) . '">';
+        }
+
+        // Fallback <img> — original format
+        $html .= '<img src="' . esc_url($image_url) . '" alt="' . esc_attr($alt) . '"' . $attr_str . ' loading="lazy">';
+        $html .= '</picture>';
+
+        return $html;
+    }
+
+    /**
      * Clear page URL cache
      */
     public static function clear_cache() {

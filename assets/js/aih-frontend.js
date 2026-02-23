@@ -44,6 +44,43 @@
         });
     };
 
+    // Responsive image helpers — derive AVIF/WebP variant URLs from watermarked URL
+    window.aihResponsiveBase = function(baseUrl) {
+        return baseUrl.replace(/\.[^.]+$/, '').replace('/watermarked/', '/responsive/');
+    };
+
+    // Build <picture> HTML string from a watermarked image URL
+    window.aihPictureTag = function(baseUrl, alt, sizes) {
+        if (!baseUrl || baseUrl.indexOf('/watermarked/') === -1) {
+            return '<img src="' + baseUrl + '" alt="' + alt + '" loading="lazy">';
+        }
+        var r = aihResponsiveBase(baseUrl);
+        var widths = [400, 800, 1200];
+        var avifSet = widths.map(function(w) { return r + '-' + w + '.avif ' + w + 'w'; }).join(', ');
+        var webpSet = widths.map(function(w) { return r + '-' + w + '.webp ' + w + 'w'; }).join(', ');
+        return '<picture>' +
+            '<source type="image/avif" srcset="' + avifSet + '" sizes="' + (sizes || '100vw') + '">' +
+            '<source type="image/webp" srcset="' + webpSet + '" sizes="' + (sizes || '100vw') + '">' +
+            '<img src="' + baseUrl + '" alt="' + alt + '" loading="lazy">' +
+            '</picture>';
+    };
+
+    // Update an existing <picture> element's sources for image switching
+    window.aihUpdatePicture = function($container, baseUrl) {
+        var $picture = $container.find('picture');
+        if ($picture.length && baseUrl.indexOf('/watermarked/') !== -1) {
+            var r = aihResponsiveBase(baseUrl);
+            var widths = [400, 800, 1200];
+            $picture.find('source[type="image/avif"]').attr('srcset',
+                widths.map(function(w) { return r + '-' + w + '.avif ' + w + 'w'; }).join(', '));
+            $picture.find('source[type="image/webp"]').attr('srcset',
+                widths.map(function(w) { return r + '-' + w + '.webp ' + w + 'w'; }).join(', '));
+            $picture.find('img').attr('src', baseUrl);
+        } else {
+            $container.find('img').attr('src', baseUrl);
+        }
+    };
+
     // Global logout handler with fallback
     $('#aih-logout').on('click', function() {
         var data = {action: 'aih_logout', nonce: aihAjax.nonce};
