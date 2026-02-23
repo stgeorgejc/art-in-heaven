@@ -263,9 +263,17 @@ class AIH_REST_API {
         $pieces = $art_model->get_all($args);
         $total = $art_model->get_count($args);
         
+        // Batch-fetch winning IDs to avoid N+1 queries
+        $batch_data = null;
+        if ($args['bidder_id'] && !empty($pieces)) {
+            $piece_ids = array_map(function($p) { return intval($p->id); }, $pieces);
+            $bid_model = new AIH_Bid();
+            $batch_data = array('winning_ids' => $bid_model->get_winning_ids_batch($piece_ids, $args['bidder_id']));
+        }
+
         $data = array();
         foreach ($pieces as $piece) {
-            $data[] = $this->format_art_piece($piece, $args['bidder_id']);
+            $data[] = $this->format_art_piece($piece, $args['bidder_id'], false, $batch_data);
         }
         
         $response = new WP_REST_Response($data);
@@ -513,7 +521,7 @@ class AIH_REST_API {
      * Format art piece for API response
      * Uses consolidated AIH_Template_Helper::format_art_piece()
      */
-    private function format_art_piece($piece, $bidder_id = null, $full = false) {
-        return AIH_Template_Helper::format_art_piece($piece, $bidder_id, $full, false);
+    private function format_art_piece($piece, $bidder_id = null, $full = false, $batch_data = null) {
+        return AIH_Template_Helper::format_art_piece($piece, $bidder_id, $full, false, $batch_data);
     }
 }

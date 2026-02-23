@@ -167,7 +167,7 @@ class AIH_Template_Helper {
      * @param bool $include_time_string Whether to include formatted time string
      * @return array Formatted art piece data
      */
-    public static function format_art_piece($piece, $bidder_id = null, $full = false, $include_time_string = false) {
+    public static function format_art_piece($piece, $bidder_id = null, $full = false, $include_time_string = false, $batch_data = null) {
         $secs = max(0, intval($piece->seconds_remaining ?? 0));
 
         $data = array(
@@ -202,8 +202,15 @@ class AIH_Template_Helper {
 
         // Add bidder-specific data
         if ($bidder_id) {
-            $bid_model = new AIH_Bid();
-            $data['is_winning'] = $bid_model->is_bidder_winning($piece->id, $bidder_id);
+            $piece_id = intval($piece->id);
+            if ($batch_data !== null && isset($batch_data['winning_ids'])) {
+                // Use pre-fetched batch data to avoid N+1 queries
+                $data['is_winning'] = !empty($batch_data['winning_ids'][$piece_id]);
+            } else {
+                // Fallback to individual query (for single-piece views)
+                $bid_model = new AIH_Bid();
+                $data['is_winning'] = $bid_model->is_bidder_winning($piece->id, $bidder_id);
+            }
         }
 
         return $data;

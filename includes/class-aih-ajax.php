@@ -232,9 +232,19 @@ class AIH_Ajax {
     public function get_gallery() {
         check_ajax_referer('aih_nonce', 'nonce');
         $auth = AIH_Auth::get_instance();
-        $pieces = (new AIH_Art_Piece())->get_all(array('status' => 'active', 'bidder_id' => $auth->get_current_bidder_id()));
+        $bidder_id = $auth->get_current_bidder_id();
+        $pieces = (new AIH_Art_Piece())->get_all(array('status' => 'active', 'bidder_id' => $bidder_id));
+
+        // Batch-fetch winning IDs to avoid N+1 queries
+        $batch_data = null;
+        if ($bidder_id && !empty($pieces)) {
+            $piece_ids = array_map(function($p) { return intval($p->id); }, $pieces);
+            $bid_model = new AIH_Bid();
+            $batch_data = array('winning_ids' => $bid_model->get_winning_ids_batch($piece_ids, $bidder_id));
+        }
+
         $data = array();
-        foreach ($pieces as $p) $data[] = $this->format_art_piece($p, $auth->get_current_bidder_id());
+        foreach ($pieces as $p) $data[] = $this->format_art_piece($p, $bidder_id, false, $batch_data);
         wp_send_json_success($data);
     }
 
@@ -277,9 +287,19 @@ class AIH_Ajax {
         if (strlen($search) < 2) wp_send_json_success(array());
 
         $auth = AIH_Auth::get_instance();
-        $results = (new AIH_Art_Piece())->get_all(array('search' => $search, 'status' => 'active', 'bidder_id' => $auth->get_current_bidder_id(), 'limit' => 20));
+        $bidder_id = $auth->get_current_bidder_id();
+        $results = (new AIH_Art_Piece())->get_all(array('search' => $search, 'status' => 'active', 'bidder_id' => $bidder_id, 'limit' => 20));
+
+        // Batch-fetch winning IDs to avoid N+1 queries
+        $batch_data = null;
+        if ($bidder_id && !empty($results)) {
+            $piece_ids = array_map(function($p) { return intval($p->id); }, $results);
+            $bid_model = new AIH_Bid();
+            $batch_data = array('winning_ids' => $bid_model->get_winning_ids_batch($piece_ids, $bidder_id));
+        }
+
         $data = array();
-        foreach ($results as $p) $data[] = $this->format_art_piece($p, $auth->get_current_bidder_id());
+        foreach ($results as $p) $data[] = $this->format_art_piece($p, $bidder_id, false, $batch_data);
         wp_send_json_success($data);
     }
 
@@ -1486,8 +1506,8 @@ class AIH_Ajax {
      * Format art piece for AJAX response
      * Uses consolidated AIH_Template_Helper::format_art_piece()
      */
-    private function format_art_piece($piece, $bidder_id = null, $full = false) {
-        return AIH_Template_Helper::format_art_piece($piece, $bidder_id, $full, true);
+    private function format_art_piece($piece, $bidder_id = null, $full = false, $batch_data = null) {
+        return AIH_Template_Helper::format_art_piece($piece, $bidder_id, $full, true, $batch_data);
     }
     
     // ========== MULTIPLE IMAGES ==========

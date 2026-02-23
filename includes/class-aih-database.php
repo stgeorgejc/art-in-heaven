@@ -14,14 +14,29 @@ if (!defined('ABSPATH')) {
 }
 
 class AIH_Database {
-    
+
+    /**
+     * Cached auction year to avoid repeated get_option() calls
+     */
+    private static $cached_year = null;
+
     /**
      * Get current auction year
-     * 
+     *
      * @return string
      */
     public static function get_auction_year() {
-        return get_option('aih_auction_year', wp_date('Y'));
+        if (self::$cached_year === null) {
+            self::$cached_year = get_option('aih_auction_year', wp_date('Y'));
+        }
+        return self::$cached_year;
+    }
+
+    /**
+     * Clear the cached auction year (call after updating the option)
+     */
+    public static function clear_year_cache() {
+        self::$cached_year = null;
     }
     
     /**
@@ -361,6 +376,7 @@ class AIH_Database {
         // Store database version
         update_option('aih_db_version', AIH_DB_VERSION);
         update_option('aih_auction_year', $year);
+        self::clear_year_cache();
         
         // Create upload directory
         $upload_dir = wp_upload_dir();

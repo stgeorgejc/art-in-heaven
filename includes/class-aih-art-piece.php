@@ -308,7 +308,7 @@ class AIH_Art_Piece {
     public function get_by_art_id($art_id) {
         global $wpdb;
         $now = current_time('mysql');
-        // Use UPPER() to make comparison case-insensitive
+        // Art IDs are stored uppercase (enforced at insert time), so direct comparison uses the index
         $art_id_upper = strtoupper(trim($art_id));
         return $wpdb->get_row($wpdb->prepare(
             "SELECT *,
@@ -323,7 +323,7 @@ class AIH_Art_Piece {
                 WHEN auction_start IS NOT NULL AND auction_start > %s THEN 'upcoming'
                 ELSE 'active'
              END as computed_status
-             FROM {$this->table} WHERE UPPER(art_id) = %s",
+             FROM {$this->table} WHERE art_id = %s",
             $now, $now, $now, $now, $now, $now, $now, $now, $art_id_upper
         ));
     }
