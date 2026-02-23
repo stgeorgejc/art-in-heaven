@@ -388,10 +388,10 @@ class AIH_Bid {
 
             // If this was the winning bid, update the winning status
             if ($bid->is_winning) {
-                // Find the next highest bid
+                // Find the next highest valid bid
                 $next_highest = $wpdb->get_row($wpdb->prepare(
                     "SELECT * FROM {$this->table}
-                     WHERE art_piece_id = %d
+                     WHERE art_piece_id = %d AND bid_status = 'valid'
                      ORDER BY bid_amount DESC
                      LIMIT 1",
                     $bid->art_piece_id
