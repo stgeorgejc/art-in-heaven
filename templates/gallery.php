@@ -245,6 +245,8 @@ $bidder_bid_ids = $bid_model->get_bidder_bid_ids_batch($piece_ids, $bidder_id);
 
                     <?php if ($status_text): ?>
                     <div class="aih-badge aih-badge-<?php echo $status_class; ?>"><?php echo esc_html($status_text); ?></div>
+                    <?php elseif (!$has_bids && !$is_ended && !$is_upcoming): ?>
+                    <div class="aih-badge aih-badge-no-bids"><?php _e('No Bids Yet', 'art-in-heaven'); ?></div>
                     <?php endif; ?>
 
                     <button type="button" class="aih-fav-btn <?php echo $is_favorite ? 'active' : ''; ?>" data-id="<?php echo intval($piece->id); ?>" aria-label="<?php echo $is_favorite ? esc_attr__('Remove from favorites', 'art-in-heaven') : esc_attr__('Add to favorites', 'art-in-heaven'); ?>" aria-pressed="<?php echo $is_favorite ? 'true' : 'false'; ?>">
@@ -263,12 +265,10 @@ $bidder_bid_ids = $bid_model->get_bidder_bid_ids_batch($piece_ids, $bidder_id);
                         <a href="?art_id=<?php echo intval($piece->id); ?>"><?php echo esc_html($piece->title); ?></a>
                     </h3>
                     <p class="aih-card-artist"><?php echo esc_html($piece->artist); ?></p>
-                    <?php if (!$has_bids): ?>
                     <p class="aih-card-bid">
                         <span class="aih-bid-label"><?php _e('Starting Bid', 'art-in-heaven'); ?></span>
                         <span class="aih-bid-amount">$<?php echo number_format($piece->starting_bid, 2); ?></span>
                     </p>
-                    <?php endif; ?>
                 </div>
 
                 <?php if ($is_upcoming): ?>

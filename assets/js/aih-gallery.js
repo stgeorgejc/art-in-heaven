@@ -508,9 +508,9 @@ jQuery(document).ready(function($) {
                     $input.attr('data-min', info.min_bid).data('min', info.min_bid);
                 }
 
-                // Hide "Starting Bid" label if bids now exist
+                // Remove "No Bids Yet" badge if bids now exist
                 if (info.has_bids) {
-                    $card.find('.aih-card-bid').hide();
+                    $card.find('.aih-badge-no-bids').remove();
                 }
             });
         }).fail(function() {

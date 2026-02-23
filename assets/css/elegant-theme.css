@@ -981,6 +981,11 @@ body.filter-open {
     color: white;
 }
 
+.aih-badge-no-bids {
+    background: var(--color-muted);
+    color: white;
+}
+
 .aih-fav-btn {
     position: absolute;
     top: 8px;
