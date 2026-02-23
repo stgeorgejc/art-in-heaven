@@ -297,9 +297,13 @@
         }
     }
 
+    var bidInProgress = false;
     function doSubmitBid(artId, bidAmount, $notice) {
+        if (bidInProgress) return;
+        bidInProgress = true;
         var data = {action: 'aih_place_bid', nonce: aihAjax.nonce, art_piece_id: artId, bid_amount: bidAmount};
         $.post(aihApiUrl('bid'), data, function(response) {
+                bidInProgress = false;
                 if (response.success) {
                     if (navigator.vibrate) navigator.vibrate(100);
                     $notice.addClass('success').text(aihAjax.strings.bidSuccess).show();
@@ -338,6 +342,7 @@
                     showToast(message, 'error');
                 }
         }).fail(function() {
+                bidInProgress = false;
                 $notice.addClass('error').text(aihAjax.strings.bidError).show();
                 showToast(aihAjax.strings.bidError, 'error');
         });
@@ -418,7 +423,110 @@
             sortTimer = setInterval(sortGallery, 60000);
         }
     });
-    
+
+    // Cleanup timers on page unload
+    window.addEventListener('beforeunload', function() {
+        clearInterval(countdownInterval);
+        clearInterval(sortTimer);
+    });
+
+    // =============================================
+    // SHARED POLLING MODULE
+    // =============================================
+    /**
+     * Shared polling module used by gallery, single-item, and my-bids pages.
+     *
+     * @param {Object} opts
+     * @param {Function} opts.getPieceIds  - Returns array of piece IDs to poll
+     * @param {number}   opts.timeOffset   - Server-client time offset in ms
+     * @param {Function} opts.onUpdate     - Callback(items) with poll response data
+     * @param {Function} [opts.getEndTimes]- Returns array of end-time ms values for smart interval
+     * @param {Function} [opts.isEnded]    - Returns true if all auctions have ended
+     * @param {Function} [opts.shouldSkip] - Returns true to skip UI update (e.g. bidJustPlaced)
+     * @returns {{ stop: Function, poll: Function }}
+     */
+    window.aihStartPolling = function(opts) {
+        var pollTimer = null;
+
+        function getSmartInterval() {
+            if (typeof opts.getEndTimes === 'function') {
+                var times = opts.getEndTimes();
+                var soonest = Infinity;
+                for (var i = 0; i < times.length; i++) {
+                    var remaining = times[i] - (Date.now() + (opts.timeOffset || 0));
+                    if (remaining > 0 && remaining < soonest) soonest = remaining;
+                }
+                if (soonest < 60000) return 2000;
+                if (soonest < 300000) return 5000;
+                if (soonest < 3600000) return 10000;
+            }
+            return 30000;
+        }
+
+        function poll() {
+            if (window.aihSSEConnected) return;
+            if (!aihAjax.isLoggedIn) return;
+            if (typeof opts.isEnded === 'function' && opts.isEnded()) return;
+
+            var ids = opts.getPieceIds();
+            if (!ids || ids.length === 0) return;
+
+            aihPost('poll-status', {
+                action: 'aih_poll_status',
+                nonce: aihAjax.nonce,
+                art_piece_ids: ids
+            }, function(r) {
+                if (!r.success || !r.data || !r.data.items) return;
+                if (typeof opts.shouldSkip === 'function' && opts.shouldSkip()) return;
+                opts.onUpdate(r.data.items);
+            });
+        }
+
+        function start() {
+            if (pollTimer) clearTimeout(pollTimer);
+            var interval = document.hidden ? 60000 : getSmartInterval();
+            pollTimer = setTimeout(function() {
+                poll();
+                start();
+            }, interval);
+        }
+
+        function stop() {
+            if (pollTimer) {
+                clearTimeout(pollTimer);
+                pollTimer = null;
+            }
+        }
+
+        // Visibility change handler
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                stop();
+                pollTimer = setTimeout(poll, 60000);
+            } else {
+                stop();
+                poll();
+                start();
+            }
+        });
+
+        // Clean up on page unload
+        window.addEventListener('beforeunload', function() {
+            stop();
+        });
+
+        // Initial poll after 3 seconds, then smart intervals
+        setTimeout(function() {
+            poll();
+            start();
+        }, 3000);
+
+        // Expose poll for push notification handler
+        window.aihPollStatus = poll;
+
+        return { stop: stop, poll: poll };
+    };
+
     // =============================================
     // DARK MODE THEME TOGGLE
     // =============================================

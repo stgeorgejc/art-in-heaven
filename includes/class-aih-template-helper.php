@@ -65,7 +65,7 @@ class AIH_Template_Helper {
                  AND post_status = 'publish'
                  AND post_content LIKE %s
                  LIMIT 1",
-                '%[' . $shortcode . '%'
+                '%[' . $wpdb->esc_like($shortcode) . '%'
             ));
         }
 

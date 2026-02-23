@@ -150,6 +150,7 @@ class AIH_Bid {
             
         } catch (Exception $e) {
             $wpdb->query('ROLLBACK');
+            error_log('[AIH] place_bid error: ' . $e->getMessage());
             return array('success' => false, 'message' => __('An error occurred. Please try again.', 'art-in-heaven'));
         }
     }
@@ -418,10 +419,11 @@ class AIH_Bid {
 
         } catch (Exception $e) {
             $wpdb->query('ROLLBACK');
+            error_log('[AIH] cancel_bid error: ' . $e->getMessage());
             return false;
         }
     }
-    
+
     /**
      * Get all winning bids (for winners report)
      */

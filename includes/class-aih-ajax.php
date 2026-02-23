@@ -648,8 +648,10 @@ class AIH_Ajax {
             $new_id = $art_model->create($data);
             if (!$new_id) {
                 global $wpdb;
-                $db_error = $wpdb->last_error;
-                wp_send_json_error(array('message' => __('Failed to create art piece.', 'art-in-heaven') . ($db_error ? ' DB Error: ' . $db_error : '')));
+                if ($wpdb->last_error) {
+                    error_log('[AIH] create_art DB error: ' . $wpdb->last_error);
+                }
+                wp_send_json_error(array('message' => __('Failed to create art piece. Please try again.', 'art-in-heaven')));
             }
             
             // Also add the image to art_images table for multi-image support
@@ -747,9 +749,10 @@ class AIH_Ajax {
         $result = $wpdb->update($table, array('show_end_time' => $show), array('id' => $id), array('%d'), array('%d'));
         
         if ($result === false) {
-            wp_send_json_error(array('message' => __('Database error: ', 'art-in-heaven') . $wpdb->last_error));
+            error_log('[AIH] admin_toggle_end_time DB error: ' . $wpdb->last_error);
+            wp_send_json_error(array('message' => __('Database error occurred.', 'art-in-heaven')));
         }
-        
+
         wp_send_json_success(array(
             'message' => $show ? __('End time revealed', 'art-in-heaven') : __('End time hidden', 'art-in-heaven'),
             'show' => $show
@@ -829,7 +832,8 @@ class AIH_Ajax {
         }
 
         if ($result === false) {
-            wp_send_json_error(array('message' => __('Database error: ', 'art-in-heaven') . $wpdb->last_error));
+            error_log('[AIH] admin_inline_edit DB error: ' . $wpdb->last_error);
+            wp_send_json_error(array('message' => __('Database error occurred.', 'art-in-heaven')));
         }
 
         // Format the display value for return
@@ -1486,7 +1490,8 @@ class AIH_Ajax {
             if ($count > 0) {
                 $truncate_result = $wpdb->query("TRUNCATE TABLE $table");
                 if ($truncate_result === false) {
-                    $cleared[] = "$key (" . __('error', 'art-in-heaven') . ": " . $wpdb->last_error . ")";
+                    error_log('[AIH] clear_tables error on ' . $key . ': ' . $wpdb->last_error);
+                    $cleared[] = "$key (" . __('error', 'art-in-heaven') . ")";
                 } else {
                     $cleared[] = "$key ($count rows)";
                 }
@@ -1568,7 +1573,8 @@ class AIH_Ajax {
             ));
         } else {
             global $wpdb;
-            wp_send_json_error(array('message' => __('Failed to add image. DB Error: ', 'art-in-heaven') . $wpdb->last_error));
+            error_log('[AIH] admin_add_image DB error: ' . $wpdb->last_error);
+            wp_send_json_error(array('message' => __('Failed to add image. Please try again.', 'art-in-heaven')));
         }
     }
     

@@ -181,7 +181,9 @@ jQuery(document).ready(function($) {
     });
 
     // Place bid
+    var bidInProgress = false;
     $('#place-bid').on('click', function() {
+        if (bidInProgress) return;
         var $btn = $(this);
         var amount = parseInt(($('#bid-amount').val() || '').replace(/[^0-9]/g, ''), 10);
         var $msg = $('#bid-message');
@@ -191,6 +193,7 @@ jQuery(document).ready(function($) {
         // Confirm bid amount to prevent fat-finger mistakes
         var formatted = '$' + amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         window.aihConfirmBid(formatted, function() {
+        bidInProgress = true;
         $btn.prop('disabled', true).addClass('loading');
         $msg.hide().removeClass('error success');
 
@@ -210,9 +213,11 @@ jQuery(document).ready(function($) {
             } else {
                 $msg.removeClass('success').addClass('error').text(r.data.message || 'Failed').show();
             }
+            bidInProgress = false;
             $btn.prop('disabled', false).removeClass('loading');
         }).fail(function() {
             $msg.removeClass('success').addClass('error').text(aihAjax.strings.connectionError).show();
+            bidInProgress = false;
             $btn.prop('disabled', false).removeClass('loading');
         });
         }); // end aihConfirmBid
@@ -307,98 +312,46 @@ jQuery(document).ready(function($) {
     // === Live bid status polling ===
     var pieceId = parseInt($wrapper.attr('data-piece-id')) || 0;
     var isEnded = $wrapper.attr('data-is-ended') === '1';
-    var pollTimer = null;
     var bidJustPlaced = false;
 
-    // Smart polling: calculate interval based on auction end time
-    function getSmartInterval() {
-        var $timeEl = $('.aih-time-remaining-single[data-end]');
-        if (!$timeEl.length) return 30000;
-        var endMs = new Date($timeEl.attr('data-end').replace(/-/g, '/')).getTime();
-        var remaining = endMs - (Date.now() + timeOffset);
-        if (remaining <= 0) return 30000;
-        if (remaining < 60000) return 2000;
-        if (remaining < 300000) return 5000;
-        if (remaining < 3600000) return 10000;
-        return 30000;
-    }
+    if (!isEnded && pieceId && typeof window.aihStartPolling === 'function') {
+        window.aihStartPolling({
+            timeOffset: timeOffset,
+            getPieceIds: function() { return [pieceId]; },
+            getEndTimes: function() {
+                var $timeEl = $('.aih-time-remaining-single[data-end]');
+                if (!$timeEl.length) return [];
+                return [new Date($timeEl.attr('data-end').replace(/-/g, '/')).getTime()];
+            },
+            isEnded: function() { return isEnded; },
+            shouldSkip: function() { return bidJustPlaced; },
+            onUpdate: function(items) {
+                var info = items[pieceId];
+                if (!info || info.status === 'ended') return;
 
-    // Expose for push notification handler to trigger immediate refresh
-    window.aihPollStatus = pollStatus;
+                var $badge = $('.aih-badge-single');
+                var wasWinning = $badge.length && $badge.text().trim() === 'Winning';
 
-    function pollStatus() {
-        if (window.aihSSEConnected) return; // SSE handles real-time updates
-        if (!aihAjax.isLoggedIn || isEnded) return;
-
-        aihPost('poll-status', {
-            action: 'aih_poll_status',
-            nonce: aihAjax.nonce,
-            art_piece_ids: [pieceId]
-        }, function(r) {
-            if (!r.success || !r.data || !r.data.items) return;
-            // Skip UI updates if a bid was just placed (avoids stale cache overwriting fresh state)
-            if (bidJustPlaced) return;
-            var info = r.data.items[pieceId];
-            if (!info || info.status === 'ended') return;
-
-            var $badge = $('.aih-badge-single');
-            var wasWinning = $badge.length && $badge.text().trim() === 'Winning';
-
-            if (info.is_winning && !wasWinning) {
-                if ($badge.length) {
-                    $badge.attr('class', 'aih-badge aih-badge-winning aih-badge-single').text('Winning');
-                } else {
-                    $('.aih-single-image').prepend('<span class="aih-badge aih-badge-winning aih-badge-single">Winning</span>');
+                if (info.is_winning && !wasWinning) {
+                    if ($badge.length) {
+                        $badge.attr('class', 'aih-badge aih-badge-winning aih-badge-single').text('Winning');
+                    } else {
+                        $('.aih-single-image').prepend('<span class="aih-badge aih-badge-winning aih-badge-single">Winning</span>');
+                    }
+                } else if (!info.is_winning && info.has_bid) {
+                    if ($badge.length) {
+                        $badge.attr('class', 'aih-badge aih-badge-outbid aih-badge-single').text('Outbid');
+                    } else {
+                        $('.aih-single-image').prepend('<span class="aih-badge aih-badge-outbid aih-badge-single">Outbid</span>');
+                    }
                 }
-            } else if (!info.is_winning && info.has_bid) {
-                // Outbid — show or update badge
-                if ($badge.length) {
-                    $badge.attr('class', 'aih-badge aih-badge-outbid aih-badge-single').text('Outbid');
-                } else {
-                    $('.aih-single-image').prepend('<span class="aih-badge aih-badge-outbid aih-badge-single">Outbid</span>');
-                }
-            }
 
-            // Update min bid
-            var $bidInput = $('#bid-amount');
-            if ($bidInput.length) {
-                $bidInput.attr('data-min', info.min_bid).data('min', info.min_bid);
+                // Update min bid
+                var $bidInput = $('#bid-amount');
+                if ($bidInput.length) {
+                    $bidInput.attr('data-min', info.min_bid).data('min', info.min_bid);
+                }
             }
         });
     }
-
-    function startPolling() {
-        if (pollTimer) clearTimeout(pollTimer);
-        var interval = document.hidden ? 60000 : getSmartInterval();
-        pollTimer = setTimeout(function() {
-            pollStatus();
-            startPolling();
-        }, interval);
-    }
-
-    function stopPolling() {
-        if (pollTimer) {
-            clearTimeout(pollTimer);
-            pollTimer = null;
-        }
-    }
-
-    if (!isEnded) {
-        // First poll after 3 seconds, then use smart intervals
-        setTimeout(function() {
-            pollStatus();
-            startPolling();
-        }, 3000);
-    }
-
-    document.addEventListener('visibilitychange', function() {
-        if (document.hidden) {
-            stopPolling();
-            if (!isEnded) pollTimer = setTimeout(pollStatus, 60000);
-        } else if (!isEnded) {
-            stopPolling();
-            pollStatus();
-            startPolling();
-        }
-    });
 });

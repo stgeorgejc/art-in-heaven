@@ -157,10 +157,10 @@ $total = $subtotal + $tax;
                     <span><?php _e('Total', 'art-in-heaven'); ?></span>
                     <span id="aih-total">$<?php echo number_format($total, 2); ?></span>
                 </div>
-                <button type="button" id="aih-create-order" class="aih-btn" style="margin-top: 24px;">
+                <button type="button" id="aih-create-order" class="aih-btn">
                     <?php _e('Proceed to Payment', 'art-in-heaven'); ?>
                 </button>
-                <div id="aih-checkout-msg" class="aih-message" style="display:none; margin-top: 12px;"></div>
+                <div id="aih-checkout-msg" class="aih-message"></div>
                 <p class="aih-checkout-note"><?php _e("You'll be redirected to our secure payment portal.", 'art-in-heaven'); ?></p>
             </div>
         </div>
@@ -168,7 +168,7 @@ $total = $subtotal + $tax;
         
         <?php if (!empty($orders)): ?>
         <div class="aih-previous-orders">
-            <h2 class="aih-section-heading" style="margin-top: 48px;"><?php _e('Previous Orders', 'art-in-heaven'); ?></h2>
+            <h2 class="aih-section-heading aih-checkout-orders-heading"><?php _e('Previous Orders', 'art-in-heaven'); ?></h2>
             <div class="aih-orders-grid">
                 <?php foreach ($orders as $order): ?>
                 <div class="aih-order-card aih-order-clickable" data-order="<?php echo esc_attr($order->order_number); ?>">
@@ -192,7 +192,7 @@ $total = $subtotal + $tax;
         <?php endif; ?>
 
         <!-- Order Details Modal -->
-        <div id="aih-order-modal" class="aih-modal" role="dialog" aria-modal="true" aria-labelledby="aih-modal-title" style="display: none;">
+        <div id="aih-order-modal" class="aih-modal" role="dialog" aria-modal="true" aria-labelledby="aih-modal-title">
             <div class="aih-modal-backdrop" aria-hidden="true"></div>
             <div class="aih-modal-content">
                 <div class="aih-modal-header">

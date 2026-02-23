@@ -229,77 +229,83 @@ class AIH_Export {
      */
     public static function to_csv($type, $filters = array()) {
         global $wpdb;
-        $data = array();
         $headers = array();
-        
+        $fields = array();
+        $query_base = '';
+        $chunk_size = 500;
+
         switch ($type) {
             case 'art':
             case 'art_pieces':
                 $table = AIH_Database::get_table('art_pieces');
-                $data = $wpdb->get_results("SELECT * FROM $table ORDER BY id ASC", ARRAY_A);
+                $query_base = "SELECT * FROM {$table} ORDER BY id ASC";
                 $headers = array('ID', 'Art ID', 'Title', 'Artist', 'Medium', 'Dimensions', 'Starting Bid', 'Status', 'Auction End', 'Created');
                 $fields = array('id', 'art_id', 'title', 'artist', 'medium', 'dimensions', 'starting_bid', 'status', 'auction_end', 'created_at');
                 break;
-                
+
             case 'bids':
                 $bids_table = AIH_Database::get_table('bids');
                 $art_table = AIH_Database::get_table('art_pieces');
-                $data = $wpdb->get_results(
-                    "SELECT b.*, a.title, a.art_id as art_code FROM $bids_table b
-                     LEFT JOIN $art_table a ON b.art_piece_id = a.id
-                     ORDER BY b.bid_time DESC", ARRAY_A
-                );
+                $query_base = "SELECT b.*, a.title, a.art_id as art_code FROM {$bids_table} b LEFT JOIN {$art_table} a ON b.art_piece_id = a.id ORDER BY b.id ASC";
                 $headers = array('Bid ID', 'Art ID', 'Art Title', 'Bidder', 'Amount', 'Time', 'Winning');
                 $fields = array('id', 'art_code', 'title', 'bidder_id', 'bid_amount', 'bid_time', 'is_winning');
                 break;
-                
+
             case 'bidders':
                 $table = AIH_Database::get_table('bidders');
-                $data = $wpdb->get_results("SELECT * FROM $table ORDER BY name_last, name_first ASC", ARRAY_A);
+                $query_base = "SELECT * FROM {$table} ORDER BY id ASC";
                 $headers = array('ID', 'Email', 'First Name', 'Last Name', 'Phone', 'City', 'State', 'Confirmation Code', 'Last Login', 'Created');
                 $fields = array('id', 'email_primary', 'name_first', 'name_last', 'phone_mobile', 'mailing_city', 'mailing_state', 'confirmation_code', 'last_login', 'created_at');
                 break;
-                
+
             case 'registrants':
                 $table = AIH_Database::get_table('registrants');
-                $data = $wpdb->get_results("SELECT * FROM $table ORDER BY name_last, name_first ASC", ARRAY_A);
+                $query_base = "SELECT * FROM {$table} ORDER BY id ASC";
                 $headers = array('ID', 'Email', 'First Name', 'Last Name', 'Phone', 'Confirmation Code', 'Logged In', 'Has Bid', 'Created');
                 $fields = array('id', 'email_primary', 'name_first', 'name_last', 'phone_mobile', 'confirmation_code', 'has_logged_in', 'has_bid', 'created_at');
                 break;
-                
+
             case 'orders':
                 $table = AIH_Database::get_table('orders');
-                $data = $wpdb->get_results("SELECT * FROM $table ORDER BY created_at DESC", ARRAY_A);
+                $query_base = "SELECT * FROM {$table} ORDER BY id ASC";
                 $headers = array('Order #', 'Bidder', 'Subtotal', 'Tax', 'Total', 'Status', 'Method', 'Reference', 'Date');
                 $fields = array('order_number', 'bidder_id', 'subtotal', 'tax', 'total', 'payment_status', 'payment_method', 'payment_reference', 'created_at');
                 break;
-                
+
             default:
                 return '';
         }
-        
-        // Build CSV
+
+        // Build CSV with chunked queries to prevent memory exhaustion
         $output = fopen('php://temp', 'r+');
-        
+
         // Add BOM for Excel
         fprintf($output, chr(0xEF) . chr(0xBB) . chr(0xBF));
-        
+
         // Headers
         fputcsv($output, $headers);
-        
-        // Data rows
-        foreach ($data as $row) {
-            $csv_row = array();
-            foreach ($fields as $field) {
-                $csv_row[] = isset($row[$field]) ? $row[$field] : '';
+
+        // Chunked data rows
+        $offset = 0;
+        do {
+            $rows = $wpdb->get_results(
+                $wpdb->prepare("{$query_base} LIMIT %d OFFSET %d", $chunk_size, $offset),
+                ARRAY_A
+            );
+            foreach ($rows as $row) {
+                $csv_row = array();
+                foreach ($fields as $field) {
+                    $csv_row[] = isset($row[$field]) ? $row[$field] : '';
+                }
+                fputcsv($output, $csv_row);
             }
-            fputcsv($output, $csv_row);
-        }
-        
+            $offset += $chunk_size;
+        } while (count($rows) === $chunk_size);
+
         rewind($output);
         $csv = stream_get_contents($output);
         fclose($output);
-        
+
         return $csv;
     }
     

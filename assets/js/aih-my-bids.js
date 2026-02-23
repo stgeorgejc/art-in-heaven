@@ -95,7 +95,9 @@ jQuery(document).ready(function($) {
         }
     });
 
+    var bidInProgress = false;
     $('.aih-bid-btn').on('click', function() {
+        if (bidInProgress) return;
         var $btn = $(this);
         var $card = $btn.closest('.aih-card');
         var $input = $card.find('.aih-bid-input');
@@ -107,6 +109,7 @@ jQuery(document).ready(function($) {
 
         var formatted = '$' + amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         window.aihConfirmBid(formatted, function() {
+            bidInProgress = true;
             $btn.prop('disabled', true).text('...');
             $msg.hide();
 
@@ -118,10 +121,12 @@ jQuery(document).ready(function($) {
                     setTimeout(function() { location.reload(); }, 1500);
                 } else {
                     $msg.removeClass('success').addClass('error').text(r.data.message || 'Failed').show();
+                    bidInProgress = false;
                     $btn.prop('disabled', false).text('Bid');
                 }
             }).fail(function() {
                 $msg.removeClass('success').addClass('error').text(aihAjax.strings.connectionError).show();
+                bidInProgress = false;
                 $btn.prop('disabled', false).text('Bid');
             });
         });
@@ -206,134 +211,78 @@ jQuery(document).ready(function($) {
     setInterval(updateMyBidsCountdowns, 1000);
 
     // === Live bid status polling ===
-    var pollTimer = null;
+    if (typeof window.aihStartPolling === 'function') {
+        window.aihStartPolling({
+            timeOffset: timeOffset,
+            getPieceIds: function() {
+                var ids = [];
+                $('.aih-card').each(function() {
+                    var id = $(this).data('id');
+                    if (id) ids.push(id);
+                });
+                return ids;
+            },
+            getEndTimes: function() {
+                var times = [];
+                $('.aih-card[data-end]').each(function() {
+                    var $c = $(this);
+                    if ($c.hasClass('ended') || $c.hasClass('won') || $c.hasClass('paid')) return;
+                    times.push(new Date($c.attr('data-end').replace(/-/g, '/')).getTime());
+                });
+                return times;
+            },
+            isEnded: function() {
+                var hasActive = false;
+                $('.aih-card').each(function() {
+                    var $card = $(this);
+                    if (!$card.hasClass('ended') && !$card.hasClass('won') && !$card.hasClass('paid')) {
+                        hasActive = true;
+                        return false;
+                    }
+                });
+                return !hasActive;
+            },
+            onUpdate: function(items) {
+                // Build card map for efficient DOM access
+                var cardMap = {};
+                $('.aih-card').each(function() { cardMap[$(this).data('id')] = $(this); });
 
-    function hasActiveAuctions() {
-        var hasActive = false;
-        $('.aih-card').each(function() {
-            var $card = $(this);
-            if (!$card.hasClass('ended') && !$card.hasClass('won') && !$card.hasClass('paid')) {
-                hasActive = true;
-                return false;
+                $.each(items, function(id, info) {
+                    if (info.status === 'ended') return;
+                    var $card = cardMap[id];
+                    if (!$card || !$card.length) return;
+                    if ($card.hasClass('ended') || $card.hasClass('won') || $card.hasClass('paid')) return;
+
+                    var wasWinning = $card.hasClass('winning');
+
+                    if (info.is_winning && !wasWinning) {
+                        $card.removeClass('outbid').addClass('winning');
+                        var $badge = $card.find('.aih-badge');
+                        $badge.attr('class', 'aih-badge aih-badge-winning').text('Winning');
+                        $card.find('.aih-bid-form').hide();
+                    } else if (!info.is_winning && wasWinning) {
+                        $card.removeClass('winning').addClass('outbid');
+                        var $badge = $card.find('.aih-badge');
+                        $badge.attr('class', 'aih-badge aih-badge-outbid').text('Outbid');
+                        var $form = $card.find('.aih-bid-form');
+                        if ($form.length) {
+                            $form.show();
+                        } else {
+                            $card.find('.aih-card-footer').append(
+                                '<div class="aih-bid-form">' +
+                                '<input type="text" inputmode="numeric" pattern="[0-9]*" class="aih-bid-input" data-min="' + info.min_bid + '" placeholder="$">' +
+                                '<button type="button" class="aih-bid-btn" data-id="' + id + '">Bid</button>' +
+                                '</div>'
+                            );
+                        }
+                    }
+
+                    var $input = $card.find('.aih-bid-input');
+                    if ($input.length) {
+                        $input.attr('data-min', info.min_bid).data('min', info.min_bid);
+                    }
+                });
             }
         });
-        return hasActive;
     }
-
-    // Smart polling: calculate interval based on soonest-ending auction
-    function getSmartInterval() {
-        var soonest = Infinity;
-        $('.aih-card[data-end]').each(function() {
-            var $c = $(this);
-            if ($c.hasClass('ended') || $c.hasClass('won') || $c.hasClass('paid')) return;
-            var endMs = new Date($c.attr('data-end').replace(/-/g, '/')).getTime();
-            var remaining = endMs - (Date.now() + timeOffset);
-            if (remaining > 0 && remaining < soonest) soonest = remaining;
-        });
-
-        if (soonest < 60000) return 2000;       // < 1 min: poll every 2s
-        if (soonest < 300000) return 5000;       // < 5 min: poll every 5s
-        if (soonest < 3600000) return 10000;     // < 1 hour: poll every 10s
-        return 30000;                             // > 1 hour: poll every 30s
-    }
-
-    // Expose for push notification handler to trigger immediate refresh
-    window.aihPollStatus = pollStatus;
-
-    function pollStatus() {
-        if (window.aihSSEConnected) return; // SSE handles real-time updates
-        if (!aihAjax.isLoggedIn || !hasActiveAuctions()) return;
-
-        var ids = [];
-        $('.aih-card').each(function() {
-            var id = $(this).data('id');
-            if (id) ids.push(id);
-        });
-        if (ids.length === 0) return;
-
-        aihPost('poll-status', {
-            action: 'aih_poll_status',
-            nonce: aihAjax.nonce,
-            art_piece_ids: ids
-        }, function(r) {
-            if (!r.success || !r.data || !r.data.items) return;
-            var items = r.data.items;
-
-            $.each(items, function(id, info) {
-                if (info.status === 'ended') return; // countdown handles ended transitions
-                var $card = $('.aih-card[data-id="' + id + '"]');
-                if (!$card.length) return;
-                // Skip cards already transitioned to ended/won/paid
-                if ($card.hasClass('ended') || $card.hasClass('won') || $card.hasClass('paid')) return;
-
-                var wasWinning = $card.hasClass('winning');
-
-                if (info.is_winning && !wasWinning) {
-                    // Became winning
-                    $card.removeClass('outbid').addClass('winning');
-                    var $badge = $card.find('.aih-badge');
-                    $badge.attr('class', 'aih-badge aih-badge-winning').text('Winning');
-                    // Hide bid form when winning
-                    $card.find('.aih-bid-form').hide();
-                } else if (!info.is_winning && wasWinning) {
-                    // Got outbid
-                    $card.removeClass('winning').addClass('outbid');
-                    var $badge = $card.find('.aih-badge');
-                    $badge.attr('class', 'aih-badge aih-badge-outbid').text('Outbid');
-                    // Show bid form when outbid
-                    var $form = $card.find('.aih-bid-form');
-                    if ($form.length) {
-                        $form.show();
-                    } else {
-                        // Create bid form if it doesn't exist
-                        $card.find('.aih-card-footer').append(
-                            '<div class="aih-bid-form">' +
-                            '<input type="text" inputmode="numeric" pattern="[0-9]*" class="aih-bid-input" data-min="' + info.min_bid + '" placeholder="$">' +
-                            '<button type="button" class="aih-bid-btn" data-id="' + id + '">Bid</button>' +
-                            '</div>'
-                        );
-                    }
-                }
-
-                // Update min bid on input
-                var $input = $card.find('.aih-bid-input');
-                if ($input.length) {
-                    $input.attr('data-min', info.min_bid).data('min', info.min_bid);
-                }
-            });
-        });
-    }
-
-    function startPolling() {
-        if (pollTimer) clearTimeout(pollTimer);
-        var interval = document.hidden ? 60000 : getSmartInterval();
-        pollTimer = setTimeout(function() {
-            pollStatus();
-            startPolling();
-        }, interval);
-    }
-
-    function stopPolling() {
-        if (pollTimer) {
-            clearTimeout(pollTimer);
-            pollTimer = null;
-        }
-    }
-
-    // First poll after 3 seconds, then use smart intervals
-    setTimeout(function() {
-        pollStatus();
-        startPolling();
-    }, 3000);
-
-    document.addEventListener('visibilitychange', function() {
-        if (document.hidden) {
-            stopPolling();
-            pollTimer = setTimeout(pollStatus, 60000);
-        } else {
-            stopPolling();
-            pollStatus();
-            startPolling();
-        }
-    });
 });

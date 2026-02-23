@@ -30,6 +30,22 @@
     --safe-area-bottom: env(safe-area-inset-bottom, 0px);
     --safe-area-left: env(safe-area-inset-left, 0px);
     --safe-area-right: env(safe-area-inset-right, 0px);
+    /* Scrollbar colors */
+    --color-scrollbar-track: #f1f1f1;
+    --color-scrollbar-thumb: #c1c1c1;
+    --color-scrollbar-hover: #a1a1a1;
+    /* Feedback backgrounds */
+    --color-success-bg: #e8f5e9;
+    --color-error-bg: #ffebee;
+    /* Z-index scale */
+    --z-base: 1;
+    --z-badge: 5;
+    --z-raised: 10;
+    --z-sticky: 100;
+    --z-dropdown: 999;
+    --z-toast: 9999;
+    --z-modal: 10000;
+    --z-lightbox: 10001;
 }
 
 /* ============================================
@@ -51,6 +67,11 @@
     --shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
     --shadow-md: 0 4px 20px rgba(0,0,0,0.5);
     --shadow-lg: 0 10px 40px rgba(0,0,0,0.6);
+    --color-scrollbar-track: #2a2a2a;
+    --color-scrollbar-thumb: #555;
+    --color-scrollbar-hover: #777;
+    --color-success-bg: rgba(95, 168, 112, 0.15);
+    --color-error-bg: rgba(216, 108, 111, 0.15);
 }
 
 /* ============================================
@@ -99,17 +120,17 @@
 }
 
 ::-webkit-scrollbar-track {
-    background: #f1f1f1;
+    background: var(--color-scrollbar-track);
     border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
+    background: var(--color-scrollbar-thumb);
     border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #a1a1a1;
+    background: var(--color-scrollbar-hover);
 }
 
 /* Hardware acceleration for animated elements */
@@ -218,7 +239,7 @@ body.aih-active .page-title {
     border-bottom: 1px solid var(--color-border);
     position: sticky;
     top: 0;
-    z-index: 100;
+    z-index: var(--z-sticky);
     width: 100%;
     max-width: 100%;
 }
@@ -493,7 +514,7 @@ body.aih-active .page-title {
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.5);
-    z-index: 999;
+    z-index: var(--z-dropdown);
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.3s ease, visibility 0.3s ease;
@@ -514,7 +535,7 @@ body.aih-active .page-title {
     background: var(--color-surface);
     border: none;
     border-radius: 16px 16px 0 0;
-    z-index: 1000;
+    z-index: calc(var(--z-dropdown) + 1);
     transform: translateY(100%);
     transition: transform 0.3s ease;
     max-height: 80vh;
@@ -535,7 +556,7 @@ body.aih-active .page-title {
     position: sticky;
     top: 0;
     background: var(--color-surface);
-    z-index: 1;
+    z-index: var(--z-base);
 }
 
 .aih-filter-panel-title {
@@ -941,7 +962,7 @@ body.filter-open {
     align-items: center;
     justify-content: center;
     text-align: center;
-    z-index: 4;
+    z-index: var(--z-badge);
 }
 
 .aih-badge {
@@ -988,12 +1009,12 @@ body.filter-open {
 
 .aih-fav-btn {
     position: absolute;
-    top: 8px;
-    right: 8px;
-    width: 28px;
-    height: 28px;
-    min-width: 28px;
-    min-height: 28px;
+    top: 4px;
+    right: 4px;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
     aspect-ratio: 1/1;
     flex-shrink: 0;
     display: flex;
@@ -1007,7 +1028,7 @@ body.filter-open {
     font-size: 14px;
     color: var(--color-muted);
     -webkit-tap-highlight-color: transparent;
-    z-index: 5;
+    z-index: var(--z-badge);
     box-sizing: border-box;
 }
 
@@ -1231,6 +1252,8 @@ body.filter-open {
 .aih-bid-btn:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+    pointer-events: none;
+    filter: grayscale(30%);
 }
 
 .aih-bid-message {
@@ -1243,13 +1266,13 @@ body.filter-open {
 
 .aih-bid-message.success {
     display: block;
-    background: #e8f5e9;
+    background: var(--color-success-bg);
     color: var(--color-success);
 }
 
 .aih-bid-message.error {
     display: block;
-    background: #ffebee;
+    background: var(--color-error-bg);
     color: var(--color-error);
 }
 
@@ -1385,6 +1408,8 @@ body.filter-open {
 .aih-btn:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+    pointer-events: none;
+    filter: grayscale(30%);
 }
 
 .aih-btn.loading {
@@ -1415,8 +1440,8 @@ body.filter-open {
     display: none;
 }
 
-.aih-message.success { display: block; background: #e8f5e9; color: var(--color-success); }
-.aih-message.error { display: block; background: #ffebee; color: var(--color-error); }
+.aih-message.success { display: block; background: var(--color-success-bg); color: var(--color-success); }
+.aih-message.error { display: block; background: var(--color-error-bg); color: var(--color-error); }
 
 /* ============================================
    FOOTER
@@ -1450,7 +1475,7 @@ body.filter-open {
     box-shadow: var(--shadow-lg);
     opacity: 0;
     transition: all 0.3s ease;
-    z-index: 9999;
+    z-index: var(--z-toast);
 }
 
 .aih-toast.show {
@@ -1465,6 +1490,9 @@ body.filter-open {
     display: grid;
     grid-template-columns: 1fr;
     gap: 32px;
+    align-items: start;
+    flex: 1;
+    min-width: 0;
 }
 
 /* Image wrapper with navigation arrows */
@@ -1491,7 +1519,7 @@ body.filter-open {
     text-decoration: none;
     font-size: 18px;
     transition: all var(--transition);
-    z-index: 10;
+    z-index: var(--z-raised);
     box-shadow: var(--shadow-sm);
 }
 
@@ -1821,7 +1849,7 @@ body.filter-open {
     font-size: 16px;
     font-weight: bold;
     color: var(--color-primary);
-    z-index: 5;
+    z-index: var(--z-badge);
     opacity: 1;
     transition: opacity 0.2s ease, background 0.2s ease;
     box-shadow: 0 1px 4px rgba(0,0,0,0.15);
@@ -1847,7 +1875,7 @@ body.filter-open {
     transform: translateX(-50%);
     display: flex;
     gap: 6px;
-    z-index: 5;
+    z-index: var(--z-badge);
 }
 
 .aih-carousel-dot {
@@ -1892,7 +1920,7 @@ body.filter-open {
     border-radius: 4px;
     font-size: 12px;
     font-weight: 600;
-    z-index: 5;
+    z-index: var(--z-badge);
     backdrop-filter: blur(4px);
 }
 
@@ -1932,6 +1960,8 @@ body.filter-open {
     display: flex;
     align-items: center;
     justify-content: center;
+    width: 18px;
+    height: 18px;
     /* Outline heart for unpressed state */
     -webkit-text-stroke: 1.5px var(--color-muted);
     color: transparent;
@@ -2012,7 +2042,7 @@ body.filter-open {
     opacity: 0;
     visibility: hidden;
     transition: all 0.3s ease;
-    z-index: 999;
+    z-index: var(--z-dropdown);
 }
 
 .aih-scroll-top.visible {
@@ -2465,11 +2495,7 @@ body {
     .aih-gallery-grid {
         gap: 24px;
     }
-    
-    .aih-gallery-title h1 {
-        font-size: 32px;
-    }
-    
+
     .aih-card:hover {
         box-shadow: var(--shadow-md);
         transform: translateY(-2px);
@@ -2664,17 +2690,17 @@ body {
     min-height: 100vh;
 }
 
-/* Scrollbar */
+/* Scrollbar — inherits from CSS variables, dark-mode overrides via :root */
 .aih-page.dark-mode ::-webkit-scrollbar-track {
-    background: #1a1a1a;
+    background: var(--color-scrollbar-track);
 }
 
 .aih-page.dark-mode ::-webkit-scrollbar-thumb {
-    background: #444;
+    background: var(--color-scrollbar-thumb);
 }
 
 .aih-page.dark-mode ::-webkit-scrollbar-thumb:hover {
-    background: #555;
+    background: var(--color-scrollbar-hover);
 }
 
 /* Selection */
@@ -2753,10 +2779,7 @@ body {
     background: rgba(74, 156, 96, 0.15);
 }
 
-/* Order status badges */
-.aih-page.dark-mode .aih-status-paid {
-    background: rgba(95, 168, 112, 0.15);
-}
+/* Order status badges — see consolidated dark-mode section below */
 
 .aih-page.dark-mode .aih-status-pending {
     background: rgba(230, 81, 0, 0.15);
@@ -2804,10 +2827,6 @@ body {
 
 .aih-page.dark-mode .aih-modal-close:hover {
     color: var(--color-primary);
-}
-
-.aih-page.dark-mode .aih-status-paid {
-    background: rgba(45, 90, 61, 0.2);
 }
 
 .aih-page.dark-mode .aih-status-pending {
@@ -3038,7 +3057,7 @@ body {
     display: none;
     position: fixed;
     inset: 0;
-    z-index: 10001;
+    z-index: var(--z-lightbox);
     background: rgba(0, 0, 0, 0.5);
     align-items: center;
     justify-content: center;
@@ -3134,7 +3153,7 @@ body {
     top: 0;
     left: 50%;
     transform: translateX(-50%);
-    z-index: 10000;
+    z-index: var(--z-modal);
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -3246,7 +3265,7 @@ body {
     display: none;
     position: fixed;
     inset: 0;
-    z-index: 10000;
+    z-index: var(--z-modal);
     background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
@@ -3343,7 +3362,7 @@ body {
     top: 0;
     left: 50%;
     transform: translateX(-50%) translateY(-60px);
-    z-index: 9998;
+    z-index: calc(var(--z-toast) - 1);
     transition: transform 0.2s ease;
     pointer-events: none;
 }
@@ -3507,7 +3526,7 @@ body {
     text-decoration: none;
     font-size: 16px;
     transition: all var(--transition);
-    z-index: 100;
+    z-index: var(--z-sticky);
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
@@ -3523,15 +3542,6 @@ body {
 
 .aih-single-content-wrapper > .aih-nav-next {
     right: 4px;
-}
-
-.aih-single-content {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 32px;
-    align-items: start;
-    flex: 1;
-    min-width: 0;
 }
 
 .aih-single-image {
@@ -3579,7 +3589,7 @@ body {
     border-radius: 4px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     line-height: 1;
-    z-index: 4;
+    z-index: var(--z-badge);
 }
 
 /* Status Badge on single image - top left corner */
@@ -3587,7 +3597,7 @@ body {
     position: absolute;
     top: 16px;
     left: 16px;
-    z-index: 4;
+    z-index: var(--z-badge);
 }
 
 .aih-thumbnails {
@@ -3641,16 +3651,6 @@ body {
 /* Hide art ID from meta since it's now on the image */
 .aih-single-meta .aih-art-id {
     display: none;
-}
-
-.aih-single-details h1 {
-    font-family: var(--font-display);
-    font-size: 22px;
-    font-weight: 500;
-    margin-bottom: 8px;
-    line-height: 1.3;
-    overflow-wrap: break-word;
-    word-wrap: break-word;
 }
 
 .aih-artist {
@@ -3928,7 +3928,7 @@ body {
     padding: 0;
     text-align: center;
     color: var(--color-primary);
-    z-index: 5;
+    z-index: var(--z-badge);
     opacity: 1;
     transition: background 0.2s ease, transform 0.2s ease;
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
@@ -3961,7 +3961,7 @@ body {
     transform: translateX(-50%);
     display: flex;
     gap: 8px;
-    z-index: 5;
+    z-index: var(--z-badge);
 }
 
 .aih-image-dot {
@@ -4000,7 +4000,7 @@ body {
     margin: 0;
     padding: 0;
     background: rgba(0, 0, 0, 0.98);
-    z-index: 999999;
+    z-index: var(--z-lightbox);
     overflow: hidden;
     box-sizing: border-box;
 }
@@ -4027,7 +4027,7 @@ html.aih-lightbox-open body {
     background: rgba(0, 0, 0, 0.5);
     border: none;
     cursor: pointer;
-    z-index: 1000001;
+    z-index: calc(var(--z-lightbox) + 1);
     width: 50px;
     height: 50px;
     display: flex;
@@ -4100,7 +4100,7 @@ html.aih-lightbox-open body {
     align-items: center;
     justify-content: center;
     transition: background 0.2s ease, transform 0.2s ease, color 0.2s ease;
-    z-index: 1000000;
+    z-index: var(--z-lightbox);
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
 }
 
@@ -4227,7 +4227,7 @@ html.aih-lightbox-open body {
         width: 48px;
         height: 48px;
         font-size: 20px;
-        z-index: 10;
+        z-index: var(--z-raised);
     }
 
     .aih-single-content-wrapper > .aih-nav-prev {
@@ -4639,6 +4639,11 @@ html.aih-lightbox-open body {
     margin-top: 16px;
 }
 
+#aih-create-order { margin-top: 24px; }
+#aih-checkout-msg { display: none; margin-top: 12px; }
+.aih-checkout-orders-heading { margin-top: 48px; }
+#aih-order-modal { display: none; }
+
 /* --- Checkout Item Selection --- */
 
 .aih-checkout-items-header {
@@ -4855,7 +4860,7 @@ html.aih-lightbox-open body {
 }
 
 .aih-payment-success {
-    background: #e8f5e9;
+    background: var(--color-success-bg);
     border: 1px solid #a5d6a7;
     color: #2e7d32;
 }
@@ -4920,7 +4925,7 @@ html.aih-lightbox-open body {
     border-radius: 2px;
 }
 
-.aih-status-paid { background: #e8f5e9; color: var(--color-success); }
+.aih-status-paid { background: var(--color-success-bg); color: var(--color-success); }
 .aih-status-pending { background: #fff3e0; color: #e65100; }
 
 .aih-order-details p {
@@ -4964,7 +4969,7 @@ html.aih-lightbox-open body {
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: 9999;
+    z-index: var(--z-toast);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -5326,7 +5331,7 @@ html.aih-lightbox-open body {
     align-items: center;
     justify-content: center;
     text-align: center;
-    z-index: 4;
+    z-index: var(--z-badge);
 }
 
 /* Status badge - match gallery exactly */
@@ -5560,7 +5565,7 @@ html.aih-lightbox-open body {
     border-radius: 4px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     line-height: 1;
-    z-index: 4;
+    z-index: var(--z-badge);
 }
 
 .aih-badge-owned {
