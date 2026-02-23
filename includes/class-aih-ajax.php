@@ -1516,12 +1516,12 @@ class AIH_Ajax {
         // Check if table exists, if not create it
         global $wpdb;
         $table = AIH_Database::get_table('art_images');
-        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table}'");
+        $table_exists = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $table));
         if (!$table_exists) {
             // Try to create the table
             AIH_Database::create_tables();
             // Check again
-            $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table}'");
+            $table_exists = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $table));
             if (!$table_exists) {
                 wp_send_json_error(array('message' => __('Database table not found. Please go to Settings and click "Recreate Tables".', 'art-in-heaven')));
             }

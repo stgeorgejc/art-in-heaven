@@ -299,20 +299,32 @@ class AIH_Security {
         if ($limit === null) {
             $limit = self::DEFAULT_RATE_LIMIT;
         }
-        
+
         $key = self::RATE_LIMIT_PREFIX . md5($identifier);
+
+        // Use wp_cache_incr for atomic increment when an external object cache is available
+        if (wp_using_ext_object_cache()) {
+            $cache_key = 'aih_rl_' . md5($identifier);
+            $count = wp_cache_get($cache_key, 'aih_rate_limit');
+            if ($count === false) {
+                wp_cache_add($cache_key, 1, 'aih_rate_limit', $window);
+                return true;
+            }
+            $count = wp_cache_incr($cache_key, 1, 'aih_rate_limit');
+            return $count <= $limit;
+        }
+
+        // Fallback to transients (non-atomic but best available without object cache)
         $data = get_transient($key);
-        
+
         if ($data === false) {
-            // First request
             set_transient($key, array(
                 'count' => 1,
                 'start' => time()
             ), $window);
             return true;
         }
-        
-        // Check if window expired
+
         if (time() - $data['start'] > $window) {
             set_transient($key, array(
                 'count' => 1,
@@ -320,11 +332,10 @@ class AIH_Security {
             ), $window);
             return true;
         }
-        
-        // Increment and check
+
         $data['count']++;
         set_transient($key, $data, $window - (time() - $data['start']));
-        
+
         return $data['count'] <= $limit;
     }
     
@@ -454,7 +465,7 @@ class AIH_Security {
         }
 
         // Already encrypted
-        if (strpos($value, 'enc:') === 0) {
+        if (strpos($value, 'enc:') === 0 || strpos($value, 'enc2:') === 0) {
             return $value;
         }
 
@@ -463,29 +474,28 @@ class AIH_Security {
         }
 
         $key = substr(hash('sha256', self::get_encryption_key()), 0, 32);
-        $iv = openssl_random_pseudo_bytes(16);
-        $encrypted = openssl_encrypt($value, 'AES-256-CBC', $key, 0, $iv);
+        $iv = openssl_random_pseudo_bytes(12); // GCM uses 12-byte IV
+        $tag = '';
+        $encrypted = openssl_encrypt($value, 'AES-256-GCM', $key, OPENSSL_RAW_DATA, $iv, $tag);
 
         if ($encrypted === false) {
             return $value;
         }
 
-        return 'enc:' . base64_encode($iv . $encrypted);
+        // enc2: prefix distinguishes GCM from legacy CBC
+        return 'enc2:' . base64_encode($iv . $tag . $encrypted);
     }
 
     /**
      * Decrypt a value from storage
      *
-     * @param string $value Encrypted value (base64 with 'enc:' prefix)
+     * Supports both AES-256-GCM (enc2: prefix) and legacy AES-256-CBC (enc: prefix).
+     *
+     * @param string $value Encrypted value (base64 with 'enc:' or 'enc2:' prefix)
      * @return string Decrypted plaintext
      */
     public static function decrypt($value) {
         if (empty($value)) {
-            return $value;
-        }
-
-        // Not encrypted
-        if (strpos($value, 'enc:') !== 0) {
             return $value;
         }
 
@@ -494,8 +504,26 @@ class AIH_Security {
         }
 
         $key = substr(hash('sha256', self::get_encryption_key()), 0, 32);
-        $data = base64_decode(substr($value, 4));
 
+        // AES-256-GCM (authenticated)
+        if (strpos($value, 'enc2:') === 0) {
+            $data = base64_decode(substr($value, 5));
+            if ($data === false || strlen($data) < 29) { // 12 IV + 16 tag + 1 min ciphertext
+                return '';
+            }
+            $iv = substr($data, 0, 12);
+            $tag = substr($data, 12, 16);
+            $encrypted = substr($data, 28);
+            $decrypted = openssl_decrypt($encrypted, 'AES-256-GCM', $key, OPENSSL_RAW_DATA, $iv, $tag);
+            return $decrypted !== false ? $decrypted : '';
+        }
+
+        // Legacy AES-256-CBC (for existing encrypted data)
+        if (strpos($value, 'enc:') !== 0) {
+            return $value; // Not encrypted
+        }
+
+        $data = base64_decode(substr($value, 4));
         if ($data === false || strlen($data) < 17) {
             return '';
         }
