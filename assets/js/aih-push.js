@@ -347,6 +347,7 @@
          */
         pollOutbid: function() {
             if (window.aihSSEConnected) return; // SSE handles real-time outbid notifications
+            console.log('[AIH] Polling for outbid events (fallback)');
             var self = this;
             aihPost('check-outbid', {
                 action: 'aih_check_outbid',
@@ -360,6 +361,7 @@
                         if (self.shownEvents[eventKey]) continue;
                         self.shownEvents[eventKey] = true;
                         // Show persistent alert card (falls back to toast)
+                        console.log('[AIH] Outbid via POLLING:', evt.title, '(art #' + evt.art_piece_id + ')');
                         if (typeof window.showOutbidAlert === 'function') {
                             window.showOutbidAlert(evt.art_piece_id, evt.title);
                         } else if (typeof window.showToast === 'function') {

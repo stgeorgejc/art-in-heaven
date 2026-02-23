@@ -111,6 +111,7 @@
                 self.connected = true;
                 self.reconnectAttempts = 0;
                 self.disablePolling();
+                console.log('[AIH] SSE connected to Mercure hub — polling disabled');
             };
 
             this.eventSource.onmessage = function(event) {
@@ -127,6 +128,7 @@
             };
 
             this.eventSource.onerror = function() {
+                console.warn('[AIH] SSE disconnected — falling back to polling');
                 self.onDisconnect();
             };
         },
@@ -136,6 +138,7 @@
          */
         handleEvent: function(data) {
             if (!data || !data.type) return;
+            console.log('[AIH] SSE event received:', data.type, data);
 
             switch (data.type) {
                 case 'bid_update':
