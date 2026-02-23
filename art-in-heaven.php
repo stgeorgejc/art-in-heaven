@@ -370,19 +370,15 @@ class Art_In_Heaven {
         // Wrap in try-catch to prevent cron failures
         try {
             global $wpdb;
-            
-            // Check if database is ready
+
+            // Single table existence check (removed redundant SHOW TABLES queries)
             if (!class_exists('AIH_Database') || !AIH_Database::tables_exist()) {
                 return;
             }
-            
+
             $table = AIH_Database::get_table('art_pieces');
             if (!$table) return;
-            
-            // Verify table exists before querying
-            $table_exists = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $table));
-            if (!$table_exists) return;
-            
+
             $now = current_time('mysql');
             
             // Activate draft auctions whose start time has passed

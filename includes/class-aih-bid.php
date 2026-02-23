@@ -11,13 +11,11 @@ if (!defined('ABSPATH')) {
 }
 
 class AIH_Bid {
-    
+
     private $table;
-    private $art_piece_model;
-    
+
     public function __construct() {
         $this->table = AIH_Database::get_table('bids');
-        $this->art_piece_model = new AIH_Art_Piece();
     }
     
     /**
