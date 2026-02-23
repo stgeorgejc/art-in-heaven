@@ -10,7 +10,7 @@
     // API URL helper: use clean /api/ endpoint when available, fall back to admin-ajax.php
     window.aihApiUrl = function(endpoint) {
         var base = (aihAjax.apiurl || '').replace(/\/$/, '');
-        return base ? (base + endpoint) : aihAjax.ajaxurl;
+        return base ? (base + '/' + endpoint) : aihAjax.ajaxurl;
     };
 
     // Toast notification helper — auto-inject element if missing
