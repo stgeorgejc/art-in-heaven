@@ -299,7 +299,7 @@
 
     function doSubmitBid(artId, bidAmount, $notice) {
         var data = {action: 'aih_place_bid', nonce: aihAjax.nonce, art_piece_id: artId, bid_amount: bidAmount};
-        aihPost('bid', data, function(response) {
+        $.post(aihApiUrl('bid'), data, function(response) {
                 if (response.success) {
                     if (navigator.vibrate) navigator.vibrate(100);
                     $notice.addClass('success').text(aihAjax.strings.bidSuccess).show();
@@ -337,7 +337,7 @@
                     $notice.addClass('error').text(message).show();
                     showToast(message, 'error');
                 }
-        }, function() {
+        }).fail(function() {
                 $notice.addClass('error').text(aihAjax.strings.bidError).show();
                 showToast(aihAjax.strings.bidError, 'error');
         });

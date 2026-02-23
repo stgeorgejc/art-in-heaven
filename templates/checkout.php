@@ -267,14 +267,14 @@ jQuery(document).ready(function($) {
         });
         if (ids.length === 0) return;
         var $btn = $(this).prop('disabled', true).addClass('loading');
-        aihPost('create-order', {action:'aih_create_order', nonce:aihAjax.nonce, 'art_piece_ids[]': ids}, function(r) {
+        $.post(aihApiUrl('create-order'), {action:'aih_create_order', nonce:aihAjax.nonce, 'art_piece_ids[]': ids}, function(r) {
             if (r.success && r.data.pushpay_url) {
                 window.location.href = r.data.pushpay_url;
             } else {
                 $('#aih-checkout-msg').addClass('error').text(r.data.message || 'Error creating order. Payment URL could not be generated.').show();
                 $btn.prop('disabled', false).removeClass('loading');
             }
-        }, function() {
+        }).fail(function() {
             $('#aih-checkout-msg').addClass('error').text('Connection error. Please try again.').show();
             $btn.prop('disabled', false).removeClass('loading');
         });
