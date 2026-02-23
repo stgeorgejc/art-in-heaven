@@ -103,28 +103,36 @@ class AIH_Checkout {
     
     public function create_order($bidder_id, $art_piece_ids = array()) {
         global $wpdb;
-        
+
         $orders_table = AIH_Database::get_table('orders');
         $order_items_table = AIH_Database::get_table('order_items');
-        
-        $won_items = $this->get_won_items($bidder_id);
-        
-        if (!empty($art_piece_ids)) {
-            $won_items = array_filter($won_items, function($item) use ($art_piece_ids) {
-                return in_array($item->id, $art_piece_ids);
-            });
-        }
-        
-        if (empty($won_items)) {
-            return array('success' => false, 'message' => __('No items to checkout.', 'art-in-heaven'));
-        }
-        
-        $totals = $this->calculate_totals($won_items);
-        $order_number = 'AIH-' . strtoupper(wp_generate_password(8, false));
-        
+        $bids_table = AIH_Database::get_table('bids');
+
         $wpdb->query('START TRANSACTION');
-        
+
         try {
+            // Lock the bidder's winning bids inside the transaction to prevent double-orders
+            $wpdb->query($wpdb->prepare(
+                "SELECT id FROM $bids_table WHERE bidder_id = %s AND is_winning = 1 FOR UPDATE",
+                $bidder_id
+            ));
+
+            $won_items = $this->get_won_items($bidder_id);
+
+            if (!empty($art_piece_ids)) {
+                $won_items = array_filter($won_items, function($item) use ($art_piece_ids) {
+                    return in_array($item->id, $art_piece_ids);
+                });
+            }
+
+            if (empty($won_items)) {
+                $wpdb->query('ROLLBACK');
+                return array('success' => false, 'message' => __('No items to checkout.', 'art-in-heaven'));
+            }
+
+            $totals = $this->calculate_totals($won_items);
+            $order_number = 'AIH-' . strtoupper(wp_generate_password(8, false));
+
             $wpdb->insert($orders_table, array(
                 'order_number' => $order_number,
                 'bidder_id' => $bidder_id,

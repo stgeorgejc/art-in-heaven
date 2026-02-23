@@ -995,7 +995,7 @@ class AIH_Ajax {
         // If this was the winning bid, set the next highest bid as winning
         if ($was_winning) {
             $next_highest = $wpdb->get_row($wpdb->prepare(
-                "SELECT * FROM {$bids_table} WHERE art_piece_id = %d ORDER BY bid_amount DESC LIMIT 1",
+                "SELECT * FROM {$bids_table} WHERE art_piece_id = %d AND bid_status = 'valid' ORDER BY bid_amount DESC LIMIT 1",
                 $art_piece_id
             ));
             
