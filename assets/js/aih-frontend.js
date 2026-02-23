@@ -17,7 +17,9 @@
     // Tries /api/ route first, falls back to admin-ajax.php on network failure
     window.aihPost = function(endpoint, data, successFn, failFn) {
         return $.post(aihApiUrl(endpoint), data, successFn).fail(function() {
+            console.warn('[AIH] API route failed for "' + endpoint + '", using admin-ajax fallback');
             $.post(aihAjax.ajaxurl, data, successFn).fail(function() {
+                console.error('[AIH] admin-ajax fallback also failed for "' + endpoint + '"');
                 if (typeof failFn === 'function') failFn();
             });
         });
