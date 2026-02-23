@@ -267,14 +267,14 @@ jQuery(document).ready(function($) {
         });
         if (ids.length === 0) return;
         var $btn = $(this).prop('disabled', true).addClass('loading');
-        $.post(aihApiUrl('create-order'), {action:'aih_create_order', nonce:aihAjax.nonce, 'art_piece_ids[]': ids}, function(r) {
+        aihPost('create-order', {action:'aih_create_order', nonce:aihAjax.nonce, 'art_piece_ids[]': ids}, function(r) {
             if (r.success && r.data.pushpay_url) {
                 window.location.href = r.data.pushpay_url;
             } else {
                 $('#aih-checkout-msg').addClass('error').text(r.data.message || 'Error creating order. Payment URL could not be generated.').show();
                 $btn.prop('disabled', false).removeClass('loading');
             }
-        }).fail(function() {
+        }, function() {
             $('#aih-checkout-msg').addClass('error').text('Connection error. Please try again.').show();
             $btn.prop('disabled', false).removeClass('loading');
         });
@@ -300,11 +300,11 @@ jQuery(document).ready(function($) {
 
         $body.html('<div class="aih-loading">Loading order details...</div>');
 
-        $.post(aihApiUrl('order-details'), {
+        aihPost('order-details', {
             action: 'aih_get_order_details',
             nonce: aihAjax.nonce,
             order_number: orderNumber
-        }).done(function(r) {
+        }, function(r) {
             if (r.success) {
                 var data = r.data;
                 var html = '<div class="aih-order-modal-info">';
@@ -361,8 +361,8 @@ jQuery(document).ready(function($) {
                 var msg = (r.data && r.data.message) ? r.data.message : 'Unknown error';
                 $body.html('<p class="aih-error">Error: ' + escapeHtml(msg) + '</p>');
             }
-        }).fail(function(xhr) {
-            $body.html('<p class="aih-error">Request failed: ' + escapeHtml(xhr.status + ' ' + xhr.statusText) + '</p>');
+        }, function() {
+            $body.html('<p class="aih-error">Connection error. Please try again.</p>');
         });
     });
 

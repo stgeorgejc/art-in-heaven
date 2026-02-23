@@ -236,7 +236,8 @@ jQuery(document).ready(function($) {
         var id = $btn.data('id');
         $btn.addClass('loading');
 
-        $.post(aihApiUrl('favorite'), {action:'aih_toggle_favorite', nonce:aihAjax.nonce, art_piece_id:id}, function(r) {
+        aihPost('favorite', {action:'aih_toggle_favorite', nonce:aihAjax.nonce, art_piece_id:id}, function(r) {
+            $btn.removeClass('loading');
             if (r.success) {
                 $btn.toggleClass('active');
                 var $cardImage = $btn.closest('.aih-card-image');
@@ -245,9 +246,7 @@ jQuery(document).ready(function($) {
                 if (!userChangedSort) sortCards('default');
                 filterCards();
             }
-        }).fail(function() {
-            // Silently fail - don't change UI state
-        }).always(function() {
+        }, function() {
             $btn.removeClass('loading');
         });
     });
@@ -272,7 +271,7 @@ jQuery(document).ready(function($) {
             $btn.prop('disabled', true).text('...');
             $msg.hide();
 
-            $.post(aihApiUrl('bid'), {action:'aih_place_bid', nonce:aihAjax.nonce, art_piece_id:id, bid_amount:amount}, function(r) {
+            aihPost('bid', {action:'aih_place_bid', nonce:aihAjax.nonce, art_piece_id:id, bid_amount:amount}, function(r) {
                 if (r.success) {
                     if (navigator.vibrate) navigator.vibrate(100);
                     bidJustPlaced = true;
@@ -291,7 +290,7 @@ jQuery(document).ready(function($) {
                     $msg.removeClass('success').addClass('error').text(r.data.message || 'Bid failed').show();
                 }
                 $btn.prop('disabled', false).text('Bid');
-            }).fail(function() {
+            }, function() {
                 $msg.removeClass('success').addClass('error').text(aihAjax.strings.connectionError).show();
                 $btn.prop('disabled', false).text('Bid');
             });
@@ -453,7 +452,7 @@ jQuery(document).ready(function($) {
         });
         if (ids.length === 0) return;
 
-        $.post(aihApiUrl('poll-status'), {
+        aihPost('poll-status', {
             action: 'aih_poll_status',
             nonce: aihAjax.nonce,
             art_piece_ids: ids
@@ -507,8 +506,6 @@ jQuery(document).ready(function($) {
                     $card.find('.aih-badge-no-bids').remove();
                 }
             });
-        }).fail(function() {
-            // Network error or server error — polling continues via setTimeout chain
         });
     }
 

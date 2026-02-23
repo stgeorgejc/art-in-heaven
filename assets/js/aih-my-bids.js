@@ -19,11 +19,11 @@ jQuery(document).ready(function($) {
         $body.html('<div class="aih-loading">Loading order details...</div>');
         $('#aih-modal-title').text('Order ' + orderNumber);
 
-        $.post(aihApiUrl('order-details'), {
+        aihPost('order-details', {
             action: 'aih_get_order_details',
             nonce: aihAjax.nonce,
             order_number: orderNumber
-        }).done(function(r) {
+        }, function(r) {
             if (r.success) {
                 var data = r.data;
                 var html = '<div class="aih-order-modal-info">';
@@ -77,8 +77,8 @@ jQuery(document).ready(function($) {
                 var msg = (r.data && r.data.message) ? r.data.message : 'Unknown error';
                 $body.html('<p class="aih-error">Error: ' + escapeHtml(msg) + '</p>');
             }
-        }).fail(function(xhr) {
-            $body.html('<p class="aih-error">Request failed: ' + escapeHtml(xhr.status + ' ' + xhr.statusText) + '</p>');
+        }, function() {
+            $body.html('<p class="aih-error">Connection error. Please try again.</p>');
         });
     });
 
@@ -110,7 +110,7 @@ jQuery(document).ready(function($) {
             $btn.prop('disabled', true).text('...');
             $msg.hide();
 
-            $.post(aihApiUrl('bid'), {action:'aih_place_bid', nonce:aihAjax.nonce, art_piece_id:id, bid_amount:amount}, function(r) {
+            aihPost('bid', {action:'aih_place_bid', nonce:aihAjax.nonce, art_piece_id:id, bid_amount:amount}, function(r) {
                 if (r.success) {
                     if (navigator.vibrate) navigator.vibrate(100);
                     $msg.removeClass('error').addClass('success').text(aihAjax.strings.bidPlaced).show();
@@ -120,7 +120,7 @@ jQuery(document).ready(function($) {
                     $msg.removeClass('success').addClass('error').text(r.data.message || 'Failed').show();
                     $btn.prop('disabled', false).text('Bid');
                 }
-            }).fail(function() {
+            }, function() {
                 $msg.removeClass('success').addClass('error').text(aihAjax.strings.connectionError).show();
                 $btn.prop('disabled', false).text('Bid');
             });
@@ -251,7 +251,7 @@ jQuery(document).ready(function($) {
         });
         if (ids.length === 0) return;
 
-        $.post(aihApiUrl('poll-status'), {
+        aihPost('poll-status', {
             action: 'aih_poll_status',
             nonce: aihAjax.nonce,
             art_piece_ids: ids
@@ -301,8 +301,6 @@ jQuery(document).ready(function($) {
                     $input.attr('data-min', info.min_bid).data('min', info.min_bid);
                 }
             });
-        }).fail(function() {
-            // Network error or server error — polling continues via setTimeout chain
         });
     }
 

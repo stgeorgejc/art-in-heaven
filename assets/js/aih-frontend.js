@@ -13,20 +13,24 @@
         return base ? (base + '/' + endpoint) : aihAjax.ajaxurl;
     };
 
+    // AJAX helper with automatic admin-ajax.php fallback
+    // Tries /api/ route first, falls back to admin-ajax.php on network failure
+    window.aihPost = function(endpoint, data, successFn, failFn) {
+        return $.post(aihApiUrl(endpoint), data, successFn).fail(function() {
+            $.post(aihAjax.ajaxurl, data, successFn).fail(function() {
+                if (typeof failFn === 'function') failFn();
+            });
+        });
+    };
+
     // Global logout handler with fallback
     $('#aih-logout').on('click', function() {
         var data = {action: 'aih_logout', nonce: aihAjax.nonce};
-        $.post(aihApiUrl('logout'), data, function() {
+        aihPost('logout', data, function() {
             location.reload();
-        }).fail(function() {
-            // Fallback to admin-ajax.php
-            $.post(aihAjax.ajaxurl, data, function() {
-                location.reload();
-            }).fail(function() {
-                // Final fallback: clear session cookie and reload
-                document.cookie = 'PHPSESSID=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-                location.reload();
-            });
+        }, function() {
+            document.cookie = 'PHPSESSID=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            location.reload();
         });
     });
 
@@ -178,15 +182,8 @@
     
     // Load art details into modal
     function loadArtDetails(artId, focusBid) {
-        $.ajax({
-            url: aihApiUrl('art-details'),
-            type: 'POST',
-            data: {
-                action: 'aih_get_art_details',
-                nonce: aihAjax.nonce,
-                art_id: artId
-            },
-            success: function(response) {
+        var data = {action: 'aih_get_art_details', nonce: aihAjax.nonce, art_id: artId};
+        aihPost('art-details', data, function(response) {
                 if (response.success) {
                     var data = response.data;
                     
@@ -243,10 +240,8 @@
                         }, 300);
                     }
                 }
-            },
-            error: function() {
-                showToast('Failed to load details. Please try again.', 'error');
-            }
+        }, function() {
+            showToast('Failed to load details. Please try again.', 'error');
         });
     }
     
@@ -301,16 +296,8 @@
     }
 
     function doSubmitBid(artId, bidAmount, $notice) {
-        $.ajax({
-            url: aihApiUrl('bid'),
-            type: 'POST',
-            data: {
-                action: 'aih_place_bid',
-                nonce: aihAjax.nonce,
-                art_piece_id: artId,
-                bid_amount: bidAmount
-            },
-            success: function(response) {
+        var data = {action: 'aih_place_bid', nonce: aihAjax.nonce, art_piece_id: artId, bid_amount: bidAmount};
+        aihPost('bid', data, function(response) {
                 if (response.success) {
                     if (navigator.vibrate) navigator.vibrate(100);
                     $notice.addClass('success').text(aihAjax.strings.bidSuccess).show();
@@ -348,11 +335,9 @@
                     $notice.addClass('error').text(message).show();
                     showToast(message, 'error');
                 }
-            },
-            error: function() {
+        }, function() {
                 $notice.addClass('error').text(aihAjax.strings.bidError).show();
                 showToast(aihAjax.strings.bidError, 'error');
-            }
         });
     }
     
