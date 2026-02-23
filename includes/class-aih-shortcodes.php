@@ -56,7 +56,7 @@ class AIH_Shortcodes {
         foreach ($requires_login as $shortcode) {
             if (has_shortcode($post->post_content, $shortcode)) {
                 $redirect_url = add_query_arg('redirect_to', urlencode(get_permalink()), $login_page);
-                wp_redirect($redirect_url);
+                wp_safe_redirect($redirect_url);
                 exit;
             }
         }

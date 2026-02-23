@@ -459,15 +459,6 @@ class AIH_Watermark {
     }
     
     /**
-     * Add cross-hatch pattern for extra protection (DISABLED - removed diagonal lines)
-     */
-    private function add_crosshatch_pattern($image, $width, $height) {
-        // Diagonal lines removed per user request
-        // This function intentionally left empty
-        return;
-    }
-    
-    /**
      * Add prominent center watermark
      */
     private function add_center_watermark($image, $width, $height, $text, $font_file = null) {
@@ -515,39 +506,6 @@ class AIH_Watermark {
             }
             imagestring($image, $font, $x, $y, $text, $white);
         }
-    }
-    
-    /**
-     * Draw large watermark text without TTF fonts
-     */
-    private function draw_large_watermark($image, $text, $x, $y, $img_width, $img_height) {
-        // Use largest built-in font (5)
-        $font = 5;
-        $char_width = imagefontwidth($font);
-        $char_height = imagefontheight($font);
-        
-        // Colors - MORE VISIBLE
-        $white = imagecolorallocatealpha($image, 255, 255, 255, 25); // More opaque
-        $shadow = imagecolorallocatealpha($image, 0, 0, 0, 35); // More opaque
-        
-        // Draw text block multiple times for visibility
-        $lines = array($text, $text, $text);
-        
-        $line_y = $y;
-        foreach ($lines as $line) {
-            // Heavy shadow
-            for ($s = 3; $s >= 1; $s--) {
-                imagestring($image, $font, $x + $s, $line_y + $s, $line, $shadow);
-            }
-            // Main text
-            imagestring($image, $font, $x, $line_y, $line, $white);
-            $line_y += $char_height + 8;
-        }
-        
-        // Add X pattern through this block
-        $line_color = imagecolorallocatealpha($image, 255, 255, 255, 50);
-        imageline($image, $x, $y, $x + 150, $y + 80, $line_color);
-        imageline($image, $x + 150, $y, $x, $y + 80, $line_color);
     }
     
     /**

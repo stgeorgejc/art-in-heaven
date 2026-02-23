@@ -22,6 +22,7 @@
         reconnectTimer: null,
         reconnectAttempts: 0,
         maxReconnectAttempts: 10,
+        lastEventId: null,
 
         /**
          * Initialize SSE connection
@@ -85,6 +86,11 @@
 
             var url = this.buildUrl();
 
+            // Include Last-Event-ID on reconnection to resume from where we left off
+            if (this.lastEventId) {
+                url += (url.indexOf('?') > -1 ? '&' : '?') + 'Last-Event-ID=' + encodeURIComponent(this.lastEventId);
+            }
+
             // Don't connect if no topics to subscribe to
             if (url.indexOf('topic=') === -1) {
                 return;
@@ -108,6 +114,10 @@
             };
 
             this.eventSource.onmessage = function(event) {
+                // Track the last event ID for reconnection resume
+                if (event.lastEventId) {
+                    self.lastEventId = event.lastEventId;
+                }
                 try {
                     var data = JSON.parse(event.data);
                     self.handleEvent(data);

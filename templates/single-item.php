@@ -55,18 +55,29 @@ if ($computed_status === 'ended') {
 $images = $art_images->get_images($art_piece->id);
 $primary_image = !empty($images) ? $images[0]->watermarked_url : ($art_piece->watermarked_url ?: $art_piece->image_url);
 
-// Navigation - include active and ended pieces, exclude upcoming
-// TODO: optimize to fetch only IDs for navigation
-$art_model = new AIH_Art_Piece();
-$nav_active = $art_model->get_all(array('status' => 'active', 'bidder_id' => $bidder_id));
-$nav_ended = $art_model->get_all(array('status' => 'ended', 'bidder_id' => $bidder_id));
-$all_pieces = array_merge($nav_active, $nav_ended);
-$current_index = -1;
-foreach ($all_pieces as $i => $p) {
-    if ($p->id == $art_piece->id) { $current_index = $i; break; }
-}
-$prev_id = $current_index > 0 ? $all_pieces[$current_index - 1]->id : null;
-$next_id = $current_index < count($all_pieces) - 1 ? $all_pieces[$current_index + 1]->id : null;
+// Navigation - use targeted queries instead of fetching ALL art pieces
+global $wpdb;
+$art_table_nav = AIH_Database::get_table('art_pieces');
+$art_id_nav = intval($art_piece->id);
+
+$prev_piece = $wpdb->get_row($wpdb->prepare(
+    "SELECT id FROM {$art_table_nav} WHERE id < %d AND status IN ('active','ended') ORDER BY id DESC LIMIT 1",
+    $art_id_nav
+));
+$next_piece = $wpdb->get_row($wpdb->prepare(
+    "SELECT id FROM {$art_table_nav} WHERE id > %d AND status IN ('active','ended') ORDER BY id ASC LIMIT 1",
+    $art_id_nav
+));
+$total_nav_count = (int) $wpdb->get_var(
+    "SELECT COUNT(*) FROM {$art_table_nav} WHERE status IN ('active','ended')"
+);
+$current_position = (int) $wpdb->get_var($wpdb->prepare(
+    "SELECT COUNT(*) FROM {$art_table_nav} WHERE id <= %d AND status IN ('active','ended')",
+    $art_id_nav
+));
+
+$prev_id = $prev_piece ? $prev_piece->id : null;
+$next_id = $next_piece ? $next_piece->id : null;
 
 $checkout_url = AIH_Template_Helper::get_checkout_url();
 
@@ -97,7 +108,7 @@ if (empty($image_urls) && $primary_image) {
                 <?php else: ?>
                 <span class="aih-nav-arrow disabled">&larr;</span>
                 <?php endif; ?>
-                <span class="aih-piece-counter"><?php echo $current_index + 1; ?> / <?php echo count($all_pieces); ?></span>
+                <span class="aih-piece-counter"><?php echo $current_position; ?> / <?php echo $total_nav_count; ?></span>
                 <?php if ($next_id): ?>
                 <a href="?art_id=<?php echo intval($next_id); ?>" class="aih-nav-arrow" title="<?php esc_attr_e('Next', 'art-in-heaven'); ?>">&rarr;</a>
                 <?php else: ?>

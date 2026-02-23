@@ -254,16 +254,17 @@ $art_pieces = $art_model->get_all_with_stats($filter_args);
                 global $wpdb;
                 $bids_table = AIH_Database::get_table('bids');
                 $art_images_table = AIH_Database::get_table('art_images');
-                $piece_ids = array_map(function($p) { return $p->id; }, $art_pieces);
-                $ids_placeholder = implode(',', array_map('intval', $piece_ids));
+                $piece_ids = array_map(function($p) { return (int) $p->id; }, $art_pieces);
 
                 // Batch: highest bids per piece
                 $bid_data = array();
-                if ($ids_placeholder) {
-                    $bid_rows = $wpdb->get_results(
+                if (!empty($piece_ids)) {
+                    $bid_placeholders = implode(',', array_fill(0, count($piece_ids), '%d'));
+                    $bid_rows = $wpdb->get_results($wpdb->prepare(
                         "SELECT art_piece_id, MAX(bid_amount) as highest_bid, COUNT(DISTINCT bidder_id) as unique_bidders
-                         FROM $bids_table WHERE art_piece_id IN ($ids_placeholder) GROUP BY art_piece_id"
-                    );
+                         FROM $bids_table WHERE art_piece_id IN ($bid_placeholders) GROUP BY art_piece_id",
+                        $piece_ids
+                    ));
                     foreach ($bid_rows as $row) {
                         $bid_data[$row->art_piece_id] = $row;
                     }
@@ -271,17 +272,19 @@ $art_pieces = $art_model->get_all_with_stats($filter_args);
 
                 // Batch: primary images per piece
                 $image_data = array();
-                if ($ids_placeholder) {
-                    $image_rows = $wpdb->get_results(
+                if (!empty($piece_ids)) {
+                    $img_placeholders = implode(',', array_fill(0, count($piece_ids), '%d'));
+                    $image_rows = $wpdb->get_results($wpdb->prepare(
                         "SELECT ai.art_piece_id, ai.watermarked_url, ai.image_url
                          FROM $art_images_table ai
                          INNER JOIN (
                              SELECT art_piece_id, MIN(CASE WHEN is_primary = 1 THEN sort_order ELSE sort_order + 10000 END) as min_order
-                             FROM $art_images_table WHERE art_piece_id IN ($ids_placeholder) GROUP BY art_piece_id
+                             FROM $art_images_table WHERE art_piece_id IN ($img_placeholders) GROUP BY art_piece_id
                          ) best ON ai.art_piece_id = best.art_piece_id
-                         WHERE ai.art_piece_id IN ($ids_placeholder)
-                         ORDER BY ai.is_primary DESC, ai.sort_order ASC"
-                    );
+                         WHERE ai.art_piece_id IN ($img_placeholders)
+                         ORDER BY ai.is_primary DESC, ai.sort_order ASC",
+                        array_merge($piece_ids, $piece_ids)
+                    ));
                     foreach ($image_rows as $row) {
                         if (!isset($image_data[$row->art_piece_id])) {
                             $image_data[$row->art_piece_id] = $row;

@@ -58,6 +58,15 @@ $payment_statuses = $checkout->get_bidder_payment_statuses($bidder_id);
             <a href="<?php echo esc_url($gallery_url); ?>" class="aih-btn aih-btn--inline"><?php _e('View Gallery', 'art-in-heaven'); ?></a>
         </div>
         <?php else: ?>
+        <?php
+        // Pre-fetch all highest bids in a single query to avoid N+1
+        global $wpdb;
+        $bids_table_mybids = AIH_Database::get_table('bids');
+        $highest_bids_data = $wpdb->get_results(
+            "SELECT art_piece_id, MAX(bid_amount) as highest FROM {$bids_table_mybids} WHERE bid_status = 'active' OR bid_status IS NULL GROUP BY art_piece_id",
+            OBJECT_K
+        );
+        ?>
         <div class="aih-gallery-grid">
             <?php foreach ($my_bids as $bid):
                 $is_winning = ($bid->is_winning == 1);
@@ -66,7 +75,7 @@ $payment_statuses = $checkout->get_bidder_payment_statuses($bidder_id);
                 $images = $art_images->get_images($bid->art_piece_id);
                 $bid_title = isset($bid->title) ? $bid->title : (isset($bid->art_title) ? $bid->art_title : '');
                 $image_url = !empty($images) ? $images[0]->watermarked_url : (isset($bid->watermarked_url) ? $bid->watermarked_url : (isset($bid->image_url) ? $bid->image_url : ''));
-                $highest_bid = $bid_model->get_highest_bid_amount($bid->art_piece_id);
+                $highest_bid = isset($highest_bids_data[$bid->art_piece_id]) ? floatval($highest_bids_data[$bid->art_piece_id]->highest) : 0;
                 $min_bid = $highest_bid + $bid_increment;
 
                 $is_paid = isset($payment_statuses[$bid->art_piece_id]) && $payment_statuses[$bid->art_piece_id] === 'paid';

@@ -237,40 +237,58 @@ class AIH_CCB_API {
     }
     
     /**
-     * Parse form_responses XML into array of registrants
-     * 
-     * @param string $xml Raw XML response
+     * Parse form_responses XML into array of registrants using SimpleXML
+     *
+     * @param string $xml_string Raw XML response
      * @return array Array of parsed registrant data
      */
-    private function parse_form_responses($xml) {
+    private function parse_form_responses($xml_string) {
         $registrants = array();
-        
-        // Find all form_response blocks
-        if (!preg_match_all('/<form_response[^>]*>(.*?)<\/form_response>/s', $xml, $matches)) {
+
+        // Suppress libxml errors and handle them manually
+        $prev_use_errors = libxml_use_internal_errors(true);
+        $xml = simplexml_load_string($xml_string);
+
+        if ($xml === false) {
+            $errors = libxml_get_errors();
+            libxml_clear_errors();
+            libxml_use_internal_errors($prev_use_errors);
+            error_log('[AIH] CCB API: Failed to parse XML response');
             return $registrants;
         }
-        
-        foreach ($matches[1] as $block) {
-            $registrant = $this->parse_single_response($block);
-            
+
+        libxml_clear_errors();
+        libxml_use_internal_errors($prev_use_errors);
+
+        // Navigate to form_response elements — the XML structure may vary,
+        // so search recursively using xpath
+        $form_responses = $xml->xpath('//form_response');
+
+        if (empty($form_responses)) {
+            return $registrants;
+        }
+
+        foreach ($form_responses as $response_node) {
+            $registrant = $this->parse_single_response_xml($response_node);
+
             // Only include if we have a confirmation code
             if (!empty($registrant['confirmation_code'])) {
                 $registrants[] = $registrant;
             }
         }
-        
+
         return $registrants;
     }
-    
+
     /**
-     * Parse a single form_response block
-     * 
-     * @param string $xml Single form_response XML block
+     * Parse a single form_response SimpleXML element
+     *
+     * @param SimpleXMLElement $node Single form_response XML element
      * @return array Parsed registrant data
      */
-    private function parse_single_response($xml) {
+    private function parse_single_response_xml($node) {
         $data = array();
-        
+
         // Initialize all mapped fields with empty values
         foreach ($this->field_map as $ccb_field => $local_field) {
             $data[$local_field] = '';
@@ -278,27 +296,26 @@ class AIH_CCB_API {
         foreach ($this->direct_fields as $field) {
             $data[$field] = '';
         }
-        
-        // Extract direct fields
-        
-        // confirmation_code
-        if (preg_match('/<confirmation_code>([^<]*)<\/confirmation_code>/', $xml, $m)) {
-            $data['confirmation_code'] = trim($m[1]);
+
+        // Extract confirmation_code
+        if (isset($node->confirmation_code)) {
+            $data['confirmation_code'] = trim((string) $node->confirmation_code);
         }
-        
-        // individual element: <individual id="2413">Larry Boy</individual>
-        if (preg_match('/<individual\s+id="([^"]*)"[^>]*>([^<]*)<\/individual>/', $xml, $m)) {
-            $data['individual_id'] = trim($m[1]);
-            $data['individual_name'] = trim($m[2]);
+
+        // Extract individual element: <individual id="2413">Larry Boy</individual>
+        if (isset($node->individual)) {
+            $data['individual_id'] = trim((string) $node->individual['id']);
+            $data['individual_name'] = trim((string) $node->individual);
         }
-        
+
         // Extract profile_info fields
         // Pattern: <profile_info id="909" name="email_primary">value</profile_info>
-        if (preg_match_all('/<profile_info[^>]+name="([^"]+)"[^>]*>([^<]*)<\/profile_info>/', $xml, $matches, PREG_SET_ORDER)) {
-            foreach ($matches as $match) {
-                $ccb_field = trim($match[1]);
-                $value = trim($match[2]);
-                
+        $profile_infos = $node->xpath('.//profile_info');
+        if ($profile_infos) {
+            foreach ($profile_infos as $profile_info) {
+                $ccb_field = trim((string) $profile_info['name']);
+                $value = trim((string) $profile_info);
+
                 // Map to local field name if mapping exists
                 if (isset($this->field_map[$ccb_field])) {
                     $local_field = $this->field_map[$ccb_field];
@@ -306,10 +323,11 @@ class AIH_CCB_API {
                 }
             }
         }
-        
+
         // Store raw XML for debugging (truncated)
-        $data['api_data'] = strlen($xml) > 5000 ? substr($xml, 0, 5000) . '...' : $xml;
-        
+        $raw_xml = $node->asXML();
+        $data['api_data'] = strlen($raw_xml) > 5000 ? substr($raw_xml, 0, 5000) . '...' : $raw_xml;
+
         return $data;
     }
     

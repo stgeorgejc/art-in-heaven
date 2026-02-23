@@ -1418,14 +1418,20 @@ class AIH_Ajax {
         $table = $wpdb->prefix . $year . '_Bidders';
         
         $messages = array();
-        
+
+        // Allowlist of column names that may appear in SQL statements
+        $allowed_columns = array('email', 'first_name', 'last_name', 'phone', 'email_primary', 'name_first', 'name_last', 'phone_mobile');
+
         // Check which columns exist
-        $columns = $wpdb->get_results("SHOW COLUMNS FROM $table");
+        $columns = $wpdb->get_results("SHOW COLUMNS FROM `{$table}`");
         $existing_columns = array();
         foreach ($columns as $col) {
-            $existing_columns[] = $col->Field;
+            // Only track columns that are in our allowlist
+            if (in_array($col->Field, $allowed_columns, true)) {
+                $existing_columns[] = $col->Field;
+            }
         }
-        
+
         // Map old columns to new columns
         $column_map = array(
             'email' => 'email_primary',
@@ -1433,13 +1439,18 @@ class AIH_Ajax {
             'last_name' => 'name_last',
             'phone' => 'phone_mobile'
         );
-        
+
         // Migrate data from old to new columns
         foreach ($column_map as $old_col => $new_col) {
+            // Validate both column names are in the allowlist
+            if (!in_array($old_col, $allowed_columns, true) || !in_array($new_col, $allowed_columns, true)) {
+                continue;
+            }
             if (in_array($old_col, $existing_columns) && in_array($new_col, $existing_columns)) {
-                $migrated = $wpdb->query("UPDATE $table SET $new_col = $old_col WHERE ($new_col IS NULL OR $new_col = '') AND $old_col IS NOT NULL AND $old_col != ''");
+                $migrated = $wpdb->query("UPDATE `{$table}` SET `{$new_col}` = `{$old_col}` WHERE (`{$new_col}` IS NULL OR `{$new_col}` = '') AND `{$old_col}` IS NOT NULL AND `{$old_col}` != ''");
                 if ($migrated === false) {
-                    $messages[] = sprintf(__('Error migrating %s: %s', 'art-in-heaven'), $old_col, $wpdb->last_error);
+                    error_log('[AIH] cleanup_tables migration error: ' . $wpdb->last_error);
+                    $messages[] = sprintf(__('Error migrating %s.', 'art-in-heaven'), $old_col);
                     continue;
                 }
                 if ($migrated > 0) {
@@ -1447,11 +1458,15 @@ class AIH_Ajax {
                 }
             }
         }
-        
+
         // Drop old columns
         foreach (array_keys($column_map) as $old_col) {
+            // Validate column name is in the allowlist before using in SQL
+            if (!in_array($old_col, $allowed_columns, true)) {
+                continue;
+            }
             if (in_array($old_col, $existing_columns)) {
-                $wpdb->query("ALTER TABLE $table DROP COLUMN $old_col");
+                $wpdb->query("ALTER TABLE `{$table}` DROP COLUMN `{$old_col}`");
                 $messages[] = "Dropped old column: $old_col";
             }
         }
@@ -1941,18 +1956,20 @@ class AIH_Ajax {
         }
         
         // Increase execution time and memory
-        @set_time_limit(600);
+        if (function_exists('set_time_limit')) {
+            set_time_limit(600);
+        }
         @ini_set('memory_limit', '512M');
         
         global $wpdb;
         $images_table = AIH_Database::get_table('art_images');
         $art_table = AIH_Database::get_table('art_pieces');
         
-        // Get all images from art_images table
-        $images = $wpdb->get_results("SELECT * FROM {$images_table}");
-        
-        // Also get images directly from art_pieces that might not be in art_images
-        $art_pieces = $wpdb->get_results("SELECT id, image_id, image_url, watermarked_url FROM {$art_table} WHERE image_id > 0");
+        // Get all images from art_images table (bounded to prevent runaway queries)
+        $images = $wpdb->get_results("SELECT * FROM {$images_table} LIMIT 5000");
+
+        // Also get images directly from art_pieces that might not be in art_images (bounded)
+        $art_pieces = $wpdb->get_results("SELECT id, image_id, image_url, watermarked_url FROM {$art_table} WHERE image_id > 0 LIMIT 5000");
         
         $watermark = new AIH_Watermark();
         if (!$watermark->is_available()) {
@@ -2260,7 +2277,7 @@ class AIH_Ajax {
             'entries'   => $all_lines,
             'total'     => $total,
             'file_size' => $size_label,
-            'log_path'  => $log_file,
+            'log_path'  => basename($log_file),
             'hints'     => array(),
         ));
     }

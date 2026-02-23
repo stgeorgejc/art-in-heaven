@@ -108,6 +108,33 @@ class AIH_Checkout {
         $order_items_table = AIH_Database::get_table('order_items');
         $bids_table = AIH_Database::get_table('bids');
 
+        // --- Idempotency key support ---
+        // If the client sends an idempotency_key, return the existing order
+        // instead of creating a duplicate.
+        $idempotency_key = isset($_POST['idempotency_key']) ? sanitize_text_field($_POST['idempotency_key']) : '';
+        if (!empty($idempotency_key)) {
+            $transient_key = 'aih_idempotency_' . md5($bidder_id . '_' . $idempotency_key);
+            $existing_order_id = get_transient($transient_key);
+            if ($existing_order_id) {
+                $order = $this->get_order($existing_order_id);
+                if ($order) {
+                    $pushpay_url = $this->get_pushpay_payment_url($order);
+                    return array(
+                        'success' => true,
+                        'order_id' => (int) $existing_order_id,
+                        'order_number' => $order->order_number,
+                        'totals' => array(
+                            'subtotal' => (float) $order->subtotal,
+                            'tax' => (float) $order->tax,
+                            'total' => (float) $order->total,
+                        ),
+                        'pushpay_url' => $pushpay_url,
+                        'idempotent' => true,
+                    );
+                }
+            }
+        }
+
         $wpdb->query('START TRANSACTION');
 
         try {
@@ -131,7 +158,15 @@ class AIH_Checkout {
             }
 
             $totals = $this->calculate_totals($won_items);
-            $order_number = 'AIH-' . strtoupper(wp_generate_password(8, false));
+
+            // Generate a collision-free order number
+            do {
+                $order_number = 'AIH-' . strtoupper(wp_generate_password(8, false));
+                $exists = $wpdb->get_var($wpdb->prepare(
+                    "SELECT 1 FROM $orders_table WHERE order_number = %s",
+                    $order_number
+                ));
+            } while ($exists);
 
             $wpdb->insert($orders_table, array(
                 'order_number' => $order_number,
@@ -143,10 +178,10 @@ class AIH_Checkout {
                 'payment_method' => 'pushpay',
                 'created_at' => current_time('mysql')
             ));
-            
+
             $order_id = $wpdb->insert_id;
             if (!$order_id) throw new Exception('Failed to create order.');
-            
+
             foreach ($won_items as $item) {
                 $wpdb->insert($order_items_table, array(
                     'order_id' => $order_id,
@@ -154,9 +189,15 @@ class AIH_Checkout {
                     'winning_bid' => $item->winning_amount
                 ));
             }
-            
+
             $wpdb->query('COMMIT');
-            
+
+            // Store idempotency mapping (10-minute TTL)
+            if (!empty($idempotency_key)) {
+                $transient_key = 'aih_idempotency_' . md5($bidder_id . '_' . $idempotency_key);
+                set_transient($transient_key, $order_id, 10 * MINUTE_IN_SECONDS);
+            }
+
             $order = $this->get_order($order_id);
             $pushpay_url = $this->get_pushpay_payment_url($order);
 
@@ -174,7 +215,7 @@ class AIH_Checkout {
                 'totals' => $totals,
                 'pushpay_url' => $pushpay_url
             );
-            
+
         } catch (Exception $e) {
             $wpdb->query('ROLLBACK');
             error_log('AIH Checkout Error: ' . $e->getMessage());
@@ -335,14 +376,23 @@ class AIH_Checkout {
         $orders_table = AIH_Database::get_table('orders');
         $order_items_table = AIH_Database::get_table('order_items');
 
-        $wpdb->delete($order_items_table, array('order_id' => $order_id));
-        $result = $wpdb->delete($orders_table, array('id' => $order_id));
+        $wpdb->query('START TRANSACTION');
+
+        $items_deleted = $wpdb->delete($order_items_table, array('order_id' => $order_id));
+        $order_deleted = $wpdb->delete($orders_table, array('id' => $order_id));
+
+        if ($order_deleted === false) {
+            $wpdb->query('ROLLBACK');
+            return false;
+        }
+
+        $wpdb->query('COMMIT');
 
         // Invalidate payment stats cache
-        if ($result && class_exists('AIH_Cache')) {
+        if (class_exists('AIH_Cache')) {
             AIH_Cache::delete('payment_stats');
         }
 
-        return $result;
+        return $order_deleted;
     }
 }

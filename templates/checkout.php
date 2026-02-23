@@ -267,7 +267,12 @@ jQuery(document).ready(function($) {
         });
         if (ids.length === 0) return;
         var $btn = $(this).prop('disabled', true).addClass('loading');
-        $.post(aihApiUrl('create-order'), {action:'aih_create_order', nonce:aihAjax.nonce, 'art_piece_ids[]': ids}, function(r) {
+        // Generate idempotency key to prevent duplicate orders on network retry
+        var idempotencyKey = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            var r = Math.random() * 16 | 0;
+            return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+        });
+        $.post(aihApiUrl('create-order'), {action:'aih_create_order', nonce:aihAjax.nonce, 'art_piece_ids[]': ids, idempotency_key: idempotencyKey}, function(r) {
             if (r.success && r.data.pushpay_url) {
                 window.location.href = r.data.pushpay_url;
             } else {

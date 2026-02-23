@@ -60,6 +60,26 @@ $art_images = new AIH_Art_Images();
             }
             krsort($grouped);
         ?>
+            <?php
+            // Pre-fetch all images for winning bids in a single query to avoid N+1
+            global $wpdb;
+            $art_images_table_winners = AIH_Database::get_table('art_images');
+            $winning_piece_ids = array_map(function($b) { return (int) $b->art_piece_id; }, $winning_bids);
+            $all_winner_images = array();
+            if (!empty($winning_piece_ids)) {
+                $img_placeholders_w = implode(',', array_fill(0, count($winning_piece_ids), '%d'));
+                $winner_image_rows = $wpdb->get_results($wpdb->prepare(
+                    "SELECT * FROM {$art_images_table_winners} WHERE art_piece_id IN ({$img_placeholders_w}) ORDER BY is_primary DESC, sort_order ASC",
+                    $winning_piece_ids
+                ));
+                foreach ($winner_image_rows as $img_row) {
+                    if (!isset($all_winner_images[$img_row->art_piece_id])) {
+                        $all_winner_images[$img_row->art_piece_id] = array();
+                    }
+                    $all_winner_images[$img_row->art_piece_id][] = $img_row;
+                }
+            }
+            ?>
             <?php foreach ($grouped as $date => $bids): ?>
             <div class="aih-winners-group">
                 <div class="aih-date-divider">
@@ -67,7 +87,7 @@ $art_images = new AIH_Art_Images();
                 </div>
                 <div class="aih-gallery-grid">
                     <?php foreach ($bids as $bid):
-                        $images = $art_images->get_images($bid->art_piece_id);
+                        $images = isset($all_winner_images[$bid->art_piece_id]) ? $all_winner_images[$bid->art_piece_id] : array();
                         $watermarked = isset($bid->watermarked_url) ? $bid->watermarked_url : '';
                         $original = isset($bid->image_url) ? $bid->image_url : '';
                         $image_url = !empty($images) ? $images[0]->watermarked_url : ($watermarked ?: $original);

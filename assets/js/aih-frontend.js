@@ -482,6 +482,23 @@
             var ids = opts.getPieceIds();
             if (!ids || ids.length === 0) return;
 
+            // Optimization: limit poll to max 50 piece IDs to reduce server load.
+            // Prefer pieces the bidder has interacted with (cards with bid-related classes).
+            if (ids.length > 50) {
+                var biddedIds = [];
+                var otherIds = [];
+                for (var j = 0; j < ids.length; j++) {
+                    var $el = $('.aih-card[data-id="' + ids[j] + '"]');
+                    if ($el.hasClass('winning') || $el.hasClass('outbid') || $el.find('.aih-bid-input').length) {
+                        biddedIds.push(ids[j]);
+                    } else {
+                        otherIds.push(ids[j]);
+                    }
+                }
+                // Prioritize pieces the bidder interacted with, then fill up to 50
+                ids = biddedIds.concat(otherIds).slice(0, 50);
+            }
+
             aihPost('poll-status', {
                 action: 'aih_poll_status',
                 nonce: aihAjax.nonce,

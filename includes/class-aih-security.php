@@ -314,7 +314,10 @@ class AIH_Security {
             return $count <= $limit;
         }
 
-        // Fallback to transients (non-atomic but best available without object cache)
+        // Fallback to transients (non-atomic -- read-modify-write is subject to race
+        // conditions under high concurrency). For production deployments serving
+        // 1000+ concurrent users, Redis or Memcached is strongly recommended so that
+        // the atomic wp_cache_incr path above is used instead of this fallback.
         $data = get_transient($key);
 
         if ($data === false) {
@@ -547,7 +550,14 @@ class AIH_Security {
         if (defined('AUTH_KEY') && AUTH_KEY) {
             return AUTH_KEY;
         }
-        return 'aih-fallback-key-' . DB_NAME;
+        // Generate and persist a random fallback key instead of deriving from DB_NAME,
+        // which is guessable and shared across plugins.
+        $key = get_option('aih_encryption_key');
+        if (!$key) {
+            $key = wp_generate_password(64, true, true);
+            update_option('aih_encryption_key', $key, false);
+        }
+        return $key;
     }
 
     /**

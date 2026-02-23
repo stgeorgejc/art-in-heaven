@@ -170,12 +170,14 @@ if ($current_tab === 'not_logged_in') {
                 </td>
             </tr>
             <?php else: ?>
+                <?php
+                // Pre-fetch bid counts and last logins in bulk to avoid N+1 queries
+                $bid_counts_data = $wpdb->get_results("SELECT bidder_id, COUNT(*) as cnt FROM {$bids_table} GROUP BY bidder_id", OBJECT_K);
+                $last_logins_data = $wpdb->get_results("SELECT confirmation_code, last_login FROM {$bidders_table}", OBJECT_K);
+                ?>
                 <?php foreach ($people as $person):
-                    // Get bid count using confirmation_code (NOT email)
-                    $bid_count = $wpdb->get_var($wpdb->prepare(
-                        "SELECT COUNT(*) FROM $bids_table WHERE bidder_id = %s",
-                        $person->confirmation_code
-                    ));
+                    // Use pre-fetched bid count instead of per-row query
+                    $bid_count = isset($bid_counts_data[$person->confirmation_code]) ? $bid_counts_data[$person->confirmation_code]->cnt : 0;
                 ?>
                 <tr>
                     <td data-label="<?php esc_attr_e('Name', 'art-in-heaven'); ?>">
@@ -202,11 +204,8 @@ if ($current_tab === 'not_logged_in') {
                     </td>
                     <td data-label="<?php esc_attr_e('Last Login', 'art-in-heaven'); ?>">
                         <?php
-                        // Get last login from bidders table
-                        $last_login = $wpdb->get_var($wpdb->prepare(
-                            "SELECT last_login FROM $bidders_table WHERE confirmation_code = %s",
-                            $person->confirmation_code
-                        ));
+                        // Use pre-fetched last login data instead of per-row query
+                        $last_login = isset($last_logins_data[$person->confirmation_code]) ? $last_logins_data[$person->confirmation_code]->last_login : null;
                         if ($last_login): ?>
                             <?php echo date_i18n('M j, g:i a', strtotime($last_login)); ?>
                         <?php else: ?>

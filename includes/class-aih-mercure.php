@@ -59,6 +59,40 @@ class AIH_Mercure {
     // =========================================================================
 
     /**
+     * Check if Mercure is configured (hub URL and JWT secret are set).
+     *
+     * @return bool
+     */
+    public function is_configured() {
+        $hub_url = self::get_hub_url();
+        $secret  = self::get_jwt_secret();
+        return !empty($hub_url) && !empty($secret);
+    }
+
+    /**
+     * Verify the Mercure hub is reachable.
+     *
+     * @return array{status: string, error?: string, code?: int}
+     */
+    public function health_check() {
+        if (!$this->is_configured()) {
+            return array('status' => 'not_configured');
+        }
+
+        $response = wp_remote_get(self::get_hub_url(), array('timeout' => 5));
+
+        if (is_wp_error($response)) {
+            return array('status' => 'unreachable', 'error' => $response->get_error_message());
+        }
+
+        $code = wp_remote_retrieve_response_code($response);
+        return array(
+            'status' => $code < 500 ? 'ok' : 'error',
+            'code'   => $code,
+        );
+    }
+
+    /**
      * Check if Mercure integration is enabled
      *
      * @return bool

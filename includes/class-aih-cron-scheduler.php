@@ -154,7 +154,7 @@ class AIH_Cron_Scheduler {
         // Schedule the new event
         $result = wp_schedule_single_event($timestamp, self::HOOK_ACTIVATE, array($art_id));
 
-        if ($result) {
+        if ($result && defined('WP_DEBUG') && WP_DEBUG) {
             error_log(sprintf(
                 'AIH Cron: Scheduled activation for piece #%d at %s UTC (local: %s)',
                 $art_id,
@@ -179,7 +179,7 @@ class AIH_Cron_Scheduler {
         // Schedule the new event
         $result = wp_schedule_single_event($timestamp, self::HOOK_END, array($art_id));
 
-        if ($result) {
+        if ($result && defined('WP_DEBUG') && WP_DEBUG) {
             error_log(sprintf(
                 'AIH Cron: Scheduled end for piece #%d at %s UTC (local: %s)',
                 $art_id,
@@ -253,18 +253,22 @@ class AIH_Cron_Scheduler {
             ));
 
             if ($result > 0) {
-                error_log(sprintf('AIH Cron: Activated piece #%d via scheduled event', $art_id));
+                if (defined('WP_DEBUG') && WP_DEBUG) {
+                    error_log(sprintf('AIH Cron: Activated piece #%d via scheduled event', $art_id));
+                }
 
-                // Clear cache
+                // Clear art_pieces cache group only
                 if (class_exists('AIH_Cache')) {
-                    AIH_Cache::flush_all();
+                    AIH_Cache::delete_group('art_pieces');
                 }
 
                 // Fire action for any listeners
                 do_action('aih_piece_activated', $art_id);
             }
         } catch (Exception $e) {
-            error_log('AIH Cron: Error in scheduled activation - ' . $e->getMessage());
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('AIH Cron: Error in scheduled activation - ' . $e->getMessage());
+            }
         }
 
         delete_transient($lock_key);
@@ -304,18 +308,22 @@ class AIH_Cron_Scheduler {
             ));
 
             if ($result > 0) {
-                error_log(sprintf('AIH Cron: Ended piece #%d via scheduled event', $art_id));
+                if (defined('WP_DEBUG') && WP_DEBUG) {
+                    error_log(sprintf('AIH Cron: Ended piece #%d via scheduled event', $art_id));
+                }
 
-                // Clear cache
+                // Clear art_pieces cache group only
                 if (class_exists('AIH_Cache')) {
-                    AIH_Cache::flush_all();
+                    AIH_Cache::delete_group('art_pieces');
                 }
 
                 // Fire action for any listeners
                 do_action('aih_piece_ended', $art_id);
             }
         } catch (Exception $e) {
-            error_log('AIH Cron: Error in scheduled end - ' . $e->getMessage());
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('AIH Cron: Error in scheduled end - ' . $e->getMessage());
+            }
         }
 
         delete_transient($lock_key);
@@ -362,7 +370,9 @@ class AIH_Cron_Scheduler {
             $count++;
         }
 
-        error_log(sprintf('AIH Cron: Scheduled events for %d existing art pieces', $count));
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log(sprintf('AIH Cron: Scheduled events for %d existing art pieces', $count));
+        }
 
         return $count;
     }
@@ -400,7 +410,7 @@ class AIH_Cron_Scheduler {
             }
         }
 
-        if ($cleared > 0) {
+        if ($cleared > 0 && defined('WP_DEBUG') && WP_DEBUG) {
             error_log(sprintf('AIH Cron: Cleared %d scheduled piece events', $cleared));
         }
 

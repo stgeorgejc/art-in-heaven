@@ -304,7 +304,7 @@ $event_date = get_option('aih_event_date', '');
     <div class="aih-settings-section aih-server-info">
         <h2><?php _e('Server Information', 'art-in-heaven'); ?></h2>
         <table class="form-table">
-            <tr><th>PHP</th><td><?php echo phpversion(); ?></td></tr>
+            <tr><th>PHP</th><td><?php echo esc_html(PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION); ?></td></tr>
             <tr><th>WordPress</th><td><?php echo get_bloginfo('version'); ?></td></tr>
             <tr><th>Plugin</th><td><?php echo AIH_VERSION; ?></td></tr>
             <tr><th>GD Library</th><td><?php echo extension_loaded('gd') ? '<span class="aih-check-yes">✓</span>' : '<span class="aih-check-no">✗</span>'; ?></td></tr>

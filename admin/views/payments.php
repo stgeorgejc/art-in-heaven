@@ -9,6 +9,10 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+if (!current_user_can('manage_options')) {
+    wp_die('Unauthorized');
+}
+
 global $wpdb;
 $orders_table = AIH_Database::get_table('orders');
 $order_items_table = AIH_Database::get_table('order_items');
@@ -117,15 +121,16 @@ if ($filter_method) {
 }
 
 $orders = $wpdb->get_results(
-    "SELECT o.*, 
-            COALESCE(bd.name_first, '') as name_first, 
+    "SELECT o.*,
+            COALESCE(bd.name_first, '') as name_first,
             COALESCE(bd.name_last, '') as name_last,
             COALESCE(bd.email_primary, '') as email,
             (SELECT COUNT(*) FROM $order_items_table oi JOIN $art_table a ON oi.art_piece_id = a.id WHERE oi.order_id = o.id) as item_count
      FROM $orders_table o
      LEFT JOIN $bidders_table bd ON o.bidder_id = bd.confirmation_code
      WHERE $where
-     ORDER BY o.created_at DESC"
+     ORDER BY o.created_at DESC
+     LIMIT 1000"
 );
 
 // Get payment stats
@@ -148,10 +153,11 @@ $won_without_orders = $wpdb->get_results(
      JOIN $art_table a ON b.art_piece_id = a.id
      LEFT JOIN $order_items_table oi ON oi.art_piece_id = a.id
      LEFT JOIN $bidders_table bd ON b.bidder_id = bd.confirmation_code
-     WHERE b.is_winning = 1 
+     WHERE b.is_winning = 1
      AND (a.auction_end < NOW() OR a.status = 'ended')
      AND oi.id IS NULL
-     ORDER BY a.auction_end DESC"
+     ORDER BY a.auction_end DESC
+     LIMIT 1000"
 );
 ?>
 <div class="wrap aih-admin-wrap">

@@ -42,9 +42,31 @@ class AIH_Status {
     );
     
     /**
+     * Get the SQL CASE statement for computing auction status.
+     *
+     * Returns a reusable SQL CASE fragment that mirrors the PHP status
+     * logic. Callers must supply the placeholder values for "now" via
+     * $wpdb->prepare().
+     *
+     * @param string $alias           Table alias used in the query (default 'a').
+     * @param string $now_placeholder The prepare() placeholder for the current time (default '%s').
+     * @return string SQL CASE expression.
+     */
+    public static function get_status_sql($alias = 'a', $now_placeholder = '%s') {
+        return "CASE
+            WHEN {$alias}.status = 'sold' THEN 'sold'
+            WHEN {$alias}.status = 'ended' THEN 'ended'
+            WHEN {$alias}.status = 'active' AND {$alias}.auction_end IS NOT NULL AND {$alias}.auction_end <= {$now_placeholder} THEN 'ended'
+            WHEN {$alias}.status = 'active' AND {$alias}.auction_start IS NOT NULL AND {$alias}.auction_start > {$now_placeholder} THEN 'scheduled'
+            WHEN {$alias}.status = 'active' THEN 'active'
+            ELSE {$alias}.status
+        END";
+    }
+
+    /**
      * Get the current WordPress time as a DateTime object
      * Uses WordPress's configured timezone from Settings > General
-     * 
+     *
      * @return DateTime
      */
     public static function get_now() {
@@ -93,7 +115,7 @@ class AIH_Status {
             $dt = new DateTime($date_value, $wp_timezone);
             return $dt;
         } catch (Exception $e) {
-            error_log('AIH_Status::parse_date failed: ' . $e->getMessage() . ' for value: ' . print_r($date_value, true));
+            if (defined('WP_DEBUG') && WP_DEBUG) { error_log('AIH_Status::parse_date failed: ' . $e->getMessage() . ' for value: ' . print_r($date_value, true)); }
             return null;
         }
     }
@@ -432,44 +454,46 @@ class AIH_Status {
         $now = self::get_now();
 
         // Debug logging to trace status calculation
-        error_log(sprintf(
-            'AIH_Status::calculate_auto_status - start_raw: %s, end_raw: %s, requested: %s, times_changed: %s, now: %s, start_parsed: %s, end_parsed: %s, end<=now: %s, start>now: %s',
-            var_export($auction_start, true),
-            var_export($auction_end, true),
-            $requested_status,
-            $times_changed ? 'true' : 'false',
-            $now->format('Y-m-d H:i:s T'),
-            $start ? $start->format('Y-m-d H:i:s T') : 'null',
-            $end ? $end->format('Y-m-d H:i:s T') : 'null',
-            ($end !== null && $end <= $now) ? 'TRUE' : 'FALSE',
-            ($start !== null && $start > $now) ? 'TRUE' : 'FALSE'
-        ));
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log(sprintf(
+                'AIH_Status::calculate_auto_status - start_raw: %s, end_raw: %s, requested: %s, times_changed: %s, now: %s, start_parsed: %s, end_parsed: %s, end<=now: %s, start>now: %s',
+                var_export($auction_start, true),
+                var_export($auction_end, true),
+                $requested_status,
+                $times_changed ? 'true' : 'false',
+                $now->format('Y-m-d H:i:s T'),
+                $start ? $start->format('Y-m-d H:i:s T') : 'null',
+                $end ? $end->format('Y-m-d H:i:s T') : 'null',
+                ($end !== null && $end <= $now) ? 'TRUE' : 'FALSE',
+                ($start !== null && $start > $now) ? 'TRUE' : 'FALSE'
+            ));
+        }
 
         // If requesting draft, respect it
         if ($requested_status === self::STATUS_DRAFT) {
-            error_log('AIH_Status: Returning DRAFT (requested)');
+            if (defined('WP_DEBUG') && WP_DEBUG) { error_log('AIH_Status: Returning DRAFT (requested)'); }
             return self::STATUS_DRAFT;
         }
 
         // If requesting a closed status AND times didn't change, respect it
         // But if times changed, recalculate based on new times
         if (self::is_closed_status($requested_status) && !$times_changed) {
-            error_log('AIH_Status: Returning ' . $requested_status . ' (closed, times unchanged)');
+            if (defined('WP_DEBUG') && WP_DEBUG) { error_log('AIH_Status: Returning ' . $requested_status . ' (closed, times unchanged)'); }
             return $requested_status;
         }
 
         // Calculate based on times
         if ($end !== null && $end <= $now) {
-            error_log('AIH_Status: Returning ENDED (end <= now)');
+            if (defined('WP_DEBUG') && WP_DEBUG) { error_log('AIH_Status: Returning ENDED (end <= now)'); }
             return self::STATUS_ENDED;
         }
 
         if ($start !== null && $start > $now) {
-            error_log('AIH_Status: Returning DRAFT (start > now)');
+            if (defined('WP_DEBUG') && WP_DEBUG) { error_log('AIH_Status: Returning DRAFT (start > now)'); }
             return self::STATUS_DRAFT;
         }
 
-        error_log('AIH_Status: Returning ACTIVE (default)');
+        if (defined('WP_DEBUG') && WP_DEBUG) { error_log('AIH_Status: Returning ACTIVE (default)'); }
         return self::STATUS_ACTIVE;
     }
     

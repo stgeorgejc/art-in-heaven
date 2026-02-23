@@ -59,6 +59,18 @@ class AIH_Favorites {
      * Toggle favorite
      */
     public function toggle($bidder_id, $art_piece_id) {
+        // Debounce: prevent rapid duplicate toggles with a 2-second transient lock
+        $lock_key = 'aih_fav_lock_' . md5($bidder_id . '_' . $art_piece_id);
+        if (get_transient($lock_key)) {
+            // Return current state without toggling
+            $is_fav = $this->is_favorite($bidder_id, $art_piece_id);
+            return array(
+                'action' => 'debounced',
+                'is_favorite' => $is_fav
+            );
+        }
+        set_transient($lock_key, 1, 2);
+
         if ($this->is_favorite($bidder_id, $art_piece_id)) {
             $this->remove($bidder_id, $art_piece_id);
             return array(

@@ -75,7 +75,7 @@ class AIH_Art_Images {
     public function remove_image($image_record_id) {
         global $wpdb;
         
-        error_log('AIH Art Images: remove_image called for record ID: ' . $image_record_id);
+        if (defined('WP_DEBUG') && WP_DEBUG) { error_log('AIH Art Images: remove_image called for record ID: ' . $image_record_id); }
         
         // Get the image record first
         $image = $wpdb->get_row($wpdb->prepare(
@@ -84,7 +84,7 @@ class AIH_Art_Images {
         ));
         
         if (!$image) {
-            error_log('AIH Art Images: No image found with ID: ' . $image_record_id . ' in table: ' . $this->table);
+            if (defined('WP_DEBUG') && WP_DEBUG) { error_log('AIH Art Images: No image found with ID: ' . $image_record_id . ' in table: ' . $this->table); }
             return false;
         }
         
@@ -93,7 +93,7 @@ class AIH_Art_Images {
         $deleted_image_url = $image->image_url;
         $deleted_watermarked_url = $image->watermarked_url;
         
-        error_log('AIH Art Images: Found image for art_piece_id: ' . $art_piece_id . ', was_primary: ' . $was_primary);
+        if (defined('WP_DEBUG') && WP_DEBUG) { error_log('AIH Art Images: Found image for art_piece_id: ' . $art_piece_id . ', was_primary: ' . $was_primary); }
         
         // Delete the record from art_images table
         $result = $wpdb->delete(
@@ -102,7 +102,7 @@ class AIH_Art_Images {
             array('%d')
         );
         
-        error_log('AIH Art Images: Delete result: ' . ($result ? 'success' : 'failed') . ', wpdb error: ' . $wpdb->last_error);
+        if (defined('WP_DEBUG') && WP_DEBUG) { error_log('AIH Art Images: Delete result: ' . ($result ? 'success' : 'failed') . ', wpdb error: ' . $wpdb->last_error); }
         
         if ($result) {
             // Delete watermarked file if it exists
@@ -111,7 +111,7 @@ class AIH_Art_Images {
                 $watermarked_path = str_replace($upload_dir['baseurl'], $upload_dir['basedir'], $deleted_watermarked_url);
                 if (file_exists($watermarked_path)) {
                     @unlink($watermarked_path);
-                    error_log('AIH Art Images: Deleted watermarked file: ' . $watermarked_path);
+                    if (defined('WP_DEBUG') && WP_DEBUG) { error_log('AIH Art Images: Deleted watermarked file: ' . $watermarked_path); }
                 }
             }
             
@@ -123,7 +123,7 @@ class AIH_Art_Images {
                 $art_piece_id
             ));
             
-            error_log('AIH Art Images: Remaining images count: ' . count($remaining));
+            if (defined('WP_DEBUG') && WP_DEBUG) { error_log('AIH Art Images: Remaining images count: ' . count($remaining)); }
             
             if (!empty($remaining)) {
                 // There are still images left
@@ -131,7 +131,7 @@ class AIH_Art_Images {
                 
                 if ($was_primary) {
                     // The deleted image was primary, so set the first remaining as primary
-                    error_log('AIH Art Images: Setting new primary image: ' . $first->id);
+                    if (defined('WP_DEBUG') && WP_DEBUG) { error_log('AIH Art Images: Setting new primary image: ' . $first->id); }
                     
                     // Set this image as primary in art_images table
                     $wpdb->update(
@@ -155,11 +155,11 @@ class AIH_Art_Images {
                         array('%d')
                     );
                     
-                    error_log('AIH Art Images: Updated art_pieces with new primary');
+                    if (defined('WP_DEBUG') && WP_DEBUG) { error_log('AIH Art Images: Updated art_pieces with new primary'); }
                 }
             } else {
                 // No images left - clear art piece image fields completely
-                error_log('AIH Art Images: No images left, clearing art_pieces image fields for ID: ' . $art_piece_id);
+                if (defined('WP_DEBUG') && WP_DEBUG) { error_log('AIH Art Images: No images left, clearing art_pieces image fields for ID: ' . $art_piece_id); }
                 
                 $update_result = $wpdb->update(
                     $art_table,
@@ -173,7 +173,7 @@ class AIH_Art_Images {
                     array('%d')
                 );
                 
-                error_log('AIH Art Images: Clear art_pieces result: ' . ($update_result !== false ? 'success' : 'failed'));
+                if (defined('WP_DEBUG') && WP_DEBUG) { error_log('AIH Art Images: Clear art_pieces result: ' . ($update_result !== false ? 'success' : 'failed')); }
             }
             
             // Clear any caches

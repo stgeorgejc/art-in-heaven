@@ -53,18 +53,20 @@ if (!empty($search)) {
 } else {
     $total_bids = $wpdb->get_var("SELECT COUNT(*) FROM {$bids_table}");
     
-    // Simple query without prepare for non-search case
-    $bids = $wpdb->get_results(
-        "SELECT b.*, 
+    // Use $wpdb->prepare() for LIMIT/OFFSET to avoid raw integer casts
+    $bids = $wpdb->get_results($wpdb->prepare(
+        "SELECT b.*,
                 b.bidder_id as confirmation_code,
                 bi.name_first, bi.name_last, bi.email_primary,
                 a.art_id, a.title, a.artist
-         FROM {$bids_table} b 
-         LEFT JOIN {$bidders_table} bi ON b.bidder_id = bi.confirmation_code 
-         LEFT JOIN {$art_table} a ON b.art_piece_id = a.id 
+         FROM {$bids_table} b
+         LEFT JOIN {$bidders_table} bi ON b.bidder_id = bi.confirmation_code
+         LEFT JOIN {$art_table} a ON b.art_piece_id = a.id
          ORDER BY b.bid_time DESC
-         LIMIT " . (int) $per_page . " OFFSET " . (int) $offset
-    );
+         LIMIT %d OFFSET %d",
+        (int) $per_page,
+        (int) $offset
+    ));
 }
 
 $total_pages = ceil($total_bids / $per_page);
@@ -87,7 +89,7 @@ $total_bid_value = $wpdb->get_var("SELECT SUM(bid_amount) FROM {$bids_table}");
         <p>Total bids in table: <?php echo intval($total_bid_count); ?></p>
         <p>Query result count: <?php echo count($bids); ?></p>
         <?php if ($wpdb->last_error): ?>
-        <p style="color:red;">Last DB Error: <?php echo esc_html($wpdb->last_error); ?></p>
+        <p style="color:red;">A database error occurred. Please check the server logs for details.</p>
         <?php endif; ?>
     </div>
     <?php endif; ?>

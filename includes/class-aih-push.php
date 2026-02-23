@@ -147,7 +147,7 @@ class AIH_Push {
         $table = AIH_Database::get_table('push_subscriptions');
 
         return $wpdb->get_results($wpdb->prepare(
-            "SELECT * FROM `{$table}` WHERE bidder_id = %s",
+            "SELECT * FROM `{$table}` WHERE bidder_id = %s ORDER BY created_at DESC LIMIT 5",
             $bidder_id
         ));
     }
@@ -277,6 +277,10 @@ class AIH_Push {
      * @param int    $art_piece_id
      * @param string $title
      */
+    // Note: This read-modify-write pattern is non-atomic. Under high concurrency,
+    // an outbid event can be lost if two events are recorded simultaneously.
+    // SSE/push notifications are the primary channels; this is a polling fallback.
+    // For production with 1000+ users, an external object cache (Redis) is recommended.
     public static function record_outbid_event($bidder_id, $art_piece_id, $title) {
         $key    = 'aih_outbid_' . $bidder_id;
         $events = get_transient($key);
@@ -300,6 +304,10 @@ class AIH_Push {
      * @param string $bidder_id
      * @return array
      */
+    // Note: This read-then-delete pattern is non-atomic. Under high concurrency,
+    // an outbid event written between get_transient() and delete_transient() will be lost.
+    // SSE/push notifications are the primary channels; this is a polling fallback.
+    // For production with 1000+ users, an external object cache (Redis) is recommended.
     public static function consume_outbid_events($bidder_id) {
         $key    = 'aih_outbid_' . $bidder_id;
         $events = get_transient($key);

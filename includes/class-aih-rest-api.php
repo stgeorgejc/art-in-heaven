@@ -236,6 +236,12 @@ class AIH_REST_API {
      * GET /art - Get art pieces
      */
     public function get_art_pieces($request) {
+        // Rate limiting for public gallery endpoint
+        $ip = AIH_Security::get_client_ip();
+        if (!AIH_Security::check_rate_limit('gallery_' . $ip, 60, 60)) {
+            return new WP_Error('rate_limited', __('Too many requests. Please wait.', 'art-in-heaven'), array('status' => 429));
+        }
+
         $status = $request->get_param('status');
 
         // Non-admins cannot access draft or all statuses

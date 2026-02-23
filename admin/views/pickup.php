@@ -77,13 +77,14 @@ if ($current_tab === 'picked_up') {
 // Batch load items for all orders (instead of N+1 queries)
 $order_ids = wp_list_pluck($orders, 'id');
 if (!empty($order_ids)) {
-    $ids_placeholder = implode(',', array_map('intval', $order_ids));
-    $all_items = $wpdb->get_results("
-        SELECT oi.*, a.art_id, a.title, a.artist
+    $placeholders = implode(',', array_fill(0, count($order_ids), '%d'));
+    $all_items = $wpdb->get_results($wpdb->prepare(
+        "SELECT oi.*, a.art_id, a.title, a.artist
         FROM {$order_items_table} oi
         JOIN {$art_table} a ON oi.art_piece_id = a.id
-        WHERE oi.order_id IN ({$ids_placeholder})
-    ");
+        WHERE oi.order_id IN ({$placeholders})",
+        array_map('intval', $order_ids)
+    ));
     // Group items by order_id
     $items_by_order = array();
     foreach ($all_items as $item) {

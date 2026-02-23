@@ -450,15 +450,17 @@ class AIH_Pushpay_API {
                     $total_synced++;
                 }
 
-                // Try to match to an order by order number found anywhere in the payment data
+                // Try to match to an order by order number in designated payment fields
                 $order_number = null;
-                $raw_json = json_encode($payment);
-
-                // Search the entire payment JSON for the order number pattern
-                // This catches it regardless of which field Pushpay returns it in
-                // (payerNote from 'nt' param, source reference from 'sr' param, etc.)
-                if (preg_match('/AIH-[A-Z0-9]+/i', $raw_json, $matches)) {
-                    $order_number = strtoupper($matches[0]);
+                $search_fields = array(
+                    isset($payment['payerNote']) ? $payment['payerNote'] : '',
+                    isset($payment['paymentMethodDetails']['reference']) ? $payment['paymentMethodDetails']['reference'] : '',
+                );
+                foreach ($search_fields as $field) {
+                    if (preg_match('/\bAIH-[A-Z0-9]{8}\b/', strtoupper($field), $matches)) {
+                        $order_number = $matches[0];
+                        break;
+                    }
                 }
                 
                 // Update order if matched
@@ -519,13 +521,17 @@ class AIH_Pushpay_API {
             $has_more = isset($result['page']) && isset($result['totalPages']) && $result['page'] < $result['totalPages'] - 1;
             $page++;
 
-            // Throttle requests to avoid hitting Pushpay rate limits
+            // Throttle requests to avoid hitting Pushpay rate limits.
+            // NOTE: This sleep() call blocks the PHP process. To prevent blocking
+            // user-facing requests, configure system cron and add
+            // define('DISABLE_WP_CRON', true) to wp-config.php so this only
+            // runs in a dedicated cron process.
             if ($has_more) {
                 sleep(1);
             }
-            
-            // Safety limit
-            if ($page > 50) break;
+
+            // Safety limit — keep low to bound total execution time (~20 seconds of sleep)
+            if ($page > 20) break;
         }
         
         // Store sync timestamp
@@ -812,7 +818,7 @@ class AIH_Pushpay_API {
         // Check both saved option and current POST (option may not be saved yet during settings save)
         $enabled = get_option('aih_pushpay_auto_sync_enabled', false);
         if (!$enabled && isset($_POST['aih_pushpay_auto_sync_enabled'])) {
-            $enabled = (bool) $_POST['aih_pushpay_auto_sync_enabled'];
+            $enabled = (bool) sanitize_text_field(wp_unslash($_POST['aih_pushpay_auto_sync_enabled']));
         }
         if ($enabled) {
             self::schedule_auto_sync($interval);

@@ -383,11 +383,17 @@ class AIH_Auth {
     
     /**
      * Get all registrants
+     *
+     * @param int $limit Maximum number of rows to return (default 10000).
+     * @return array
      */
-    public function get_all_registrants() {
+    public function get_all_registrants($limit = 10000) {
         global $wpdb;
         $table = AIH_Database::get_table('registrants');
-        $rows = $wpdb->get_results("SELECT * FROM $table ORDER BY name_last, name_first ASC");
+        $rows = $wpdb->get_results($wpdb->prepare(
+            "SELECT * FROM $table ORDER BY name_last, name_first ASC LIMIT %d",
+            $limit
+        ));
         foreach ($rows as $row) {
             if (!empty($row->api_data)) {
                 $row->api_data = AIH_Security::decrypt($row->api_data);
@@ -528,11 +534,17 @@ class AIH_Auth {
     
     /**
      * Get all bidders (only those who have logged in)
+     *
+     * @param int $limit Maximum number of rows to return (default 10000).
+     * @return array
      */
-    public function get_all_bidders() {
+    public function get_all_bidders($limit = 10000) {
         global $wpdb;
         $table = AIH_Database::get_table('bidders');
-        $rows = $wpdb->get_results("SELECT * FROM $table ORDER BY name_last, name_first ASC");
+        $rows = $wpdb->get_results($wpdb->prepare(
+            "SELECT * FROM $table ORDER BY name_last, name_first ASC LIMIT %d",
+            $limit
+        ));
         foreach ($rows as $row) {
             if (!empty($row->api_data)) {
                 $row->api_data = AIH_Security::decrypt($row->api_data);
@@ -650,7 +662,18 @@ class AIH_Auth {
      */
     public function is_logged_in() {
         $data = $this->read_session();
-        return !empty($data['confirmation_code']);
+        if (empty($data['confirmation_code'])) {
+            return false;
+        }
+
+        // Expire sessions after configurable duration
+        $max_age = (int) get_option('aih_session_max_age', 8 * HOUR_IN_SECONDS);
+        if (isset($data['logged_in_at']) && (time() - $data['logged_in_at']) > $max_age) {
+            $this->clear_session();
+            return false;
+        }
+
+        return true;
     }
     
     /**

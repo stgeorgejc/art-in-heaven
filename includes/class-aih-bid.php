@@ -39,21 +39,13 @@ class AIH_Bid {
         
         try {
             // Lock the art piece row and get current highest bid atomically
+            $status_sql = AIH_Status::get_status_sql('a', '%s');
             $art_piece = $wpdb->get_row($wpdb->prepare(
                 "SELECT a.id, a.starting_bid, a.auction_start, a.auction_end, a.status,
-                        CASE
-                            WHEN a.status = 'draft' AND a.auction_start IS NOT NULL AND a.auction_start <= %s AND (a.auction_end IS NULL OR a.auction_end > %s) THEN 'active'
-                            WHEN a.status = 'draft' AND a.auction_end IS NOT NULL AND a.auction_end <= %s THEN 'ended'
-                            WHEN a.status = 'draft' THEN 'draft'
-                            WHEN a.auction_end IS NOT NULL AND a.auction_end <= %s THEN 'ended'
-                            WHEN a.status = 'ended' AND (a.auction_end IS NULL OR a.auction_end > %s) AND (a.auction_start IS NULL OR a.auction_start <= %s) THEN 'active'
-                            WHEN a.status = 'ended' THEN 'ended'
-                            WHEN a.auction_start IS NOT NULL AND a.auction_start > %s THEN 'upcoming'
-                            ELSE 'active'
-                        END as computed_status,
+                        ({$status_sql}) as computed_status,
                         (SELECT MAX(bid_amount) FROM {$this->table} WHERE art_piece_id = a.id AND bid_status = 'valid') as current_highest
                  FROM $art_table a WHERE a.id = %d FOR UPDATE",
-                $now, $now, $now, $now, $now, $now, $now, $art_piece_id
+                $now, $now, $art_piece_id
             ));
             
             if (!$art_piece) {
@@ -83,7 +75,7 @@ class AIH_Bid {
             $current_highest = floatval($art_piece->current_highest);
             $ip_address = !empty($_SERVER['REMOTE_ADDR']) ? sanitize_text_field($_SERVER['REMOTE_ADDR']) : '';
             $bid_amount = floatval($amount);
-            $max_bid = 50000;
+            $max_bid = (int) get_option('aih_max_bid', 50000);
             $min_increment = floatval(get_option('aih_bid_increment', 1));
 
             // Check if bid exceeds maximum allowed
@@ -256,18 +248,13 @@ class AIH_Bid {
         // Get the bidder's highest bid per art piece, avoiding duplicates
         // Uses a subquery to find the max bid amount per art piece for this bidder,
         // then joins to get full details of that specific bid
+        $status_sql = AIH_Status::get_status_sql('a', '%s');
         return $wpdb->get_results($wpdb->prepare(
             "SELECT b.*, a.title, a.title as art_title, a.artist, a.art_id, a.auction_end, a.status as auction_status,
                     a.watermarked_url, a.watermarked_url as image_url, a.image_url as original_image_url,
                     a.starting_bid, a.show_end_time,
                     (SELECT COUNT(*) FROM {$this->table} WHERE art_piece_id = b.art_piece_id AND bidder_id = %s AND bid_status = 'valid') as bid_count,
-                    CASE
-                        WHEN a.auction_end IS NOT NULL AND a.auction_end <= %s THEN 'ended'
-                        WHEN a.status = 'ended' AND (a.auction_end IS NULL OR a.auction_end > %s) AND (a.auction_start IS NULL OR a.auction_start <= %s) THEN 'active'
-                        WHEN a.status = 'ended' THEN 'ended'
-                        WHEN a.auction_start IS NOT NULL AND a.auction_start > %s THEN 'upcoming'
-                        ELSE 'active'
-                    END as computed_status
+                    ({$status_sql}) as computed_status
              FROM {$this->table} b
              JOIN $art_table a ON b.art_piece_id = a.id
              WHERE b.bidder_id = %s AND b.bid_status = 'valid'
@@ -278,7 +265,7 @@ class AIH_Bid {
                    LIMIT 1
                )
              ORDER BY b.bid_time DESC",
-            $bidder_id, $now, $now, $now, $now, $bidder_id, $bidder_id
+            $bidder_id, $now, $now, $bidder_id, $bidder_id
         ));
     }
     
@@ -437,6 +424,7 @@ class AIH_Bid {
         $order_items_table = AIH_Database::get_table('order_items');
         $now = current_time('mysql');
 
+        $status_sql = AIH_Status::get_status_sql('a', '%s');
         return $wpdb->get_results($wpdb->prepare(
             "SELECT b.*,
                     a.art_id, a.title, a.artist, a.starting_bid,
@@ -451,12 +439,7 @@ class AIH_Bid {
                     order_info.payment_status,
                     order_info.pickup_status,
                     order_info.pickup_date,
-                    CASE
-                        WHEN a.auction_end IS NOT NULL AND a.auction_end <= %s THEN 'ended'
-                        WHEN a.status = 'ended' AND (a.auction_end IS NULL OR a.auction_end > %s) AND (a.auction_start IS NULL OR a.auction_start <= %s) THEN 'active'
-                        WHEN a.status = 'ended' THEN 'ended'
-                        ELSE 'active'
-                    END as auction_computed_status
+                    ({$status_sql}) as auction_computed_status
              FROM {$this->table} b
              JOIN $art_table a ON b.art_piece_id = a.id
              LEFT JOIN $bidders_table bd ON b.bidder_id = bd.confirmation_code
@@ -471,7 +454,7 @@ class AIH_Bid {
              ) order_info ON a.id = order_info.art_piece_id
              WHERE b.is_winning = 1
              ORDER BY a.auction_end DESC",
-            $now, $now, $now
+            $now, $now
         ));
     }
     
@@ -567,19 +550,29 @@ class AIH_Bid {
         }
 
         // Single query with conditional aggregation (replaces 9 separate queries)
-        $row = $wpdb->get_row(
+        // Using prepare() with literal placeholders for SQL safety consistency
+        $row = $wpdb->get_row($wpdb->prepare(
             "SELECT
-                COUNT(CASE WHEN bid_status = 'valid' OR bid_status IS NULL THEN 1 END) AS total_bids,
-                COUNT(CASE WHEN is_winning = 1 THEN 1 END) AS winning_bids,
-                COUNT(CASE WHEN is_winning = 0 AND (bid_status = 'valid' OR bid_status IS NULL) THEN 1 END) AS outbid_bids,
-                COUNT(CASE WHEN bid_status = 'too_low' THEN 1 END) AS rejected_bids,
-                COUNT(DISTINCT CASE WHEN bid_status = 'valid' OR bid_status IS NULL THEN bidder_id END) AS unique_bidders,
-                COUNT(DISTINCT CASE WHEN bid_status = 'valid' OR bid_status IS NULL THEN art_piece_id END) AS unique_art_pieces,
-                COALESCE(SUM(CASE WHEN is_winning = 1 THEN bid_amount ELSE 0 END), 0) AS total_bid_value,
-                MAX(CASE WHEN bid_status = 'valid' OR bid_status IS NULL THEN bid_amount END) AS highest_bid,
-                AVG(CASE WHEN bid_status = 'valid' OR bid_status IS NULL THEN bid_amount END) AS average_bid
-            FROM {$this->table}"
-        );
+                COUNT(CASE WHEN bid_status = %s OR bid_status IS NULL THEN 1 END) AS total_bids,
+                COUNT(CASE WHEN is_winning = %d THEN 1 END) AS winning_bids,
+                COUNT(CASE WHEN is_winning = %d AND (bid_status = %s OR bid_status IS NULL) THEN 1 END) AS outbid_bids,
+                COUNT(CASE WHEN bid_status = %s THEN 1 END) AS rejected_bids,
+                COUNT(DISTINCT CASE WHEN bid_status = %s OR bid_status IS NULL THEN bidder_id END) AS unique_bidders,
+                COUNT(DISTINCT CASE WHEN bid_status = %s OR bid_status IS NULL THEN art_piece_id END) AS unique_art_pieces,
+                COALESCE(SUM(CASE WHEN is_winning = %d THEN bid_amount ELSE 0 END), 0) AS total_bid_value,
+                MAX(CASE WHEN bid_status = %s OR bid_status IS NULL THEN bid_amount END) AS highest_bid,
+                AVG(CASE WHEN bid_status = %s OR bid_status IS NULL THEN bid_amount END) AS average_bid
+            FROM {$this->table}",
+            'valid',   // total_bids
+            1,         // winning_bids
+            0, 'valid', // outbid_bids
+            'too_low', // rejected_bids
+            'valid',   // unique_bidders
+            'valid',   // unique_art_pieces
+            1,         // total_bid_value
+            'valid',   // highest_bid
+            'valid'    // average_bid
+        ));
 
         $stats = new stdClass();
         $stats->total_bids = (int) ($row->total_bids ?? 0);

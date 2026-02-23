@@ -8,6 +8,7 @@ global $wpdb;
 $current_year = AIH_Database::get_auction_year();
 
 // Get list of existing year tables
+// Note: SHOW TABLES uses $wpdb->prefix for the table name pattern; this is safe as prefix is set by WordPress config
 $tables = $wpdb->get_results("SHOW TABLES LIKE '{$wpdb->prefix}%_ArtPieces'", ARRAY_N);
 $years = array();
 foreach ($tables as $table) {
@@ -30,7 +31,7 @@ rsort($years);
                 <td>
                     <select id="aih-source-year">
                         <?php foreach ($years as $year): ?>
-                        <option value="<?php echo $year; ?>"><?php echo $year; ?></option>
+                        <option value="<?php echo esc_attr($year); ?>"><?php echo esc_html($year); ?></option>
                         <?php endforeach; ?>
                     </select>
                 </td>
@@ -80,7 +81,7 @@ rsort($years);
                     $orders_count = $orders_table ? $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}{$year}_Orders") : 0;
                 ?>
                 <tr>
-                    <td><strong><?php echo $year; ?></strong></td>
+                    <td><strong><?php echo esc_html($year); ?></strong></td>
                     <td><?php echo number_format($art_count); ?></td>
                     <td><?php echo number_format($bids_count); ?></td>
                     <td><?php echo number_format($bidders_count); ?></td>
@@ -89,7 +90,7 @@ rsort($years);
                         <?php if ($year == $current_year): ?>
                             <span class="aih-current-badge"><?php _e('Active', 'art-in-heaven'); ?></span>
                         <?php else: ?>
-                            <button type="button" class="button button-small aih-switch-year" data-year="<?php echo $year; ?>"><?php _e('Switch', 'art-in-heaven'); ?></button>
+                            <button type="button" class="button button-small aih-switch-year" data-year="<?php echo esc_attr($year); ?>"><?php _e('Switch', 'art-in-heaven'); ?></button>
                         <?php endif; ?>
                     </td>
                 </tr>
