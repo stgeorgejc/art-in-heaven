@@ -7,6 +7,12 @@
 (function($) {
     'use strict';
     
+    // API URL helper: use clean /api/ endpoint when available, fall back to admin-ajax.php
+    window.aihApiUrl = function(endpoint) {
+        var base = (aihAjax.apiurl || '').replace(/\/$/, '');
+        return base ? (base + endpoint) : aihAjax.ajaxurl;
+    };
+
     // Toast notification helper — auto-inject element if missing
     if (!$('#aih-toast').length) {
         $('body').append('<div id="aih-toast" class="aih-toast"></div>');
@@ -110,7 +116,7 @@
         
         searchTimeout = setTimeout(function() {
             $.ajax({
-                url: aihAjax.ajaxurl,
+                url: aihApiUrl('search'),
                 type: 'POST',
                 data: {
                     action: 'aih_search',
@@ -156,7 +162,7 @@
     // Load art details into modal
     function loadArtDetails(artId, focusBid) {
         $.ajax({
-            url: aihAjax.ajaxurl,
+            url: aihApiUrl('art-details'),
             type: 'POST',
             data: {
                 action: 'aih_get_art_details',
@@ -279,7 +285,7 @@
 
     function doSubmitBid(artId, bidAmount, $notice) {
         $.ajax({
-            url: aihAjax.ajaxurl,
+            url: aihApiUrl('bid'),
             type: 'POST',
             data: {
                 action: 'aih_place_bid',

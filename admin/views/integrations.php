@@ -362,6 +362,63 @@ $is_sandbox = get_option('aih_pushpay_sandbox', 0);
             </div>
         </div>
         
+        <!-- Mercure SSE Section -->
+        <div class="aih-settings-section">
+            <h2>
+                <span class="dashicons dashicons-controls-repeat" style="margin-right: 8px;"></span>
+                <?php _e('Mercure Real-Time Updates (SSE)', 'art-in-heaven'); ?>
+            </h2>
+            <p class="description"><?php _e('Enable Server-Sent Events for instant bid updates and outbid notifications. Requires a Mercure hub running on the server. When disabled, the plugin falls back to polling.', 'art-in-heaven'); ?></p>
+
+            <?php $mercure_enabled = get_option('aih_mercure_enabled', false); ?>
+
+            <table class="form-table">
+                <tr>
+                    <th scope="row"><?php _e('Enable Mercure', 'art-in-heaven'); ?></th>
+                    <td>
+                        <label>
+                            <input type="checkbox" name="aih_mercure_enabled" value="1" <?php checked($mercure_enabled); ?>>
+                            <?php _e('Enable real-time updates via Server-Sent Events', 'art-in-heaven'); ?>
+                        </label>
+                        <p class="description"><?php _e('Only enable this after the Mercure hub is running and configured.', 'art-in-heaven'); ?></p>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="aih_mercure_hub_url"><?php _e('Internal Hub URL', 'art-in-heaven'); ?></label></th>
+                    <td>
+                        <input type="url" id="aih_mercure_hub_url" name="aih_mercure_hub_url" value="<?php echo esc_attr(get_option('aih_mercure_hub_url', 'http://127.0.0.1:3000/.well-known/mercure')); ?>" class="regular-text">
+                        <p class="description"><?php _e('URL where PHP publishes events (internal, never exposed to browsers). Default: http://127.0.0.1:3000/.well-known/mercure', 'art-in-heaven'); ?></p>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="aih_mercure_public_hub_url"><?php _e('Public Hub URL', 'art-in-heaven'); ?></label></th>
+                    <td>
+                        <input type="url" id="aih_mercure_public_hub_url" name="aih_mercure_public_hub_url" value="<?php echo esc_attr(get_option('aih_mercure_public_hub_url', '')); ?>" class="regular-text" placeholder="<?php echo esc_attr(home_url('/.well-known/mercure')); ?>">
+                        <p class="description"><?php _e('URL browsers connect to (proxied via nginx). Leave blank to use site domain: /.well-known/mercure', 'art-in-heaven'); ?></p>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="aih_mercure_jwt_secret"><?php _e('JWT Secret', 'art-in-heaven'); ?></label></th>
+                    <td>
+                        <input type="password" id="aih_mercure_jwt_secret" name="aih_mercure_jwt_secret" value="<?php echo esc_attr(AIH_Security::decrypt(get_option('aih_mercure_jwt_secret', ''))); ?>" class="regular-text" autocomplete="off">
+                        <p class="description"><?php _e('Shared secret between PHP and the Mercure hub for JWT signing. Must match the MERCURE_PUBLISHER_JWT_KEY and MERCURE_SUBSCRIBER_JWT_KEY in your Mercure config. Stored encrypted.', 'art-in-heaven'); ?></p>
+                    </td>
+                </tr>
+            </table>
+
+            <div class="aih-info-box" style="background: #eff6ff; border-left: 4px solid #3b82f6; padding: 15px; margin: 20px 0;">
+                <strong><?php _e('Setup Instructions:', 'art-in-heaven'); ?></strong>
+                <ol style="margin: 10px 0 0 20px;">
+                    <li><?php _e('Install the Mercure binary on your server (systemd service recommended)', 'art-in-heaven'); ?></li>
+                    <li><?php _e('Configure nginx to proxy /.well-known/mercure to the Mercure hub (default port 3000)', 'art-in-heaven'); ?></li>
+                    <li><?php _e('Set the same JWT secret in both the Mercure config and this settings page', 'art-in-heaven'); ?></li>
+                    <li><?php _e('Enable Mercure above and save settings', 'art-in-heaven'); ?></li>
+                    <li><?php _e('Verify: open two browser tabs, place a bid in one — the other should update instantly', 'art-in-heaven'); ?></li>
+                </ol>
+                <p style="margin-top: 10px;"><?php _e('When Mercure is disabled or unreachable, the plugin automatically falls back to polling.', 'art-in-heaven'); ?></p>
+            </div>
+        </div>
+
         <?php submit_button(__('Save Integration Settings', 'art-in-heaven')); ?>
     </form>
 </div>

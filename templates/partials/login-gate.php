@@ -43,7 +43,7 @@ jQuery(document).ready(function($) {
         var $msg = $('#aih-login-msg');
         if (!code) { $msg.addClass('error').text(aihAjax.strings.enterCode || 'Please enter your code').show(); return; }
         $btn.prop('disabled', true).addClass('loading');
-        $.post(aihAjax.ajaxurl, {action:'aih_verify_code', nonce:aihAjax.nonce, code:code}, function(r) {
+        $.post(aihApiUrl('verify-code'), {action:'aih_verify_code', nonce:aihAjax.nonce, code:code}, function(r) {
             if (r.success) location.reload();
             else { $msg.addClass('error').text(r.data.message || 'Invalid code').show(); $btn.prop('disabled', false).removeClass('loading'); }
         }).fail(function() {

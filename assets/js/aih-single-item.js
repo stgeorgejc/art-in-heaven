@@ -5,7 +5,7 @@ jQuery(document).ready(function($) {
     var $wrapper = $('#aih-single-wrapper');
 
     $('#aih-logout').on('click', function() {
-        $.post(aihAjax.ajaxurl, {action:'aih_logout', nonce:aihAjax.nonce}, function() { location.reload(); });
+        $.post(aihApiUrl('logout'), {action:'aih_logout', nonce:aihAjax.nonce}, function() { location.reload(); });
     });
 
     // Favorite
@@ -13,7 +13,7 @@ jQuery(document).ready(function($) {
         var $btn = $(this);
         if ($btn.hasClass('loading')) return;
         $btn.addClass('loading');
-        $.post(aihAjax.ajaxurl, {action:'aih_toggle_favorite', nonce:aihAjax.nonce, art_piece_id:$btn.data('id')}, function(r) {
+        $.post(aihApiUrl('favorite'), {action:'aih_toggle_favorite', nonce:aihAjax.nonce, art_piece_id:$btn.data('id')}, function(r) {
             if (r.success) {
                 $btn.toggleClass('active');
             }
@@ -197,7 +197,7 @@ jQuery(document).ready(function($) {
         $btn.prop('disabled', true).addClass('loading');
         $msg.hide().removeClass('error success');
 
-        $.post(aihAjax.ajaxurl, {action:'aih_place_bid', nonce:aihAjax.nonce, art_piece_id:$btn.data('id'), bid_amount:amount}, function(r) {
+        $.post(aihApiUrl('bid'), {action:'aih_place_bid', nonce:aihAjax.nonce, art_piece_id:$btn.data('id'), bid_amount:amount}, function(r) {
             if (r.success) {
                 if (navigator.vibrate) navigator.vibrate(100);
                 bidJustPlaced = true;
@@ -330,9 +330,10 @@ jQuery(document).ready(function($) {
     window.aihPollStatus = pollStatus;
 
     function pollStatus() {
+        if (window.aihSSEConnected) return; // SSE handles real-time updates
         if (!aihAjax.isLoggedIn || isEnded) return;
 
-        $.post(aihAjax.ajaxurl, {
+        $.post(aihApiUrl('poll-status'), {
             action: 'aih_poll_status',
             nonce: aihAjax.nonce,
             art_piece_ids: [pieceId]

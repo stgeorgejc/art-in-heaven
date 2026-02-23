@@ -218,7 +218,7 @@ jQuery(document).ready(function($) {
         return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
     $('#aih-logout').on('click', function() {
-        $.post(aihAjax.ajaxurl, {action:'aih_logout', nonce:aihAjax.nonce}, function() { location.reload(); });
+        $.post(aihApiUrl('logout'), {action:'aih_logout', nonce:aihAjax.nonce}, function() { location.reload(); });
     });
 
     // Item selection logic
@@ -269,7 +269,7 @@ jQuery(document).ready(function($) {
         });
         if (ids.length === 0) return;
         var $btn = $(this).prop('disabled', true).addClass('loading');
-        $.post(aihAjax.ajaxurl, {action:'aih_create_order', nonce:aihAjax.nonce, 'art_piece_ids[]': ids}, function(r) {
+        $.post(aihApiUrl('create-order'), {action:'aih_create_order', nonce:aihAjax.nonce, 'art_piece_ids[]': ids}, function(r) {
             if (r.success && r.data.pushpay_url) {
                 window.location.href = r.data.pushpay_url;
             } else {
@@ -302,7 +302,7 @@ jQuery(document).ready(function($) {
 
         $body.html('<div class="aih-loading">Loading order details...</div>');
 
-        $.post(aihAjax.ajaxurl, {
+        $.post(aihApiUrl('order-details'), {
             action: 'aih_get_order_details',
             nonce: aihAjax.nonce,
             order_number: orderNumber

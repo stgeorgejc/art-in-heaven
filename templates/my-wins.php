@@ -142,7 +142,7 @@ $cart_count = count($checkout->get_won_items($bidder_id));
 <script>
 jQuery(document).ready(function($) {
     $('#aih-logout').on('click', function() {
-        $.post(aihAjax.ajaxurl, {action:'aih_logout', nonce:aihAjax.nonce}, function() { location.reload(); });
+        $.post(aihApiUrl('logout'), {action:'aih_logout', nonce:aihAjax.nonce}, function() { location.reload(); });
     });
 });
 </script>

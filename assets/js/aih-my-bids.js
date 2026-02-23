@@ -7,7 +7,7 @@ jQuery(document).ready(function($) {
         return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
     $('#aih-logout').on('click', function() {
-        $.post(aihAjax.ajaxurl, {action:'aih_logout', nonce:aihAjax.nonce}, function() { location.reload(); });
+        $.post(aihApiUrl('logout'), {action:'aih_logout', nonce:aihAjax.nonce}, function() { location.reload(); });
     });
 
     // Order details modal
@@ -23,7 +23,7 @@ jQuery(document).ready(function($) {
         $body.html('<div class="aih-loading">Loading order details...</div>');
         $('#aih-modal-title').text('Order ' + orderNumber);
 
-        $.post(aihAjax.ajaxurl, {
+        $.post(aihApiUrl('order-details'), {
             action: 'aih_get_order_details',
             nonce: aihAjax.nonce,
             order_number: orderNumber
@@ -114,7 +114,7 @@ jQuery(document).ready(function($) {
             $btn.prop('disabled', true).text('...');
             $msg.hide();
 
-            $.post(aihAjax.ajaxurl, {action:'aih_place_bid', nonce:aihAjax.nonce, art_piece_id:id, bid_amount:amount}, function(r) {
+            $.post(aihApiUrl('bid'), {action:'aih_place_bid', nonce:aihAjax.nonce, art_piece_id:id, bid_amount:amount}, function(r) {
                 if (r.success) {
                     if (navigator.vibrate) navigator.vibrate(100);
                     $msg.removeClass('error').addClass('success').text(aihAjax.strings.bidPlaced).show();
@@ -245,6 +245,7 @@ jQuery(document).ready(function($) {
     window.aihPollStatus = pollStatus;
 
     function pollStatus() {
+        if (window.aihSSEConnected) return; // SSE handles real-time updates
         if (!aihAjax.isLoggedIn || !hasActiveAuctions()) return;
 
         var ids = [];
@@ -254,7 +255,7 @@ jQuery(document).ready(function($) {
         });
         if (ids.length === 0) return;
 
-        $.post(aihAjax.ajaxurl, {
+        $.post(aihApiUrl('poll-status'), {
             action: 'aih_poll_status',
             nonce: aihAjax.nonce,
             art_piece_ids: ids

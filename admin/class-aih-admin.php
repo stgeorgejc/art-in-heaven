@@ -404,6 +404,30 @@ class AIH_Admin {
                 return $value ? 1 : 0;
             }
         ));
+
+        // Mercure SSE settings (in aih_integrations group)
+        register_setting('aih_integrations', 'aih_mercure_enabled', array(
+            'type' => 'boolean',
+            'default' => false,
+            'sanitize_callback' => function($value) {
+                return (bool) $value;
+            }
+        ));
+        register_setting('aih_integrations', 'aih_mercure_hub_url', array(
+            'type' => 'string',
+            'default' => 'http://127.0.0.1:3000/.well-known/mercure',
+            'sanitize_callback' => 'esc_url_raw'
+        ));
+        register_setting('aih_integrations', 'aih_mercure_public_hub_url', array(
+            'type' => 'string',
+            'default' => '',
+            'sanitize_callback' => 'esc_url_raw'
+        ));
+        register_setting('aih_integrations', 'aih_mercure_jwt_secret', array(
+            'type' => 'string',
+            'default' => '',
+            'sanitize_callback' => array('AIH_Security', 'sanitize_encrypt')
+        ));
     }
     
     /**

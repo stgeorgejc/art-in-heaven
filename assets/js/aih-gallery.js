@@ -4,7 +4,7 @@
 jQuery(document).ready(function($) {
     // Logout
     $('#aih-logout').on('click', function() {
-        $.post(aihAjax.ajaxurl, {action:'aih_logout', nonce:aihAjax.nonce}, function() {
+        $.post(aihApiUrl('logout'), {action:'aih_logout', nonce:aihAjax.nonce}, function() {
             location.reload();
         });
     });
@@ -243,7 +243,7 @@ jQuery(document).ready(function($) {
         var id = $btn.data('id');
         $btn.addClass('loading');
 
-        $.post(aihAjax.ajaxurl, {action:'aih_toggle_favorite', nonce:aihAjax.nonce, art_piece_id:id}, function(r) {
+        $.post(aihApiUrl('favorite'), {action:'aih_toggle_favorite', nonce:aihAjax.nonce, art_piece_id:id}, function(r) {
             if (r.success) {
                 $btn.toggleClass('active');
                 var $cardImage = $btn.closest('.aih-card-image');
@@ -279,7 +279,7 @@ jQuery(document).ready(function($) {
             $btn.prop('disabled', true).text('...');
             $msg.hide();
 
-            $.post(aihAjax.ajaxurl, {action:'aih_place_bid', nonce:aihAjax.nonce, art_piece_id:id, bid_amount:amount}, function(r) {
+            $.post(aihApiUrl('bid'), {action:'aih_place_bid', nonce:aihAjax.nonce, art_piece_id:id, bid_amount:amount}, function(r) {
                 if (r.success) {
                     if (navigator.vibrate) navigator.vibrate(100);
                     bidJustPlaced = true;
@@ -450,6 +450,7 @@ jQuery(document).ready(function($) {
     window.aihPollStatus = pollStatus;
 
     function pollStatus() {
+        if (window.aihSSEConnected) return; // SSE handles real-time updates
         if (!aihAjax.isLoggedIn || !hasActiveAuctions()) return;
 
         var ids = [];
@@ -459,7 +460,7 @@ jQuery(document).ready(function($) {
         });
         if (ids.length === 0) return;
 
-        $.post(aihAjax.ajaxurl, {
+        $.post(aihApiUrl('poll-status'), {
             action: 'aih_poll_status',
             nonce: aihAjax.nonce,
             art_piece_ids: ids

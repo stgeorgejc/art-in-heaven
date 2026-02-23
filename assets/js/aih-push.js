@@ -102,7 +102,7 @@
             var auth  = subscription.getKey('auth');
 
             $.ajax({
-                url: aihAjax.ajaxurl,
+                url: aihApiUrl('push-subscribe'),
                 type: 'POST',
                 data: {
                     action:   'aih_push_subscribe',
@@ -146,9 +146,10 @@
          * Polling fallback: check for outbid events using smart intervals
          */
         pollOutbid: function() {
+            if (window.aihSSEConnected) return; // SSE handles real-time outbid notifications
             var self = this;
             $.ajax({
-                url: aihAjax.ajaxurl,
+                url: aihApiUrl('check-outbid'),
                 type: 'POST',
                 data: {
                     action: 'aih_check_outbid',

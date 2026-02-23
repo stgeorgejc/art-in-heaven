@@ -110,6 +110,10 @@ class Art_In_Heaven {
         require_once AIH_PLUGIN_DIR . 'vendor/autoload.php';
         require_once AIH_PLUGIN_DIR . 'includes/class-aih-push.php';
 
+        // Lightweight API router and real-time SSE
+        require_once AIH_PLUGIN_DIR . 'includes/class-aih-api-router.php';
+        require_once AIH_PLUGIN_DIR . 'includes/class-aih-mercure.php';
+
         // Defer loading of classes only needed in specific contexts
         // REST API class loaded on rest_api_init (see init_rest_api())
         // Export class loaded on demand (referenced by class name in callbacks)
@@ -315,7 +319,9 @@ class Art_In_Heaven {
         AIH_Checkout::get_instance();
         AIH_Assets::get_instance();
         if (class_exists('AIH_Cron_Scheduler')) AIH_Cron_Scheduler::get_instance();
-        
+        AIH_API_Router::get_instance();
+        AIH_Mercure::get_instance();
+
         if (is_admin()) {
             AIH_Admin::get_instance();
         }
@@ -403,6 +409,18 @@ class Art_In_Heaven {
                 $now
             ));
 
+            // Fire auction_ended action for pieces that just ended (for Mercure SSE)
+            if ($ended > 0) {
+                $just_ended = $wpdb->get_col($wpdb->prepare(
+                    "SELECT id FROM $table WHERE status = 'ended' AND auction_end IS NOT NULL
+                     AND auction_end > DATE_SUB(%s, INTERVAL 6 MINUTE) AND auction_end <= %s",
+                    $now, $now
+                ));
+                foreach ($just_ended as $ended_id) {
+                    do_action('aih_auction_ended', intval($ended_id));
+                }
+            }
+
             // Clear targeted caches if any records were updated
             if (($activated > 0 || $ended > 0) && class_exists('AIH_Cache')) {
                 $this->invalidate_art_cache();
@@ -480,8 +498,10 @@ class Art_In_Heaven {
         
         $auth = AIH_Auth::get_instance();
         $vapid = AIH_Push::get_vapid_keys();
-        wp_localize_script('aih-frontend', 'aihAjax', array(
+
+        $localize_data = array(
             'ajaxurl'        => admin_url('admin-ajax.php'),
+            'apiurl'         => AIH_API_Router::get_api_url(),
             'resturl'        => rest_url('art-in-heaven/v1/'),
             'nonce'          => wp_create_nonce('aih_nonce'),
             'restNonce'      => wp_create_nonce('wp_rest'),
@@ -491,7 +511,30 @@ class Art_In_Heaven {
             'swUrl'          => home_url('/?aih-sw=1'),
             'checkoutUrl'    => AIH_Template_Helper::get_checkout_url(),
             'bidIncrement'   => floatval(get_option('aih_bid_increment', 1)),
-            'strings'        => array(
+        );
+
+        // Mercure SSE: add hub URL and set subscriber JWT cookie
+        if (AIH_Mercure::is_enabled()) {
+            $localize_data['mercureUrl'] = AIH_Mercure::get_public_hub_url();
+            $localize_data['siteUrl']    = home_url();
+
+            $bidder_id = $auth->get_current_bidder_id();
+            $subscriber_jwt = AIH_Mercure::generate_subscriber_jwt($bidder_id ?: null);
+            if ($subscriber_jwt) {
+                $mercure_path = parse_url(AIH_Mercure::get_public_hub_url(), PHP_URL_PATH) ?: '/.well-known/mercure';
+                setcookie('mercureAuthorization', $subscriber_jwt, array(
+                    'expires'  => time() + 3600,
+                    'path'     => $mercure_path,
+                    'secure'   => is_ssl(),
+                    'httponly' => true,
+                    'samesite' => 'Strict',
+                ));
+            }
+
+            wp_enqueue_script('aih-sse', AIH_PLUGIN_URL . 'assets/js/aih-sse.js', array('jquery', 'aih-frontend'), AIH_VERSION, true);
+        }
+
+        $localize_data['strings'] = array(
                 'bidTooLow'      => __('Your Bid is too Low.', 'art-in-heaven'),
                 'bidSuccess'     => __('Bid placed successfully!', 'art-in-heaven'),
                 'bidError'       => __('Error placing bid.', 'art-in-heaven'),
@@ -509,8 +552,9 @@ class Art_In_Heaven {
                 'bidPlaced'      => __('Your bid has been placed!', 'art-in-heaven'),
                 'connectionError'=> __('Connection error. Please try again.', 'art-in-heaven'),
                 'networkError'   => __('Network error. Please try again.', 'art-in-heaven'),
-            )
-        ));
+        );
+
+        wp_localize_script('aih-frontend', 'aihAjax', $localize_data);
 
         // Conditionally enqueue page-specific JS
         global $post;
