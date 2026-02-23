@@ -219,7 +219,7 @@ jQuery(document).ready(function($) {
             $msg.removeClass('success').addClass('error').text(aihAjax.strings.connectionError).show();
             bidInProgress = false;
             $btn.prop('disabled', false).removeClass('loading');
-        });
+        }, { mutating: true });
         }); // end aihConfirmBid
     });
 

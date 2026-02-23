@@ -15,8 +15,16 @@
 
     // AJAX helper with automatic admin-ajax.php fallback
     // Tries /api/ route first, falls back to admin-ajax.php on network failure
-    window.aihPost = function(endpoint, data, successFn, failFn) {
-        return $.post(aihApiUrl(endpoint), data, successFn).fail(function() {
+    window.aihPost = function(endpoint, data, successFn, failFn, opts) {
+        opts = opts || {};
+        return $.post(aihApiUrl(endpoint), data, successFn).fail(function(jqXHR) {
+            // For mutating operations (bids), only retry if the request never reached the server.
+            // If the server responded (status > 0), the side-effect may have occurred — don't retry.
+            if (opts.mutating && jqXHR.status !== 0) {
+                console.warn('[AIH] API route returned status ' + jqXHR.status + ' for "' + endpoint + '", not retrying mutating request');
+                if (typeof failFn === 'function') failFn();
+                return;
+            }
             console.warn('[AIH] API route failed for "' + endpoint + '", using admin-ajax fallback');
             $.post(aihAjax.ajaxurl, data, successFn).fail(function() {
                 console.error('[AIH] admin-ajax fallback also failed for "' + endpoint + '"');
@@ -337,7 +345,7 @@
                 bidInProgress = false;
                 $notice.addClass('error').text(aihAjax.strings.bidError).show();
                 showToast(aihAjax.strings.bidError, 'error');
-        });
+        }, { mutating: true });
     }
     
     // Update card winning status

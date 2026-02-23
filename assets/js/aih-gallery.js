@@ -293,7 +293,7 @@ jQuery(document).ready(function($) {
             }, function() {
                 $msg.removeClass('success').addClass('error').text(aihAjax.strings.connectionError).show();
                 $btn.prop('disabled', false).text('Bid');
-            });
+            }, { mutating: true });
         });
     });
 
