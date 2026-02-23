@@ -230,7 +230,7 @@ $bidder_bid_ids = $bid_model->get_bidder_bid_ids_batch($piece_ids, $bidder_id);
                 <div class="aih-card-image" data-favorite="<?php echo $is_favorite ? '1' : '0'; ?>">
                     <?php if ($primary_image): ?>
                     <a href="?art_id=<?php echo intval($piece->id); ?>">
-                        <img src="<?php echo esc_url($primary_image); ?>" alt="<?php echo esc_attr($piece->title); ?>" loading="lazy">
+                        <?php echo AIH_Template_Helper::picture_tag($primary_image, $piece->title, '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw'); ?>
                     </a>
                     <?php else: ?>
                     <a href="?art_id=<?php echo intval($piece->id); ?>" class="aih-placeholder-link">

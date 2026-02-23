@@ -105,8 +105,10 @@ class AIH_Art_Images {
         if (defined('WP_DEBUG') && WP_DEBUG) { error_log('AIH Art Images: Delete result: ' . ($result ? 'success' : 'failed') . ', wpdb error: ' . $wpdb->last_error); }
         
         if ($result) {
-            // Delete watermarked file if it exists
+            // Delete watermarked file and responsive variants if they exist
             if (!empty($deleted_watermarked_url)) {
+                AIH_Image_Optimizer::cleanup_variants($deleted_watermarked_url);
+
                 $upload_dir = wp_upload_dir();
                 $watermarked_path = str_replace($upload_dir['baseurl'], $upload_dir['basedir'], $deleted_watermarked_url);
                 if (file_exists($watermarked_path)) {

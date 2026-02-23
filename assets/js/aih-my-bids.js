@@ -48,7 +48,7 @@ jQuery(document).ready(function($) {
                         html += '<div class="aih-order-item-row">';
                         html += '<div class="aih-order-item-image">';
                         if (item.image_url) {
-                            html += '<img src="' + escapeHtml(item.image_url) + '" alt="' + escapeHtml(item.title || '') + '">';
+                            html += aihPictureTag(item.image_url, escapeHtml(item.title || ''), '80px');
                         }
                         if (item.art_id) {
                             html += '<span class="aih-art-id-badge">' + escapeHtml(item.art_id) + '</span>';
