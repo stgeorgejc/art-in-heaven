@@ -6,10 +6,6 @@ jQuery(document).ready(function($) {
         if (!text) return '';
         return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
-    $('#aih-logout').on('click', function() {
-        $.post(aihApiUrl('logout'), {action:'aih_logout', nonce:aihAjax.nonce}, function() { location.reload(); });
-    });
-
     // Order details modal
     var lastFocusedElement;
     $('.aih-order-clickable').on('click', function() {

@@ -13,6 +13,23 @@
         return base ? (base + '/' + endpoint) : aihAjax.ajaxurl;
     };
 
+    // Global logout handler with fallback
+    $('#aih-logout').on('click', function() {
+        var data = {action: 'aih_logout', nonce: aihAjax.nonce};
+        $.post(aihApiUrl('logout'), data, function() {
+            location.reload();
+        }).fail(function() {
+            // Fallback to admin-ajax.php
+            $.post(aihAjax.ajaxurl, data, function() {
+                location.reload();
+            }).fail(function() {
+                // Final fallback: clear session cookie and reload
+                document.cookie = 'PHPSESSID=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                location.reload();
+            });
+        });
+    });
+
     // Toast notification helper — auto-inject element if missing
     if (!$('#aih-toast').length) {
         $('body').append('<div id="aih-toast" class="aih-toast"></div>');

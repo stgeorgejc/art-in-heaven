@@ -217,9 +217,7 @@ jQuery(document).ready(function($) {
         if (!text) return '';
         return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
-    $('#aih-logout').on('click', function() {
-        $.post(aihApiUrl('logout'), {action:'aih_logout', nonce:aihAjax.nonce}, function() { location.reload(); });
-    });
+
 
     // Item selection logic
     var taxRate = parseFloat($('.aih-checkout-summary').data('tax-rate')) || 0;

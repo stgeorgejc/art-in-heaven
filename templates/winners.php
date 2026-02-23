@@ -114,9 +114,7 @@ $art_images = new AIH_Art_Images();
 
 <script>
 jQuery(document).ready(function($) {
-    $('#aih-logout').on('click', function() {
-        $.post(aihApiUrl('logout'), {action:'aih_logout', nonce:aihAjax.nonce}, function() { location.reload(); });
-    });
+    // Logout handled by aih-frontend.js
 });
 </script>
 

@@ -2,13 +2,6 @@
  * Art in Heaven - Gallery Page JavaScript
  */
 jQuery(document).ready(function($) {
-    // Logout
-    $('#aih-logout').on('click', function() {
-        $.post(aihApiUrl('logout'), {action:'aih_logout', nonce:aihAjax.nonce}, function() {
-            location.reload();
-        });
-    });
-
     // Search & Filter
     var serverTime = parseInt($('#aih-gallery-wrapper').data('server-time')) || new Date().getTime();
     var timeOffset = serverTime - new Date().getTime();

@@ -4,10 +4,6 @@
 jQuery(document).ready(function($) {
     var $wrapper = $('#aih-single-wrapper');
 
-    $('#aih-logout').on('click', function() {
-        $.post(aihApiUrl('logout'), {action:'aih_logout', nonce:aihAjax.nonce}, function() { location.reload(); });
-    });
-
     // Favorite
     $('.aih-fav-btn').on('click', function() {
         var $btn = $(this);
