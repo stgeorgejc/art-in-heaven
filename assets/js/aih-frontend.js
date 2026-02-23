@@ -18,14 +18,16 @@
     window.aihPost = function(endpoint, data, successFn, failFn, opts) {
         opts = opts || {};
         return $.post(aihApiUrl(endpoint), data, successFn).fail(function(jqXHR) {
-            // For mutating operations (bids), only retry if the request never reached the server.
-            // If the server responded (status > 0), the side-effect may have occurred — don't retry.
-            if (opts.mutating && jqXHR.status !== 0) {
-                console.warn('[AIH] API route returned status ' + jqXHR.status + ' for "' + endpoint + '", not retrying mutating request');
+            // For mutating operations (bids): if the server returned 200 the bid likely
+            // went through but the response failed to parse — do NOT retry.
+            // For any other status (0=network error, 404=route missing, 500=server error)
+            // it's safe to fall back to admin-ajax.
+            if (opts.mutating && jqXHR.status === 200) {
+                console.warn('[AIH] API route returned 200 for "' + endpoint + '" but response failed — not retrying mutating request');
                 if (typeof failFn === 'function') failFn();
                 return;
             }
-            console.warn('[AIH] API route failed for "' + endpoint + '", using admin-ajax fallback');
+            console.warn('[AIH] API route failed for "' + endpoint + '" (status ' + jqXHR.status + '), using admin-ajax fallback');
             $.post(aihAjax.ajaxurl, data, successFn).fail(function() {
                 console.error('[AIH] admin-ajax fallback also failed for "' + endpoint + '"');
                 if (typeof failFn === 'function') failFn();
