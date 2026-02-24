@@ -40,19 +40,13 @@ class AIH_Assets {
      * Register all plugin assets (but don't enqueue yet)
      */
     public function register_assets() {
-        // Register Google Fonts
-        wp_register_style(
-            'aih-google-fonts',
-            'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap',
-            array(),
-            null
-        );
+        // Google Fonts loaded async via Art_In_Heaven::add_preconnect_hints()
 
         // Register elegant theme CSS
         wp_register_style(
             'aih-elegant-theme',
             AIH_PLUGIN_URL . 'assets/css/elegant-theme.css',
-            array('aih-google-fonts'),
+            array(),
             AIH_VERSION
         );
 
@@ -67,7 +61,6 @@ class AIH_Assets {
             return;
         }
 
-        wp_enqueue_style('aih-google-fonts');
         wp_enqueue_style('aih-elegant-theme');
 
         self::$elegant_theme_enqueued = true;

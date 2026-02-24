@@ -480,16 +480,10 @@ class Art_In_Heaven {
     public function enqueue_frontend_assets() {
         if (!$this->is_aih_page()) return;
 
-        // Google Fonts
-        wp_enqueue_style(
-            'aih-google-fonts',
-            'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap',
-            array(),
-            null
-        );
+        // Google Fonts loaded async in add_preconnect_hints() to avoid render-blocking
 
         // Elegant theme CSS (loaded in <head> to prevent FOUC)
-        wp_enqueue_style('aih-elegant-theme', AIH_PLUGIN_URL . 'assets/css/elegant-theme.css', array('aih-google-fonts'), AIH_VERSION);
+        wp_enqueue_style('aih-elegant-theme', AIH_PLUGIN_URL . 'assets/css/elegant-theme.css', array(), AIH_VERSION);
 
         wp_enqueue_script('aih-frontend', AIH_PLUGIN_URL . 'assets/js/aih-frontend.js', array('jquery'), AIH_VERSION, true);
         wp_script_add_data('aih-frontend', 'strategy', 'defer');
@@ -586,6 +580,10 @@ class Art_In_Heaven {
         if (!$this->is_aih_page()) return;
         echo '<link rel="preconnect" href="https://fonts.googleapis.com">' . "\n";
         echo '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>' . "\n";
+        // Load Google Fonts asynchronously to avoid render-blocking
+        $fonts_url = 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap';
+        echo '<link rel="stylesheet" href="' . esc_url($fonts_url) . '" media="print" onload="this.media=\'all\'">' . "\n";
+        echo '<noscript><link rel="stylesheet" href="' . esc_url($fonts_url) . '"></noscript>' . "\n";
     }
 
     /**
