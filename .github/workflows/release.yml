@@ -1,4 +1,4 @@
-name: Draft Release
+name: Release
 
 on:
   push:
@@ -10,10 +10,12 @@ permissions:
   pull-requests: read
 
 jobs:
-  update-release-draft:
-    name: Update Release Draft
+  release:
+    name: Create Release
     runs-on: ubuntu-latest
     steps:
       - uses: release-drafter/release-drafter@v6
+        with:
+          publish: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
