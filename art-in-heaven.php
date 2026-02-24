@@ -200,7 +200,7 @@ class Art_In_Heaven {
             $headers['X-Content-Type-Options'] = 'nosniff';
         }
         if (!isset($headers['X-Frame-Options'])) {
-            // SAMEORIGIN (not DENY) — WP admin uses iframes
+            // SAMEORIGIN to align with WordPress defaults and allow same-origin iframes
             $headers['X-Frame-Options'] = 'SAMEORIGIN';
         }
         if (!isset($headers['Referrer-Policy'])) {

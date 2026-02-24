@@ -21,7 +21,7 @@ WordPress plugin for silent/blind art auctions. Registrants authenticate via CCB
 - `aih_frontend_nonce` — All authenticated actions: bidding, favorites, gallery, checkout, push
 - `aih_admin_nonce` — Admin panel operations
 
-**Test Code Bypass**: Define `AIH_TEST_CODE_PREFIX` in `wp-config.php` (e.g., `define('AIH_TEST_CODE_PREFIX', 'AIHTEST');`). Any code starting with this prefix auto-creates a synthetic registrant. The prefix should be alphabetic to avoid collision with CCB's numeric codes.
+**Test Code Bypass**: Requires both `AIH_TEST_CODE_PREFIX` constant AND `WP_DEBUG = true` in `wp-config.php`. Example: `define('AIH_TEST_CODE_PREFIX', 'AIHTEST');`. Any code starting with this prefix auto-creates a synthetic registrant. The prefix should be alphabetic to avoid collision with CCB's numeric codes. The WP_DEBUG guard prevents accidental use in production.
 
 **HTTP Security Headers**: Added via `wp_headers` filter at priority 99 with `!isset()` guards. Never overrides headers set by other plugins, themes, or server config.
 

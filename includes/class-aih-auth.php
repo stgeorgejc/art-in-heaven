@@ -579,10 +579,13 @@ class AIH_Auth {
             );
         }
 
-        // Test code bypass: auto-create synthetic registrant when AIH_TEST_CODE_PREFIX is defined
-        // and the submitted code starts with that prefix. Removing the constant disables the bypass.
+        // Test code bypass: auto-create synthetic registrant when AIH_TEST_CODE_PREFIX is defined,
+        // WP_DEBUG is on, and the submitted code starts with that prefix.
+        // Requires both the constant AND debug mode — prevents accidental use in production.
         $test_prefix = defined('AIH_TEST_CODE_PREFIX') ? AIH_TEST_CODE_PREFIX : '';
-        if ($test_prefix !== '' && strpos($code, strtoupper($test_prefix)) === 0) {
+        if ($test_prefix !== '' && defined('WP_DEBUG') && WP_DEBUG
+            && strpos($code, strtoupper($test_prefix)) === 0
+        ) {
             $registrant = $this->get_or_create_test_registrant($code);
             if ($registrant) {
                 return array(
@@ -635,6 +638,9 @@ class AIH_Auth {
         global $wpdb;
         $table = AIH_Database::get_table('registrants');
 
+        // Defense-in-depth: sanitize even though $code is already trimmed/uppercased by caller
+        $code = sanitize_text_field($code);
+
         // Return existing test registrant if already created
         $existing = $wpdb->get_row($wpdb->prepare(
             "SELECT * FROM $table WHERE confirmation_code = %s",
@@ -645,7 +651,7 @@ class AIH_Auth {
         }
 
         // Extract a numeric suffix for differentiation (e.g. "001" from "AIHTEST001")
-        $suffix = substr($code, strlen(AIH_TEST_CODE_PREFIX));
+        $suffix = sanitize_text_field(substr($code, strlen(AIH_TEST_CODE_PREFIX)));
         if ($suffix === '') {
             $suffix = '0';
         }
