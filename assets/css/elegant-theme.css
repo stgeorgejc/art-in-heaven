@@ -3126,6 +3126,127 @@ body {
 }
 
 /* ============================================
+   iOS PWA INSTALL BANNER (Bottom Sheet)
+   ============================================ */
+.aih-ios-install-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-lightbox);
+    background: rgba(0, 0, 0, 0.5);
+    align-items: flex-end;
+    justify-content: center;
+    padding: 0;
+}
+
+.aih-ios-install-overlay.active {
+    display: flex;
+}
+
+.aih-ios-install-card {
+    background: var(--color-surface, #fff);
+    border-radius: 16px 16px 0 0;
+    padding: 28px 24px calc(24px + env(safe-area-inset-bottom, 0px));
+    width: 100%;
+    max-width: 480px;
+    position: relative;
+    box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.2);
+    font-family: var(--font-body, 'Inter', -apple-system, sans-serif);
+    color: var(--color-primary, #1a1a2e);
+    text-align: center;
+    animation: aih-slide-up 0.3s ease-out;
+}
+
+@keyframes aih-slide-up {
+    from { transform: translateY(100%); }
+    to   { transform: translateY(0); }
+}
+
+.aih-ios-install-icon {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 16px;
+    background: rgba(184, 149, 107, 0.12);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-accent, #b8956b);
+}
+
+.aih-ios-install-card h3 {
+    margin: 0 0 8px;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.aih-ios-install-card p {
+    margin: 0 0 20px;
+    font-size: 13px;
+    color: var(--color-secondary, #666);
+    line-height: 1.5;
+}
+
+.aih-ios-install-steps {
+    text-align: left;
+    margin: 0;
+    padding-left: 22px;
+    font-size: 14px;
+    line-height: 1.8;
+    list-style: none;
+    counter-reset: ios-step;
+}
+
+.aih-ios-install-steps li {
+    counter-increment: ios-step;
+    margin-bottom: 6px;
+    position: relative;
+}
+
+.aih-ios-install-steps li::before {
+    content: counter(ios-step);
+    position: absolute;
+    left: -22px;
+    width: 18px;
+    height: 18px;
+    background: var(--color-accent, #b8956b);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    top: 3px;
+}
+
+.aih-ios-install-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: none;
+    border: none;
+    font-size: 22px;
+    color: var(--color-muted, #999);
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+}
+
+.aih-ios-install-close:hover {
+    color: var(--color-primary, #1a1a2e);
+}
+
+/* Dark mode */
+.aih-page.dark-mode .aih-ios-install-card {
+    background: var(--color-surface, #1e1e2e);
+}
+
+.aih-page.dark-mode .aih-ios-install-icon {
+    background: rgba(184, 149, 107, 0.2);
+}
+
+/* ============================================
    NOTIFICATION BELL BADGE
    ============================================ */
 .aih-notify-badge {

@@ -21,6 +21,26 @@
         swRegistration: null,
         shownEvents: {},
         bellBtn: null,
+        iosInstallShown: false,
+
+        /**
+         * Detect iOS Safari running in browser (not as installed PWA).
+         * Returns true only for real Safari on iOS — not Chrome/Firefox for iOS,
+         * and not when already running in standalone (home-screen) mode.
+         */
+        isIOSSafariNonStandalone: function() {
+            var ua = navigator.userAgent;
+            var isIOS = /iPad|iPhone|iPod/.test(ua) ||
+                        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+            if (!isIOS) return false;
+
+            var isSafari = /Safari/.test(ua) && !/CriOS|FxiOS|Chrome/.test(ua);
+            if (!isSafari) return false;
+
+            var isStandalone = window.navigator.standalone === true ||
+                               window.matchMedia('(display-mode: standalone)').matches;
+            return !isStandalone;
+        },
 
         init: function() {
             this.bellBtn = document.getElementById('aih-notify-btn');
@@ -35,7 +55,13 @@
 
             // Check if push is supported
             if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
-                this.updateBellState('unsupported');
+                // iOS Safari (non-standalone): show bell with install prompt instead of hiding it
+                if (this.isIOSSafariNonStandalone()) {
+                    this.updateBellState('default');
+                    this.maybeAutoShowIOSBanner();
+                } else {
+                    this.updateBellState('unsupported');
+                }
                 this.startPolling();
                 return;
             }
@@ -108,6 +134,12 @@
          * Handle bell button click
          */
         handleBellClick: function() {
+            // iOS Safari (non-standalone): show install banner instead of error
+            if (this.isIOSSafariNonStandalone()) {
+                this.showIOSInstallBanner();
+                return;
+            }
+
             if (!('Notification' in window) || !('PushManager' in window)) {
                 if (typeof window.showToast === 'function') {
                     window.showToast('Your browser does not support push notifications.', 'error');
@@ -224,6 +256,72 @@
             });
 
             $('body').append($modal);
+        },
+
+        // ========== iOS INSTALL BANNER ==========
+
+        /**
+         * Show bottom-sheet modal guiding iOS Safari users to Add to Home Screen.
+         */
+        showIOSInstallBanner: function() {
+            if ($('#aih-ios-install').length) {
+                $('#aih-ios-install').addClass('active');
+                return;
+            }
+
+            // Inline SVG for iOS share icon
+            var shareIcon = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>';
+
+            var $modal = $(
+                '<div id="aih-ios-install" class="aih-ios-install-overlay active">' +
+                    '<div class="aih-ios-install-card">' +
+                        '<button type="button" class="aih-ios-install-close" aria-label="Close">&times;</button>' +
+                        '<div class="aih-ios-install-icon">' +
+                            '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>' +
+                        '</div>' +
+                        '<h3>Get Instant Bid Alerts</h3>' +
+                        '<p>Add this app to your Home Screen to receive push notifications when you\'re outbid.</p>' +
+                        '<ol class="aih-ios-install-steps">' +
+                            '<li>Tap the <strong>Share</strong> button ' + shareIcon + ' in Safari</li>' +
+                            '<li>Scroll down and tap <strong>"Add to Home Screen"</strong></li>' +
+                            '<li>Tap <strong>"Add"</strong> and open the app from your Home Screen</li>' +
+                        '</ol>' +
+                    '</div>' +
+                '</div>'
+            );
+
+            var self = this;
+            function closeBanner() {
+                $modal.removeClass('active');
+                try {
+                    localStorage.setItem('aih_ios_banner_dismissed', Date.now().toString());
+                } catch (e) {}
+            }
+
+            $modal.find('.aih-ios-install-close').on('click', closeBanner);
+            $modal.on('click', function(e) {
+                if (e.target === this) closeBanner();
+            });
+
+            $('body').append($modal);
+        },
+
+        /**
+         * Auto-show the iOS install banner once, with a 7-day cooldown.
+         */
+        maybeAutoShowIOSBanner: function() {
+            try {
+                var dismissed = localStorage.getItem('aih_ios_banner_dismissed');
+                if (dismissed) {
+                    var elapsed = Date.now() - parseInt(dismissed, 10);
+                    if (elapsed < 7 * 24 * 60 * 60 * 1000) return; // 7 days
+                }
+            } catch (e) {}
+
+            var self = this;
+            setTimeout(function() {
+                self.showIOSInstallBanner();
+            }, 3000);
         },
 
         // ========== PERMISSION & SUBSCRIPTION ==========

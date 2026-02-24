@@ -165,8 +165,12 @@ class Art_In_Heaven {
         // Outbid alerts: record event synchronously (fast), defer push sending (slow)
         add_action('aih_bid_placed', array(AIH_Push::get_instance(), 'handle_outbid_event'), 10, 4);
 
-        // Serve service worker from site root scope
+        // Serve service worker and PWA manifest from site root scope
         add_action('template_redirect', array($this, 'serve_service_worker'));
+        add_action('template_redirect', array($this, 'serve_manifest'));
+
+        // PWA meta tags for iOS Add to Home Screen
+        add_action('wp_head', array($this, 'add_pwa_meta'), 3);
 
         // Disable intermediate image sizes for AIH uploads
         add_filter('intermediate_image_sizes_advanced', array($this, 'disable_intermediate_sizes'), 10, 2);
@@ -365,6 +369,58 @@ class Art_In_Heaven {
         header('Cache-Control: no-cache');
         readfile($sw_file);
         exit;
+    }
+
+    /**
+     * Serve the PWA manifest dynamically via /?aih-manifest=1.
+     */
+    public function serve_manifest() {
+        if (!isset($_GET['aih-manifest']) || $_GET['aih-manifest'] !== '1') {
+            return;
+        }
+
+        $manifest = array(
+            'name'             => 'Art in Heaven',
+            'short_name'       => 'Art in Heaven',
+            'description'      => 'Silent auction for art pieces',
+            'start_url'        => '/',
+            'display'          => 'standalone',
+            'background_color' => '#faf9f7',
+            'theme_color'      => '#b8956b',
+            'icons'            => array(
+                array(
+                    'src'   => AIH_PLUGIN_URL . 'assets/images/icon-192.png',
+                    'sizes' => '192x192',
+                    'type'  => 'image/png',
+                ),
+                array(
+                    'src'   => AIH_PLUGIN_URL . 'assets/images/icon-512.png',
+                    'sizes' => '512x512',
+                    'type'  => 'image/png',
+                ),
+            ),
+        );
+
+        header('Content-Type: application/manifest+json');
+        header('Cache-Control: public, max-age=86400');
+        echo wp_json_encode($manifest);
+        exit;
+    }
+
+    /**
+     * Output PWA meta tags for iOS Add to Home Screen support.
+     */
+    public function add_pwa_meta() {
+        if (!$this->is_aih_page()) return;
+
+        $icon_url = esc_url(AIH_PLUGIN_URL . 'assets/images/icon-192.png');
+        $manifest = esc_url(home_url('/?aih-manifest=1'));
+
+        echo '<link rel="manifest" href="' . $manifest . '">' . "\n";
+        echo '<meta name="apple-mobile-web-app-capable" content="yes">' . "\n";
+        echo '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">' . "\n";
+        echo '<meta name="theme-color" content="#b8956b">' . "\n";
+        echo '<link rel="apple-touch-icon" href="' . $icon_url . '">' . "\n";
     }
 
     private function throttled_expired_check() {
