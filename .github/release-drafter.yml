@@ -41,13 +41,21 @@ version-resolver:
   default: patch
 
 autolabeler:
+  # Match branch naming conventions
   - label: 'feature'
     branch:
       - '/feature\/.+/'
+      - '/feat\/.+/'
+    title:
+      - '/^feat(\(.+\))?:/'
   - label: 'fix'
     branch:
       - '/fix\/.+/'
       - '/bugfix\/.+/'
+    title:
+      - '/^fix(\(.+\))?:/'
   - label: 'docs'
     branch:
       - '/docs\/.+/'
+    title:
+      - '/^docs(\(.+\))?:/'

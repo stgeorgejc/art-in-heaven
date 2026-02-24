@@ -21,6 +21,7 @@
     },
     "scripts": {
         "test": "phpunit",
-        "analyse": "phpstan analyse"
+        "analyse": "phpstan analyse",
+        "setup-hooks": "git config core.hooksPath .githooks && echo 'Git hooks installed from .githooks/'"
     }
 }
