@@ -268,18 +268,14 @@ jQuery(document).ready(function($) {
                         if ($form.length) {
                             $form.show();
                         } else {
+                            var startingMin = $card.data('starting-bid') || '';
                             $card.find('.aih-card-footer').append(
                                 '<div class="aih-bid-form">' +
-                                '<input type="text" inputmode="numeric" pattern="[0-9]*" class="aih-bid-input" data-min="' + info.min_bid + '" placeholder="$">' +
+                                '<input type="text" inputmode="numeric" pattern="[0-9]*" class="aih-bid-input" data-min="' + startingMin + '" placeholder="$">' +
                                 '<button type="button" class="aih-bid-btn" data-id="' + id + '">Bid</button>' +
                                 '</div>'
                             );
                         }
-                    }
-
-                    var $input = $card.find('.aih-bid-input');
-                    if ($input.length) {
-                        $input.attr('data-min', info.min_bid).data('min', info.min_bid);
                     }
                 });
             }

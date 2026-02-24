@@ -477,11 +477,6 @@ jQuery(document).ready(function($) {
                         }
                     }
 
-                    var $input = $card.find('.aih-bid-input');
-                    if ($input.length) {
-                        $input.attr('data-min', info.min_bid).data('min', info.min_bid);
-                    }
-
                     if (info.has_bids) {
                         $card.find('.aih-badge-no-bids').remove();
                     }

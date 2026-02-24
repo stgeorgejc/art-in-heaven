@@ -129,34 +129,112 @@ Enables instant bid updates and outbid notifications without page refresh. If no
 ### Step-by-Step
 
 1. **Install Mercure on your server**
-   - Download from [github.com/dunglas/mercure/releases](https://github.com/dunglas/mercure/releases)
-   - Or install via package manager
+   ```bash
+   mkdir -p ~/mercure && cd ~/mercure
+   curl -sL -o mercure.tar.gz https://github.com/dunglas/mercure/releases/download/v0.21.8/mercure_Linux_x86_64.tar.gz
+   tar -xzf mercure.tar.gz && chmod +x mercure && rm mercure.tar.gz
+
+   # Create the data directory Mercure needs
+   mkdir -p ~/.local/share/caddy
+   ```
 
 2. **Create a JWT Secret**
    - Generate a strong random string (32+ characters)
    - Example: `openssl rand -base64 32`
    - You'll use this same secret in both Mercure config and WordPress settings
 
-3. **Configure Mercure** — Create a Caddyfile or environment config:
-   ```
-   MERCURE_PUBLISHER_JWT_KEY=your-jwt-secret-here
-   MERCURE_SUBSCRIBER_JWT_KEY=your-jwt-secret-here
-   ```
+3. **Configure Mercure** — Create a Caddyfile at `~/mercure/Caddyfile`:
+   ```caddyfile
+   {
+       order mercure after encode
+       auto_https off
+       http_port 3000
+       log {
+           output file /path/to/mercure/mercure.log {
+               roll_size 10mb
+               roll_keep 3
+           }
+       }
+   }
 
-4. **Run Mercure** — Start as a service:
+   :3000 {
+       route {
+           mercure {
+               publisher_jwt {env.MERCURE_PUBLISHER_JWT_KEY} HS256
+               subscriber_jwt {env.MERCURE_SUBSCRIBER_JWT_KEY} HS256
+               cors_origins https://yoursite.com
+               publish_origins *
+               anonymous
+           }
+           respond "Mercure hub"
+       }
+   }
+   ```
+   Replace `https://yoursite.com` with your actual domain.
+
+4. **Run Mercure** — Choose one of the following:
+
+   **Option A: Systemd service (requires root/sudo)**
    ```bash
-   # Systemd service (recommended for production)
    sudo systemctl start mercure
    sudo systemctl enable mercure
    ```
-   Mercure should listen on port 3000 by default.
+
+   **Option B: User-level scripts (shared hosting / Plesk / no root)**
+
+   Create `~/mercure/start.sh`:
+   ```bash
+   #!/bin/bash
+   export MERCURE_PUBLISHER_JWT_KEY="your-jwt-secret-here"
+   export MERCURE_SUBSCRIBER_JWT_KEY="your-jwt-secret-here"
+
+   PIDFILE="$HOME/mercure/mercure.pid"
+
+   if [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
+       echo "Mercure is already running (PID $(cat "$PIDFILE"))"
+       exit 0
+   fi
+
+   cd "$HOME/mercure"
+   nohup ./mercure run --config Caddyfile >> mercure.log 2>&1 &
+   echo $! > "$PIDFILE"
+   echo "Mercure started (PID $!)"
+   ```
+
+   Create `~/mercure/stop.sh`:
+   ```bash
+   #!/bin/bash
+   PIDFILE="$HOME/mercure/mercure.pid"
+   if [ -f "$PIDFILE" ]; then
+       PID=$(cat "$PIDFILE")
+       if kill -0 "$PID" 2>/dev/null; then
+           kill "$PID" && rm "$PIDFILE"
+           echo "Mercure stopped (PID $PID)"
+       else
+           rm "$PIDFILE"
+           echo "Mercure was not running (stale PID file removed)"
+       fi
+   else
+       echo "No PID file found"
+   fi
+   ```
+
+   Make them executable and add a cron entry to auto-start on reboot:
+   ```bash
+   chmod +x ~/mercure/start.sh ~/mercure/stop.sh
+   (crontab -l 2>/dev/null; echo "@reboot $HOME/mercure/start.sh") | crontab -
+   ```
+
+   Mercure listens on port 3000 by default.
 
 5. **Configure nginx** to proxy the Mercure endpoint:
+
+   **Standard nginx config:**
    ```nginx
    location /.well-known/mercure {
        proxy_pass http://127.0.0.1:3000/.well-known/mercure;
        proxy_set_header Host $host;
-       proxy_set_header X-Forwarded-For $proxy_addr;
+       proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
        proxy_set_header X-Forwarded-Proto $scheme;
 
        # SSE-specific settings
@@ -168,6 +246,8 @@ Enables instant bid updates and outbid notifications without page refresh. If no
        chunked_transfer_encoding off;
    }
    ```
+
+   **Plesk:** Go to Websites & Domains > your domain > Apache & nginx Settings > **Additional nginx directives** and paste the config above.
 
 6. **Enter settings in WordPress**:
    - **Internal Hub URL**: `http://127.0.0.1:3000/.well-known/mercure`

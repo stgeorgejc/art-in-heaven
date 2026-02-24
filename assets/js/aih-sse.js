@@ -25,13 +25,18 @@
         lastEventId: null,
 
         /**
-         * Initialize SSE connection
+         * Initialize SSE connection (fetches Mercure auth cookie first)
          */
         init: function() {
             if (typeof EventSource === 'undefined') {
                 return; // Browser doesn't support SSE
             }
-            this.connect();
+            var self = this;
+            // Set Mercure auth cookie via AJAX before connecting EventSource
+            $.get(aihAjax.ajaxurl, { action: 'aih_mercure_cookie' })
+                .always(function() {
+                    self.connect();
+                });
         },
 
         /**
@@ -157,31 +162,8 @@
          * Handle real-time bid update (public topic)
          */
         handleBidUpdate: function(data) {
-            var id = data.art_piece_id;
-
-            // Gallery page: update card min bid
-            var $card = $('.aih-card[data-id="' + id + '"]');
-            if ($card.length) {
-                var $input = $card.find('.aih-bid-input');
-                if ($input.length && data.min_bid) {
-                    $input.attr('min', data.min_bid).attr('placeholder',
-                        '$' + parseFloat(data.min_bid).toFixed(0));
-                    $input.data('min', data.min_bid);
-                }
-            }
-
-            // Single item page: update min bid
-            var $wrapper = $('#aih-single-wrapper');
-            if ($wrapper.length && parseInt($wrapper.attr('data-piece-id')) === id) {
-                var $bidInput = $('#bid-amount');
-                if ($bidInput.length && data.min_bid) {
-                    $bidInput.attr('min', data.min_bid).attr('placeholder',
-                        '$' + parseFloat(data.min_bid).toFixed(0));
-                    $bidInput.data('min', data.min_bid);
-                }
-            }
-
             // Trigger a status poll to update per-bidder state (winning/outbid badges)
+            // No bid amounts are exposed — silent auction
             if (typeof window.aihPollStatus === 'function') {
                 window.aihPollStatus();
             }

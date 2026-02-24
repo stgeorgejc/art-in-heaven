@@ -52,8 +52,6 @@ if ($is_logged_in) {
     $payment_statuses = $checkout->get_bidder_payment_statuses($bidder_id);
 }
 
-$bid_increment = floatval(get_option('aih_bid_increment', 1));
-
 // Batch pre-fetch bid data to avoid N+1 queries in the loop
 $piece_ids = array_map(function($p) { return $p->id; }, $art_pieces);
 $highest_bids = $bid_model->get_highest_bids_batch($piece_ids);
@@ -162,6 +160,7 @@ $bidder_bid_ids = $bid_model->get_bidder_bid_ids_batch($piece_ids, $bidder_id);
         </div>
         <?php else: ?>
         <div class="aih-gallery-grid" id="aih-gallery">
+            <?php $card_index = 0; ?>
             <?php foreach ($art_pieces as $piece):
                 $bidder_has_bid_check = false;
                 $is_favorite = !empty($piece->is_favorite);
@@ -169,7 +168,7 @@ $bidder_bid_ids = $bid_model->get_bidder_bid_ids_batch($piece_ids, $bidder_id);
                 $current_bid = isset($highest_bids[$piece->id]) ? $highest_bids[$piece->id] : 0;
                 $has_bids = $current_bid > 0;
                 $display_bid = $has_bids ? $current_bid : $piece->starting_bid;
-                $min_bid = $has_bids ? $current_bid + $bid_increment : $piece->starting_bid;
+                $min_bid = $piece->starting_bid;
                 $primary_image = $piece->watermarked_url ?: $piece->image_url;
 
                 // Proper status calculation - check computed_status first, then calculate from dates
@@ -229,8 +228,15 @@ $bidder_bid_ids = $bid_model->get_bidder_bid_ids_batch($piece_ids, $bidder_id);
 
                 <div class="aih-card-image" data-favorite="<?php echo $is_favorite ? '1' : '0'; ?>">
                     <?php if ($primary_image): ?>
-                    <a href="<?php echo esc_url(AIH_Template_Helper::get_art_url($piece->id)); ?>">
-                        <?php echo AIH_Template_Helper::picture_tag($primary_image, $piece->title, '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw'); ?>
+                    <a href="?art_id=<?php echo intval($piece->id); ?>">
+                        <?php echo AIH_Template_Helper::picture_tag(
+                            $primary_image,
+                            $piece->title,
+                            '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw',
+                            array(),
+                            $card_index < 3 ? 'eager' : 'lazy',
+                            $card_index === 0 ? 'high' : null
+                        ); ?>
                     </a>
                     <?php else: ?>
                     <a href="<?php echo esc_url(AIH_Template_Helper::get_art_url($piece->id)); ?>" class="aih-placeholder-link">
@@ -288,6 +294,7 @@ $bidder_bid_ids = $bid_model->get_bidder_bid_ids_batch($piece_ids, $bidder_id);
 
                 <div class="aih-bid-message"></div>
             </article>
+            <?php $card_index++; ?>
             <?php endforeach; ?>
         </div>
         <?php endif; ?>

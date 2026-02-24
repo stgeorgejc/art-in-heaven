@@ -280,13 +280,15 @@ class AIH_Template_Helper {
      *
      * Falls back to plain <img> if no responsive variants exist.
      *
-     * @param string $image_url  URL to the watermarked (or original) image
-     * @param string $alt        Alt text
-     * @param string $sizes      Sizes attribute value
-     * @param array  $attrs      Extra attributes for the <img> tag (e.g., ['id' => 'main-img'])
+     * @param string $image_url     URL to the watermarked (or original) image
+     * @param string $alt           Alt text
+     * @param string $sizes         Sizes attribute value
+     * @param array  $attrs         Extra attributes for the <img> tag
+     * @param string $loading       'lazy' (default) or 'eager' for above-fold images
+     * @param string $fetchpriority 'high', 'low', or null (browser default)
      * @return string HTML markup
      */
-    public static function picture_tag($image_url, $alt = '', $sizes = '100vw', $attrs = array()) {
+    public static function picture_tag($image_url, $alt = '', $sizes = '100vw', $attrs = array(), $loading = 'lazy', $fetchpriority = null) {
         if (empty($image_url)) {
             return '';
         }
@@ -299,9 +301,13 @@ class AIH_Template_Helper {
             $attr_str .= ' ' . esc_attr($k) . '="' . esc_attr($v) . '"';
         }
 
+        // Loading and fetchpriority attributes
+        $loading_attr = ' loading="' . esc_attr($loading) . '"';
+        $priority_attr = $fetchpriority ? ' fetchpriority="' . esc_attr($fetchpriority) . '"' : '';
+
         // No variants — fall back to plain <img>
         if (empty($variants)) {
-            return '<img src="' . esc_url($image_url) . '" alt="' . esc_attr($alt) . '"' . $attr_str . ' loading="lazy">';
+            return '<img src="' . esc_url($image_url) . '" alt="' . esc_attr($alt) . '"' . $attr_str . $loading_attr . $priority_attr . '>';
         }
 
         $html = '<picture>';
@@ -325,7 +331,7 @@ class AIH_Template_Helper {
         }
 
         // Fallback <img> — original format
-        $html .= '<img src="' . esc_url($image_url) . '" alt="' . esc_attr($alt) . '"' . $attr_str . ' loading="lazy">';
+        $html .= '<img src="' . esc_url($image_url) . '" alt="' . esc_attr($alt) . '"' . $attr_str . $loading_attr . $priority_attr . '>';
         $html .= '</picture>';
 
         return $html;
