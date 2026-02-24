@@ -1,6 +1,8 @@
 <?php
 /**
- * Image Optimizer - Generates responsive AVIF/WebP variants using Imagick
+ * Image Optimizer - Generates responsive AVIF/WebP variants
+ *
+ * Uses Imagick when available, falls back to GD for formats Imagick lacks.
  *
  * @package ArtInHeaven
  * @since 0.9.7
@@ -22,25 +24,41 @@ class AIH_Image_Optimizer {
     );
 
     /**
-     * Check if Imagick is available with AVIF + WebP support
+     * Check if any image processing library supports at least one modern format
      */
     public static function is_available() {
-        if (!extension_loaded('imagick') || !class_exists('Imagick')) {
-            return false;
-        }
-
-        $supported = Imagick::queryFormats();
-        return in_array('WEBP', $supported) && in_array('AVIF', $supported);
+        return !empty(self::supported_formats());
     }
 
     /**
-     * Check which formats are supported
+     * Check which formats are supported across Imagick and GD
      */
     public static function supported_formats() {
+        $formats = array();
+
+        // Check Imagick
+        if (extension_loaded('imagick') && class_exists('Imagick')) {
+            $imagick_formats = Imagick::queryFormats();
+            if (in_array('AVIF', $imagick_formats)) $formats[] = 'avif';
+            if (in_array('WEBP', $imagick_formats)) $formats[] = 'webp';
+        }
+
+        // Check GD as fallback for formats Imagick doesn't support
+        if (extension_loaded('gd')) {
+            if (!in_array('avif', $formats) && function_exists('imageavif')) $formats[] = 'avif';
+            if (!in_array('webp', $formats) && function_exists('imagewebp')) $formats[] = 'webp';
+        }
+
+        return $formats;
+    }
+
+    /**
+     * Check which formats Imagick supports natively
+     */
+    private static function imagick_formats() {
         if (!extension_loaded('imagick') || !class_exists('Imagick')) {
             return array();
         }
-
         $supported = Imagick::queryFormats();
         $formats = array();
         if (in_array('AVIF', $supported)) $formats[] = 'avif';
@@ -73,7 +91,7 @@ class AIH_Image_Optimizer {
     public static function generate_variants($watermarked_path) {
         $available_formats = self::supported_formats();
         if (empty($available_formats)) {
-            error_log('AIH Optimizer: Imagick not available or missing AVIF/WebP support');
+            error_log('AIH Optimizer: No image library supports AVIF or WebP');
             return array();
         }
 
@@ -92,57 +110,78 @@ class AIH_Image_Optimizer {
 
         $basename = pathinfo($watermarked_path, PATHINFO_FILENAME);
         $generated = array();
+        $imagick_formats = self::imagick_formats();
 
-        try {
-            $source = new Imagick($watermarked_path);
-            $source_width = $source->getImageWidth();
-            $source_height = $source->getImageHeight();
+        // Load source dimensions via GD (always available for dimension check)
+        $source_size = @getimagesize($watermarked_path);
+        if (!$source_size) {
+            error_log('AIH Optimizer: Could not read source image dimensions: ' . $watermarked_path);
+            return array();
+        }
+        $source_width = $source_size[0];
 
-            // Strip metadata from source for all variants
-            $source->stripImage();
+        // Try Imagick for formats it supports
+        $imagick_source = null;
+        if (!empty($imagick_formats) && extension_loaded('imagick')) {
+            try {
+                $imagick_source = new Imagick($watermarked_path);
+                $imagick_source->stripImage();
+            } catch (ImagickException $e) {
+                error_log('AIH Optimizer: Imagick failed to load source: ' . $e->getMessage());
+                $imagick_source = null;
+            }
+        }
 
-            foreach (self::$widths as $width) {
-                // Skip if source is smaller than target width
-                if ($source_width <= $width) {
-                    // Still generate format conversions at original size for this breakpoint
-                    $effective_width = $source_width;
-                    $resized = clone $source;
-                } else {
-                    $resized = clone $source;
-                    $resized->thumbnailImage($width, 0);
-                    $effective_width = $width;
-                }
+        // Load GD source for formats that need it
+        $gd_formats = array_diff($available_formats, $imagick_formats);
+        $gd_source = null;
+        if (!empty($gd_formats)) {
+            $gd_source = self::gd_load_image($watermarked_path);
+            if (!$gd_source) {
+                error_log('AIH Optimizer: GD failed to load source: ' . $watermarked_path);
+            }
+        }
 
-                foreach ($available_formats as $format) {
-                    $quality = self::$formats[$format] ?? 80;
-                    $output_file = $responsive_dir . '/' . $basename . '-' . $effective_width . '.' . $format;
+        foreach (self::$widths as $width) {
+            $effective_width = ($source_width <= $width) ? $source_width : $width;
 
+            foreach ($available_formats as $format) {
+                $quality = self::$formats[$format] ?? 80;
+                $output_file = $responsive_dir . '/' . $basename . '-' . $effective_width . '.' . $format;
+
+                if (in_array($format, $imagick_formats) && $imagick_source) {
+                    // Use Imagick
                     try {
-                        $variant = clone $resized;
-                        $variant->setImageFormat($format);
-                        $variant->setImageCompressionQuality($quality);
-
-                        if ($format === 'avif') {
-                            // AVIF-specific: use YUV420 for photos, set speed
-                            $variant->setOption('heic:speed', '6');
+                        $resized = clone $imagick_source;
+                        if ($source_width > $width) {
+                            $resized->thumbnailImage($width, 0);
                         }
-
-                        $variant->writeImage($output_file);
-                        $variant->destroy();
+                        $resized->setImageFormat($format);
+                        $resized->setImageCompressionQuality($quality);
+                        if ($format === 'avif') {
+                            $resized->setOption('heic:speed', '6');
+                        }
+                        $resized->writeImage($output_file);
+                        $resized->destroy();
                         $generated[] = $output_file;
                     } catch (ImagickException $e) {
-                        error_log('AIH Optimizer: Failed to generate ' . $format . ' at ' . $width . 'w: ' . $e->getMessage());
+                        error_log('AIH Optimizer: Imagick failed ' . $format . ' at ' . $width . 'w: ' . $e->getMessage());
+                    }
+                } elseif ($gd_source) {
+                    // Use GD fallback
+                    $result = self::gd_generate_variant($gd_source, $source_width, $effective_width, $format, $quality, $output_file);
+                    if ($result) {
+                        $generated[] = $output_file;
                     }
                 }
-
-                $resized->destroy();
             }
+        }
 
-            $source->destroy();
-
-        } catch (ImagickException $e) {
-            error_log('AIH Optimizer: Failed to process source image: ' . $e->getMessage());
-            return array();
+        if ($imagick_source) {
+            $imagick_source->destroy();
+        }
+        if ($gd_source) {
+            imagedestroy($gd_source);
         }
 
         if (!empty($generated) && defined('WP_DEBUG') && WP_DEBUG) {
@@ -150,6 +189,57 @@ class AIH_Image_Optimizer {
         }
 
         return $generated;
+    }
+
+    /**
+     * Load an image into a GD resource
+     */
+    private static function gd_load_image($path) {
+        $info = @getimagesize($path);
+        if (!$info) return null;
+
+        switch ($info[2]) {
+            case IMAGETYPE_JPEG: return @imagecreatefromjpeg($path);
+            case IMAGETYPE_PNG:  return @imagecreatefrompng($path);
+            case IMAGETYPE_WEBP: return @imagecreatefromwebp($path);
+            case IMAGETYPE_GIF:  return @imagecreatefromgif($path);
+            default: return null;
+        }
+    }
+
+    /**
+     * Generate a single variant using GD
+     */
+    private static function gd_generate_variant($source, $source_width, $target_width, $format, $quality, $output_file) {
+        $source_height = imagesy($source);
+
+        if ($source_width > $target_width) {
+            $target_height = (int) round($source_height * ($target_width / $source_width));
+            $resized = imagecreatetruecolor($target_width, $target_height);
+            imagecopyresampled($resized, $source, 0, 0, 0, 0, $target_width, $target_height, $source_width, $source_height);
+        } else {
+            $resized = $source;
+        }
+
+        $success = false;
+        switch ($format) {
+            case 'webp':
+                $success = @imagewebp($resized, $output_file, $quality);
+                break;
+            case 'avif':
+                $success = @imageavif($resized, $output_file, $quality);
+                break;
+        }
+
+        if ($resized !== $source) {
+            imagedestroy($resized);
+        }
+
+        if (!$success) {
+            error_log('AIH Optimizer: GD failed to generate ' . $format . ' at ' . $target_width . 'w');
+        }
+
+        return $success;
     }
 
     /**
