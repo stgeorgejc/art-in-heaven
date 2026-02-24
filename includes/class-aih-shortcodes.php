@@ -27,64 +27,11 @@ class AIH_Shortcodes {
         add_shortcode('art_in_heaven_login', array($this, 'login_shortcode'));
         add_shortcode('art_in_heaven_winners', array($this, 'winners_shortcode'));
         add_shortcode('art_in_heaven_my_wins', array($this, 'my_wins_shortcode'));
-
-        // Clean URLs: register rewrite rule for /gallery/art/{id}
-        add_action('init', array($this, 'register_art_rewrite_rules'));
-        add_filter('query_vars', array($this, 'register_art_query_vars'));
-        add_action('update_option_aih_gallery_page', array($this, 'flush_art_rewrite_rules'));
-
-        // Handle login redirect and legacy URL redirect
-        add_action('template_redirect', array($this, 'redirect_legacy_art_urls'), 5);
+        
+        // Handle login redirect
         add_action('template_redirect', array($this, 'check_login_required'));
     }
-
-    /**
-     * Register rewrite rule for clean art piece URLs
-     *
-     * Maps {gallery-slug}/art/{id} to the gallery page with aih_art_id query var.
-     */
-    public function register_art_rewrite_rules() {
-        $gallery_page_id = get_option('aih_gallery_page', '');
-        if (!$gallery_page_id) return;
-
-        $page = get_post($gallery_page_id);
-        if (!$page) return;
-
-        $slug = $page->post_name;
-        add_rewrite_rule(
-            '^' . preg_quote($slug, '/') . '/art/([0-9]+)/?$',
-            'index.php?pagename=' . $slug . '&aih_art_id=$matches[1]',
-            'top'
-        );
-    }
-
-    /**
-     * Register custom query variable for clean art URLs
-     */
-    public function register_art_query_vars($vars) {
-        $vars[] = 'aih_art_id';
-        return $vars;
-    }
-
-    /**
-     * 301 redirect legacy ?art_id= URLs to clean /art/{id}/ URLs
-     */
-    public function redirect_legacy_art_urls() {
-        if (isset($_GET['art_id']) && !empty($_GET['art_id'])) {
-            $clean_url = AIH_Template_Helper::get_art_url(intval($_GET['art_id']));
-            wp_safe_redirect($clean_url, 301);
-            exit;
-        }
-    }
-
-    /**
-     * Flush rewrite rules when gallery page option changes
-     */
-    public function flush_art_rewrite_rules() {
-        $this->register_art_rewrite_rules();
-        flush_rewrite_rules();
-    }
-
+    
     /**
      * Check if login is required and redirect
      */
@@ -157,12 +104,11 @@ class AIH_Shortcodes {
             return ob_get_clean();
         }
         
-        // Check if viewing individual art piece (clean URL or legacy query string)
-        $art_id = intval(get_query_var('aih_art_id', 0));
-        if ($art_id) {
+        // Check if viewing individual art piece
+        if (isset($_GET['art_id']) && !empty($_GET['art_id'])) {
             $art_model = new AIH_Art_Piece();
-            $art_piece = $art_model->get($art_id);
-
+            $art_piece = $art_model->get(intval($_GET['art_id']));
+            
             if ($art_piece && (!isset($art_piece->computed_status) || $art_piece->computed_status !== 'upcoming')) {
                 ob_start();
                 include AIH_PLUGIN_DIR . 'templates/single-item.php';
