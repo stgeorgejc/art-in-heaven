@@ -666,8 +666,11 @@ class AIH_Auth {
             return false;
         }
 
-        // Expire sessions after configurable duration
-        $max_age = (int) get_option('aih_session_max_age', 8 * HOUR_IN_SECONDS);
+        // Expire sessions after configurable duration (relaxed to 7 days in sandbox)
+        $is_sandbox = get_option('aih_pushpay_sandbox', 0);
+        $default_max_age = $is_sandbox ? 7 * DAY_IN_SECONDS : 8 * HOUR_IN_SECONDS;
+        $max_age = (int) get_option('aih_session_max_age', $default_max_age);
+
         if (isset($data['logged_in_at']) && (time() - $data['logged_in_at']) > $max_age) {
             $this->clear_session();
             return false;
