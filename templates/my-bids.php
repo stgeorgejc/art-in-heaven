@@ -100,11 +100,11 @@ $payment_statuses = $checkout->get_bidder_payment_statuses($bidder_id);
             <article class="aih-card <?php echo esc_attr($status_class); ?>" data-id="<?php echo intval($bid->art_piece_id); ?>" <?php if (!empty($bid->auction_end)): ?>data-end="<?php echo esc_attr($bid->auction_end); ?>"<?php endif; ?>>
                 <div class="aih-card-image">
                     <?php if ($image_url): ?>
-                    <a href="<?php echo esc_url($gallery_url); ?>?art_id=<?php echo intval($bid->art_piece_id); ?>">
+                    <a href="<?php echo esc_url(AIH_Template_Helper::get_art_url($bid->art_piece_id)); ?>">
                         <?php echo AIH_Template_Helper::picture_tag($image_url, $bid_title, '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw'); ?>
                     </a>
                     <?php else: ?>
-                    <a href="<?php echo esc_url($gallery_url); ?>?art_id=<?php echo intval($bid->art_piece_id); ?>" class="aih-placeholder-link">
+                    <a href="<?php echo esc_url(AIH_Template_Helper::get_art_url($bid->art_piece_id)); ?>" class="aih-placeholder-link">
                         <div class="aih-placeholder">
                             <span class="aih-placeholder-id"><?php echo esc_html(isset($bid->art_id) ? $bid->art_id : ''); ?></span>
                             <span class="aih-placeholder-text"><?php _e('No Image', 'art-in-heaven'); ?></span>
@@ -125,7 +125,7 @@ $payment_statuses = $checkout->get_bidder_payment_statuses($bidder_id);
 
                 <div class="aih-card-body">
                     <h3 class="aih-card-title">
-                        <a href="<?php echo esc_url($gallery_url); ?>?art_id=<?php echo intval($bid->art_piece_id); ?>"><?php echo esc_html($bid_title); ?></a>
+                        <a href="<?php echo esc_url(AIH_Template_Helper::get_art_url($bid->art_piece_id)); ?>"><?php echo esc_html($bid_title); ?></a>
                     </h3>
                     <p class="aih-card-artist"><?php echo esc_html(isset($bid->artist) ? $bid->artist : ''); ?></p>
                 </div>

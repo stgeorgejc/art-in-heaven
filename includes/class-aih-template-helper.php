@@ -126,6 +126,19 @@ class AIH_Template_Helper {
     }
 
     /**
+     * Get clean URL for an individual art piece
+     *
+     * Generates a pretty URL like /gallery/art/5/ instead of ?art_id=5
+     *
+     * @param int $art_piece_id The art piece ID
+     * @return string The clean URL
+     */
+    public static function get_art_url($art_piece_id) {
+        $gallery_url = self::get_gallery_url();
+        return trailingslashit($gallery_url) . 'art/' . intval($art_piece_id) . '/';
+    }
+
+    /**
      * Get bidder display name
      *
      * Consolidates duplicate name extraction logic used in:

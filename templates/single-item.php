@@ -104,13 +104,13 @@ if (empty($image_urls) && $primary_image) {
             <a href="<?php echo esc_url($gallery_url); ?>" class="aih-back-link">&larr; <?php _e('Back to Gallery', 'art-in-heaven'); ?></a>
             <div class="aih-nav-center">
                 <?php if ($prev_id): ?>
-                <a href="?art_id=<?php echo intval($prev_id); ?>" class="aih-nav-arrow" title="<?php esc_attr_e('Previous', 'art-in-heaven'); ?>">&larr;</a>
+                <a href="<?php echo esc_url(AIH_Template_Helper::get_art_url($prev_id)); ?>" class="aih-nav-arrow" title="<?php esc_attr_e('Previous', 'art-in-heaven'); ?>">&larr;</a>
                 <?php else: ?>
                 <span class="aih-nav-arrow disabled">&larr;</span>
                 <?php endif; ?>
                 <span class="aih-piece-counter"><?php echo $current_position; ?> / <?php echo $total_nav_count; ?></span>
                 <?php if ($next_id): ?>
-                <a href="?art_id=<?php echo intval($next_id); ?>" class="aih-nav-arrow" title="<?php esc_attr_e('Next', 'art-in-heaven'); ?>">&rarr;</a>
+                <a href="<?php echo esc_url(AIH_Template_Helper::get_art_url($next_id)); ?>" class="aih-nav-arrow" title="<?php esc_attr_e('Next', 'art-in-heaven'); ?>">&rarr;</a>
                 <?php else: ?>
                 <span class="aih-nav-arrow disabled">&rarr;</span>
                 <?php endif; ?>
