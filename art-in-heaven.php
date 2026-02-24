@@ -139,6 +139,9 @@ class Art_In_Heaven {
         add_action('wp_enqueue_scripts', array($this, 'enqueue_frontend_assets'));
         add_filter('body_class', array($this, 'add_body_class'));
         add_action('wp_head', array($this, 'add_preconnect_hints'), 1);
+        add_action('wp_head', array($this, 'preload_lcp_image'), 2);
+        add_action('wp_ajax_aih_mercure_cookie', array($this, 'ajax_mercure_cookie'));
+        add_action('wp_ajax_nopriv_aih_mercure_cookie', array($this, 'ajax_mercure_cookie'));
         add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_assets'));
         
         // Privacy/GDPR
@@ -477,19 +480,15 @@ class Art_In_Heaven {
     public function enqueue_frontend_assets() {
         if (!$this->is_aih_page()) return;
 
-        // Google Fonts
-        wp_enqueue_style(
-            'aih-google-fonts',
-            'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap',
-            array(),
-            null
-        );
+        // Google Fonts loaded async in add_preconnect_hints() to avoid render-blocking
 
         // Elegant theme CSS (loaded in <head> to prevent FOUC)
-        wp_enqueue_style('aih-elegant-theme', AIH_PLUGIN_URL . 'assets/css/elegant-theme.css', array('aih-google-fonts'), AIH_VERSION);
+        wp_enqueue_style('aih-elegant-theme', AIH_PLUGIN_URL . 'assets/css/elegant-theme.css', array(), AIH_VERSION);
 
         wp_enqueue_script('aih-frontend', AIH_PLUGIN_URL . 'assets/js/aih-frontend.js', array('jquery'), AIH_VERSION, true);
+        wp_script_add_data('aih-frontend', 'strategy', 'defer');
         wp_enqueue_script('aih-push', AIH_PLUGIN_URL . 'assets/js/aih-push.js', array('jquery', 'aih-frontend'), AIH_VERSION, true);
+        wp_script_add_data('aih-push', 'strategy', 'defer');
 
         // Add custom color CSS
         $custom_css = $this->get_custom_color_css();
@@ -515,25 +514,13 @@ class Art_In_Heaven {
             'galleryUrl'     => AIH_Template_Helper::get_gallery_url(),
         );
 
-        // Mercure SSE: add hub URL and set subscriber JWT cookie
+        // Mercure SSE: add hub URL (cookie set via AJAX to keep page cacheable)
         if (AIH_Mercure::is_enabled()) {
             $localize_data['mercureUrl'] = AIH_Mercure::get_public_hub_url();
             $localize_data['siteUrl']    = home_url();
 
-            $bidder_id = $auth->get_current_bidder_id();
-            $subscriber_jwt = AIH_Mercure::generate_subscriber_jwt($bidder_id ?: null);
-            if ($subscriber_jwt) {
-                $mercure_path = parse_url(AIH_Mercure::get_public_hub_url(), PHP_URL_PATH) ?: '/.well-known/mercure';
-                setcookie('mercureAuthorization', $subscriber_jwt, array(
-                    'expires'  => time() + 3600,
-                    'path'     => $mercure_path,
-                    'secure'   => is_ssl(),
-                    'httponly' => true,
-                    'samesite' => 'Strict',
-                ));
-            }
-
             wp_enqueue_script('aih-sse', AIH_PLUGIN_URL . 'assets/js/aih-sse.js', array('jquery', 'aih-frontend'), AIH_VERSION, true);
+            wp_script_add_data('aih-sse', 'strategy', 'defer');
         }
 
         $localize_data['strings'] = array(
@@ -566,17 +553,22 @@ class Art_In_Heaven {
                 // Gallery shortcode also serves single-item (?art_id=) and my-bids (?my_bids=1)
                 if (isset($_GET['art_id']) && !empty($_GET['art_id'])) {
                     wp_enqueue_script('aih-single-item', AIH_PLUGIN_URL . 'assets/js/aih-single-item.js', array('jquery', 'aih-frontend'), AIH_VERSION, true);
+                    wp_script_add_data('aih-single-item', 'strategy', 'defer');
                 } elseif (isset($_GET['my_bids']) && $_GET['my_bids'] == '1') {
                     wp_enqueue_script('aih-my-bids', AIH_PLUGIN_URL . 'assets/js/aih-my-bids.js', array('jquery', 'aih-frontend'), AIH_VERSION, true);
+                    wp_script_add_data('aih-my-bids', 'strategy', 'defer');
                 } else {
                     wp_enqueue_script('aih-gallery', AIH_PLUGIN_URL . 'assets/js/aih-gallery.js', array('jquery', 'aih-frontend'), AIH_VERSION, true);
+                    wp_script_add_data('aih-gallery', 'strategy', 'defer');
                 }
             }
             if (has_shortcode($content, 'art_in_heaven_item')) {
                 wp_enqueue_script('aih-single-item', AIH_PLUGIN_URL . 'assets/js/aih-single-item.js', array('jquery', 'aih-frontend'), AIH_VERSION, true);
+                wp_script_add_data('aih-single-item', 'strategy', 'defer');
             }
             if (has_shortcode($content, 'art_in_heaven_my_bids')) {
                 wp_enqueue_script('aih-my-bids', AIH_PLUGIN_URL . 'assets/js/aih-my-bids.js', array('jquery', 'aih-frontend'), AIH_VERSION, true);
+                wp_script_add_data('aih-my-bids', 'strategy', 'defer');
             }
         }
     }
@@ -588,6 +580,75 @@ class Art_In_Heaven {
         if (!$this->is_aih_page()) return;
         echo '<link rel="preconnect" href="https://fonts.googleapis.com">' . "\n";
         echo '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>' . "\n";
+        // Load Google Fonts asynchronously to avoid render-blocking
+        $fonts_url = 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap';
+        echo '<link rel="stylesheet" href="' . esc_url($fonts_url) . '" media="print" onload="this.media=\'all\'">' . "\n";
+        echo '<noscript><link rel="stylesheet" href="' . esc_url($fonts_url) . '"></noscript>' . "\n";
+    }
+
+    /**
+     * Preload the LCP image (first gallery image) for faster rendering
+     */
+    public function preload_lcp_image() {
+        if (!$this->is_aih_page()) return;
+
+        global $post;
+        if (!$post || !has_shortcode($post->post_content, 'art_in_heaven_gallery')) return;
+        // Don't preload on single-item or my-bids sub-views
+        if (isset($_GET['art_id']) || isset($_GET['my_bids'])) return;
+
+        $art_model = new AIH_Art_Piece();
+        $pieces = $art_model->get_all(array('status' => 'active', 'limit' => 1));
+        if (empty($pieces)) return;
+
+        $image_url = $pieces[0]->watermarked_url ?: $pieces[0]->image_url;
+        if (empty($image_url)) return;
+
+        $variants = AIH_Image_Optimizer::get_variant_urls($image_url);
+        $sizes = '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw';
+
+        // Prefer AVIF, then WebP, then original
+        if (!empty($variants['avif'])) {
+            $srcset_parts = array();
+            foreach ($variants['avif'] as $w => $url) {
+                $srcset_parts[] = esc_url($url) . ' ' . $w . 'w';
+            }
+            echo '<link rel="preload" as="image" type="image/avif" imagesrcset="' . implode(', ', $srcset_parts) . '" imagesizes="' . esc_attr($sizes) . '" fetchpriority="high">' . "\n";
+        } elseif (!empty($variants['webp'])) {
+            $srcset_parts = array();
+            foreach ($variants['webp'] as $w => $url) {
+                $srcset_parts[] = esc_url($url) . ' ' . $w . 'w';
+            }
+            echo '<link rel="preload" as="image" type="image/webp" imagesrcset="' . implode(', ', $srcset_parts) . '" imagesizes="' . esc_attr($sizes) . '" fetchpriority="high">' . "\n";
+        } else {
+            echo '<link rel="preload" as="image" href="' . esc_url($image_url) . '" fetchpriority="high">' . "\n";
+        }
+    }
+
+    /**
+     * AJAX endpoint to set Mercure subscriber cookie (keeps main page cacheable)
+     */
+    public function ajax_mercure_cookie() {
+        if (!AIH_Mercure::is_enabled()) {
+            wp_send_json_success();
+        }
+
+        $auth = AIH_Auth::get_instance();
+        $bidder_id = $auth->get_current_bidder_id();
+        $subscriber_jwt = AIH_Mercure::generate_subscriber_jwt($bidder_id ?: null);
+
+        if ($subscriber_jwt) {
+            $mercure_path = parse_url(AIH_Mercure::get_public_hub_url(), PHP_URL_PATH) ?: '/.well-known/mercure';
+            setcookie('mercureAuthorization', $subscriber_jwt, array(
+                'expires'  => time() + 3600,
+                'path'     => $mercure_path,
+                'secure'   => is_ssl(),
+                'httponly' => true,
+                'samesite' => 'Strict',
+            ));
+        }
+
+        wp_send_json_success();
     }
 
     /**
