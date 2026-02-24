@@ -1,0 +1,50 @@
+#!/bin/sh
+#
+# Pre-commit hook: runs PHP lint, PHPUnit tests, and PHPStan
+# on staged PHP files before allowing a commit.
+#
+# Install: composer setup-hooks
+
+set -e
+
+echo "==> Pre-commit: checking staged PHP files..."
+
+# Get list of staged PHP files (excluding deleted files)
+STAGED_PHP=$(git diff --cached --name-only --diff-filter=d | grep '\.php$' || true)
+
+if [ -z "$STAGED_PHP" ]; then
+    echo "    No PHP files staged, skipping checks."
+    exit 0
+fi
+
+# 1. PHP syntax lint on staged files only
+echo "==> Running PHP lint..."
+for file in $STAGED_PHP; do
+    php -l "$file" > /dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        echo "    FAIL: Syntax error in $file"
+        php -l "$file"
+        exit 1
+    fi
+done
+echo "    PHP lint passed."
+
+# 2. PHPUnit tests (full suite — fast enough to run on every commit)
+if [ -f vendor/bin/phpunit ]; then
+    echo "==> Running PHPUnit..."
+    vendor/bin/phpunit --no-coverage 2>&1
+    echo "    PHPUnit passed."
+else
+    echo "    SKIP: PHPUnit not installed (run composer install)"
+fi
+
+# 3. PHPStan static analysis
+if [ -f vendor/bin/phpstan ]; then
+    echo "==> Running PHPStan..."
+    vendor/bin/phpstan analyse --memory-limit=1G --no-progress 2>&1
+    echo "    PHPStan passed."
+else
+    echo "    SKIP: PHPStan not installed (run composer install)"
+fi
+
+echo "==> All pre-commit checks passed."
