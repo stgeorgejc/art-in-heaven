@@ -359,10 +359,7 @@ class Art_In_Heaven {
             return;
         }
 
-        $sw_file = AIH_PLUGIN_DIR . 'assets/js/aih-sw.min.js';
-        if (!file_exists($sw_file)) {
-            $sw_file = AIH_PLUGIN_DIR . 'assets/js/aih-sw.js';
-        }
+        $sw_file = $this->get_asset_path('assets/js/aih-sw.js');
         if (!file_exists($sw_file)) {
             return;
         }
