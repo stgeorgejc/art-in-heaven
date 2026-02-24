@@ -512,6 +512,7 @@ class Art_In_Heaven {
             'checkoutUrl'    => AIH_Template_Helper::get_checkout_url(),
             'bidIncrement'   => floatval(get_option('aih_bid_increment', 1)),
             'galleryUrl'     => AIH_Template_Helper::get_gallery_url(),
+            'artUrlBase'     => trailingslashit(AIH_Template_Helper::get_gallery_url()) . 'art/',
         );
 
         // Mercure SSE: add hub URL (cookie set via AJAX to keep page cacheable)
@@ -550,8 +551,9 @@ class Art_In_Heaven {
         if ($post) {
             $content = $post->post_content;
             if (has_shortcode($content, 'art_in_heaven_gallery')) {
-                // Gallery shortcode also serves single-item (?art_id=) and my-bids (?my_bids=1)
-                if (isset($_GET['art_id']) && !empty($_GET['art_id'])) {
+                // Gallery shortcode also serves single-item (/art/{id}) and my-bids (?my_bids=1)
+                $art_id = intval(get_query_var('aih_art_id', 0));
+                if ($art_id) {
                     wp_enqueue_script('aih-single-item', AIH_PLUGIN_URL . 'assets/js/aih-single-item.js', array('jquery', 'aih-frontend'), AIH_VERSION, true);
                     wp_script_add_data('aih-single-item', 'strategy', 'defer');
                 } elseif (isset($_GET['my_bids']) && $_GET['my_bids'] == '1') {

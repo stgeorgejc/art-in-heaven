@@ -84,11 +84,11 @@ $cart_count = count($checkout->get_won_items($bidder_id));
             <article class="aih-win-card" data-id="<?php echo $item->art_piece_id; ?>">
                 <div class="aih-win-image">
                     <?php if ($item->image_url): ?>
-                    <a href="<?php echo esc_url($gallery_url); ?>?art_id=<?php echo $item->art_piece_id; ?>">
+                    <a href="<?php echo esc_url(AIH_Template_Helper::get_art_url($item->art_piece_id)); ?>">
                         <?php echo AIH_Template_Helper::picture_tag($item->image_url, $item->title, '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw'); ?>
                     </a>
                     <?php else: ?>
-                    <a href="<?php echo esc_url($gallery_url); ?>?art_id=<?php echo $item->art_piece_id; ?>" class="aih-placeholder-link">
+                    <a href="<?php echo esc_url(AIH_Template_Helper::get_art_url($item->art_piece_id)); ?>" class="aih-placeholder-link">
                         <div class="aih-placeholder">
                             <span class="aih-placeholder-id"><?php echo esc_html($item->art_id); ?></span>
                             <span class="aih-placeholder-text"><?php _e('No Image', 'art-in-heaven'); ?></span>
@@ -106,7 +106,7 @@ $cart_count = count($checkout->get_won_items($bidder_id));
 
                 <div class="aih-win-body">
                     <h3 class="aih-win-title">
-                        <a href="<?php echo esc_url($gallery_url); ?>?art_id=<?php echo $item->art_piece_id; ?>"><?php echo esc_html($item->title); ?></a>
+                        <a href="<?php echo esc_url(AIH_Template_Helper::get_art_url($item->art_piece_id)); ?>"><?php echo esc_html($item->title); ?></a>
                     </h3>
                     <p class="aih-win-artist"><?php echo esc_html($item->artist); ?></p>
                     <?php if ($item->medium || $item->dimensions): ?>
