@@ -155,7 +155,7 @@ Every pull request runs three checks in parallel:
 |-------|------|-----------------|
 | **Lint** | `php -l` | Syntax errors |
 | **Test** | PHPUnit 12 | Logic regressions |
-| **Analyse** | PHPStan level 5 | Type errors, undefined variables |
+| **Analyze** | PHPStan level 5 | Type errors, undefined variables |
 
 On merge to `main`, the release workflow automatically drafts a release, builds zip artifacts, and deploys to production.
 
