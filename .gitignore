@@ -8,3 +8,9 @@ vendor/
 # IDE
 .idea/
 .vscode/
+
+# Testing
+.phpunit.cache/
+
+# Logs
+firebase-debug.log
