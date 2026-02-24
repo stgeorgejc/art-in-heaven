@@ -225,9 +225,7 @@ class AIH_Art_Piece {
             array_unshift($values, $now); // seconds_remaining
         }
 
-        if (!empty($values)) {
-            $query = $wpdb->prepare($query, $values);
-        }
+        $query = $wpdb->prepare($query, $values);
 
         $results = $wpdb->get_results($query);
 

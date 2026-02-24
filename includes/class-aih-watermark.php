@@ -258,11 +258,11 @@ class AIH_Watermark {
                     for ($x_pos = -$width * 0.5; $x_pos < $width * 1.5; $x_pos += $spacing_x) {
                         // Shadow
                         $shadow = imagecolorallocatealpha($image, 0, 0, 0, 60);
-                        @imagettftext($image, $font_size, 30, $x_pos + 3, $y_pos + 3, $shadow, $font_file, $text);
-                        
+                        @imagettftext($image, $font_size, 30, (int) ($x_pos + 3), (int) ($y_pos + 3), $shadow, $font_file, $text);
+
                         // White text
                         $white = imagecolorallocatealpha($image, 255, 255, 255, 50);
-                        @imagettftext($image, $font_size, 30, $x_pos, $y_pos, $white, $font_file, $text);
+                        @imagettftext($image, $font_size, 30, (int) $x_pos, (int) $y_pos, $white, $font_file, $text);
                     }
                 }
                 

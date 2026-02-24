@@ -283,8 +283,8 @@ class AIH_REST_API {
         }
         
         $response = new WP_REST_Response($data);
-        $response->header('X-WP-Total', $total);
-        $response->header('X-WP-TotalPages', ceil($total / $request->get_param('per_page')));
+        $response->header('X-WP-Total', (string) $total);
+        $response->header('X-WP-TotalPages', (string) ceil($total / $request->get_param('per_page')));
         
         return $response;
     }

@@ -182,8 +182,8 @@ class AIH_Image_Optimizer {
         $generated = array();
 
         // Determine per-tier format support
-        $imagick_fmts = self::imagick_formats();
-        $gd_fmts = self::gd_formats();
+        $imagick_formats = self::imagick_formats();
+        $gd_formats = self::gd_formats();
         $cli_bins = self::cli_binaries();
 
         // Load source dimensions
@@ -196,7 +196,7 @@ class AIH_Image_Optimizer {
 
         // Load Imagick source if it supports any format
         $imagick_source = null;
-        if (!empty($imagick_fmts) && extension_loaded('imagick')) {
+        if (!empty($imagick_formats) && extension_loaded('imagick')) {
             try {
                 $imagick_source = new Imagick($watermarked_path);
                 $imagick_source->stripImage();
@@ -208,7 +208,7 @@ class AIH_Image_Optimizer {
 
         // Load GD source if it supports any format
         $gd_source = null;
-        if (!empty($gd_fmts)) {
+        if (!empty($gd_formats)) {
             $gd_source = self::gd_load_image($watermarked_path);
             if (!$gd_source) {
                 error_log('AIH Optimizer: GD failed to load source: ' . $watermarked_path);
@@ -224,7 +224,7 @@ class AIH_Image_Optimizer {
                 $success = false;
 
                 // Tier 1: Imagick
-                if (!$success && in_array($format, $imagick_fmts) && $imagick_source) {
+                if (in_array($format, $imagick_formats) && $imagick_source) {
                     try {
                         $resized = clone $imagick_source;
                         if ($source_width > $width) {
@@ -245,7 +245,7 @@ class AIH_Image_Optimizer {
                 }
 
                 // Tier 2: GD
-                if (!$success && in_array($format, $gd_fmts) && $gd_source) {
+                if (!$success && in_array($format, $gd_formats) && $gd_source) {
                     $result = self::gd_generate_variant($gd_source, $source_width, $effective_width, $format, $quality, $output_file);
                     if ($result) {
                         $generated[] = $output_file;

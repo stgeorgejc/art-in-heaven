@@ -71,7 +71,7 @@ These prefixes trigger automatic PR labeling via release-drafter, which feeds in
 
 ```bash
 composer test                  # PHPUnit (64+ unit tests)
-composer analyse               # PHPStan static analysis
+composer analyze               # PHPStan static analysis
 vendor/bin/phpunit --filter SecurityTest   # run a specific test class
 ```
 

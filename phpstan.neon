@@ -8,7 +8,7 @@ parameters:
         - includes
         - admin/class-aih-admin.php
     excludePaths:
-        # Large AJAX handler — analyse separately to avoid memory issues
+        # Large AJAX handler — analyze separately to avoid memory issues
         - includes/class-aih-ajax.php
     bootstrapFiles:
         - tests/phpstan-bootstrap.php
@@ -23,20 +23,3 @@ parameters:
         - identifier: phpstanWP.wpConstant.fetch
         # Properties reserved for future use or used via magic methods
         - identifier: property.onlyWritten
-        # Baseline: existing type issues to fix incrementally
-        -
-            message: '#Parameter \#4 .* of function imagettftext expects int, float given#'
-            paths:
-                - includes/class-aih-watermark.php
-        -
-            message: '#Parameter \#2 .* of method WP_HTTP_Response::header\(\) expects string, float given#'
-            paths:
-                - includes/class-aih-rest-api.php
-        -
-            message: '#Variable \$values in empty\(\) always exists#'
-            paths:
-                - includes/class-aih-art-piece.php
-        -
-            message: '#Negated boolean expression is always true#'
-            paths:
-                - includes/class-aih-image-optimizer.php
