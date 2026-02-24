@@ -1,50 +1,47 @@
 # Art in Heaven - Build Notes
 
+## Asset Files
+
+### CSS
+- `assets/css/elegant-theme.css` — Main frontend theme
+- `assets/css/elegant-theme.php` — Dynamic theme CSS generator (admin color settings)
+- `assets/css/aih-admin.css` — Admin panel styles
+
+### JavaScript
+- `assets/js/aih-frontend.js` — Shared frontend utilities
+- `assets/js/aih-gallery.js` — Gallery page (bidding, favorites, filtering)
+- `assets/js/aih-single-item.js` — Single art piece page
+- `assets/js/aih-my-bids.js` — My Bids page
+- `assets/js/aih-admin.js` — Admin panel
+- `assets/js/aih-sse.js` — Server-Sent Events client (real-time updates)
+- `assets/js/aih-push.js` — Web Push notification registration
+- `assets/js/aih-sw.js` — Service Worker (PWA + push)
+
+### Fonts
+- `assets/fonts/OpenSans-Bold.ttf` — Used for watermark text rendering
+
+### Images
+- `assets/images/logo.png` — Plugin logo
+- `assets/images/icon-20.png` — Small PWA icon
+- `assets/images/icon-192.png` — Medium PWA icon
+- `assets/images/icon-512.png` — Large PWA icon
+
 ## Asset Optimization
 
-For production deployment, minify the following files:
+For production, consider minifying CSS and JS using WordPress caching plugins:
+- Autoptimize
+- W3 Total Cache
+- WP Rocket
 
-### CSS Files
-- `assets/css/frontend.css` → `assets/css/frontend.min.css`
-- `assets/css/admin.css` → `assets/css/admin.min.css`
+Or use a CDN (Cloudflare, AWS CloudFront, BunnyCDN) for static asset delivery.
 
-### JavaScript Files
-- `assets/js/frontend.js` → `assets/js/frontend.min.js`
-- `assets/js/admin.js` → `assets/js/admin.min.js`
+## Deployment
 
-## Recommended Minification Tools
+Deployment is automated via GitHub Actions on merge to `main`:
 
-1. **Using npm/Node.js:**
-   ```bash
-   npm install -g terser csso-cli
-   
-   # Minify JS
-   terser assets/js/frontend.js -o assets/js/frontend.min.js -c -m
-   terser assets/js/admin.js -o assets/js/admin.min.js -c -m
-   
-   # Minify CSS
-   csso assets/css/frontend.css -o assets/css/frontend.min.css
-   csso assets/css/admin.css -o assets/css/admin.min.css
-   ```
-
-2. **Using WordPress plugins:**
-   - Autoptimize
-   - W3 Total Cache
-   - WP Rocket
-
-3. **Online tools:**
-   - https://minifier.org/
-   - https://www.toptal.com/developers/javascript-minifier
-
-## CDN Recommendations
-
-For best performance, serve static assets via CDN:
-- Cloudflare
-- AWS CloudFront
-- BunnyCDN
-
-## Version History
-
-- 2.7.0: Added Security, Cache, Notifications, Export, REST API classes
-- 2.6.0: Added Registrants table, fixed double notifications
-- 2.5.0: Added role-based access control
+1. Release-drafter creates a versioned release with auto-generated notes
+2. Two zip artifacts are built and uploaded:
+   - `art-in-heaven.zip` — Pre-packaged with vendor dependencies
+   - `art-in-heaven-source.zip` — Source only (no vendor)
+3. rsync deploys to the production server
+4. WordPress rewrite rules and cache are flushed

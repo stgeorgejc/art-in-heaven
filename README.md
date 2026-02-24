@@ -11,7 +11,7 @@ A WordPress plugin for running silent art auctions. Built for churches and organ
 1. **Register** through Church Community Builder (CCB). Registrant data is synced into the plugin.
 2. **Log in** using a confirmation code on the login page.
 3. **Browse** the gallery of active art pieces with images, descriptions, and current bids.
-4. **Bid** on art pieces. The system enforces minimum bid increments and prevents bidding on ended or upcoming auctions. Outbid notifications are sent via email.
+4. **Bid** on art pieces. The system enforces minimum bid increments and prevents bidding on ended or upcoming auctions. Outbid notifications are sent via email and web push.
 5. **Track** bids and favorites from the My Bids page, which also shows order history.
 6. **Pay** for won items through Pushpay at checkout. Orders are created automatically for winning bids once the auction ends.
 
@@ -32,8 +32,8 @@ A WordPress plugin for running silent art auctions. Built for churches and organ
 
 ## Installation
 
-1. Download the repository as a zip file from GitHub.
-2. In WordPress, go to **Plugins > Add New > Upload Plugin** and upload the zip.
+1. Download the latest release zip from GitHub Releases.
+2. In WordPress, go to **Plugins > Add New > Upload Plugin** and upload `art-in-heaven.zip`.
 3. Activate the plugin.
 4. Go to **Art in Heaven > Settings** to configure the auction year and create database tables.
 5. Set up integrations (CCB API, Pushpay) under **Art in Heaven > Integrations**.
@@ -45,6 +45,7 @@ A WordPress plugin for running silent art auctions. Built for churches and organ
 | `[art_in_heaven_gallery]` | Art piece gallery with bidding |
 | `[art_in_heaven_login]` | Login page with confirmation code entry |
 | `[art_in_heaven_my_bids]` | User's bid history and order history |
+| `[art_in_heaven_my_wins]` | User's won items / collection |
 | `[art_in_heaven_checkout]` | Checkout for won items |
 | `[art_in_heaven_item id="123"]` | Single art piece display |
 
@@ -74,7 +75,7 @@ Tables are prefixed by auction year (e.g., `wp_2025_`):
 | `Registrants` | All people synced from CCB |
 | `Bidders` | People who have logged in |
 | `ArtPieces` | Art piece records with images and auction times |
-| `Bids` | All bids placed |
+| `Bids` | All bids placed (valid + rejected) |
 | `Favorites` | User favorites |
 | `Orders` | Checkout orders |
 | `OrderItems` | Order line items |
@@ -84,48 +85,86 @@ Tables are prefixed by auction year (e.g., `wp_2025_`):
 
 ```
 art-in-heaven/
-├── art-in-heaven.php              # Main plugin file
-├── uninstall.php                  # Clean removal handler
+├── art-in-heaven.php                # Main plugin file
+├── uninstall.php                    # Clean removal handler
 ├── admin/
-│   ├── class-aih-admin.php        # Admin panel handler
-│   └── views/                     # Admin page templates
+│   ├── class-aih-admin.php          # Admin panel handler
+│   └── views/                       # Admin page templates
 ├── includes/
-│   ├── class-aih-database.php     # Database table management
-│   ├── class-aih-art-piece.php    # Art piece model
-│   ├── class-aih-bid.php          # Bid model
-│   ├── class-aih-auth.php         # Authentication
-│   ├── class-aih-ccb-api.php      # CCB API client
-│   ├── class-aih-pushpay.php      # Pushpay API integration
-│   ├── class-aih-checkout.php     # Orders and checkout
-│   ├── class-aih-favorites.php    # Favorites model
-│   ├── class-aih-shortcodes.php   # Shortcode handlers
-│   ├── class-aih-ajax.php         # AJAX request handlers
-│   ├── class-aih-watermark.php    # Image watermarking
-│   ├── class-aih-notifications.php # Email notifications
-│   ├── class-aih-security.php     # Input sanitization and rate limiting
-│   ├── class-aih-cache.php        # Transient caching
-│   ├── class-aih-export.php       # CSV and GDPR exports
-│   ├── class-aih-rest-api.php     # REST API endpoints
-│   ├── class-aih-roles.php        # Role and capability management
+│   ├── class-aih-database.php       # Database table management
+│   ├── class-aih-art-piece.php      # Art piece model
+│   ├── class-aih-art-images.php     # Image upload handling
+│   ├── class-aih-bid.php            # Bid model
+│   ├── class-aih-auth.php           # Authentication
+│   ├── class-aih-ccb-api.php        # CCB API client
+│   ├── class-aih-pushpay.php        # Pushpay API integration
+│   ├── class-aih-checkout.php       # Orders and checkout
+│   ├── class-aih-favorites.php      # Favorites model
+│   ├── class-aih-shortcodes.php     # Shortcode handlers
+│   ├── class-aih-ajax.php           # AJAX request handlers
+│   ├── class-aih-rest-api.php       # REST API endpoints
+│   ├── class-aih-api-router.php     # Lightweight API routing
+│   ├── class-aih-watermark.php      # Image watermarking
+│   ├── class-aih-image-optimizer.php # AVIF/WebP responsive images
+│   ├── class-aih-notifications.php  # Email notifications
+│   ├── class-aih-push.php           # Web push notifications
+│   ├── class-aih-mercure.php        # Real-time updates (Mercure)
+│   ├── class-aih-sse.php            # Server-Sent Events
+│   ├── class-aih-security.php       # Input sanitization and rate limiting
+│   ├── class-aih-cache.php          # Transient caching with group versioning
+│   ├── class-aih-status.php         # Auction status computation
+│   ├── class-aih-cron-scheduler.php # Cron job scheduling
+│   ├── class-aih-export.php         # CSV and GDPR exports
+│   ├── class-aih-roles.php          # Role and capability management
 │   ├── class-aih-template-helper.php # Frontend data formatting
-│   └── class-aih-assets.php       # CSS/JS loading
+│   └── class-aih-assets.php         # CSS/JS loading
 ├── templates/
-│   ├── gallery.php                # Art gallery grid
-│   ├── single-item.php            # Individual art piece page
-│   ├── login.php                  # Confirmation code login
-│   ├── my-bids.php                # User bid history and orders
-│   ├── checkout.php               # Won items checkout
-│   └── winners.php                # Public winners display
+│   ├── gallery.php                  # Art gallery grid
+│   ├── single-item.php              # Individual art piece page
+│   ├── login.php                    # Confirmation code login
+│   ├── my-bids.php                  # User bid history and orders
+│   ├── my-wins.php                  # User won items / collection
+│   ├── checkout.php                 # Won items checkout
+│   ├── winners.php                  # Public winners display
+│   └── partials/                    # Reusable template components
+├── tests/
+│   ├── bootstrap.php                # PHPUnit test bootstrap
+│   └── Unit/                        # Unit tests
 └── assets/
-    ├── css/                       # Stylesheets
-    ├── js/                        # Frontend and admin JavaScript
-    └── images/                    # Plugin icons and logo
+    ├── css/                         # Stylesheets
+    ├── js/                          # Frontend and admin JavaScript
+    ├── fonts/                       # Custom fonts
+    └── images/                      # Plugin icons and logo
 ```
+
+## Development
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, testing, and contribution guidelines.
+
+```bash
+# Quick start
+composer install
+composer setup-hooks    # install git hooks (one-time)
+composer test           # run PHPUnit
+composer analyse        # run PHPStan
+```
+
+## CI/CD
+
+Every pull request runs three checks in parallel:
+
+| Check | Tool | What it catches |
+|-------|------|-----------------|
+| **Lint** | `php -l` | Syntax errors |
+| **Test** | PHPUnit 12 | Logic regressions |
+| **Analyse** | PHPStan level 5 | Type errors, undefined variables |
+
+On merge to `main`, the release workflow automatically drafts a release, builds zip artifacts, and deploys to production.
 
 ## Requirements
 
 - WordPress 5.8+
-- PHP 7.4+
+- PHP 8.3+
 - MySQL 5.7+
 - GD Library (for image watermarking)
 
