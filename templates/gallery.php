@@ -162,6 +162,7 @@ $bidder_bid_ids = $bid_model->get_bidder_bid_ids_batch($piece_ids, $bidder_id);
         </div>
         <?php else: ?>
         <div class="aih-gallery-grid" id="aih-gallery">
+            <?php $card_index = 0; ?>
             <?php foreach ($art_pieces as $piece):
                 $bidder_has_bid_check = false;
                 $is_favorite = !empty($piece->is_favorite);
@@ -230,7 +231,14 @@ $bidder_bid_ids = $bid_model->get_bidder_bid_ids_batch($piece_ids, $bidder_id);
                 <div class="aih-card-image" data-favorite="<?php echo $is_favorite ? '1' : '0'; ?>">
                     <?php if ($primary_image): ?>
                     <a href="?art_id=<?php echo intval($piece->id); ?>">
-                        <?php echo AIH_Template_Helper::picture_tag($primary_image, $piece->title, '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw'); ?>
+                        <?php echo AIH_Template_Helper::picture_tag(
+                            $primary_image,
+                            $piece->title,
+                            '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw',
+                            array(),
+                            $card_index < 3 ? 'eager' : 'lazy',
+                            $card_index === 0 ? 'high' : null
+                        ); ?>
                     </a>
                     <?php else: ?>
                     <a href="?art_id=<?php echo intval($piece->id); ?>" class="aih-placeholder-link">
@@ -288,6 +296,7 @@ $bidder_bid_ids = $bid_model->get_bidder_bid_ids_batch($piece_ids, $bidder_id);
 
                 <div class="aih-bid-message"></div>
             </article>
+            <?php $card_index++; ?>
             <?php endforeach; ?>
         </div>
         <?php endif; ?>

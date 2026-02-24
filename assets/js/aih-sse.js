@@ -25,13 +25,18 @@
         lastEventId: null,
 
         /**
-         * Initialize SSE connection
+         * Initialize SSE connection (fetches Mercure auth cookie first)
          */
         init: function() {
             if (typeof EventSource === 'undefined') {
                 return; // Browser doesn't support SSE
             }
-            this.connect();
+            var self = this;
+            // Set Mercure auth cookie via AJAX before connecting EventSource
+            $.get(aihAjax.ajaxurl, { action: 'aih_mercure_cookie' })
+                .always(function() {
+                    self.connect();
+                });
         },
 
         /**
