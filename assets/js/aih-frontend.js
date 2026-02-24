@@ -693,8 +693,8 @@
 
             // Build alert card
             var viewUrl = url || '';
-            if (!viewUrl && aihAjax.galleryUrl) {
-                viewUrl = aihAjax.galleryUrl + '?art_id=' + artPieceId;
+            if (!viewUrl && aihAjax.artUrlBase) {
+                viewUrl = aihAjax.artUrlBase + artPieceId + '/';
             }
 
             var $alert = $(
