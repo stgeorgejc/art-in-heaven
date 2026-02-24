@@ -239,7 +239,7 @@ $bidder_bid_ids = $bid_model->get_bidder_bid_ids_batch($piece_ids, $bidder_id);
                         ); ?>
                     </a>
                     <?php else: ?>
-                    <a href="?art_id=<?php echo intval($piece->id); ?>" class="aih-placeholder-link">
+                    <a href="<?php echo esc_url(AIH_Template_Helper::get_art_url($piece->id)); ?>" class="aih-placeholder-link">
                         <div class="aih-placeholder">
                             <span class="aih-placeholder-id"><?php echo esc_html($piece->art_id); ?></span>
                             <span class="aih-placeholder-text"><?php _e('No Image', 'art-in-heaven'); ?></span>
@@ -268,7 +268,7 @@ $bidder_bid_ids = $bid_model->get_bidder_bid_ids_batch($piece_ids, $bidder_id);
 
                 <div class="aih-card-body">
                     <h3 class="aih-card-title">
-                        <a href="?art_id=<?php echo intval($piece->id); ?>"><?php echo esc_html($piece->title); ?></a>
+                        <a href="<?php echo esc_url(AIH_Template_Helper::get_art_url($piece->id)); ?>"><?php echo esc_html($piece->title); ?></a>
                     </h3>
                     <p class="aih-card-artist"><?php echo esc_html($piece->artist); ?></p>
                     <p class="aih-card-bid">
