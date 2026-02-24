@@ -416,11 +416,13 @@ class Art_In_Heaven {
             return;
         }
 
+        $gallery_url = wp_make_link_relative( AIH_Template_Helper::get_gallery_url() );
+
         $manifest = array(
             'name'             => 'Art in Heaven',
             'short_name'       => 'Art in Heaven',
             'description'      => 'Silent auction for art pieces',
-            'start_url'        => '/',
+            'start_url'        => $gallery_url ? $gallery_url : '/',
             'display'          => 'standalone',
             'background_color' => '#faf9f7',
             'theme_color'      => '#b8956b',
