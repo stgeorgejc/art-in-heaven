@@ -1,8 +1,9 @@
 # OS files
 .DS_Store
 
-# Node
+# Dependencies
 node_modules/
+vendor/
 
 # IDE
 .idea/

@@ -13,6 +13,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+
+      - name: Install Composer dependencies
+        run: composer install --no-dev --optimize-autoloader --no-interaction
+
       - name: Setup SSH key
         run: |
           mkdir -p ~/.ssh
@@ -27,7 +41,6 @@ jobs:
             --exclude='.github/' \
             --exclude='.claude/' \
             --exclude='*.md' \
-            --exclude='deploy.sh' \
             --exclude='.DS_Store' \
             --exclude='node_modules/' \
             --exclude='tests/' \
