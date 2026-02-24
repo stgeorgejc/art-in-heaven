@@ -1,0 +1,41 @@
+name: Deploy to Production
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  deploy:
+    name: SSH Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy via rsync
+        run: |
+          rsync -avz --delete \
+            --exclude='.git/' \
+            --exclude='.github/' \
+            --exclude='.claude/' \
+            --exclude='*.md' \
+            --exclude='deploy.sh' \
+            --exclude='.DS_Store' \
+            --exclude='node_modules/' \
+            --exclude='tests/' \
+            -e "ssh -i ~/.ssh/deploy_key" \
+            ./ \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:~/httpdocs/wp-content/plugins/art-in-heaven-main/
+
+      - name: Flush rewrite rules and cache
+        run: |
+          ssh -i ~/.ssh/deploy_key ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+            "cd ~/httpdocs && /opt/plesk/php/8.3/bin/php /usr/local/bin/wp rewrite flush && /opt/plesk/php/8.3/bin/php /usr/local/bin/wp cache flush" || true
