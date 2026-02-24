@@ -36,3 +36,56 @@ jobs:
 
       - name: Verify autoloader
         run: php -r "require 'vendor/autoload.php'; echo 'Autoloader OK' . PHP_EOL;"
+
+  test:
+    name: PHPUnit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, openssl
+          coverage: none
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v5
+        with:
+          path: vendor
+          key: composer-dev-${{ hashFiles('composer.lock') }}
+
+      - name: Install Composer dependencies
+        run: composer install --optimize-autoloader --no-interaction
+
+      - name: Run PHPUnit
+        run: vendor/bin/phpunit
+
+  phpstan:
+    name: PHPStan Static Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, openssl
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v5
+        with:
+          path: vendor
+          key: composer-dev-${{ hashFiles('composer.lock') }}
+
+      - name: Install Composer dependencies
+        run: composer install --optimize-autoloader --no-interaction
+
+      - name: Run PHPStan
+        run: vendor/bin/phpstan analyse --memory-limit=1G

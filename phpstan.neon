@@ -1,0 +1,42 @@
+parameters:
+    level: 5
+    treatPhpDocTypesAsCertain: false
+    parallel:
+        maximumNumberOfProcesses: 1
+    paths:
+        - art-in-heaven.php
+        - includes
+        - admin/class-aih-admin.php
+    excludePaths:
+        # Large AJAX handler — analyse separately to avoid memory issues
+        - includes/class-aih-ajax.php
+    bootstrapFiles:
+        - tests/phpstan-bootstrap.php
+    ignoreErrors:
+        # AIH_Ajax class is excluded from analysis (memory), references are valid at runtime
+        - identifier: class.notFound
+          message: '#AIH_Ajax#'
+        # WordPress DB_NAME constant is defined in wp-config.php at runtime
+        - identifier: constant.notFound
+          message: '#DB_NAME#'
+        # WordPress DOING_AJAX constant — acceptable to use directly
+        - identifier: phpstanWP.wpConstant.fetch
+        # Properties reserved for future use or used via magic methods
+        - identifier: property.onlyWritten
+        # Baseline: existing type issues to fix incrementally
+        -
+            message: '#Parameter \#4 .* of function imagettftext expects int, float given#'
+            paths:
+                - includes/class-aih-watermark.php
+        -
+            message: '#Parameter \#2 .* of method WP_HTTP_Response::header\(\) expects string, float given#'
+            paths:
+                - includes/class-aih-rest-api.php
+        -
+            message: '#Variable \$values in empty\(\) always exists#'
+            paths:
+                - includes/class-aih-art-piece.php
+        -
+            message: '#Negated boolean expression is always true#'
+            paths:
+                - includes/class-aih-image-optimizer.php
