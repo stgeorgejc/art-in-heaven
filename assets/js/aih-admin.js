@@ -2,7 +2,7 @@
  * Art in Heaven - Admin JavaScript
  * Silent Auction Admin JavaScript
  * Note: Form handlers for add/edit art are in the template itself
- * Version: 0.9.7
+ * Version: 1.0.0
  */
 
 (function($) {

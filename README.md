@@ -2,7 +2,7 @@
 
 A WordPress plugin for running silent art auctions. Built for churches and organizations to let participants browse artwork, place bids, and pay for won items online.
 
-## Version 0.9.7
+## Version 1.0.0
 
 ## How It Works
 
