@@ -50,7 +50,7 @@ jobs:
         with:
           php-version: '8.3'
           extensions: mbstring, openssl
-          coverage: none
+          coverage: pcov
 
       - name: Cache Composer dependencies
         uses: actions/cache@v5
@@ -61,8 +61,19 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --optimize-autoloader --no-interaction
 
-      - name: Run PHPUnit
-        run: vendor/bin/phpunit
+      - name: Run PHPUnit with coverage
+        run: vendor/bin/phpunit --coverage-text --coverage-clover=coverage.xml
+
+      - name: Coverage summary
+        run: |
+          php -r "
+          \$xml = simplexml_load_file('coverage.xml');
+          \$metrics = \$xml->project->metrics;
+          \$stmts = (int)\$metrics['statements'];
+          \$covered = (int)\$metrics['coveredstatements'];
+          \$pct = \$stmts > 0 ? round((\$covered / \$stmts) * 100, 2) : 0;
+          echo \"Coverage: {\$covered}/{\$stmts} statements ({\$pct}%)\" . PHP_EOL;
+          "
 
   phpstan:
     name: PHPStan Static Analysis
