@@ -174,8 +174,45 @@ class Art_In_Heaven {
 
         // Disable intermediate image sizes for AIH uploads
         add_filter('intermediate_image_sizes_advanced', array($this, 'disable_intermediate_sizes'), 10, 2);
+
+        // Adaptive HTTP security headers (priority 99 — run late so other plugins set theirs first)
+        add_filter('wp_headers', array($this, 'add_security_headers'), 99);
     }
     
+    /**
+     * Add adaptive HTTP security headers.
+     *
+     * Uses wp_headers filter (not raw header() calls) so WordPress deduplicates
+     * by key. Each header is guarded with !isset() so we only fill gaps — never
+     * override what another plugin, theme, or server config has already declared.
+     *
+     * @param array $headers Existing headers from WordPress and other plugins
+     * @return array Headers with security defaults filled in
+     */
+    public function add_security_headers($headers) {
+        // Skip admin, AJAX, and cron — those have their own header handling
+        if (is_admin() || wp_doing_ajax() || wp_doing_cron()) {
+            return $headers;
+        }
+
+        // Only fill in headers that aren't already set
+        if (!isset($headers['X-Content-Type-Options'])) {
+            $headers['X-Content-Type-Options'] = 'nosniff';
+        }
+        if (!isset($headers['X-Frame-Options'])) {
+            // SAMEORIGIN (not DENY) — WP admin uses iframes
+            $headers['X-Frame-Options'] = 'SAMEORIGIN';
+        }
+        if (!isset($headers['Referrer-Policy'])) {
+            $headers['Referrer-Policy'] = 'strict-origin-when-cross-origin';
+        }
+        if (!isset($headers['Permissions-Policy'])) {
+            $headers['Permissions-Policy'] = 'camera=(), microphone=(), geolocation=()';
+        }
+
+        return $headers;
+    }
+
     /**
      * Add custom cron schedules
      */
@@ -559,7 +596,8 @@ class Art_In_Heaven {
             'ajaxurl'        => admin_url('admin-ajax.php'),
             'apiurl'         => AIH_API_Router::get_api_url(),
             'resturl'        => rest_url('art-in-heaven/v1/'),
-            'nonce'          => wp_create_nonce('aih_nonce'),
+            'nonce'          => wp_create_nonce('aih_frontend_nonce'),
+            'publicNonce'    => wp_create_nonce('aih_public_nonce'),
             'restNonce'      => wp_create_nonce('wp_rest'),
             'isLoggedIn'     => $auth->is_logged_in(),
             'bidderId'       => $auth->get_current_bidder_id(),

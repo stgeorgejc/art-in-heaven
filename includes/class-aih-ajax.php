@@ -126,7 +126,7 @@ class AIH_Ajax {
     // ========== AUTH ==========
     
     public function verify_confirmation_code() {
-        check_ajax_referer('aih_nonce', 'nonce');
+        check_ajax_referer('aih_public_nonce', 'nonce');
 
         // Rate limiting: 5 attempts per 60 seconds
         $ip = AIH_Security::get_client_ip();
@@ -161,7 +161,7 @@ class AIH_Ajax {
      * @return void Sends JSON response and exits.
      */
     public function logout() {
-        check_ajax_referer('aih_nonce', 'nonce');
+        check_ajax_referer('aih_public_nonce', 'nonce');
         AIH_Auth::get_instance()->logout_bidder();
         wp_send_json_success(array('message' => __('Logged out.', 'art-in-heaven')));
     }
@@ -172,15 +172,24 @@ class AIH_Ajax {
      * @return void Sends JSON response and exits.
      */
     public function check_auth() {
-        check_ajax_referer('aih_nonce', 'nonce');
+        check_ajax_referer('aih_public_nonce', 'nonce');
         $auth = AIH_Auth::get_instance();
-        wp_send_json_success(array('logged_in' => $auth->is_logged_in(), 'bidder' => $auth->get_current_bidder()));
+        $bidder = $auth->get_current_bidder();
+        $safe_bidder = null;
+        if ($bidder) {
+            $safe_bidder = array(
+                'confirmation_code' => $bidder->confirmation_code,
+                'name_first'        => $bidder->name_first ?? '',
+                'name_last'         => $bidder->name_last ?? '',
+            );
+        }
+        wp_send_json_success(array('logged_in' => $auth->is_logged_in(), 'bidder' => $safe_bidder));
     }
     
     // ========== BIDDING ==========
     
     public function place_bid() {
-        check_ajax_referer('aih_nonce', 'nonce');
+        check_ajax_referer('aih_frontend_nonce', 'nonce');
         $auth = AIH_Auth::get_instance();
         if (!$auth->is_logged_in()) wp_send_json_error(array('message' => __('Please sign in.', 'art-in-heaven'), 'login_required' => true));
 
@@ -212,7 +221,7 @@ class AIH_Ajax {
     }
     
     public function toggle_favorite() {
-        check_ajax_referer('aih_nonce', 'nonce');
+        check_ajax_referer('aih_frontend_nonce', 'nonce');
         $auth = AIH_Auth::get_instance();
         if (!$auth->is_logged_in()) wp_send_json_error(array('login_required' => true));
         
@@ -230,7 +239,7 @@ class AIH_Ajax {
      * @return void Sends JSON response and exits.
      */
     public function get_gallery() {
-        check_ajax_referer('aih_nonce', 'nonce');
+        check_ajax_referer('aih_frontend_nonce', 'nonce');
         $auth = AIH_Auth::get_instance();
         $bidder_id = $auth->get_current_bidder_id();
         $pieces = (new AIH_Art_Piece())->get_all(array('status' => 'active', 'bidder_id' => $bidder_id));
@@ -254,7 +263,7 @@ class AIH_Ajax {
      * @return void Sends JSON response and exits.
      */
     public function get_art_details() {
-        check_ajax_referer('aih_nonce', 'nonce');
+        check_ajax_referer('aih_frontend_nonce', 'nonce');
         $art_id = intval($_POST['art_id'] ?? 0);
         if (!$art_id) wp_send_json_error(array('message' => __('Invalid.', 'art-in-heaven')));
 
@@ -282,7 +291,7 @@ class AIH_Ajax {
      * @return void Sends JSON response and exits.
      */
     public function search_art() {
-        check_ajax_referer('aih_nonce', 'nonce');
+        check_ajax_referer('aih_frontend_nonce', 'nonce');
         $search = sanitize_text_field($_POST['search'] ?? '');
         if (strlen($search) < 2) wp_send_json_success(array());
 
@@ -311,7 +320,7 @@ class AIH_Ajax {
      * @return void Sends JSON response and exits.
      */
     public function get_won_items() {
-        check_ajax_referer('aih_nonce', 'nonce');
+        check_ajax_referer('aih_frontend_nonce', 'nonce');
         $auth = AIH_Auth::get_instance();
         if (!$auth->is_logged_in()) wp_send_json_error(array('login_required' => true));
         
@@ -325,7 +334,7 @@ class AIH_Ajax {
     }
     
     public function create_order() {
-        check_ajax_referer('aih_nonce', 'nonce');
+        check_ajax_referer('aih_frontend_nonce', 'nonce');
         $auth = AIH_Auth::get_instance();
         if (!$auth->is_logged_in()) wp_send_json_error(array('login_required' => true));
 
@@ -352,7 +361,7 @@ class AIH_Ajax {
     }
     
     public function get_pushpay_link() {
-        check_ajax_referer('aih_nonce', 'nonce');
+        check_ajax_referer('aih_frontend_nonce', 'nonce');
         $auth = AIH_Auth::get_instance();
         if (!$auth->is_logged_in()) wp_send_json_error(array('login_required' => true));
 
@@ -373,7 +382,7 @@ class AIH_Ajax {
      * Get order details for frontend display
      */
     public function get_order_details() {
-        check_ajax_referer('aih_nonce', 'nonce');
+        check_ajax_referer('aih_frontend_nonce', 'nonce');
         $auth = AIH_Auth::get_instance();
         if (!$auth->is_logged_in()) wp_send_json_error(array('message' => __('Session expired. Please refresh the page and sign in again.', 'art-in-heaven')));
 
@@ -423,7 +432,7 @@ class AIH_Ajax {
      * Get all purchased items for My Wins page
      */
     public function get_my_purchases() {
-        check_ajax_referer('aih_nonce', 'nonce');
+        check_ajax_referer('aih_frontend_nonce', 'nonce');
         $auth = AIH_Auth::get_instance();
         if (!$auth->is_logged_in()) wp_send_json_error(array('login_required' => true));
 
@@ -2313,7 +2322,7 @@ class AIH_Ajax {
      * Save a push subscription for the current bidder
      */
     public function push_subscribe() {
-        check_ajax_referer('aih_nonce', 'nonce');
+        check_ajax_referer('aih_frontend_nonce', 'nonce');
 
         $auth = AIH_Auth::get_instance();
         if (!$auth->is_logged_in()) {
@@ -2341,7 +2350,7 @@ class AIH_Ajax {
      * Remove a push subscription by endpoint
      */
     public function push_unsubscribe() {
-        check_ajax_referer('aih_nonce', 'nonce');
+        check_ajax_referer('aih_frontend_nonce', 'nonce');
 
         $endpoint = isset($_POST['endpoint']) ? esc_url_raw($_POST['endpoint']) : '';
         if (empty($endpoint)) {
@@ -2356,7 +2365,7 @@ class AIH_Ajax {
      * Return and clear pending outbid events for the current bidder (polling fallback)
      */
     public function check_outbid() {
-        check_ajax_referer('aih_nonce', 'nonce');
+        check_ajax_referer('aih_frontend_nonce', 'nonce');
 
         $auth = AIH_Auth::get_instance();
         if (!$auth->is_logged_in()) {
@@ -2378,7 +2387,7 @@ class AIH_Ajax {
      * when many users are polling simultaneously.
      */
     public function poll_status() {
-        check_ajax_referer('aih_nonce', 'nonce');
+        check_ajax_referer('aih_frontend_nonce', 'nonce');
 
         $auth = AIH_Auth::get_instance();
         if (!$auth->is_logged_in()) {

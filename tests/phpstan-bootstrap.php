@@ -14,3 +14,6 @@ define('AIH_PLUGIN_URL', 'https://example.com/wp-content/plugins/art-in-heaven/'
 define('AIH_PLUGIN_BASENAME', 'art-in-heaven/art-in-heaven.php');
 define('AIH_CACHE_GROUP', 'art_in_heaven');
 define('AIH_CACHE_EXPIRY', HOUR_IN_SECONDS);
+
+// Optional wp-config.php constant for test code bypass (may or may not exist at runtime)
+define('AIH_TEST_CODE_PREFIX', 'AIHTEST');
