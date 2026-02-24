@@ -2,7 +2,10 @@
 /**
  * Image Optimizer - Generates responsive AVIF/WebP variants
  *
- * Uses Imagick when available, falls back to GD for formats Imagick lacks.
+ * Three-tier format support (per-format priority):
+ *   Tier 1: Imagick (fastest, best quality)
+ *   Tier 2: GD (built into PHP)
+ *   Tier 3: CLI binaries — cwebp for WebP, ffmpeg (libaom-av1) for AVIF
  *
  * @package ArtInHeaven
  * @since 0.9.7
@@ -23,6 +26,9 @@ class AIH_Image_Optimizer {
         'webp' => 80,
     );
 
+    /** @var array|null Cached CLI binary paths keyed by format */
+    private static $cli_cache = null;
+
     /**
      * Check if any image processing library supports at least one modern format
      */
@@ -31,22 +37,24 @@ class AIH_Image_Optimizer {
     }
 
     /**
-     * Check which formats are supported across Imagick and GD
+     * Check which formats are supported across Imagick, GD, and CLI binaries
      */
     public static function supported_formats() {
         $formats = array();
 
-        // Check Imagick
-        if (extension_loaded('imagick') && class_exists('Imagick')) {
-            $imagick_formats = Imagick::queryFormats();
-            if (in_array('AVIF', $imagick_formats)) $formats[] = 'avif';
-            if (in_array('WEBP', $imagick_formats)) $formats[] = 'webp';
+        // Tier 1: Imagick
+        foreach (self::imagick_formats() as $f) {
+            if (!in_array($f, $formats)) $formats[] = $f;
         }
 
-        // Check GD as fallback for formats Imagick doesn't support
-        if (extension_loaded('gd')) {
-            if (!in_array('avif', $formats) && function_exists('imageavif')) $formats[] = 'avif';
-            if (!in_array('webp', $formats) && function_exists('imagewebp')) $formats[] = 'webp';
+        // Tier 2: GD
+        foreach (self::gd_formats() as $f) {
+            if (!in_array($f, $formats)) $formats[] = $f;
+        }
+
+        // Tier 3: CLI binaries (cwebp, ffmpeg)
+        foreach (array_keys(self::cli_binaries()) as $f) {
+            if (!in_array($f, $formats)) $formats[] = $f;
         }
 
         return $formats;
@@ -64,6 +72,68 @@ class AIH_Image_Optimizer {
         if (in_array('AVIF', $supported)) $formats[] = 'avif';
         if (in_array('WEBP', $supported)) $formats[] = 'webp';
         return $formats;
+    }
+
+    /**
+     * Check which formats GD supports natively
+     */
+    private static function gd_formats() {
+        if (!extension_loaded('gd')) {
+            return array();
+        }
+        $formats = array();
+        if (function_exists('imageavif')) $formats[] = 'avif';
+        if (function_exists('imagewebp')) $formats[] = 'webp';
+        return $formats;
+    }
+
+    /**
+     * Detect available CLI binaries for image encoding
+     *
+     * @return array Format => binary path, e.g. ['webp' => '/home/user/bin/cwebp']
+     */
+    private static function cli_binaries() {
+        if (self::$cli_cache !== null) {
+            return self::$cli_cache;
+        }
+
+        self::$cli_cache = array();
+
+        if (!function_exists('exec')) {
+            return self::$cli_cache;
+        }
+
+        $search_paths = array();
+        $home = getenv('HOME');
+        if ($home) {
+            $search_paths[] = $home . '/bin';
+        }
+        $search_paths[] = '/usr/local/bin';
+        $search_paths[] = '/usr/bin';
+
+        // cwebp for WebP encoding
+        foreach ($search_paths as $dir) {
+            $path = $dir . '/cwebp';
+            if (@is_executable($path)) {
+                self::$cli_cache['webp'] = $path;
+                break;
+            }
+        }
+
+        // ffmpeg with libaom-av1 for AVIF encoding
+        foreach ($search_paths as $dir) {
+            $path = $dir . '/ffmpeg';
+            if (@is_executable($path)) {
+                $output = array();
+                @exec(escapeshellarg($path) . ' -encoders 2>/dev/null', $output);
+                if (strpos(implode("\n", $output), 'libaom-av1') !== false) {
+                    self::$cli_cache['avif'] = $path;
+                }
+                break;
+            }
+        }
+
+        return self::$cli_cache;
     }
 
     /**
@@ -110,9 +180,13 @@ class AIH_Image_Optimizer {
 
         $basename = pathinfo($watermarked_path, PATHINFO_FILENAME);
         $generated = array();
-        $imagick_formats = self::imagick_formats();
 
-        // Load source dimensions via GD (always available for dimension check)
+        // Determine per-tier format support
+        $imagick_fmts = self::imagick_formats();
+        $gd_fmts = self::gd_formats();
+        $cli_bins = self::cli_binaries();
+
+        // Load source dimensions
         $source_size = @getimagesize($watermarked_path);
         if (!$source_size) {
             error_log('AIH Optimizer: Could not read source image dimensions: ' . $watermarked_path);
@@ -120,9 +194,9 @@ class AIH_Image_Optimizer {
         }
         $source_width = $source_size[0];
 
-        // Try Imagick for formats it supports
+        // Load Imagick source if it supports any format
         $imagick_source = null;
-        if (!empty($imagick_formats) && extension_loaded('imagick')) {
+        if (!empty($imagick_fmts) && extension_loaded('imagick')) {
             try {
                 $imagick_source = new Imagick($watermarked_path);
                 $imagick_source->stripImage();
@@ -132,10 +206,9 @@ class AIH_Image_Optimizer {
             }
         }
 
-        // Load GD source for formats that need it
-        $gd_formats = array_diff($available_formats, $imagick_formats);
+        // Load GD source if it supports any format
         $gd_source = null;
-        if (!empty($gd_formats)) {
+        if (!empty($gd_fmts)) {
             $gd_source = self::gd_load_image($watermarked_path);
             if (!$gd_source) {
                 error_log('AIH Optimizer: GD failed to load source: ' . $watermarked_path);
@@ -148,9 +221,10 @@ class AIH_Image_Optimizer {
             foreach ($available_formats as $format) {
                 $quality = self::$formats[$format] ?? 80;
                 $output_file = $responsive_dir . '/' . $basename . '-' . $effective_width . '.' . $format;
+                $success = false;
 
-                if (in_array($format, $imagick_formats) && $imagick_source) {
-                    // Use Imagick
+                // Tier 1: Imagick
+                if (!$success && in_array($format, $imagick_fmts) && $imagick_source) {
                     try {
                         $resized = clone $imagick_source;
                         if ($source_width > $width) {
@@ -164,14 +238,27 @@ class AIH_Image_Optimizer {
                         $resized->writeImage($output_file);
                         $resized->destroy();
                         $generated[] = $output_file;
+                        $success = true;
                     } catch (ImagickException $e) {
                         error_log('AIH Optimizer: Imagick failed ' . $format . ' at ' . $width . 'w: ' . $e->getMessage());
                     }
-                } elseif ($gd_source) {
-                    // Use GD fallback
+                }
+
+                // Tier 2: GD
+                if (!$success && in_array($format, $gd_fmts) && $gd_source) {
                     $result = self::gd_generate_variant($gd_source, $source_width, $effective_width, $format, $quality, $output_file);
                     if ($result) {
                         $generated[] = $output_file;
+                        $success = true;
+                    }
+                }
+
+                // Tier 3: CLI binaries (cwebp / ffmpeg)
+                if (!$success && isset($cli_bins[$format])) {
+                    $result = self::cli_generate_variant($watermarked_path, $source_width, $effective_width, $format, $quality, $output_file, $cli_bins[$format]);
+                    if ($result) {
+                        $generated[] = $output_file;
+                        $success = true;
                     }
                 }
             }
@@ -240,6 +327,43 @@ class AIH_Image_Optimizer {
         }
 
         return $success;
+    }
+
+    /**
+     * Generate a single variant using a CLI binary (cwebp or ffmpeg)
+     */
+    private static function cli_generate_variant($source_path, $source_width, $target_width, $format, $quality, $output_file, $cli_bin) {
+        $src = escapeshellarg($source_path);
+        $out = escapeshellarg($output_file);
+
+        switch ($format) {
+            case 'webp':
+                // cwebp handles resize internally
+                $resize = ($source_width > $target_width) ? '-resize ' . intval($target_width) . ' 0 ' : '';
+                $cmd = escapeshellarg($cli_bin) . ' -q ' . intval($quality) . ' ' . $resize . $src . ' -o ' . $out . ' 2>&1';
+                break;
+
+            case 'avif':
+                // ffmpeg with libaom-av1; map quality 0-100 to CRF 63-0 (quality 50 → CRF 30)
+                $scale = ($source_width > $target_width) ? '-vf scale=' . intval($target_width) . ':-1 ' : '';
+                $crf = max(0, min(63, intval(63 - ($quality * 0.66))));
+                $cmd = escapeshellarg($cli_bin) . ' -y -i ' . $src . ' ' . $scale . '-c:v libaom-av1 -crf ' . $crf . ' -cpu-used 6 -still-picture 1 -frames:v 1 ' . $out . ' 2>&1';
+                break;
+
+            default:
+                return false;
+        }
+
+        $output = array();
+        $return_code = 0;
+        @exec($cmd, $output, $return_code);
+
+        if ($return_code !== 0 || !file_exists($output_file)) {
+            error_log('AIH Optimizer: CLI failed (' . $format . ' at ' . $target_width . 'w): ' . implode(' ', array_slice($output, -3)));
+            return false;
+        }
+
+        return true;
     }
 
     /**
