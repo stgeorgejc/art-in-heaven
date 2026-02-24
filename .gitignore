@@ -12,5 +12,9 @@ vendor/
 # Testing
 .phpunit.cache/
 
+# Build artifacts (generated in CI)
+assets/css/*.min.css
+assets/js/*.min.js
+
 # Logs
 firebase-debug.log

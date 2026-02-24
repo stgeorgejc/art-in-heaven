@@ -42,10 +42,14 @@ class AIH_Assets {
     public function register_assets() {
         // Google Fonts loaded async via Art_In_Heaven::add_preconnect_hints()
 
-        // Register elegant theme CSS
+        // Register elegant theme CSS (prefer .min in production)
+        $css_file = 'assets/css/elegant-theme.css';
+        if (!(defined('SCRIPT_DEBUG') && SCRIPT_DEBUG) && file_exists(AIH_PLUGIN_DIR . 'assets/css/elegant-theme.min.css')) {
+            $css_file = 'assets/css/elegant-theme.min.css';
+        }
         wp_register_style(
             'aih-elegant-theme',
-            AIH_PLUGIN_URL . 'assets/css/elegant-theme.css',
+            AIH_PLUGIN_URL . $css_file,
             array(),
             AIH_VERSION
         );
@@ -86,6 +90,12 @@ class AIH_Assets {
      * @return string
      */
     public static function get_elegant_theme_path() {
+        if (!(defined('SCRIPT_DEBUG') && SCRIPT_DEBUG)) {
+            $min_path = AIH_PLUGIN_DIR . 'assets/css/elegant-theme.min.css';
+            if (file_exists($min_path)) {
+                return $min_path;
+            }
+        }
         return AIH_PLUGIN_DIR . 'assets/css/elegant-theme.css';
     }
 

@@ -45,6 +45,20 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --no-dev --optimize-autoloader --no-interaction
 
+      - name: Minify CSS and JS assets
+        run: |
+          npx --yes esbuild@0.24 \
+            assets/css/*.css \
+            --outdir=assets/css \
+            --minify \
+            --out-extension:.css=.min.css
+
+          npx --yes esbuild@0.24 \
+            assets/js/*.js \
+            --outdir=assets/js \
+            --minify \
+            --out-extension:.js=.min.js
+
       - name: Build source release (no vendor)
         run: |
           zip -r art-in-heaven-source.zip . \
