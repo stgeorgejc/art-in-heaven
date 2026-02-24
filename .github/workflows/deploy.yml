@@ -4,9 +4,12 @@ on:
   release:
     types: [published]
 
+permissions:
+  contents: write
+
 jobs:
   deploy:
-    name: SSH Deploy
+    name: Build, Deploy & Release Artifacts
     runs-on: ubuntu-latest
 
     steps:
@@ -27,6 +30,27 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --no-dev --optimize-autoloader --no-interaction
 
+      - name: Build source release (no vendor)
+        run: |
+          zip -r art-in-heaven-source.zip . \
+            -x '.git/*' '.github/*' '.claude/*' '*.md' '.DS_Store' \
+               'node_modules/*' 'tests/*' 'vendor/*' '.gitignore'
+
+      - name: Build pre-packaged release (with vendor)
+        run: |
+          zip -r art-in-heaven.zip . \
+            -x '.git/*' '.github/*' '.claude/*' '*.md' '.DS_Store' \
+               'node_modules/*' 'tests/*' '.gitignore'
+
+      - name: Upload release artifacts
+        run: |
+          gh release upload "${{ github.event.release.tag_name }}" \
+            art-in-heaven.zip \
+            art-in-heaven-source.zip \
+            --clobber
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Setup SSH key
         run: |
           mkdir -p ~/.ssh
@@ -44,6 +68,7 @@ jobs:
             --exclude='.DS_Store' \
             --exclude='node_modules/' \
             --exclude='tests/' \
+            --exclude='art-in-heaven*.zip' \
             -e "ssh -i ~/.ssh/deploy_key" \
             ./ \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:~/httpdocs/wp-content/plugins/art-in-heaven-main/
