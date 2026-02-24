@@ -26,8 +26,6 @@ $bid_model = new AIH_Bid();
 $favorites = new AIH_Favorites();
 $art_images = new AIH_Art_Images();
 $my_bids = $bid_model->get_bidder_bids($bidder_id);
-$bid_increment = floatval(get_option('aih_bid_increment', 1));
-
 $cart_count = 0;
 $checkout = AIH_Checkout::get_instance();
 $cart_count = count($checkout->get_won_items($bidder_id));
@@ -58,15 +56,6 @@ $payment_statuses = $checkout->get_bidder_payment_statuses($bidder_id);
             <a href="<?php echo esc_url($gallery_url); ?>" class="aih-btn aih-btn--inline"><?php _e('View Gallery', 'art-in-heaven'); ?></a>
         </div>
         <?php else: ?>
-        <?php
-        // Pre-fetch all highest bids in a single query to avoid N+1
-        global $wpdb;
-        $bids_table_mybids = AIH_Database::get_table('bids');
-        $highest_bids_data = $wpdb->get_results(
-            "SELECT art_piece_id, MAX(bid_amount) as highest FROM {$bids_table_mybids} WHERE bid_status = 'active' OR bid_status IS NULL GROUP BY art_piece_id",
-            OBJECT_K
-        );
-        ?>
         <div class="aih-gallery-grid">
             <?php foreach ($my_bids as $bid):
                 $is_winning = ($bid->is_winning == 1);
@@ -75,8 +64,7 @@ $payment_statuses = $checkout->get_bidder_payment_statuses($bidder_id);
                 $images = $art_images->get_images($bid->art_piece_id);
                 $bid_title = isset($bid->title) ? $bid->title : (isset($bid->art_title) ? $bid->art_title : '');
                 $image_url = !empty($images) ? $images[0]->watermarked_url : (isset($bid->watermarked_url) ? $bid->watermarked_url : (isset($bid->image_url) ? $bid->image_url : ''));
-                $highest_bid = isset($highest_bids_data[$bid->art_piece_id]) ? floatval($highest_bids_data[$bid->art_piece_id]->highest) : 0;
-                $min_bid = $highest_bid + $bid_increment;
+                $min_bid = floatval($bid->starting_bid);
 
                 $is_paid = isset($payment_statuses[$bid->art_piece_id]) && $payment_statuses[$bid->art_piece_id] === 'paid';
 
@@ -97,7 +85,7 @@ $payment_statuses = $checkout->get_bidder_payment_statuses($bidder_id);
                     $status_text = 'Outbid';
                 }
             ?>
-            <article class="aih-card <?php echo esc_attr($status_class); ?>" data-id="<?php echo intval($bid->art_piece_id); ?>" <?php if (!empty($bid->auction_end)): ?>data-end="<?php echo esc_attr($bid->auction_end); ?>"<?php endif; ?>>
+            <article class="aih-card <?php echo esc_attr($status_class); ?>" data-id="<?php echo intval($bid->art_piece_id); ?>" data-starting-bid="<?php echo esc_attr($bid->starting_bid); ?>" <?php if (!empty($bid->auction_end)): ?>data-end="<?php echo esc_attr($bid->auction_end); ?>"<?php endif; ?>>
                 <div class="aih-card-image">
                     <?php if ($image_url): ?>
                     <a href="<?php echo esc_url($gallery_url); ?>?art_id=<?php echo intval($bid->art_piece_id); ?>">

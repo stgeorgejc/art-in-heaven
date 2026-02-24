@@ -2405,7 +2405,6 @@ class AIH_Ajax {
         }
 
         global $wpdb;
-        $bid_increment = floatval(get_option('aih_bid_increment', 1));
         $now = current_time('mysql');
         $art_table = AIH_Database::get_table('art_pieces');
         $bids_table = AIH_Database::get_table('bids');
@@ -2413,7 +2412,7 @@ class AIH_Ajax {
         // Batch fetch art piece data
         $placeholders = implode(',', array_fill(0, count($ids), '%d'));
         $art_pieces = $wpdb->get_results($wpdb->prepare(
-            "SELECT id, status, auction_end, starting_bid FROM $art_table WHERE id IN ($placeholders)",
+            "SELECT id, status, auction_end FROM $art_table WHERE id IN ($placeholders)",
             ...$ids
         ), OBJECT_K);
 
@@ -2456,19 +2455,14 @@ class AIH_Ajax {
             $is_winning = isset($winning_ids[$id]);
 
             $status = 'active';
-            $starting_bid = 0;
             if ($piece) {
                 if ($piece->status === 'ended' || (!empty($piece->auction_end) && $piece->auction_end <= $now)) {
                     $status = 'ended';
                 }
-                $starting_bid = floatval($piece->starting_bid);
             }
-
-            $min_bid = $has_bids ? $highest + $bid_increment : $starting_bid;
 
             $items[$id] = array(
                 'is_winning' => $is_winning,
-                'min_bid'    => $min_bid,
                 'has_bids'   => $has_bids,
                 'status'     => $status,
                 'has_bid'    => isset($has_bid_ids[$id]),

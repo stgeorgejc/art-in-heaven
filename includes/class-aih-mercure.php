@@ -320,15 +320,13 @@ class AIH_Mercure {
     public function on_bid_placed($bid_id, $art_piece_id, $new_bidder_id, $amount) {
         global $wpdb;
         $prefix = self::get_topic_prefix();
-        $bid_increment = floatval(get_option('aih_bid_increment', 1));
 
-        // 1. Public bid update
+        // 1. Public bid update (no bid amounts — silent auction)
         $this->publish(
             $prefix . '/auction/' . intval($art_piece_id),
             array(
                 'type'         => 'bid_update',
                 'art_piece_id' => intval($art_piece_id),
-                'min_bid'      => $amount + $bid_increment,
                 'has_bids'     => true,
                 'status'       => 'active',
             )

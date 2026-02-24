@@ -24,14 +24,12 @@ endif;
 $favorites = new AIH_Favorites();
 $bid_model = new AIH_Bid();
 $art_images = new AIH_Art_Images();
-$bid_increment = floatval(get_option('aih_bid_increment', 1));
-
 $is_favorite = $bidder_id ? $favorites->is_favorite($bidder_id, $art_piece->id) : false;
 $is_winning = $bidder_id ? $bid_model->is_bidder_winning($art_piece->id, $bidder_id) : false;
 $current_bid = $bid_model->get_highest_bid_amount($art_piece->id);
 $has_bids = $current_bid > 0;
 $display_bid = $has_bids ? $current_bid : $art_piece->starting_bid;
-$min_bid = $has_bids ? $current_bid + $bid_increment : $art_piece->starting_bid;
+$min_bid = $art_piece->starting_bid;
 
 // Get bidder's successful bid history for this piece
 $my_bid_history = $bidder_id ? $bid_model->get_bidder_bids_for_art_piece($art_piece->id, $bidder_id) : array();

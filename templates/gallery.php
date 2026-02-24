@@ -52,8 +52,6 @@ if ($is_logged_in) {
     $payment_statuses = $checkout->get_bidder_payment_statuses($bidder_id);
 }
 
-$bid_increment = floatval(get_option('aih_bid_increment', 1));
-
 // Batch pre-fetch bid data to avoid N+1 queries in the loop
 $piece_ids = array_map(function($p) { return $p->id; }, $art_pieces);
 $highest_bids = $bid_model->get_highest_bids_batch($piece_ids);
@@ -169,7 +167,7 @@ $bidder_bid_ids = $bid_model->get_bidder_bid_ids_batch($piece_ids, $bidder_id);
                 $current_bid = isset($highest_bids[$piece->id]) ? $highest_bids[$piece->id] : 0;
                 $has_bids = $current_bid > 0;
                 $display_bid = $has_bids ? $current_bid : $piece->starting_bid;
-                $min_bid = $has_bids ? $current_bid + $bid_increment : $piece->starting_bid;
+                $min_bid = $piece->starting_bid;
                 $primary_image = $piece->watermarked_url ?: $piece->image_url;
 
                 // Proper status calculation - check computed_status first, then calculate from dates

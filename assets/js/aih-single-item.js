@@ -206,10 +206,6 @@ jQuery(document).ready(function($) {
                 $('.aih-single-image').find('.aih-badge').remove();
                 $('.aih-single-image').prepend('<span class="aih-badge aih-badge-winning aih-badge-single">Winning</span>');
                 $('#bid-amount').val('');
-                // Update minimum bid
-                var increment = aihAjax.bidIncrement;
-                var newMin = amount + increment;
-                $('#bid-amount').data('min', newMin).attr('data-min', newMin);
             } else {
                 $msg.removeClass('success').addClass('error').text(r.data.message || 'Failed').show();
             }
@@ -346,11 +342,6 @@ jQuery(document).ready(function($) {
                     }
                 }
 
-                // Update min bid
-                var $bidInput = $('#bid-amount');
-                if ($bidInput.length) {
-                    $bidInput.attr('data-min', info.min_bid).data('min', info.min_bid);
-                }
             }
         });
     }
