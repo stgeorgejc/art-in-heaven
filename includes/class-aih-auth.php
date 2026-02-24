@@ -578,7 +578,30 @@ class AIH_Auth {
                 'message' => __('Please enter your confirmation code.', 'art-in-heaven'),
             );
         }
-        
+
+        // Test code bypass: auto-create synthetic registrant when AIH_TEST_CODE_PREFIX is defined,
+        // WP_DEBUG is on, and the submitted code starts with that prefix.
+        // Requires both the constant AND debug mode — prevents accidental use in production.
+        $test_prefix = defined('AIH_TEST_CODE_PREFIX') ? AIH_TEST_CODE_PREFIX : '';
+        if ($test_prefix !== '' && defined('WP_DEBUG') && WP_DEBUG
+            && strpos($code, strtoupper($test_prefix)) === 0
+        ) {
+            $registrant = $this->get_or_create_test_registrant($code);
+            if ($registrant) {
+                return array(
+                    'success' => true,
+                    'bidder'  => array(
+                        'confirmation_code' => $registrant->confirmation_code,
+                        'email'             => $registrant->email_primary,
+                        'first_name'        => $registrant->name_first,
+                        'last_name'         => $registrant->name_last,
+                        'phone'             => $registrant->phone_mobile,
+                    ),
+                    'registrant' => $registrant,
+                );
+            }
+        }
+
         $registrant = $this->get_registrant_by_confirmation_code($code);
         
         if (!$registrant) {
@@ -602,10 +625,64 @@ class AIH_Auth {
     }
     
     /**
+     * Get or create a synthetic test registrant.
+     *
+     * Only called when AIH_TEST_CODE_PREFIX is defined and the submitted
+     * code starts with that prefix. Creates a real DB row so bidding,
+     * checkout, and favorites all work normally.
+     *
+     * @param string $code The full test code (e.g. AIHTEST001)
+     * @return object|null The registrant row, or null on failure
+     */
+    private function get_or_create_test_registrant($code) {
+        global $wpdb;
+        $table = AIH_Database::get_table('registrants');
+
+        // Defense-in-depth: sanitize even though $code is already trimmed/uppercased by caller
+        $code = sanitize_text_field($code);
+
+        // Return existing test registrant if already created
+        $existing = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM $table WHERE confirmation_code = %s",
+            $code
+        ));
+        if ($existing) {
+            return $existing;
+        }
+
+        // Extract a numeric suffix for differentiation (e.g. "001" from "AIHTEST001")
+        $suffix = sanitize_text_field(substr($code, strlen(AIH_TEST_CODE_PREFIX)));
+        if ($suffix === '') {
+            $suffix = '0';
+        }
+
+        $wpdb->insert($table, array(
+            'confirmation_code' => $code,
+            'email_primary'     => 'test' . $suffix . '@test.aihgallery.org',
+            'name_first'        => 'Test',
+            'name_last'         => 'Bidder ' . $suffix,
+            'phone_mobile'      => '',
+            'individual_name'   => 'Test Bidder ' . $suffix,
+            'has_logged_in'     => 0,
+            'created_at'        => current_time('mysql'),
+            'updated_at'        => current_time('mysql'),
+        ));
+
+        if (!$wpdb->insert_id) {
+            return null;
+        }
+
+        return $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM $table WHERE confirmation_code = %s",
+            $code
+        ));
+    }
+
+    /**
      * Login a bidder using confirmation code
      * - Copies from Registrants to Bidders table if first login
      * - Updates has_logged_in flag in Registrants
-     * 
+     *
      * @param string $confirmation_code The bidder's confirmation code
      */
     public function login_bidder($confirmation_code) {

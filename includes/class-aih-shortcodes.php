@@ -130,7 +130,7 @@ class AIH_Shortcodes {
             }
             $bidder = $auth->get_current_bidder();
             $name = !empty($bidder->name_first) ? $bidder->name_first : (!empty($bidder->email_primary) ? $bidder->email_primary : '');
-            return '<div class="aih-login-success"><p>' . sprintf(__('Welcome, %s! You are already signed in.', 'art-in-heaven'), esc_html($name)) . '</p><button type="button" onclick="jQuery.post(aihAjax.ajaxurl, {action:\'aih_logout\'}, function(){location.reload();});" class="aih-btn-secondary">' . __('Sign Out', 'art-in-heaven') . '</button></div>';
+            return '<div class="aih-login-success"><p>' . sprintf(__('Welcome, %s! You are already signed in.', 'art-in-heaven'), esc_html($name)) . '</p><button type="button" onclick="jQuery.post(aihAjax.ajaxurl, {action:\'aih_logout\', nonce:aihAjax.publicNonce}, function(){location.reload();});" class="aih-btn-secondary">' . __('Sign Out', 'art-in-heaven') . '</button></div>';
         }
         
         $redirect_to = isset($_GET['redirect_to']) ? esc_url($_GET['redirect_to']) : '';

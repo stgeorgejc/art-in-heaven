@@ -11,7 +11,7 @@ require_once __DIR__ . '/../vendor/autoload.php';
 
 // WordPress core constants used by plugin code
 define('ABSPATH', '/tmp/wordpress/');
-define('WP_DEBUG', false);
+define('WP_DEBUG', true);
 define('HOUR_IN_SECONDS', 3600);
 define('MINUTE_IN_SECONDS', 60);
 define('DAY_IN_SECONDS', 86400);
@@ -28,6 +28,9 @@ define('AIH_PLUGIN_URL', 'https://example.com/wp-content/plugins/art-in-heaven/'
 define('AIH_PLUGIN_BASENAME', 'art-in-heaven/art-in-heaven.php');
 define('AIH_CACHE_GROUP', 'art_in_heaven');
 define('AIH_CACHE_EXPIRY', HOUR_IN_SECONDS);
+
+// Test code bypass constant
+define('AIH_TEST_CODE_PREFIX', 'AIHTEST');
 
 // Load plugin source files under test
 require_once __DIR__ . '/../includes/class-aih-security.php';

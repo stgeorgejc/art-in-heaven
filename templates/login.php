@@ -19,7 +19,7 @@ $gallery_url = $gallery_page ? get_permalink($gallery_page) : home_url();
 if (typeof aihAjax === 'undefined') {
     var aihAjax = {
         ajaxurl: '<?php echo esc_url(admin_url('admin-ajax.php')); ?>',
-        nonce: '<?php echo wp_create_nonce('aih_nonce'); ?>',
+        publicNonce: '<?php echo wp_create_nonce('aih_public_nonce'); ?>',
         isLoggedIn: false
     };
 }
@@ -85,7 +85,7 @@ jQuery(document).ready(function($) {
         $.ajax({
             url: aihAjax.ajaxurl,
             type: 'POST',
-            data: { action: 'aih_verify_code', nonce: aihAjax.nonce, code: code },
+            data: { action: 'aih_verify_code', nonce: aihAjax.publicNonce, code: code },
             success: function(response) {
                 if (response.success) {
                     $msg.removeClass('error').addClass('success').text(response.data.message).show();
