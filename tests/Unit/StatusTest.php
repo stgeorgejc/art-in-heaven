@@ -13,19 +13,21 @@ use DateTimeZone;
 
 class StatusTest extends TestCase
 {
+    private DateTimeZone $tz;
+
     protected function setUp(): void
     {
         parent::setUp();
         Monkey\setUp();
 
-        $tz = new DateTimeZone('America/New_York');
+        $this->tz = new DateTimeZone('America/New_York');
 
         Functions\stubs([
-            'wp_timezone' => function () use ($tz) {
-                return $tz;
+            'wp_timezone' => function () {
+                return $this->tz;
             },
             'current_time' => function ($format) {
-                return (new DateTime('now', new DateTimeZone('America/New_York')))->format(
+                return (new DateTime('now', $this->tz))->format(
                     $format === 'mysql' ? 'Y-m-d H:i:s' : $format
                 );
             },
@@ -39,6 +41,22 @@ class StatusTest extends TestCase
     {
         Monkey\tearDown();
         parent::tearDown();
+    }
+
+    /**
+     * Generate a future datetime string relative to now.
+     */
+    private function futureDate(string $offset = '+1 year'): string
+    {
+        return (new DateTime($offset, $this->tz))->format('Y-m-d H:i:s');
+    }
+
+    /**
+     * Generate a past datetime string relative to now.
+     */
+    private function pastDate(string $offset = '-1 year'): string
+    {
+        return (new DateTime($offset, $this->tz))->format('Y-m-d H:i:s');
     }
 
     // ── is_valid_status() ──
@@ -145,7 +163,7 @@ class StatusTest extends TestCase
             'id' => 1,
             'status' => 'ended',
             'auction_start' => '2025-01-01 00:00:00',
-            'auction_end' => '2099-12-31 23:59:59', // future end, but status says ended
+            'auction_end' => $this->futureDate(), // future end, but status says ended
         ];
         $result = AIH_Status::compute_status($piece);
         $this->assertSame('ended', $result['status']);
@@ -157,8 +175,8 @@ class StatusTest extends TestCase
         $piece = (object) [
             'id' => 1,
             'status' => 'paused',
-            'auction_start' => '2020-01-01 00:00:00',
-            'auction_end' => '2099-12-31 23:59:59',
+            'auction_start' => $this->pastDate(),
+            'auction_end' => $this->futureDate(),
         ];
         $result = AIH_Status::compute_status($piece);
         $this->assertSame('paused', $result['status']);
@@ -170,8 +188,8 @@ class StatusTest extends TestCase
         $piece = (object) [
             'id' => 1,
             'status' => 'canceled',
-            'auction_start' => '2020-01-01 00:00:00',
-            'auction_end' => '2099-12-31 23:59:59',
+            'auction_start' => $this->pastDate(),
+            'auction_end' => $this->futureDate(),
         ];
         $result = AIH_Status::compute_status($piece);
         $this->assertSame('canceled', $result['status']);
@@ -183,8 +201,8 @@ class StatusTest extends TestCase
         $piece = (object) [
             'id' => 1,
             'status' => 'draft',
-            'auction_start' => '2020-01-01 00:00:00',
-            'auction_end' => '2099-12-31 23:59:59',
+            'auction_start' => $this->pastDate(),
+            'auction_end' => $this->futureDate(),
         ];
         $result = AIH_Status::compute_status($piece);
         $this->assertSame('draft', $result['status']);
@@ -196,8 +214,8 @@ class StatusTest extends TestCase
         $piece = (object) [
             'id' => 1,
             'status' => 'active',
-            'auction_start' => '2020-01-01 00:00:00',
-            'auction_end' => '2099-12-31 23:59:59',
+            'auction_start' => $this->pastDate(),
+            'auction_end' => $this->futureDate(),
         ];
         $result = AIH_Status::compute_status($piece);
         $this->assertSame('active', $result['status']);
@@ -209,8 +227,8 @@ class StatusTest extends TestCase
         $piece = (object) [
             'id' => 1,
             'status' => 'active',
-            'auction_start' => '2020-01-01 00:00:00',
-            'auction_end' => '2020-12-31 23:59:59', // past
+            'auction_start' => $this->pastDate('-2 years'),
+            'auction_end' => $this->pastDate(), // past
         ];
         $result = AIH_Status::compute_status($piece);
         $this->assertSame('ended', $result['status']);
@@ -222,8 +240,8 @@ class StatusTest extends TestCase
         $piece = (object) [
             'id' => 1,
             'status' => 'active',
-            'auction_start' => '2099-06-01 00:00:00', // future
-            'auction_end' => '2099-12-31 23:59:59',
+            'auction_start' => $this->futureDate('+6 months'), // future
+            'auction_end' => $this->futureDate('+1 year'),
         ];
         $result = AIH_Status::compute_status($piece);
         $this->assertSame('draft', $result['status']); // upcoming = draft
