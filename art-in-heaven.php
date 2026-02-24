@@ -359,7 +359,10 @@ class Art_In_Heaven {
             return;
         }
 
-        $sw_file = AIH_PLUGIN_DIR . 'assets/js/aih-sw.js';
+        $sw_file = AIH_PLUGIN_DIR . 'assets/js/aih-sw.min.js';
+        if (!file_exists($sw_file)) {
+            $sw_file = AIH_PLUGIN_DIR . 'assets/js/aih-sw.js';
+        }
         if (!file_exists($sw_file)) {
             return;
         }
@@ -539,11 +542,11 @@ class Art_In_Heaven {
         // Google Fonts loaded async in add_preconnect_hints() to avoid render-blocking
 
         // Elegant theme CSS (loaded in <head> to prevent FOUC)
-        wp_enqueue_style('aih-elegant-theme', AIH_PLUGIN_URL . 'assets/css/elegant-theme.css', array(), AIH_VERSION);
+        wp_enqueue_style('aih-elegant-theme', $this->get_asset_url('assets/css/elegant-theme.css'), array(), AIH_VERSION);
 
-        wp_enqueue_script('aih-frontend', AIH_PLUGIN_URL . 'assets/js/aih-frontend.js', array('jquery'), AIH_VERSION, true);
+        wp_enqueue_script('aih-frontend', $this->get_asset_url('assets/js/aih-frontend.js'), array('jquery'), AIH_VERSION, true);
         wp_script_add_data('aih-frontend', 'strategy', 'defer');
-        wp_enqueue_script('aih-push', AIH_PLUGIN_URL . 'assets/js/aih-push.js', array('jquery', 'aih-frontend'), AIH_VERSION, true);
+        wp_enqueue_script('aih-push', $this->get_asset_url('assets/js/aih-push.js'), array('jquery', 'aih-frontend'), AIH_VERSION, true);
         wp_script_add_data('aih-push', 'strategy', 'defer');
 
         // Add custom color CSS
@@ -576,7 +579,7 @@ class Art_In_Heaven {
             $localize_data['mercureUrl'] = AIH_Mercure::get_public_hub_url();
             $localize_data['siteUrl']    = home_url();
 
-            wp_enqueue_script('aih-sse', AIH_PLUGIN_URL . 'assets/js/aih-sse.js', array('jquery', 'aih-frontend'), AIH_VERSION, true);
+            wp_enqueue_script('aih-sse', $this->get_asset_url('assets/js/aih-sse.js'), array('jquery', 'aih-frontend'), AIH_VERSION, true);
             wp_script_add_data('aih-sse', 'strategy', 'defer');
         }
 
@@ -610,22 +613,22 @@ class Art_In_Heaven {
                 // Gallery shortcode also serves single-item (/art/{id}) and my-bids (?my_bids=1)
                 $art_id = intval(get_query_var('aih_art_id', 0));
                 if ($art_id) {
-                    wp_enqueue_script('aih-single-item', AIH_PLUGIN_URL . 'assets/js/aih-single-item.js', array('jquery', 'aih-frontend'), AIH_VERSION, true);
+                    wp_enqueue_script('aih-single-item', $this->get_asset_url('assets/js/aih-single-item.js'), array('jquery', 'aih-frontend'), AIH_VERSION, true);
                     wp_script_add_data('aih-single-item', 'strategy', 'defer');
                 } elseif (isset($_GET['my_bids']) && $_GET['my_bids'] == '1') {
-                    wp_enqueue_script('aih-my-bids', AIH_PLUGIN_URL . 'assets/js/aih-my-bids.js', array('jquery', 'aih-frontend'), AIH_VERSION, true);
+                    wp_enqueue_script('aih-my-bids', $this->get_asset_url('assets/js/aih-my-bids.js'), array('jquery', 'aih-frontend'), AIH_VERSION, true);
                     wp_script_add_data('aih-my-bids', 'strategy', 'defer');
                 } else {
-                    wp_enqueue_script('aih-gallery', AIH_PLUGIN_URL . 'assets/js/aih-gallery.js', array('jquery', 'aih-frontend'), AIH_VERSION, true);
+                    wp_enqueue_script('aih-gallery', $this->get_asset_url('assets/js/aih-gallery.js'), array('jquery', 'aih-frontend'), AIH_VERSION, true);
                     wp_script_add_data('aih-gallery', 'strategy', 'defer');
                 }
             }
             if (has_shortcode($content, 'art_in_heaven_item')) {
-                wp_enqueue_script('aih-single-item', AIH_PLUGIN_URL . 'assets/js/aih-single-item.js', array('jquery', 'aih-frontend'), AIH_VERSION, true);
+                wp_enqueue_script('aih-single-item', $this->get_asset_url('assets/js/aih-single-item.js'), array('jquery', 'aih-frontend'), AIH_VERSION, true);
                 wp_script_add_data('aih-single-item', 'strategy', 'defer');
             }
             if (has_shortcode($content, 'art_in_heaven_my_bids')) {
-                wp_enqueue_script('aih-my-bids', AIH_PLUGIN_URL . 'assets/js/aih-my-bids.js', array('jquery', 'aih-frontend'), AIH_VERSION, true);
+                wp_enqueue_script('aih-my-bids', $this->get_asset_url('assets/js/aih-my-bids.js'), array('jquery', 'aih-frontend'), AIH_VERSION, true);
                 wp_script_add_data('aih-my-bids', 'strategy', 'defer');
             }
         }
@@ -832,7 +835,45 @@ class Art_In_Heaven {
         
         return sprintf('#%02x%02x%02x', $r, $g, $b);
     }
-    
+
+    /**
+     * Get the URL for an asset file, preferring .min version in production.
+     *
+     * @param string $relative_path Relative path from plugin root, e.g. 'assets/js/aih-frontend.js'
+     * @return string Full URL to the asset file
+     */
+    private function get_asset_url($relative_path) {
+        if (defined('SCRIPT_DEBUG') && SCRIPT_DEBUG) {
+            return AIH_PLUGIN_URL . $relative_path;
+        }
+
+        $min_path = preg_replace('/\.(js|css)$/', '.min.$1', $relative_path);
+        if (file_exists(AIH_PLUGIN_DIR . $min_path)) {
+            return AIH_PLUGIN_URL . $min_path;
+        }
+
+        return AIH_PLUGIN_URL . $relative_path;
+    }
+
+    /**
+     * Get the filesystem path for an asset file, preferring .min version in production.
+     *
+     * @param string $relative_path Relative path from plugin root
+     * @return string Full filesystem path to the asset file
+     */
+    private function get_asset_path($relative_path) {
+        if (defined('SCRIPT_DEBUG') && SCRIPT_DEBUG) {
+            return AIH_PLUGIN_DIR . $relative_path;
+        }
+
+        $min_path = preg_replace('/\.(js|css)$/', '.min.$1', $relative_path);
+        if (file_exists(AIH_PLUGIN_DIR . $min_path)) {
+            return AIH_PLUGIN_DIR . $min_path;
+        }
+
+        return AIH_PLUGIN_DIR . $relative_path;
+    }
+
     /**
      * Enqueue admin assets
      */
@@ -845,9 +886,9 @@ class Art_In_Heaven {
         });
         
         wp_enqueue_media();
-        $css_ver = AIH_VERSION . '.' . filemtime(AIH_PLUGIN_DIR . 'assets/css/aih-admin.css');
-        wp_enqueue_style('aih-admin', AIH_PLUGIN_URL . 'assets/css/aih-admin.css', array(), $css_ver);
-        wp_enqueue_script('aih-admin', AIH_PLUGIN_URL . 'assets/js/aih-admin.js', array('jquery', 'jquery-ui-datepicker', 'jquery-ui-sortable'), AIH_VERSION, true);
+        $css_ver = AIH_VERSION . '.' . filemtime($this->get_asset_path('assets/css/aih-admin.css'));
+        wp_enqueue_style('aih-admin', $this->get_asset_url('assets/css/aih-admin.css'), array(), $css_ver);
+        wp_enqueue_script('aih-admin', $this->get_asset_url('assets/js/aih-admin.js'), array('jquery', 'jquery-ui-datepicker', 'jquery-ui-sortable'), AIH_VERSION, true);
         
         wp_localize_script('aih-admin', 'aihAdmin', array(
             'ajaxurl' => admin_url('admin-ajax.php'),
