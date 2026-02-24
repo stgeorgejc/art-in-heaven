@@ -106,10 +106,8 @@ art-in-heaven/
 │   ├── class-aih-api-router.php     # Lightweight API routing
 │   ├── class-aih-watermark.php      # Image watermarking
 │   ├── class-aih-image-optimizer.php # AVIF/WebP responsive images
-│   ├── class-aih-notifications.php  # Email notifications
 │   ├── class-aih-push.php           # Web push notifications
 │   ├── class-aih-mercure.php        # Real-time updates (Mercure)
-│   ├── class-aih-sse.php            # Server-Sent Events
 │   ├── class-aih-security.php       # Input sanitization and rate limiting
 │   ├── class-aih-cache.php          # Transient caching with group versioning
 │   ├── class-aih-status.php         # Auction status computation
@@ -146,7 +144,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, testing, and contribution guid
 composer install
 composer setup-hooks    # install git hooks (one-time)
 composer test           # run PHPUnit
-composer analyse        # run PHPStan
+composer analyze        # run PHPStan
 ```
 
 ## CI/CD
