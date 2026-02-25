@@ -231,6 +231,17 @@ body.aih-active .page-title {
     display: none !important;
 }
 
+/* ── WordPress theme chrome: hide on plugin pages ── */
+body.aih-active .wp-site-blocks > header,
+body.aih-active .wp-site-blocks > footer {
+    display: none !important;
+}
+
+body.aih-active .wp-site-blocks {
+    padding-block-start: 0 !important;
+    padding-block-end: 0 !important;
+}
+
 /* ============================================
    HEADER - MOBILE FIRST
    ============================================ */
@@ -245,12 +256,11 @@ body.aih-active .page-title {
 }
 
 .aih-page .aih-header-inner {
-    padding: 12px 24px;
+    padding: 8px 12px;
     display: flex;
-    flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
     max-width: 100%;
     margin: 0 auto;
     width: 100%;
@@ -258,7 +268,7 @@ body.aih-active .page-title {
 
 .aih-logo {
     font-family: var(--font-display);
-    font-size: 20px;
+    font-size: 1.1rem;
     font-weight: 600;
     color: var(--color-primary);
     text-decoration: none;
@@ -268,12 +278,8 @@ body.aih-active .page-title {
 
 .aih-nav {
     display: flex;
-    gap: 20px;
-    order: 3;
-    width: 100%;
-    justify-content: center;
-    padding-top: 12px;
-    border-top: 1px solid var(--color-border);
+    gap: 12px;
+    align-items: center;
 }
 
 .aih-page .aih-nav-link {
@@ -282,11 +288,12 @@ body.aih-active .page-title {
     font-weight: 500;
     color: var(--color-muted);
     text-decoration: none;
-    letter-spacing: 1.5px;
+    letter-spacing: 1px;
     text-transform: uppercase;
     transition: color var(--transition);
-    padding: 6px 0;
+    padding: 4px 0;
     border-bottom: 2px solid transparent;
+    white-space: nowrap;
 }
 
 .aih-nav-link:hover,
@@ -301,7 +308,7 @@ body.aih-active .page-title {
 .aih-header-actions {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 6px;
 }
 
 .aih-cart-link {
@@ -335,11 +342,11 @@ body.aih-active .page-title {
 .aih-user-menu {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 6px;
 }
 
 .aih-page .aih-user-name {
-    display: flex;
+    display: none;
     align-items: center;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     font-size: 13px;
@@ -360,8 +367,8 @@ body.aih-active .page-title {
     border: 1px solid var(--color-border);
     border-radius: var(--radius);
     cursor: pointer;
-    height: 32px;
-    padding: 0 12px;
+    height: 28px;
+    padding: 0 8px;
     transition: all var(--transition);
 }
 
@@ -376,7 +383,7 @@ body.aih-active .page-title {
 .aih-page .aih-main {
     flex: 1 1 auto;
     width: 100%;
-    padding: 20px 24px;
+    padding: 12px 12px;
     background: var(--color-bg);
     min-height: 0;
     min-width: 0;
@@ -399,19 +406,19 @@ body.aih-active .page-title {
 .aih-gallery-header {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    margin-bottom: 16px;
-    padding-bottom: 12px;
+    gap: 6px;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
     border-bottom: 1px solid var(--color-border);
 }
 
 .aih-gallery-title h1 {
     font-family: var(--font-display);
-    font-size: 24px;
+    font-size: 1.1rem;
     font-weight: 500;
     color: var(--color-primary);
     letter-spacing: -0.5px;
-    margin-bottom: 2px;
+    margin-bottom: 0;
     overflow-wrap: break-word;
     word-wrap: break-word;
 }
@@ -420,28 +427,29 @@ body.aih-active .page-title {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     font-size: 12px;
     color: var(--color-muted);
+    display: none;
 }
 
 .aih-gallery-controls {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 12px;
+    gap: 6px;
+    margin-top: 6px;
     align-items: center;
 }
 
 .aih-search-box {
-    flex: 1 1 100%;
-    width: 100%;
+    flex: 1 1 auto;
+    min-width: 0;
     order: 0;
 }
 
 .aih-search-input {
     width: 100%;
-    height: 36px;
+    height: 32px;
     padding: 5px 8px;
     font-family: var(--font-body);
-    font-size: 11px;
+    font-size: 16px; /* >=16px prevents iOS Safari auto-zoom on focus */
     color: var(--color-primary);
     background: var(--color-surface);
     border: 1px solid var(--color-border);
@@ -475,10 +483,10 @@ body.aih-active .page-title {
     align-items: center;
     justify-content: center;
     gap: 6px;
-    height: 36px;
-    padding: 0 12px;
+    height: 32px;
+    padding: 0 10px;
     font-family: var(--font-body);
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 500;
     color: var(--color-primary);
     background: var(--color-surface);
@@ -1489,7 +1497,7 @@ body.filter-open {
 .aih-single-content {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 32px;
+    gap: 16px;
     align-items: start;
     flex: 1;
     min-width: 0;
@@ -2098,21 +2106,6 @@ body.filter-open {
     display: block;
 }
 
-/* ============================================
-   SINGLE PAGE - NAVIGATION & PAGE INDICATOR
-   Note: Main styles are in single-item.php
-   ============================================ */
-.aih-back-link {
-    font-size: 13px;
-    color: var(--color-muted);
-    text-decoration: none;
-    transition: color var(--transition);
-}
-
-.aih-back-link:hover {
-    color: var(--color-primary);
-}
-
 /* Prevent text size adjustment on orientation change (iOS) */
 html {
     -webkit-text-size-adjust: 100%;
@@ -2457,39 +2450,79 @@ body {
     
     .aih-header-inner {
         padding: 16px 48px;
-        flex-wrap: nowrap;
+        gap: 12px;
     }
-    
+
     .aih-logo {
         font-size: 24px;
         flex: 1;
     }
 
     .aih-nav {
-        order: 0;
-        width: auto;
         flex: 0 0 auto;
         justify-content: center;
         gap: 36px;
-        padding-top: 0;
-        border-top: none;
     }
 
     .aih-header-actions {
         flex: 1;
         justify-content: flex-end;
+        gap: 12px;
     }
-    
+
+    .aih-user-menu {
+        gap: 12px;
+    }
+
+    .aih-user-name {
+        display: flex;
+    }
+
+    .aih-logout-btn {
+        height: 32px;
+        padding: 0 12px;
+    }
+
     .aih-nav-link {
         font-size: 12px;
+        letter-spacing: 1.5px;
+        padding: 6px 0;
     }
-    
+
     .aih-main {
         padding: 32px 48px;
     }
     
     .aih-gallery-header {
         gap: 16px;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+    }
+
+    .aih-gallery-title h1 {
+        font-size: 24px;
+        margin-bottom: 2px;
+    }
+
+    .aih-subtitle {
+        display: block;
+        font-size: 12px;
+    }
+
+    .aih-gallery-controls {
+        gap: 8px;
+        margin-top: 12px;
+    }
+
+    .aih-search-input {
+        height: 36px;
+        font-size: 11px;
+    }
+
+    .aih-filter-toggle {
+        height: 36px;
+        padding: 0 12px;
+        font-size: 12px;
     }
     
     .aih-gallery-grid {
@@ -2534,7 +2567,33 @@ body {
         grid-template-columns: 1.2fr 1fr;
         gap: 48px;
     }
-    
+
+    .aih-single-image > img {
+        max-height: 55vh;
+    }
+
+    .aih-single-image {
+        padding: 12px;
+    }
+
+    .aih-single-nav-bar {
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        gap: 12px;
+    }
+
+    .aih-nav-center {
+        gap: 12px;
+    }
+
+    .aih-single-details .aih-bid-section { order: 0; }
+    .aih-single-details .aih-piece-info { order: 0; }
+    .aih-single-details .aih-bid-history { order: 0; }
+
+    .aih-artist {
+        margin-bottom: 24px;
+    }
+
     .aih-single-details h1 {
         font-size: 32px;
     }
@@ -3624,33 +3683,34 @@ body {
 /* Single Item Page Overrides */
 .aih-single-nav-bar {
     display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 24px;
-    padding-bottom: 16px;
+    gap: 8px;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
     border-bottom: 1px solid var(--color-border);
 }
 
 .aih-back-link {
-    width: 100%;
-    text-align: center;
-    order: 2;
-    font-size: 13px;
+    flex: 1;
+    text-align: left;
+    order: 0;
+    font-size: 12px;
     color: var(--color-accent);
     text-decoration: none;
     font-weight: 500;
+    transition: color var(--transition);
 }
 
 .aih-back-link:hover {
+    color: var(--color-accent-dark);
     text-decoration: underline;
 }
 
 .aih-nav-center {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
     order: 1;
 }
 
@@ -3688,7 +3748,7 @@ body {
 }
 
 .aih-nav-spacer {
-    display: none;
+    flex: 1;
 }
 
 /* Content wrapper with navigation arrows at edges */
@@ -3737,7 +3797,7 @@ body {
     position: relative;
     background: var(--color-surface);
     border: 1px solid var(--color-border);
-    padding: 12px;
+    padding: 8px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -3747,7 +3807,7 @@ body {
     width: auto;
     max-width: 100%;
     height: auto;
-    max-height: 55vh;
+    max-height: 45vh;
     display: block;
     object-fit: contain;
     cursor: zoom-in;
@@ -3826,7 +3886,14 @@ body {
     overflow-wrap: break-word;
     word-wrap: break-word;
     word-break: break-word;
+    display: flex;
+    flex-direction: column;
 }
+
+/* Reorder on mobile: bid section above piece info */
+.aih-single-details .aih-bid-section { order: -1; }
+.aih-single-details .aih-piece-info { order: 1; }
+.aih-single-details .aih-bid-history { order: 2; }
 
 .aih-single-meta {
     display: flex;
@@ -3845,7 +3912,7 @@ body {
 .aih-artist {
     font-size: clamp(14px, 3.5vw, 16px);
     color: var(--color-muted);
-    margin-bottom: 24px;
+    margin-bottom: 8px;
 }
 
 .aih-piece-info {
@@ -4394,7 +4461,7 @@ html.aih-lightbox-open body {
     }
 
     .aih-back-link {
-        width: auto;
+        flex: 0 0 auto;
         text-align: left;
         order: 0;
         font-size: 14px;
@@ -4406,7 +4473,7 @@ html.aih-lightbox-open body {
 
     .aih-nav-spacer {
         display: block;
-        width: 100px;
+        flex: 0 0 100px;
     }
 
     .aih-single-content-wrapper > .aih-nav-arrow {
