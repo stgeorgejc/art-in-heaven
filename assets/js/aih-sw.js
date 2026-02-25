@@ -35,6 +35,24 @@ self.addEventListener('push', function(event) {
 
     event.waitUntil(
         self.registration.showNotification(data.title || 'Art in Heaven', options)
+            .then(function() {
+                return self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+            })
+            .then(function(clients) {
+                var message = {
+                    type: 'aih-push',
+                    data: {
+                        type: data.type || 'outbid',
+                        art_piece_id: data.art_piece_id || null,
+                        title: data.title || '',
+                        body: data.body || '',
+                        url: data.url || '/'
+                    }
+                };
+                for (var i = 0; i < clients.length; i++) {
+                    clients[i].postMessage(message);
+                }
+            })
     );
 });
 

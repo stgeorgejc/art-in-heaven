@@ -105,6 +105,8 @@ window.addEventListener('beforeinstallprompt', function(e) {
                         self.pushSubscribed = true;
                         self.syncSubscription(subscription);
                         self.updateBellState('granted');
+                        // Verify subscription still exists server-side
+                        self.verifySubscription(subscription);
                     } else if (Notification.permission === 'granted') {
                         // Permission granted but not subscribed — re-subscribe
                         self.subscribe();
@@ -113,6 +115,28 @@ window.addEventListener('beforeinstallprompt', function(e) {
                 .catch(function() {
                     // Service worker failed — polling already running
                 });
+
+            // Listen for messages from the service worker (push → page bridge)
+            navigator.serviceWorker.addEventListener('message', function(event) {
+                if (!event.data || event.data.type !== 'aih-push') return;
+                var payload = event.data.data;
+                if (!payload) return;
+
+                // Dedup: skip if we already showed this via SSE/polling
+                var dedupeKey = (payload.type || '') + '-' + (payload.art_piece_id || '');
+                if (self.shownEvents[dedupeKey]) return;
+                self.shownEvents[dedupeKey] = true;
+
+                if (payload.type === 'outbid' && typeof window.showOutbidAlert === 'function') {
+                    var title = payload.title || 'an item';
+                    window.showOutbidAlert(payload.art_piece_id, title, payload.url);
+                }
+
+                // Trigger status poll for fresh badge/state data
+                if (typeof window.aihPollStatus === 'function') {
+                    window.aihPollStatus();
+                }
+            });
         },
 
         // ========== BELL BUTTON STATE ==========
@@ -172,8 +196,9 @@ window.addEventListener('beforeinstallprompt', function(e) {
 
             if (permission === 'granted') {
                 if (this.pushSubscribed) {
-                    if (typeof window.showToast === 'function') {
-                        window.showToast('Notifications are already enabled!', 'success');
+                    // Open notification drawer
+                    if (typeof window.aihToggleDrawer === 'function') {
+                        window.aihToggleDrawer();
                     }
                 } else {
                     // Granted but not subscribed — try subscribing
@@ -514,6 +539,27 @@ window.addEventListener('beforeinstallprompt', function(e) {
             });
         },
 
+        /**
+         * Verify subscription exists server-side; re-subscribe if stale.
+         */
+        verifySubscription: function(subscription) {
+            var self = this;
+            aihPost('push-verify', {
+                action:   'aih_push_verify',
+                nonce:    aihAjax.nonce,
+                endpoint: subscription.endpoint
+            }, function(response) {
+                // Server knows this subscription — all good
+            }, function() {
+                // Server doesn't recognize it — unsubscribe and re-subscribe
+                console.warn('[AIH] Push subscription unknown to server — re-subscribing');
+                subscription.unsubscribe().then(function() {
+                    self.pushSubscribed = false;
+                    self.subscribe();
+                });
+            });
+        },
+
         // ========== POLLING FALLBACK ==========
 
         /**
@@ -548,8 +594,7 @@ window.addEventListener('beforeinstallprompt', function(e) {
          * Polling fallback: check for outbid events using smart intervals
          */
         pollOutbid: function() {
-            if (window.aihSSEConnected) return; // SSE handles real-time outbid notifications
-            console.log('[AIH] Polling for outbid events (fallback)');
+            console.log('[AIH] Polling for outbid events' + (window.aihSSEConnected ? ' (background check)' : ' (fallback)'));
             var self = this;
             aihPost('check-outbid', {
                 action: 'aih_check_outbid',
@@ -581,7 +626,9 @@ window.addEventListener('beforeinstallprompt', function(e) {
         startPolling: function() {
             if (this.pollTimer) clearTimeout(this.pollTimer);
             var self = this;
-            var interval = document.hidden ? 60000 : this.getSmartInterval();
+            // Use slower interval when SSE is connected (background safety net)
+            var interval = document.hidden ? 60000 :
+                           (window.aihSSEConnected ? 60000 : this.getSmartInterval());
             this.pollTimer = setTimeout(function() {
                 self.pollOutbid();
                 self.startPolling();
@@ -628,6 +675,21 @@ window.addEventListener('beforeinstallprompt', function(e) {
             AIHPush.startPolling();
         }
     });
+
+    // Offline/online detection — dispatch connection status changes
+    window.addEventListener('offline', function() {
+        window.aihConnectionStatus = 'offline';
+        window.dispatchEvent(new CustomEvent('aih:connectionchange', { detail: { status: 'offline' } }));
+    });
+
+    window.addEventListener('online', function() {
+        // Go back to polling; SSE will promote to 'realtime' if it reconnects
+        window.aihConnectionStatus = 'polling';
+        window.dispatchEvent(new CustomEvent('aih:connectionchange', { detail: { status: 'polling' } }));
+    });
+
+    // Set initial connection status
+    window.aihConnectionStatus = navigator.onLine ? 'polling' : 'offline';
 
     // Expose for external triggering (e.g. after bid, from other scripts)
     window.AIHPush = AIHPush;

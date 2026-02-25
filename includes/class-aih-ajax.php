@@ -115,6 +115,8 @@ class AIH_Ajax {
         add_action('wp_ajax_nopriv_aih_push_subscribe', array($this, 'push_subscribe'));
         add_action('wp_ajax_aih_push_unsubscribe', array($this, 'push_unsubscribe'));
         add_action('wp_ajax_nopriv_aih_push_unsubscribe', array($this, 'push_unsubscribe'));
+        add_action('wp_ajax_aih_push_verify', array($this, 'push_verify'));
+        add_action('wp_ajax_nopriv_aih_push_verify', array($this, 'push_verify'));
         add_action('wp_ajax_aih_check_outbid', array($this, 'check_outbid'));
         add_action('wp_ajax_nopriv_aih_check_outbid', array($this, 'check_outbid'));
 
@@ -2359,6 +2361,38 @@ class AIH_Ajax {
 
         AIH_Push::delete_subscription($endpoint);
         wp_send_json_success();
+    }
+
+    /**
+     * Verify a push subscription endpoint exists server-side.
+     * Used by the client to detect stale subscriptions after browser
+     * data clear or server-side purge, then re-subscribe automatically.
+     */
+    public function push_verify() {
+        check_ajax_referer('aih_frontend_nonce', 'nonce');
+
+        $auth = AIH_Auth::get_instance();
+        if (!$auth->is_logged_in()) {
+            wp_send_json_error(array('message' => 'Not authenticated'));
+        }
+
+        $endpoint = isset($_POST['endpoint']) ? esc_url_raw($_POST['endpoint']) : '';
+        if (empty($endpoint)) {
+            wp_send_json_error(array('message' => 'Missing endpoint'));
+        }
+
+        global $wpdb;
+        $table  = AIH_Database::get_table('push_subscriptions');
+        $exists = (bool) $wpdb->get_var($wpdb->prepare(
+            "SELECT id FROM `{$table}` WHERE endpoint = %s LIMIT 1",
+            $endpoint
+        ));
+
+        if ($exists) {
+            wp_send_json_success(array('valid' => true));
+        } else {
+            wp_send_json_error(array('valid' => false, 'message' => 'Subscription not found'));
+        }
     }
 
     /**

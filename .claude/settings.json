@@ -1,6 +1,8 @@
 {
   "permissions": {
     "allow": [
+      "Bash(./vendor/bin/phpunit)",
+      "Bash(composer test)",
       "Bash(gh api:*)",
       "Bash(gh pr create:*)",
       "Bash(gh pr list:*)",
