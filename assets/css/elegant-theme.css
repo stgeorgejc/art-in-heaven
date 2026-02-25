@@ -284,7 +284,7 @@ body.aih-active .wp-site-blocks {
 
 .aih-page .aih-nav-link {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 500;
     color: var(--color-muted);
     text-decoration: none;
@@ -425,7 +425,7 @@ body.aih-active .wp-site-blocks {
 
 .aih-page .aih-subtitle {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    font-size: 11px;
+    font-size: 12px;
     color: var(--color-muted);
     display: none;
 }
@@ -2501,8 +2501,9 @@ body {
     .aih-nav-link {
         font-size: 12px;
         letter-spacing: 1.5px;
+        padding: 6px 0;
     }
-    
+
     .aih-main {
         padding: 32px 48px;
     }
@@ -2520,6 +2521,7 @@ body {
 
     .aih-subtitle {
         display: block;
+        font-size: 12px;
     }
 
     .aih-gallery-controls {
@@ -2591,6 +2593,11 @@ body {
     .aih-single-nav-bar {
         margin-bottom: 24px;
         padding-bottom: 16px;
+        gap: 12px;
+    }
+
+    .aih-nav-center {
+        gap: 12px;
     }
 
     .aih-single-details .aih-bid-section { order: 0; }
@@ -2746,18 +2753,8 @@ body {
     }
 }
 
-/* ── PWA standalone mode: extra chrome removal ── */
+/* ── PWA standalone mode: safe area insets for notched devices ── */
 @media (display-mode: standalone) {
-    body.aih-active .wp-site-blocks > header,
-    body.aih-active .wp-site-blocks > footer {
-        display: none !important;
-    }
-
-    body.aih-active .wp-site-blocks {
-        padding-block-start: 0 !important;
-        padding-block-end: 0 !important;
-    }
-
     .aih-header {
         padding-top: env(safe-area-inset-top, 0px);
     }
@@ -3829,7 +3826,7 @@ body {
     width: auto;
     max-width: 100%;
     height: auto;
-    max-height: 40vh;
+    max-height: 45vh;
     display: block;
     object-fit: contain;
     cursor: zoom-in;
