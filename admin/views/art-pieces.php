@@ -83,11 +83,19 @@ $art_pieces = $art_model->get_all_with_stats($filter_args);
             <input type="text" id="aih-search-table" placeholder="<?php _e('Search...', 'art-in-heaven'); ?>">
             <select id="aih-filter-artist-admin">
                 <option value=""><?php _e('All Artists', 'art-in-heaven'); ?></option>
-                <?php 
+                <?php
                 $artists = array_unique(array_column($art_pieces, 'artist'));
                 sort($artists);
                 foreach ($artists as $artist): ?>
                     <option value="<?php echo esc_attr($artist); ?>"><?php echo esc_html($artist); ?></option>
+                <?php endforeach; ?>
+            </select>
+            <select id="aih-filter-tier-admin">
+                <option value=""><?php _e('All Tiers', 'art-in-heaven'); ?></option>
+                <?php
+                $tiers = array('1', '2', '3', '4');
+                foreach ($tiers as $tier): ?>
+                    <option value="<?php echo esc_attr($tier); ?>"><?php printf(__('Tier %s', 'art-in-heaven'), $tier); ?></option>
                 <?php endforeach; ?>
             </select>
             <select id="aih-sort-table">
@@ -313,6 +321,7 @@ $art_pieces = $art_model->get_all_with_stats($filter_args);
                         data-title="<?php echo esc_attr(strtolower($piece->title)); ?>"
                         data-artist="<?php echo esc_attr(strtolower($piece->artist)); ?>"
                         data-artid="<?php echo esc_attr(strtolower($piece->art_id)); ?>"
+                        data-tier="<?php echo esc_attr($piece->tier); ?>"
                         data-starting="<?php echo esc_attr($piece->starting_bid); ?>"
                         data-current="<?php echo esc_attr($current_bid); ?>"
                         data-bids="<?php echo esc_attr($piece->total_bids); ?>"
@@ -694,22 +703,27 @@ jQuery(document).ready(function($) {
     function applyFilters() {
         var search = $('#aih-search-table').val().toLowerCase().trim();
         var artist = $('#aih-filter-artist-admin').val().toLowerCase();
+        var tier = $('#aih-filter-tier-admin').val();
         var visibleCount = 0;
-        
+
         $rows.each(function() {
             var $row = $(this);
             var title = $row.data('title') || '';
             var rowArtist = $row.data('artist') || '';
             var artid = $row.data('artid') || '';
+            var rowTier = String($row.data('tier') || '');
             var show = true;
-            
+
             if (search && title.indexOf(search) === -1 && rowArtist.indexOf(search) === -1 && artid.indexOf(search) === -1) {
                 show = false;
             }
             if (artist && rowArtist !== artist) {
                 show = false;
             }
-            
+            if (tier && rowTier !== tier) {
+                show = false;
+            }
+
             if (show) {
                 $row.removeClass('aih-hidden');
                 visibleCount++;
@@ -717,12 +731,12 @@ jQuery(document).ready(function($) {
                 $row.addClass('aih-hidden');
             }
         });
-        
+
         $('#aih-visible-count').text(visibleCount);
     }
-    
+
     $('#aih-search-table').on('input keyup', applyFilters);
-    $('#aih-filter-artist-admin').on('change', applyFilters);
+    $('#aih-filter-artist-admin, #aih-filter-tier-admin').on('change', applyFilters);
     
     // ========== SORTING ==========
     
