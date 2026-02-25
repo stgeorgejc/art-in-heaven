@@ -441,6 +441,9 @@ $art_pieces = $art_model->get_all_with_stats($filter_args);
 </div>
 
 <style>
+tr.aih-hidden {
+    display: none;
+}
 /* Art Pieces - Inline Edit Styles */
 .aih-inline-editable .aih-editable {
     cursor: pointer;
