@@ -449,7 +449,7 @@ body.aih-active .wp-site-blocks {
     height: 32px;
     padding: 5px 8px;
     font-family: var(--font-body);
-    font-size: 11px;
+    font-size: 16px; /* >=16px prevents iOS Safari auto-zoom on focus */
     color: var(--color-primary);
     background: var(--color-surface);
     border: 1px solid var(--color-border);
@@ -2106,21 +2106,6 @@ body.filter-open {
     display: block;
 }
 
-/* ============================================
-   SINGLE PAGE - NAVIGATION & PAGE INDICATOR
-   Note: Main styles are in single-item.php
-   ============================================ */
-.aih-back-link {
-    font-size: 13px;
-    color: var(--color-muted);
-    text-decoration: none;
-    transition: color var(--transition);
-}
-
-.aih-back-link:hover {
-    color: var(--color-primary);
-}
-
 /* Prevent text size adjustment on orientation change (iOS) */
 html {
     -webkit-text-size-adjust: 100%;
@@ -2531,6 +2516,7 @@ body {
 
     .aih-search-input {
         height: 36px;
+        font-size: 11px;
     }
 
     .aih-filter-toggle {
@@ -3720,9 +3706,11 @@ body {
     text-decoration: none;
     font-weight: 500;
     margin-right: auto;
+    transition: color var(--transition);
 }
 
 .aih-back-link:hover {
+    color: var(--color-accent-dark);
     text-decoration: underline;
 }
 
