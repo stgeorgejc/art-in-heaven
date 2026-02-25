@@ -12,7 +12,7 @@ window.addEventListener('beforeinstallprompt', function(e) {
     e.preventDefault();
     aihDeferredInstallPrompt = e;
     // If AIHPush already initialized, trigger the banner
-    if (window.AIHPush && window.AIHPush.bellBtn) {
+    if (window.AIHPush && window.AIHPush.initialized) {
         window.AIHPush.maybeAutoShowAndroidBanner();
     }
 });
@@ -28,6 +28,7 @@ window.addEventListener('beforeinstallprompt', function(e) {
     }
 
     var AIHPush = {
+        initialized: false,
         pushSubscribed: false,
         pollTimer: null,
         swRegistration: null,
@@ -80,6 +81,7 @@ window.addEventListener('beforeinstallprompt', function(e) {
                     this.updateBellState('unsupported');
                 }
                 this.startPolling();
+                this.initialized = true;
                 return;
             }
 
@@ -90,6 +92,8 @@ window.addEventListener('beforeinstallprompt', function(e) {
 
             // Always start polling as a safety net — push may fail silently
             self.startPolling();
+
+            this.initialized = true;
 
             navigator.serviceWorker.register(aihAjax.swUrl, { scope: '/' })
                 .then(function(registration) {
@@ -303,7 +307,7 @@ window.addEventListener('beforeinstallprompt', function(e) {
                             '<li>Scroll down and tap <strong>"Add to Home Screen"</strong></li>' +
                             '<li>Tap <strong>"Add"</strong> to install</li>' +
                         '</ol>' +
-                        '<button type="button" class="aih-install-cta-btn">Got it!</button>' +
+                        '<button type="button" class="aih-install-btn aih-ios-acknowledge-btn">Got it!</button>' +
                     '</div>' +
                 '</div>'
             );
@@ -317,7 +321,7 @@ window.addEventListener('beforeinstallprompt', function(e) {
             }
 
             $modal.find('.aih-ios-install-close').on('click', closeBanner);
-            $modal.find('.aih-install-cta-btn').on('click', closeBanner);
+            $modal.find('.aih-ios-acknowledge-btn').on('click', closeBanner);
             $modal.on('click', function(e) {
                 if (e.target === this) closeBanner();
             });
@@ -365,7 +369,7 @@ window.addEventListener('beforeinstallprompt', function(e) {
                         '</div>' +
                         '<h3>Install Art in Heaven</h3>' +
                         '<p>Add the app to your home screen for a faster experience and instant bid alerts.</p>' +
-                        '<button type="button" class="aih-install-cta-btn">Install App</button>' +
+                        '<button type="button" class="aih-install-btn aih-android-install-btn">Install App</button>' +
                         '<button type="button" class="aih-install-dismiss-btn">Not now</button>' +
                     '</div>' +
                 '</div>'
@@ -384,13 +388,20 @@ window.addEventListener('beforeinstallprompt', function(e) {
                 if (e.target === this) closeBanner();
             });
 
-            $modal.find('.aih-install-cta-btn').on('click', function() {
-                if (aihDeferredInstallPrompt) {
+            $modal.find('.aih-android-install-btn').on('click', function() {
+                if (!aihDeferredInstallPrompt) return;
+                try {
                     aihDeferredInstallPrompt.prompt();
                     aihDeferredInstallPrompt.userChoice.then(function() {
                         aihDeferredInstallPrompt = null;
                         closeBanner();
+                    }).catch(function() {
+                        aihDeferredInstallPrompt = null;
+                        closeBanner();
                     });
+                } catch (e) {
+                    aihDeferredInstallPrompt = null;
+                    closeBanner();
                 }
             });
 

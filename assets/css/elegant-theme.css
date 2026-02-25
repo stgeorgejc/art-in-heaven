@@ -3237,7 +3237,7 @@ body {
     color: var(--color-primary, #1a1a2e);
 }
 
-.aih-install-cta-btn {
+.aih-install-btn {
     display: block;
     width: 100%;
     margin-top: 20px;
@@ -3253,7 +3253,7 @@ body {
     transition: background var(--transition);
 }
 
-.aih-install-cta-btn:hover {
+.aih-install-btn:hover {
     background: var(--color-accent-dark, #9a7a55);
 }
 

@@ -416,6 +416,8 @@ class Art_In_Heaven {
             return;
         }
 
+        // Relative path for start_url — always same-origin since get_gallery_url()
+        // uses get_permalink(). Falls back to "/" if page not configured yet.
         $gallery_url = wp_make_link_relative( AIH_Template_Helper::get_gallery_url() );
 
         $manifest = array(
