@@ -21,7 +21,9 @@ class CssStructureTest extends TestCase
         parent::setUp();
         $path = AIH_PLUGIN_DIR . 'assets/css/elegant-theme.css';
         $this->assertFileExists($path, 'elegant-theme.css must exist');
-        $this->css = file_get_contents($path);
+        $css = file_get_contents($path);
+        $this->assertNotFalse($css, 'Failed to read elegant-theme.css');
+        $this->css = $css;
     }
 
     // ── Mobile-first base styles ──
@@ -87,10 +89,15 @@ class CssStructureTest extends TestCase
             $mediaBlock
         );
         $this->assertNotEmpty($mediaBlock, '600px media query must exist');
-        $this->assertStringContainsString(
-            'border-bottom',
+        // Ensure .aih-gallery-header specifically receives border-bottom at the 600px breakpoint
+        preg_match(
+            '/\.aih-gallery-header\s*\{[^}]*border-bottom[^}]*\}/s',
             $mediaBlock[1],
-            'Tablet breakpoint must restore gallery header border-bottom'
+            $headerRule
+        );
+        $this->assertNotEmpty(
+            $headerRule,
+            'Tablet breakpoint must restore border-bottom for .aih-gallery-header'
         );
     }
 
@@ -127,15 +134,15 @@ class CssStructureTest extends TestCase
 
     // ── iOS zoom prevention ──
 
-    public function testSearchInputPreventsiOSZoom(): void
+    public function testMobileSearchInputPreventsiOSZoom(): void
     {
-        // iOS auto-zooms on inputs with font-size < 16px
+        // On the base (mobile) viewport, iOS auto-zooms on inputs with font-size < 16px
         preg_match(
             '/\.aih-search-input\s*\{[^}]*font-size:\s*(\d+)px/s',
             $this->css,
             $m
         );
-        $this->assertNotEmpty($m, 'Search input must set font-size');
-        $this->assertGreaterThanOrEqual(16, (int) $m[1], 'Search input font-size must be ≥ 16px to prevent iOS zoom');
+        $this->assertNotEmpty($m, 'Mobile search input must set font-size');
+        $this->assertGreaterThanOrEqual(16, (int) $m[1], 'Mobile search input font-size must be ≥ 16px to prevent iOS zoom on small viewports');
     }
 }

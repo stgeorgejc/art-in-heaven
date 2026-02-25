@@ -2291,8 +2291,8 @@ body {
         font-size: 11px;
     }
 
-    /* Layout */
-    .aih-main {
+    /* Layout — .aih-page prefix matches base rule specificity */
+    .aih-page .aih-main {
         padding: 24px;
     }
 
@@ -2452,7 +2452,7 @@ body {
         font-size: 15px;
     }
     
-    .aih-header-inner {
+    .aih-page .aih-header-inner {
         padding: 16px 48px;
         gap: 12px;
     }
@@ -2493,10 +2493,10 @@ body {
         padding: 6px 0;
     }
 
-    .aih-main {
+    .aih-page .aih-main {
         padding: 32px 48px;
     }
-    
+
     .aih-gallery-header {
         gap: 16px;
         margin-bottom: 16px;
@@ -2678,11 +2678,11 @@ body {
    These rules add larger padding for very wide screens.
    ============================================ */
 @media (min-width: 1400px) {
-    .aih-main {
+    .aih-page .aih-main {
         padding: 32px 48px;
     }
 
-    .aih-header-inner {
+    .aih-page .aih-header-inner {
         padding: 16px 48px;
     }
 }
