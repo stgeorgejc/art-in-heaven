@@ -3237,6 +3237,43 @@ body {
     color: var(--color-primary, #1a1a2e);
 }
 
+.aih-install-btn {
+    display: block;
+    width: 100%;
+    margin-top: 20px;
+    padding: 14px 24px;
+    background: var(--color-accent, #b8956b);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    font-family: var(--font-body, 'Inter', -apple-system, sans-serif);
+    cursor: pointer;
+    transition: background var(--transition);
+}
+
+.aih-install-btn:hover {
+    background: var(--color-accent-dark, #9a7a55);
+}
+
+.aih-install-dismiss-btn {
+    display: block;
+    width: 100%;
+    margin-top: 8px;
+    padding: 10px 24px;
+    background: none;
+    color: var(--color-muted, #6b6b6b);
+    border: none;
+    font-size: 14px;
+    font-family: var(--font-body, 'Inter', -apple-system, sans-serif);
+    cursor: pointer;
+}
+
+.aih-install-dismiss-btn:hover {
+    color: var(--color-primary, #1c1c1c);
+}
+
 /* Dark mode */
 .aih-page.dark-mode .aih-ios-install-card {
     background: var(--color-surface, #1e1e2e);

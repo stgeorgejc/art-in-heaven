@@ -5,6 +5,18 @@
  * for outbid notifications. Manages the header bell button state.
  */
 
+// Capture beforeinstallprompt early — Chrome/Edge fire this before user interaction.
+// Stored globally so the logged-in code below can use it for the Android install banner.
+var aihDeferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', function(e) {
+    e.preventDefault();
+    aihDeferredInstallPrompt = e;
+    // If AIHPush already initialized, trigger the banner
+    if (window.AIHPush && window.AIHPush.initialized) {
+        window.AIHPush.maybeAutoShowAndroidBanner();
+    }
+});
+
 (function($) {
     'use strict';
 
@@ -16,6 +28,7 @@
     }
 
     var AIHPush = {
+        initialized: false,
         pushSubscribed: false,
         pollTimer: null,
         swRegistration: null,
@@ -53,6 +66,11 @@
                 });
             }
 
+            // Android/Chrome install prompt (works alongside push — independent concern)
+            if (aihDeferredInstallPrompt) {
+                this.maybeAutoShowAndroidBanner();
+            }
+
             // Check if push is supported
             if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
                 // iOS Safari (non-standalone): show bell with install prompt instead of hiding it
@@ -63,6 +81,7 @@
                     this.updateBellState('unsupported');
                 }
                 this.startPolling();
+                this.initialized = true;
                 return;
             }
 
@@ -73,6 +92,8 @@
 
             // Always start polling as a safety net — push may fail silently
             self.startPolling();
+
+            this.initialized = true;
 
             navigator.serviceWorker.register(aihAjax.swUrl, { scope: '/' })
                 .then(function(registration) {
@@ -277,15 +298,16 @@
                     '<div class="aih-ios-install-card">' +
                         '<button type="button" class="aih-ios-install-close" aria-label="Close">&times;</button>' +
                         '<div class="aih-ios-install-icon">' +
-                            '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>' +
+                            '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>' +
                         '</div>' +
-                        '<h3>Get Instant Bid Alerts</h3>' +
-                        '<p>Add this app to your Home Screen to receive push notifications when you\'re outbid.</p>' +
+                        '<h3>Install Art in Heaven</h3>' +
+                        '<p>Get instant bid alerts on your phone — just 3 quick steps:</p>' +
                         '<ol class="aih-ios-install-steps">' +
                             '<li>Tap the <strong>Share</strong> button ' + shareIcon + ' in Safari</li>' +
                             '<li>Scroll down and tap <strong>"Add to Home Screen"</strong></li>' +
-                            '<li>Tap <strong>"Add"</strong> and open the app from your Home Screen</li>' +
+                            '<li>Tap <strong>"Add"</strong> to install</li>' +
                         '</ol>' +
+                        '<button type="button" class="aih-install-btn aih-ios-acknowledge-btn">Got it!</button>' +
                     '</div>' +
                 '</div>'
             );
@@ -299,6 +321,7 @@
             }
 
             $modal.find('.aih-ios-install-close').on('click', closeBanner);
+            $modal.find('.aih-ios-acknowledge-btn').on('click', closeBanner);
             $modal.on('click', function(e) {
                 if (e.target === this) closeBanner();
             });
@@ -321,6 +344,87 @@
             var self = this;
             setTimeout(function() {
                 self.showIOSInstallBanner();
+            }, 3000);
+        },
+
+        // ========== ANDROID INSTALL BANNER ==========
+
+        /**
+         * Show bottom-sheet install banner for Android/Chrome with a real "Install" button.
+         * Uses the deferred beforeinstallprompt event to trigger the native install dialog.
+         */
+        showAndroidInstallBanner: function() {
+            if (!aihDeferredInstallPrompt) return;
+            if ($('#aih-android-install').length) {
+                $('#aih-android-install').addClass('active');
+                return;
+            }
+
+            var $modal = $(
+                '<div id="aih-android-install" class="aih-ios-install-overlay active">' +
+                    '<div class="aih-ios-install-card">' +
+                        '<button type="button" class="aih-ios-install-close" aria-label="Close">&times;</button>' +
+                        '<div class="aih-ios-install-icon">' +
+                            '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>' +
+                        '</div>' +
+                        '<h3>Install Art in Heaven</h3>' +
+                        '<p>Add the app to your home screen for a faster experience and instant bid alerts.</p>' +
+                        '<button type="button" class="aih-install-btn aih-android-install-btn">Install App</button>' +
+                        '<button type="button" class="aih-install-dismiss-btn">Not now</button>' +
+                    '</div>' +
+                '</div>'
+            );
+
+            function closeBanner() {
+                $modal.removeClass('active');
+                try {
+                    localStorage.setItem('aih_android_banner_dismissed', Date.now().toString());
+                } catch (e) {}
+            }
+
+            $modal.find('.aih-ios-install-close').on('click', closeBanner);
+            $modal.find('.aih-install-dismiss-btn').on('click', closeBanner);
+            $modal.on('click', function(e) {
+                if (e.target === this) closeBanner();
+            });
+
+            $modal.find('.aih-android-install-btn').on('click', function() {
+                if (!aihDeferredInstallPrompt) return;
+                try {
+                    aihDeferredInstallPrompt.prompt();
+                    aihDeferredInstallPrompt.userChoice.then(function() {
+                        aihDeferredInstallPrompt = null;
+                        closeBanner();
+                    }).catch(function() {
+                        aihDeferredInstallPrompt = null;
+                        closeBanner();
+                    });
+                } catch (e) {
+                    aihDeferredInstallPrompt = null;
+                    closeBanner();
+                }
+            });
+
+            $('body').append($modal);
+        },
+
+        /**
+         * Auto-show the Android install banner once, with a 7-day cooldown.
+         */
+        maybeAutoShowAndroidBanner: function() {
+            if (window.matchMedia('(display-mode: standalone)').matches) return;
+
+            try {
+                var dismissed = localStorage.getItem('aih_android_banner_dismissed');
+                if (dismissed) {
+                    var elapsed = Date.now() - parseInt(dismissed, 10);
+                    if (elapsed < 7 * 24 * 60 * 60 * 1000) return; // 7 days
+                }
+            } catch (e) {}
+
+            var self = this;
+            setTimeout(function() {
+                self.showAndroidInstallBanner();
             }, 3000);
         },
 
