@@ -709,12 +709,12 @@ jQuery(document).ready(function($) {
         var tier = $('#aih-filter-tier-admin').val();
         var visibleCount = 0;
 
-        $rows.each(function() {
+        $tbody.find('tr[data-id]').each(function() {
             var $row = $(this);
-            var title = $row.data('title') || '';
-            var rowArtist = $row.data('artist') || '';
-            var artid = $row.data('artid') || '';
-            var rowTier = String($row.data('tier') || '');
+            var title = ($row.attr('data-title') || '').toLowerCase();
+            var rowArtist = ($row.attr('data-artist') || '').toLowerCase();
+            var artid = ($row.attr('data-artid') || '').toLowerCase();
+            var rowTier = $row.attr('data-tier') || '';
             var show = true;
 
             if (search && title.indexOf(search) === -1 && rowArtist.indexOf(search) === -1 && artid.indexOf(search) === -1) {
