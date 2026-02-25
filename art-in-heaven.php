@@ -457,6 +457,7 @@ class Art_In_Heaven {
         $icon_url = esc_url(AIH_PLUGIN_URL . 'assets/images/icon-192.png');
         $manifest = esc_url(home_url('/?aih-manifest=1'));
 
+        echo '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">' . "\n";
         echo '<link rel="manifest" href="' . $manifest . '">' . "\n";
         echo '<meta name="apple-mobile-web-app-capable" content="yes">' . "\n";
         echo '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">' . "\n";
