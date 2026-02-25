@@ -135,6 +135,7 @@ class Art_In_Heaven {
         add_action('init', array($this, 'maybe_update_db'), 0);
         add_action('init', array('AIH_Auth', 'maybe_encrypt_api_data'), 1);
         add_action('init', array($this, 'init'), 0);
+        add_action('init', array($this, 'maybe_flush_rewrite_rules'), 99);
         add_action('rest_api_init', array($this, 'init_rest_api'));
         add_action('wp_enqueue_scripts', array($this, 'enqueue_frontend_assets'));
         add_filter('body_class', array($this, 'add_body_class'));
@@ -230,6 +231,24 @@ class Art_In_Heaven {
         return $schedules;
     }
     
+    /**
+     * Flush rewrite rules if the plugin's rules are missing from the stored rules.
+     * Runs once at priority 99 (after all rules are registered) and only flushes
+     * when needed, so there is no performance hit on normal page loads.
+     */
+    public function maybe_flush_rewrite_rules() {
+        $rules = get_option('rewrite_rules');
+        if (!is_array($rules)) {
+            flush_rewrite_rules();
+            return;
+        }
+
+        // Check for the API router rule as a canary
+        if (!isset($rules['^api/([a-z0-9\-]+)/?$'])) {
+            flush_rewrite_rules();
+        }
+    }
+
     /**
      * Auto-run database migrations when plugin version changes
      */
