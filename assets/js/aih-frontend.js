@@ -512,7 +512,6 @@
         }
 
         function poll() {
-            if (window.aihSSEConnected) return;
             if (!aihAjax.isLoggedIn) return;
             if (typeof opts.isEnded === 'function' && opts.isEnded()) return;
 
@@ -549,7 +548,9 @@
 
         function start() {
             if (pollTimer) clearTimeout(pollTimer);
-            var interval = document.hidden ? 60000 : getSmartInterval();
+            // Use slower interval when SSE is connected (background safety net)
+            var interval = document.hidden ? 60000 :
+                           (window.aihSSEConnected ? 60000 : getSmartInterval());
             pollTimer = setTimeout(function() {
                 poll();
                 start();
@@ -578,6 +579,14 @@
         // Clean up on page unload
         window.addEventListener('beforeunload', function() {
             stop();
+        });
+
+        // Restart polling loop on connection status change to adjust interval
+        window.addEventListener('aih:connectionchange', function() {
+            if (!document.hidden) {
+                stop();
+                start();
+            }
         });
 
         // Initial poll after 3 seconds, then smart intervals
@@ -652,6 +661,112 @@
     window.showToast = showToast;
 
     // =============================================
+    // NOTIFICATION STORE (localStorage-backed)
+    // =============================================
+    var AIHNotificationStore = (function() {
+        var STORAGE_KEY = 'aih_notifications';
+        var MAX_ITEMS = 50;
+        var TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+        function load() {
+            try {
+                var raw = localStorage.getItem(STORAGE_KEY);
+                if (!raw) return [];
+                var items = JSON.parse(raw);
+                var now = Date.now();
+                // Prune expired items
+                return items.filter(function(item) {
+                    return (now - item.timestamp) < TTL_MS;
+                });
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function save(items) {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(items.slice(0, MAX_ITEMS)));
+            } catch (e) {
+                // localStorage unavailable
+            }
+        }
+
+        return {
+            getAll: function() {
+                return load();
+            },
+
+            add: function(artPieceId, title, url) {
+                var items = load();
+                // Dedup: update existing entry for same art piece
+                for (var i = 0; i < items.length; i++) {
+                    if (items[i].art_piece_id == artPieceId) {
+                        items[i].title = title;
+                        items[i].url = url || items[i].url;
+                        items[i].timestamp = Date.now();
+                        items[i].read = false;
+                        // Move to front
+                        var updated = items.splice(i, 1)[0];
+                        items.unshift(updated);
+                        save(items);
+                        return updated.id;
+                    }
+                }
+                var id = Date.now() + '-' + Math.random().toString(36).substr(2, 5);
+                items.unshift({
+                    id: id,
+                    art_piece_id: artPieceId,
+                    title: title,
+                    url: url || '',
+                    timestamp: Date.now(),
+                    read: false
+                });
+                save(items);
+                return id;
+            },
+
+            markRead: function(id) {
+                var items = load();
+                for (var i = 0; i < items.length; i++) {
+                    if (items[i].id === id) {
+                        items[i].read = true;
+                        break;
+                    }
+                }
+                save(items);
+            },
+
+            markAllRead: function() {
+                var items = load();
+                for (var i = 0; i < items.length; i++) {
+                    items[i].read = true;
+                }
+                save(items);
+            },
+
+            getUnreadCount: function() {
+                var items = load();
+                var count = 0;
+                for (var i = 0; i < items.length; i++) {
+                    if (!items[i].read) count++;
+                }
+                return count;
+            },
+
+            clear: function() {
+                try {
+                    localStorage.removeItem(STORAGE_KEY);
+                } catch (e) {
+                    // ignore
+                }
+            }
+        };
+    })();
+
+    // Expose store globally
+    window.AIHNotificationStore = AIHNotificationStore;
+
+    // =============================================
     // PERSISTENT OUTBID ALERTS (Layer 2)
     // =============================================
     (function initOutbidAlerts() {
@@ -672,6 +787,14 @@
          * @param {string} [url] - Optional link to the piece
          */
         function showOutbidAlert(artPieceId, title, url) {
+            // Persist to notification store
+            var viewUrl = url || '';
+            if (!viewUrl && aihAjax.artUrlBase) {
+                viewUrl = aihAjax.artUrlBase + artPieceId + '/';
+            }
+            AIHNotificationStore.add(artPieceId, title, viewUrl);
+            updateBellBadge();
+
             var $existing = $container.find('.aih-alert-card[data-art-id="' + artPieceId + '"]');
             if ($existing.length) {
                 // Replace: update text, reset expiry timer
@@ -689,12 +812,6 @@
             if ($cards.length >= MAX_VISIBLE) {
                 var $oldest = $cards.first();
                 removeAlert($oldest);
-            }
-
-            // Build alert card
-            var viewUrl = url || '';
-            if (!viewUrl && aihAjax.artUrlBase) {
-                viewUrl = aihAjax.artUrlBase + artPieceId + '/';
             }
 
             var $alert = $(
@@ -741,14 +858,14 @@
         }
 
         /**
-         * Update bell button badge with unread alert count
+         * Update bell button badge with unread notification count from store
          */
         function updateBellBadge() {
             var $btn = $('#aih-notify-btn');
             if (!$btn.length) return;
 
             var $badge = $btn.find('.aih-notify-badge');
-            var count = $container.find('.aih-alert-card').length;
+            var count = AIHNotificationStore.getUnreadCount();
 
             if (count > 0) {
                 if (!$badge.length) {
@@ -761,8 +878,190 @@
             }
         }
 
+        // Restore badge on page load from persisted store
+        updateBellBadge();
+
         // Expose globally
         window.showOutbidAlert = showOutbidAlert;
+    })();
+
+    // =============================================
+    // CONNECTION STATUS DOT
+    // =============================================
+    (function initConnectionStatus() {
+        var $btn = $('#aih-notify-btn');
+        if (!$btn.length) return;
+
+        // Append connection dot element
+        var $dot = $('<span class="aih-connection-dot"></span>');
+        $btn.append($dot);
+
+        function updateDot(status) {
+            $dot.removeClass('aih-conn-realtime aih-conn-polling aih-conn-offline');
+            switch (status) {
+                case 'realtime':
+                    $dot.addClass('aih-conn-realtime');
+                    $dot.attr('title', 'Real-time sync active');
+                    break;
+                case 'offline':
+                    $dot.addClass('aih-conn-offline');
+                    $dot.attr('title', 'Offline');
+                    break;
+                default:
+                    $dot.addClass('aih-conn-polling');
+                    $dot.attr('title', 'Syncing periodically');
+                    break;
+            }
+        }
+
+        // Set initial state
+        updateDot(window.aihConnectionStatus || 'polling');
+
+        // Listen for changes
+        window.addEventListener('aih:connectionchange', function(e) {
+            updateDot(e.detail.status);
+        });
+    })();
+
+    // =============================================
+    // NOTIFICATION DRAWER
+    // =============================================
+    (function initNotificationDrawer() {
+        var $btn = $('#aih-notify-btn');
+        if (!$btn.length) return;
+
+        // Build drawer HTML
+        var $backdrop = $('<div class="aih-drawer-backdrop"></div>');
+        var $drawer = $(
+            '<div class="aih-notification-drawer" aria-label="Notifications">' +
+                '<div class="aih-drawer-header">' +
+                    '<h3 class="aih-drawer-title">Notifications</h3>' +
+                    '<div class="aih-drawer-actions">' +
+                        '<button type="button" class="aih-drawer-mark-read">Mark all read</button>' +
+                        '<button type="button" class="aih-drawer-close" aria-label="Close">&times;</button>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="aih-drawer-status"></div>' +
+                '<div class="aih-drawer-list"></div>' +
+            '</div>'
+        );
+
+        $('body').append($backdrop).append($drawer);
+
+        var $list = $drawer.find('.aih-drawer-list');
+        var $status = $drawer.find('.aih-drawer-status');
+
+        function formatRelativeTime(timestamp) {
+            var diff = Math.floor((Date.now() - timestamp) / 1000);
+            if (diff < 60) return 'Just now';
+            if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+            if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+            return Math.floor(diff / 86400) + 'd ago';
+        }
+
+        function updateStatusBar() {
+            var status = window.aihConnectionStatus || 'polling';
+            var dotClass = 'aih-conn-' + status;
+            var label = status === 'realtime' ? 'Real-time sync' :
+                        status === 'offline' ? 'Offline' : 'Periodic sync';
+            $status.html(
+                '<span class="aih-drawer-dot ' + dotClass + '"></span>' +
+                '<span class="aih-drawer-status-text">' + label + '</span>'
+            );
+        }
+
+        function renderList() {
+            var items = AIHNotificationStore.getAll();
+            $list.empty();
+
+            if (items.length === 0) {
+                $list.html('<div class="aih-drawer-empty">No notifications yet</div>');
+                return;
+            }
+
+            for (var i = 0; i < items.length; i++) {
+                var item = items[i];
+                var readClass = item.read ? 'aih-drawer-item-read' : '';
+                var $item = $(
+                    '<a href="' + (item.url || '#') + '" class="aih-drawer-item ' + readClass + '" data-id="' + item.id + '">' +
+                        '<div class="aih-drawer-item-icon">' +
+                            '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' +
+                        '</div>' +
+                        '<div class="aih-drawer-item-body">' +
+                            '<span class="aih-drawer-item-text">Outbid on "' + $('<span>').text(item.title).html() + '"</span>' +
+                            '<span class="aih-drawer-item-time">' + formatRelativeTime(item.timestamp) + '</span>' +
+                        '</div>' +
+                    '</a>'
+                );
+                $list.append($item);
+            }
+        }
+
+        function openDrawer() {
+            renderList();
+            updateStatusBar();
+            $backdrop.addClass('active');
+            $drawer.addClass('active');
+        }
+
+        function closeDrawer() {
+            $backdrop.removeClass('active');
+            $drawer.removeClass('active');
+        }
+
+        // Toggle drawer
+        window.aihToggleDrawer = function() {
+            if ($drawer.hasClass('active')) {
+                closeDrawer();
+            } else {
+                openDrawer();
+            }
+        };
+
+        // Close handlers
+        $backdrop.on('click', closeDrawer);
+        $drawer.find('.aih-drawer-close').on('click', closeDrawer);
+
+        // Mark all read
+        $drawer.find('.aih-drawer-mark-read').on('click', function() {
+            AIHNotificationStore.markAllRead();
+            renderList();
+            // Update bell badge
+            var $badge = $btn.find('.aih-notify-badge');
+            $badge.remove();
+        });
+
+        // Mark individual item read on click
+        $list.on('click', '.aih-drawer-item', function() {
+            var id = $(this).data('id');
+            AIHNotificationStore.markRead(id);
+            // Update badge
+            var count = AIHNotificationStore.getUnreadCount();
+            var $badge = $btn.find('.aih-notify-badge');
+            if (count > 0) {
+                if (!$badge.length) {
+                    $badge = $('<span class="aih-notify-badge"></span>');
+                    $btn.append($badge);
+                }
+                $badge.text(count > 9 ? '9+' : count);
+            } else {
+                $badge.remove();
+            }
+        });
+
+        // Update status bar when connection changes
+        window.addEventListener('aih:connectionchange', function() {
+            if ($drawer.hasClass('active')) {
+                updateStatusBar();
+            }
+        });
+
+        // Close drawer on escape
+        $(document).on('keydown', function(e) {
+            if (e.key === 'Escape' && $drawer.hasClass('active')) {
+                closeDrawer();
+            }
+        });
     })();
 
     // =============================================

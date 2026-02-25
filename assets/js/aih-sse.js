@@ -23,6 +23,10 @@
         reconnectAttempts: 0,
         maxReconnectAttempts: 10,
         lastEventId: null,
+        lastMessageTime: 0,
+        heartbeatTimer: null,
+        heartbeatInterval: 30000,  // Check every 30s
+        heartbeatTimeout: 90000,   // Reconnect if no message for 90s
 
         /**
          * Initialize SSE connection (fetches Mercure auth cookie first)
@@ -115,11 +119,14 @@
             this.eventSource.onopen = function() {
                 self.connected = true;
                 self.reconnectAttempts = 0;
+                self.lastMessageTime = Date.now();
                 self.disablePolling();
+                self.startHeartbeat();
                 console.log('[AIH] SSE connected to Mercure hub — polling disabled');
             };
 
             this.eventSource.onmessage = function(event) {
+                self.lastMessageTime = Date.now();
                 // Track the last event ID for reconnection resume
                 if (event.lastEventId) {
                     self.lastEventId = event.lastEventId;
@@ -200,6 +207,7 @@
          */
         disablePolling: function() {
             window.aihSSEConnected = true;
+            this.updateConnectionStatus('realtime');
         },
 
         /**
@@ -207,6 +215,42 @@
          */
         enablePolling: function() {
             window.aihSSEConnected = false;
+            this.updateConnectionStatus('polling');
+        },
+
+        /**
+         * Dispatch connection status change event
+         */
+        updateConnectionStatus: function(status) {
+            window.aihConnectionStatus = status;
+            window.dispatchEvent(new CustomEvent('aih:connectionchange', { detail: { status: status } }));
+        },
+
+        /**
+         * Start heartbeat timer to detect silent SSE disconnects.
+         * If no message received for heartbeatTimeout ms, force reconnect.
+         */
+        startHeartbeat: function() {
+            this.stopHeartbeat();
+            var self = this;
+            this.heartbeatTimer = setInterval(function() {
+                if (!self.connected || document.hidden) return;
+                var elapsed = Date.now() - self.lastMessageTime;
+                if (elapsed > self.heartbeatTimeout) {
+                    console.warn('[AIH] SSE heartbeat timeout (' + Math.round(elapsed / 1000) + 's) — reconnecting');
+                    self.onDisconnect();
+                }
+            }, this.heartbeatInterval);
+        },
+
+        /**
+         * Stop heartbeat timer
+         */
+        stopHeartbeat: function() {
+            if (this.heartbeatTimer) {
+                clearInterval(this.heartbeatTimer);
+                this.heartbeatTimer = null;
+            }
         },
 
         /**
@@ -214,6 +258,7 @@
          */
         onDisconnect: function() {
             this.connected = false;
+            this.stopHeartbeat();
             this.enablePolling();
 
             if (this.eventSource) {
@@ -244,6 +289,7 @@
                 clearTimeout(this.reconnectTimer);
                 this.reconnectTimer = null;
             }
+            this.stopHeartbeat();
             this.connected = false;
             this.enablePolling();
         }

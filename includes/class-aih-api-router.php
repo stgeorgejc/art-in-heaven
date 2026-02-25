@@ -55,6 +55,7 @@ class AIH_API_Router {
         // Push notifications
         'push-subscribe'   => 'push_subscribe',
         'push-unsubscribe' => 'push_unsubscribe',
+        'push-verify'      => 'push_verify',
     );
 
     /**
@@ -79,6 +80,7 @@ class AIH_API_Router {
         'check-outbid'     => 'aih_check_outbid',
         'push-subscribe'   => 'aih_push_subscribe',
         'push-unsubscribe' => 'aih_push_unsubscribe',
+        'push-verify'      => 'aih_push_verify',
     );
 
     /** API prefix in URL path */
