@@ -3683,7 +3683,7 @@ body {
 /* Single Item Page Overrides */
 .aih-single-nav-bar {
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
     gap: 8px;
     margin-bottom: 8px;
@@ -3692,13 +3692,13 @@ body {
 }
 
 .aih-back-link {
-    text-align: center;
+    flex: 1;
+    text-align: left;
     order: 0;
     font-size: 12px;
     color: var(--color-accent);
     text-decoration: none;
     font-weight: 500;
-    margin-right: auto;
     transition: color var(--transition);
 }
 
@@ -3748,7 +3748,7 @@ body {
 }
 
 .aih-nav-spacer {
-    display: none;
+    flex: 1;
 }
 
 /* Content wrapper with navigation arrows at edges */
@@ -4461,7 +4461,7 @@ html.aih-lightbox-open body {
     }
 
     .aih-back-link {
-        width: auto;
+        flex: 0 0 auto;
         text-align: left;
         order: 0;
         font-size: 14px;
@@ -4473,7 +4473,7 @@ html.aih-lightbox-open body {
 
     .aih-nav-spacer {
         display: block;
-        width: 100px;
+        flex: 0 0 100px;
     }
 
     .aih-single-content-wrapper > .aih-nav-arrow {
