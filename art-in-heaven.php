@@ -457,9 +457,9 @@ class Art_In_Heaven {
         $icon_url = esc_url(AIH_PLUGIN_URL . 'assets/images/icon-192.png');
         $manifest = esc_url(home_url('/?aih-manifest=1'));
 
-        // Upgrade existing viewport meta to include viewport-fit=cover for notched devices.
-        // Avoids duplicate <meta name="viewport"> since the theme already outputs one.
-        echo "<script>document.querySelector('meta[name=viewport]')?.setAttribute('content','width=device-width,initial-scale=1,viewport-fit=cover');</script>\n";
+        // Append viewport-fit=cover to the existing viewport meta for notched devices.
+        // Preserves any existing directives; creates the tag if none exists.
+        echo "<script>(function(){var m=document.querySelector('meta[name=viewport]');if(m){var c=m.getAttribute('content')||'';if(c.indexOf('viewport-fit')===-1){m.setAttribute('content',c+',viewport-fit=cover');}}else{m=document.createElement('meta');m.name='viewport';m.content='width=device-width,initial-scale=1,viewport-fit=cover';document.head.appendChild(m);}})();</script>\n";
         echo '<link rel="manifest" href="' . $manifest . '">' . "\n";
         echo '<meta name="apple-mobile-web-app-capable" content="yes">' . "\n";
         echo '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">' . "\n";

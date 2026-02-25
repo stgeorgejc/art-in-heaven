@@ -2739,13 +2739,6 @@ body {
     }
 }
 
-/* ── PWA standalone mode: safe area insets for notched devices ── */
-@media (display-mode: standalone) {
-    .aih-header {
-        padding-top: env(safe-area-inset-top, 0px);
-    }
-}
-
 /* ============================================
    DARK MODE - Hardcoded Color Overrides
    ============================================ */
