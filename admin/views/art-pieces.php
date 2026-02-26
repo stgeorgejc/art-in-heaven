@@ -441,9 +441,6 @@ $art_pieces = $art_model->get_all_with_stats($filter_args);
 </div>
 
 <style>
-tr.aih-hidden {
-    display: none;
-}
 /* Art Pieces - Inline Edit Styles */
 .aih-inline-editable .aih-editable {
     cursor: pointer;
@@ -657,11 +654,11 @@ jQuery(document).ready(function($) {
                     $cell.data('value', r.data.value);
                     $cell.find('.aih-cell-value').html(r.data.display_value);
                     
-                    // Update row data attributes if needed
-                    if (field === 'title') $row.data('title', newValue.toLowerCase());
-                    if (field === 'artist') $row.data('artist', newValue.toLowerCase());
-                    if (field === 'art_id') $row.data('artid', newValue.toLowerCase());
-                    if (field === 'starting_bid') $row.data('starting', parseFloat(newValue));
+                    // Update DOM attributes so applyFilters() (which reads via attr()) sees the new values
+                    if (field === 'title') $row.attr('data-title', newValue.toLowerCase());
+                    if (field === 'artist') $row.attr('data-artist', newValue.toLowerCase());
+                    if (field === 'art_id') $row.attr('data-artid', newValue.toLowerCase());
+                    if (field === 'starting_bid') $row.attr('data-starting', parseFloat(newValue));
                     
                     // Update status cell if date fields were changed
                     if (r.data.status_html && (field === 'auction_start' || field === 'auction_end')) {

@@ -246,6 +246,19 @@ class Art_In_Heaven {
         // Check for the API router rule as a canary
         if (!isset($rules['^api/([a-z0-9\-]+)/?$'])) {
             flush_rewrite_rules();
+            return;
+        }
+
+        // Check that the gallery art rewrite rule matches the current gallery page slug.
+        // This catches slug changes (e.g. /gallery → /live) that would otherwise leave
+        // stale rules pointing at the old slug.
+        $gallery_page_id = get_option('aih_gallery_page', '');
+        $page = $gallery_page_id ? get_post($gallery_page_id) : null;
+        if ($page) {
+            $expected_rule = '^' . preg_quote($page->post_name, '/') . '/art/([0-9]+)/?$';
+            if (!isset($rules[$expected_rule])) {
+                flush_rewrite_rules();
+            }
         }
     }
 
@@ -370,7 +383,11 @@ class Art_In_Heaven {
      */
     public function init() {
         load_plugin_textdomain('art-in-heaven', false, dirname(AIH_PLUGIN_BASENAME) . '/languages');
-        
+
+        // One-time migration: convert URL-based page settings to numeric page IDs.
+        // Early installs stored a permalink string; all code now expects a post ID.
+        $this->maybe_migrate_page_settings();
+
         // One-time cleanup of deprecated cron (v0.9.89)
         if (wp_next_scheduled('aih_five_minute_check')) {
             wp_clear_scheduled_hook('aih_five_minute_check');
@@ -393,7 +410,25 @@ class Art_In_Heaven {
         // Auto-manage auction statuses based on start/end times
         $this->throttled_expired_check();
     }
-    
+
+    /**
+     * One-time migration: convert URL-based page settings to numeric post IDs.
+     *
+     * Early installs stored a permalink string in aih_gallery_page / aih_login_page.
+     * All code now expects a numeric post ID. This converts any remaining URL values.
+     */
+    private function maybe_migrate_page_settings() {
+        foreach (array('aih_gallery_page', 'aih_login_page') as $option) {
+            $value = get_option($option, '');
+            if (!empty($value) && !is_numeric($value)) {
+                $post_id = url_to_postid($value);
+                if ($post_id) {
+                    update_option($option, $post_id);
+                }
+            }
+        }
+    }
+
     public function init_rest_api() {
         // Load REST API class only when REST requests are made
         $rest_file = AIH_PLUGIN_DIR . 'includes/class-aih-rest-api.php';

@@ -45,9 +45,24 @@ class AIH_Shortcodes {
      */
     public function register_art_rewrite_rules() {
         $gallery_page_id = get_option('aih_gallery_page', '');
-        if (!$gallery_page_id) return;
 
-        $page = get_post($gallery_page_id);
+        // Validate the stored page ID actually exists
+        $page = $gallery_page_id ? get_post($gallery_page_id) : null;
+
+        // Shortcode fallback: find the page containing [art_in_heaven_gallery]
+        if (!$page) {
+            global $wpdb;
+            $gallery_page_id = $wpdb->get_var($wpdb->prepare(
+                "SELECT ID FROM {$wpdb->posts}
+                 WHERE post_type = 'page'
+                 AND post_status = 'publish'
+                 AND post_content LIKE %s
+                 LIMIT 1",
+                '%[' . $wpdb->esc_like('art_in_heaven_gallery') . '%'
+            ));
+            $page = $gallery_page_id ? get_post($gallery_page_id) : null;
+        }
+
         if (!$page) return;
 
         $slug = $page->post_name;
