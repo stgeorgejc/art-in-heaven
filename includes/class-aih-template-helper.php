@@ -51,7 +51,8 @@ class AIH_Template_Helper {
 
         global $wpdb;
 
-        // Check option first if provided
+        // Check option first if provided (stores a numeric page ID after
+        // the maybe_migrate_page_settings() migration in init).
         $page_id = '';
         if ($option_name) {
             $page_id = get_option($option_name, '');
