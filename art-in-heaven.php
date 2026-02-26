@@ -485,36 +485,62 @@ class Art_In_Heaven {
             return;
         }
 
+        header('Content-Type: application/manifest+json');
+        header('Cache-Control: public, max-age=3600');
+        echo wp_json_encode($this->build_manifest_array());
+        exit;
+    }
+
+    /**
+     * Build the PWA manifest data array.
+     *
+     * @return array Manifest data suitable for JSON encoding.
+     */
+    public function build_manifest_array() {
         // Relative path for start_url — always same-origin since get_gallery_url()
         // uses get_permalink(). Falls back to "/" if page not configured yet.
         $gallery_url = wp_make_link_relative( AIH_Template_Helper::get_gallery_url() );
+        $start_url   = $gallery_url ? $gallery_url : '/';
 
-        $manifest = array(
+        $icon_base = AIH_PLUGIN_URL . 'assets/images/';
+
+        return array(
             'name'             => 'Art in Heaven',
             'short_name'       => 'Art in Heaven',
             'description'      => 'Silent auction for art pieces',
-            'start_url'        => $gallery_url ? $gallery_url : '/',
+            'id'               => '/art-in-heaven',
+            'start_url'        => $start_url,
+            'scope'            => '/',
             'display'          => 'standalone',
             'background_color' => '#faf9f7',
             'theme_color'      => '#b8956b',
             'icons'            => array(
                 array(
-                    'src'   => AIH_PLUGIN_URL . 'assets/images/icon-192.png',
-                    'sizes' => '192x192',
-                    'type'  => 'image/png',
+                    'src'     => $icon_base . 'icon-192.png',
+                    'sizes'   => '192x192',
+                    'type'    => 'image/png',
+                    'purpose' => 'any',
                 ),
                 array(
-                    'src'   => AIH_PLUGIN_URL . 'assets/images/icon-512.png',
-                    'sizes' => '512x512',
-                    'type'  => 'image/png',
+                    'src'     => $icon_base . 'icon-512.png',
+                    'sizes'   => '512x512',
+                    'type'    => 'image/png',
+                    'purpose' => 'any',
+                ),
+                array(
+                    'src'     => $icon_base . 'icon-maskable-192.png',
+                    'sizes'   => '192x192',
+                    'type'    => 'image/png',
+                    'purpose' => 'maskable',
+                ),
+                array(
+                    'src'     => $icon_base . 'icon-maskable-512.png',
+                    'sizes'   => '512x512',
+                    'type'    => 'image/png',
+                    'purpose' => 'maskable',
                 ),
             ),
         );
-
-        header('Content-Type: application/manifest+json');
-        header('Cache-Control: public, max-age=86400');
-        echo wp_json_encode($manifest);
-        exit;
     }
 
     /**
