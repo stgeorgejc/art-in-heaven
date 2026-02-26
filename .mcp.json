@@ -5,11 +5,7 @@
       "command": "npx",
       "args": [
         "-y",
-        "@playwright/mcp@latest",
-        "--browser",
-        "chrome",
-        "--chrome-path",
-        "/Applications/Arc.app/Contents/MacOS/Arc"
+        "@playwright/mcp@latest"
       ],
       "env": {}
     }
