@@ -23,11 +23,13 @@ $counts->active = isset($counts->active) ? $counts->active : 0;
 $counts->active_with_bids = isset($counts->active_with_bids) ? $counts->active_with_bids : 0;
 $counts->active_no_bids = isset($counts->active_no_bids) ? $counts->active_no_bids : 0;
 $counts->ended = isset($counts->ended) ? $counts->ended : 0;
+$counts->ended_with_bids = isset($counts->ended_with_bids) ? $counts->ended_with_bids : 0;
+$counts->ended_no_bids = isset($counts->ended_no_bids) ? $counts->ended_no_bids : 0;
 $counts->draft = isset($counts->draft) ? $counts->draft : 0;
 $counts->with_favorites = isset($counts->with_favorites) ? $counts->with_favorites : 0;
 
 // Get current tab
-$current_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'all';
+$current_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'active_bids';
 
 // Filter by tab
 $filter_args = array();
@@ -41,8 +43,11 @@ switch ($current_tab) {
     case 'draft':
         $filter_args = array('status' => 'draft');
         break;
-    case 'ended':
-        $filter_args = array('status' => 'ended');
+    case 'ended_bids':
+        $filter_args = array('status' => 'ended', 'has_bids' => true);
+        break;
+    case 'ended_no_bids':
+        $filter_args = array('status' => 'ended', 'has_bids' => false);
         break;
     default:
         $filter_args = array(); // All
@@ -62,7 +67,7 @@ $art_pieces = $art_model->get_all_with_stats($filter_args);
             <?php _e('All', 'art-in-heaven'); ?> (<?php echo $counts->total; ?>)
         </a>
         <a href="<?php echo admin_url('admin.php?page=art-in-heaven-art&tab=active_bids'); ?>" class="nav-tab <?php echo $current_tab === 'active_bids' ? 'nav-tab-active' : ''; ?>">
-            <?php _e('Active with Bids', 'art-in-heaven'); ?> (<?php echo $counts->active_with_bids; ?>)
+            <?php _e('Active - Bids', 'art-in-heaven'); ?> (<?php echo $counts->active_with_bids; ?>)
         </a>
         <a href="<?php echo admin_url('admin.php?page=art-in-heaven-art&tab=active_no_bids'); ?>" class="nav-tab <?php echo $current_tab === 'active_no_bids' ? 'nav-tab-active' : ''; ?>">
             <?php _e('Active - No Bids', 'art-in-heaven'); ?> (<?php echo $counts->active_no_bids; ?>)
@@ -70,8 +75,11 @@ $art_pieces = $art_model->get_all_with_stats($filter_args);
         <a href="<?php echo admin_url('admin.php?page=art-in-heaven-art&tab=draft'); ?>" class="nav-tab <?php echo $current_tab === 'draft' ? 'nav-tab-active' : ''; ?>">
             <?php _e('Draft', 'art-in-heaven'); ?> (<?php echo $counts->draft; ?>)
         </a>
-        <a href="<?php echo admin_url('admin.php?page=art-in-heaven-art&tab=ended'); ?>" class="nav-tab <?php echo $current_tab === 'ended' ? 'nav-tab-active' : ''; ?>">
-            <?php _e('Ended', 'art-in-heaven'); ?> (<?php echo $counts->ended; ?>)
+        <a href="<?php echo admin_url('admin.php?page=art-in-heaven-art&tab=ended_bids'); ?>" class="nav-tab <?php echo $current_tab === 'ended_bids' ? 'nav-tab-active' : ''; ?>">
+            <?php _e('Ended - Bids', 'art-in-heaven'); ?> (<?php echo $counts->ended_with_bids; ?>)
+        </a>
+        <a href="<?php echo admin_url('admin.php?page=art-in-heaven-art&tab=ended_no_bids'); ?>" class="nav-tab <?php echo $current_tab === 'ended_no_bids' ? 'nav-tab-active' : ''; ?>">
+            <?php _e('Ended - No Bids', 'art-in-heaven'); ?> (<?php echo $counts->ended_no_bids; ?>)
         </a>
     </nav>
     
@@ -83,11 +91,20 @@ $art_pieces = $art_model->get_all_with_stats($filter_args);
             <input type="text" id="aih-search-table" placeholder="<?php _e('Search...', 'art-in-heaven'); ?>">
             <select id="aih-filter-artist-admin">
                 <option value=""><?php _e('All Artists', 'art-in-heaven'); ?></option>
-                <?php 
+                <?php
                 $artists = array_unique(array_column($art_pieces, 'artist'));
                 sort($artists);
                 foreach ($artists as $artist): ?>
                     <option value="<?php echo esc_attr($artist); ?>"><?php echo esc_html($artist); ?></option>
+                <?php endforeach; ?>
+            </select>
+            <select id="aih-filter-tier-admin">
+                <option value=""><?php _e('All Tiers', 'art-in-heaven'); ?></option>
+                <?php
+                $tiers = array_unique(array_filter(array_column($art_pieces, 'tier')));
+                sort($tiers);
+                foreach ($tiers as $tier): ?>
+                    <option value="<?php echo esc_attr($tier); ?>"><?php printf(__('Tier %s', 'art-in-heaven'), $tier); ?></option>
                 <?php endforeach; ?>
             </select>
             <select id="aih-sort-table">
@@ -313,6 +330,7 @@ $art_pieces = $art_model->get_all_with_stats($filter_args);
                         data-title="<?php echo esc_attr(strtolower($piece->title)); ?>"
                         data-artist="<?php echo esc_attr(strtolower($piece->artist)); ?>"
                         data-artid="<?php echo esc_attr(strtolower($piece->art_id)); ?>"
+                        data-tier="<?php echo esc_attr($piece->tier); ?>"
                         data-starting="<?php echo esc_attr($piece->starting_bid); ?>"
                         data-current="<?php echo esc_attr($current_bid); ?>"
                         data-bids="<?php echo esc_attr($piece->total_bids); ?>"
@@ -645,11 +663,11 @@ jQuery(document).ready(function($) {
                     $cell.data('value', r.data.value);
                     $cell.find('.aih-cell-value').html(r.data.display_value);
                     
-                    // Update row data attributes if needed
-                    if (field === 'title') $row.data('title', newValue.toLowerCase());
-                    if (field === 'artist') $row.data('artist', newValue.toLowerCase());
-                    if (field === 'art_id') $row.data('artid', newValue.toLowerCase());
-                    if (field === 'starting_bid') $row.data('starting', parseFloat(newValue));
+                    // Update DOM attributes so applyFilters() (which reads via attr()) sees the new values
+                    if (field === 'title') $row.attr('data-title', newValue.toLowerCase());
+                    if (field === 'artist') $row.attr('data-artist', newValue.toLowerCase());
+                    if (field === 'art_id') $row.attr('data-artid', newValue.toLowerCase());
+                    if (field === 'starting_bid') $row.attr('data-starting', parseFloat(newValue));
                     
                     // Update status cell if date fields were changed
                     if (r.data.status_html && (field === 'auction_start' || field === 'auction_end')) {
@@ -694,22 +712,27 @@ jQuery(document).ready(function($) {
     function applyFilters() {
         var search = $('#aih-search-table').val().toLowerCase().trim();
         var artist = $('#aih-filter-artist-admin').val().toLowerCase();
+        var tier = $('#aih-filter-tier-admin').val();
         var visibleCount = 0;
-        
-        $rows.each(function() {
+
+        $tbody.find('tr[data-id]').each(function() {
             var $row = $(this);
-            var title = $row.data('title') || '';
-            var rowArtist = $row.data('artist') || '';
-            var artid = $row.data('artid') || '';
+            var title = ($row.attr('data-title') || '').toLowerCase();
+            var rowArtist = ($row.attr('data-artist') || '').toLowerCase();
+            var artid = ($row.attr('data-artid') || '').toLowerCase();
+            var rowTier = $row.attr('data-tier') || '';
             var show = true;
-            
+
             if (search && title.indexOf(search) === -1 && rowArtist.indexOf(search) === -1 && artid.indexOf(search) === -1) {
                 show = false;
             }
             if (artist && rowArtist !== artist) {
                 show = false;
             }
-            
+            if (tier && rowTier !== tier) {
+                show = false;
+            }
+
             if (show) {
                 $row.removeClass('aih-hidden');
                 visibleCount++;
@@ -717,12 +740,12 @@ jQuery(document).ready(function($) {
                 $row.addClass('aih-hidden');
             }
         });
-        
+
         $('#aih-visible-count').text(visibleCount);
     }
-    
+
     $('#aih-search-table').on('input keyup', applyFilters);
-    $('#aih-filter-artist-admin').on('change', applyFilters);
+    $('#aih-filter-artist-admin, #aih-filter-tier-admin').on('change', applyFilters);
     
     // ========== SORTING ==========
     

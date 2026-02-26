@@ -135,6 +135,7 @@ class Art_In_Heaven {
         add_action('init', array($this, 'maybe_update_db'), 0);
         add_action('init', array('AIH_Auth', 'maybe_encrypt_api_data'), 1);
         add_action('init', array($this, 'init'), 0);
+        add_action('init', array($this, 'maybe_flush_rewrite_rules'), 99);
         add_action('rest_api_init', array($this, 'init_rest_api'));
         add_action('wp_enqueue_scripts', array($this, 'enqueue_frontend_assets'));
         add_filter('body_class', array($this, 'add_body_class'));
@@ -230,6 +231,52 @@ class Art_In_Heaven {
         return $schedules;
     }
     
+    /**
+     * Flush rewrite rules if the plugin's rules are missing from the stored rules.
+     * Runs at priority 99 on admin requests only (after all rules are registered).
+     * Uses a transient to avoid repeated flush attempts on every admin page load.
+     */
+    public function maybe_flush_rewrite_rules() {
+        // Only run in admin context to avoid expensive flushes on frontend requests
+        if (!is_admin() || wp_doing_ajax()) {
+            return;
+        }
+
+        // Skip if we already flushed recently (check lasts 12 hours)
+        if (get_transient('aih_rewrite_rules_flushed')) {
+            return;
+        }
+
+        $rules = get_option('rewrite_rules');
+        $needs_flush = !is_array($rules);
+
+        // Check for the API router rule as a canary
+        if (!$needs_flush && !isset($rules['^api/([a-z0-9\-]+)/?$'])) {
+            $needs_flush = true;
+        }
+
+        // Check that the gallery art rewrite rule matches the current gallery page slug.
+        // This catches slug changes (e.g. /gallery → /live) that would otherwise leave
+        // stale rules pointing at the old slug.
+        if (!$needs_flush) {
+            $gallery_page_id = get_option('aih_gallery_page', '');
+            $page = $gallery_page_id ? get_post($gallery_page_id) : null;
+            if ($page) {
+                $expected_rule = '^' . preg_quote($page->post_name, '/') . '/art/([0-9]+)/?$';
+                if (!isset($rules[$expected_rule])) {
+                    $needs_flush = true;
+                }
+            }
+        }
+
+        if ($needs_flush) {
+            flush_rewrite_rules();
+        }
+
+        // Mark as checked so we don't re-run on every admin page load
+        set_transient('aih_rewrite_rules_flushed', true, 12 * HOUR_IN_SECONDS);
+    }
+
     /**
      * Auto-run database migrations when plugin version changes
      */
@@ -351,7 +398,11 @@ class Art_In_Heaven {
      */
     public function init() {
         load_plugin_textdomain('art-in-heaven', false, dirname(AIH_PLUGIN_BASENAME) . '/languages');
-        
+
+        // One-time migration: convert URL-based page settings to numeric page IDs.
+        // Early installs stored a permalink string; all code now expects a post ID.
+        $this->maybe_migrate_page_settings();
+
         // One-time cleanup of deprecated cron (v0.9.89)
         if (wp_next_scheduled('aih_five_minute_check')) {
             wp_clear_scheduled_hook('aih_five_minute_check');
@@ -374,7 +425,25 @@ class Art_In_Heaven {
         // Auto-manage auction statuses based on start/end times
         $this->throttled_expired_check();
     }
-    
+
+    /**
+     * One-time migration: convert URL-based page settings to numeric post IDs.
+     *
+     * Early installs stored a permalink string in aih_gallery_page / aih_login_page.
+     * All code now expects a numeric post ID. This converts any remaining URL values.
+     */
+    private function maybe_migrate_page_settings() {
+        foreach (array('aih_gallery_page', 'aih_login_page') as $option) {
+            $value = get_option($option, '');
+            if (!empty($value) && !is_numeric($value)) {
+                $post_id = url_to_postid($value);
+                if ($post_id) {
+                    update_option($option, $post_id);
+                }
+            }
+        }
+    }
+
     public function init_rest_api() {
         // Load REST API class only when REST requests are made
         $rest_file = AIH_PLUGIN_DIR . 'includes/class-aih-rest-api.php';

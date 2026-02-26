@@ -783,10 +783,6 @@ if (!empty($order_ids)) {
     white-space: nowrap;
 }
 
-.aih-pickup-card.aih-hidden {
-    display: none;
-}
-
 /* Responsive */
 @media (max-width: 768px) {
     .aih-pickup-header {

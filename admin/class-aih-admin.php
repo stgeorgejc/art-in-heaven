@@ -266,8 +266,8 @@ class AIH_Admin {
         register_setting('aih_settings', 'aih_auction_year', array('sanitize_callback' => 'intval'));
         register_setting('aih_settings', 'aih_event_date', array('sanitize_callback' => 'sanitize_text_field'));
         register_setting('aih_settings', 'aih_event_end_date', array('sanitize_callback' => 'sanitize_text_field'));
-        register_setting('aih_settings', 'aih_login_page', array('sanitize_callback' => 'esc_url_raw'));
-        register_setting('aih_settings', 'aih_gallery_page', array('sanitize_callback' => 'esc_url_raw'));
+        register_setting('aih_settings', 'aih_login_page', array('sanitize_callback' => 'absint'));
+        register_setting('aih_settings', 'aih_gallery_page', array('sanitize_callback' => 'absint'));
         register_setting('aih_settings', 'aih_show_sold_items', array(
             'type' => 'boolean',
             'default' => true,

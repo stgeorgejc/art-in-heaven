@@ -43,13 +43,16 @@ $event_date = get_option('aih_event_date', '');
                     </td>
                 </tr>
                 <tr>
-                    <th scope="row"><label for="aih_gallery_page"><?php _e('Gallery Page URL', 'art-in-heaven'); ?></label></th>
+                    <th scope="row"><label for="aih_gallery_page"><?php _e('Gallery Page', 'art-in-heaven'); ?></label></th>
                     <td>
                         <?php $gallery_page = get_option('aih_gallery_page', ''); ?>
-                        <input type="url" id="aih_gallery_page" name="aih_gallery_page" 
-                               value="<?php echo esc_attr($gallery_page); ?>" 
-                               class="regular-text" placeholder="<?php _e('Auto-detected if empty', 'art-in-heaven'); ?>">
-                        <p class="description"><?php _e('URL of the page with [art_in_heaven_gallery] shortcode. Leave empty to auto-detect.', 'art-in-heaven'); ?></p>
+                        <select id="aih_gallery_page" name="aih_gallery_page">
+                            <option value=""><?php _e('— Select Page —', 'art-in-heaven'); ?></option>
+                            <?php foreach (get_pages() as $page): ?>
+                                <option value="<?php echo esc_attr($page->ID); ?>" <?php selected($gallery_page, $page->ID); ?>><?php echo esc_html($page->post_title); ?> (<?php echo esc_html($page->post_name); ?>)</option>
+                            <?php endforeach; ?>
+                        </select>
+                        <p class="description"><?php _e('Page with [art_in_heaven_gallery] shortcode. Auto-detected if empty.', 'art-in-heaven'); ?></p>
                     </td>
                 </tr>
             </table>
@@ -166,9 +169,15 @@ $event_date = get_option('aih_event_date', '');
                     </td>
                 </tr>
                 <tr>
-                    <th scope="row"><label for="aih_login_page"><?php _e('Login Page URL', 'art-in-heaven'); ?></label></th>
+                    <th scope="row"><label for="aih_login_page"><?php _e('Login Page', 'art-in-heaven'); ?></label></th>
                     <td>
-                        <input type="url" id="aih_login_page" name="aih_login_page" value="<?php echo esc_attr(get_option('aih_login_page', '')); ?>" class="regular-text">
+                        <?php $login_page = get_option('aih_login_page', ''); ?>
+                        <select id="aih_login_page" name="aih_login_page">
+                            <option value=""><?php _e('— Select Page —', 'art-in-heaven'); ?></option>
+                            <?php foreach (get_pages() as $page): ?>
+                                <option value="<?php echo esc_attr($page->ID); ?>" <?php selected($login_page, $page->ID); ?>><?php echo esc_html($page->post_title); ?> (<?php echo esc_html($page->post_name); ?>)</option>
+                            <?php endforeach; ?>
+                        </select>
                         <p class="description"><?php _e('Page with [art_in_heaven_login] shortcode.', 'art-in-heaven'); ?></p>
                     </td>
                 </tr>

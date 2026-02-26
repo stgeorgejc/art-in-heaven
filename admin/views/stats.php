@@ -107,11 +107,8 @@ if (!isset($art_pieces)) { $art_pieces = array(); }
         </thead>
         <tbody>
             <?php
-            $current_tier = null;
             foreach ($sorted_pieces as $piece):
                 $tier = !empty($piece->tier) ? $piece->tier : __('No Tier', 'art-in-heaven');
-                $show_tier = ($tier !== $current_tier);
-                $current_tier = $tier;
                 $piece_bid_rate = $total_bids_sum > 0 ? round(($piece->total_bids / $total_bids_sum) * 100, 1) : 0;
             ?>
             <tr data-tier="<?php echo esc_attr($tier); ?>"
@@ -122,9 +119,7 @@ if (!isset($art_pieces)) { $art_pieces = array(); }
                 data-unique_bidders="<?php echo intval($piece->unique_bidders); ?>"
                 data-current_bid="<?php echo floatval($piece->current_bid ?: $piece->starting_bid); ?>">
                 <td>
-                    <?php if ($show_tier): ?>
                     <strong style="color: #1c1c1c;"><?php echo esc_html($tier); ?></strong>
-                    <?php endif; ?>
                 </td>
                 <td><code><?php echo esc_html($piece->art_id); ?></code></td>
                 <td>
