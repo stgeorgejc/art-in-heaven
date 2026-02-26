@@ -23,11 +23,13 @@ $counts->active = isset($counts->active) ? $counts->active : 0;
 $counts->active_with_bids = isset($counts->active_with_bids) ? $counts->active_with_bids : 0;
 $counts->active_no_bids = isset($counts->active_no_bids) ? $counts->active_no_bids : 0;
 $counts->ended = isset($counts->ended) ? $counts->ended : 0;
+$counts->ended_with_bids = isset($counts->ended_with_bids) ? $counts->ended_with_bids : 0;
+$counts->ended_no_bids = isset($counts->ended_no_bids) ? $counts->ended_no_bids : 0;
 $counts->draft = isset($counts->draft) ? $counts->draft : 0;
 $counts->with_favorites = isset($counts->with_favorites) ? $counts->with_favorites : 0;
 
 // Get current tab
-$current_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'all';
+$current_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'active_bids';
 
 // Filter by tab
 $filter_args = array();
@@ -41,8 +43,11 @@ switch ($current_tab) {
     case 'draft':
         $filter_args = array('status' => 'draft');
         break;
-    case 'ended':
-        $filter_args = array('status' => 'ended');
+    case 'ended_bids':
+        $filter_args = array('status' => 'ended', 'has_bids' => true);
+        break;
+    case 'ended_no_bids':
+        $filter_args = array('status' => 'ended', 'has_bids' => false);
         break;
     default:
         $filter_args = array(); // All
@@ -62,7 +67,7 @@ $art_pieces = $art_model->get_all_with_stats($filter_args);
             <?php _e('All', 'art-in-heaven'); ?> (<?php echo $counts->total; ?>)
         </a>
         <a href="<?php echo admin_url('admin.php?page=art-in-heaven-art&tab=active_bids'); ?>" class="nav-tab <?php echo $current_tab === 'active_bids' ? 'nav-tab-active' : ''; ?>">
-            <?php _e('Active with Bids', 'art-in-heaven'); ?> (<?php echo $counts->active_with_bids; ?>)
+            <?php _e('Active - Bids', 'art-in-heaven'); ?> (<?php echo $counts->active_with_bids; ?>)
         </a>
         <a href="<?php echo admin_url('admin.php?page=art-in-heaven-art&tab=active_no_bids'); ?>" class="nav-tab <?php echo $current_tab === 'active_no_bids' ? 'nav-tab-active' : ''; ?>">
             <?php _e('Active - No Bids', 'art-in-heaven'); ?> (<?php echo $counts->active_no_bids; ?>)
@@ -70,8 +75,11 @@ $art_pieces = $art_model->get_all_with_stats($filter_args);
         <a href="<?php echo admin_url('admin.php?page=art-in-heaven-art&tab=draft'); ?>" class="nav-tab <?php echo $current_tab === 'draft' ? 'nav-tab-active' : ''; ?>">
             <?php _e('Draft', 'art-in-heaven'); ?> (<?php echo $counts->draft; ?>)
         </a>
-        <a href="<?php echo admin_url('admin.php?page=art-in-heaven-art&tab=ended'); ?>" class="nav-tab <?php echo $current_tab === 'ended' ? 'nav-tab-active' : ''; ?>">
-            <?php _e('Ended', 'art-in-heaven'); ?> (<?php echo $counts->ended; ?>)
+        <a href="<?php echo admin_url('admin.php?page=art-in-heaven-art&tab=ended_bids'); ?>" class="nav-tab <?php echo $current_tab === 'ended_bids' ? 'nav-tab-active' : ''; ?>">
+            <?php _e('Ended - Bids', 'art-in-heaven'); ?> (<?php echo $counts->ended_with_bids; ?>)
+        </a>
+        <a href="<?php echo admin_url('admin.php?page=art-in-heaven-art&tab=ended_no_bids'); ?>" class="nav-tab <?php echo $current_tab === 'ended_no_bids' ? 'nav-tab-active' : ''; ?>">
+            <?php _e('Ended - No Bids', 'art-in-heaven'); ?> (<?php echo $counts->ended_no_bids; ?>)
         </a>
     </nav>
     

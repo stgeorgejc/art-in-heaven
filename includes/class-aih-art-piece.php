@@ -797,6 +797,21 @@ class AIH_Art_Piece {
         $counts->active_with_bids = (int) ($bid_row->active_with_bids ?? 0);
         $counts->active_no_bids = (int) ($bid_row->active_no_bids ?? 0);
 
+        // Query 2b: Ended bid counts
+        $ended_bid_row = $wpdb->get_row($wpdb->prepare(
+            "SELECT
+                COUNT(DISTINCT CASE WHEN b.id IS NOT NULL THEN a.id END) as ended_with_bids,
+                COUNT(DISTINCT CASE WHEN b.id IS NULL THEN a.id END) as ended_no_bids
+            FROM {$this->table} a
+            LEFT JOIN $bids_table b ON a.id = b.art_piece_id
+            WHERE a.status = 'ended'
+               OR (a.status = 'active' AND a.auction_end IS NOT NULL AND a.auction_end <= %s)",
+            $now
+        ));
+
+        $counts->ended_with_bids = (int) ($ended_bid_row->ended_with_bids ?? 0);
+        $counts->ended_no_bids = (int) ($ended_bid_row->ended_no_bids ?? 0);
+
         // Query 3: Global bid/favorites counts (replaces 2 separate queries)
         $global_row = $wpdb->get_row(
             "SELECT
