@@ -101,7 +101,8 @@ $art_pieces = $art_model->get_all_with_stats($filter_args);
             <select id="aih-filter-tier-admin">
                 <option value=""><?php _e('All Tiers', 'art-in-heaven'); ?></option>
                 <?php
-                $tiers = array('1', '2', '3', '4');
+                $tiers = array_unique(array_filter(array_column($art_pieces, 'tier')));
+                sort($tiers);
                 foreach ($tiers as $tier): ?>
                     <option value="<?php echo esc_attr($tier); ?>"><?php printf(__('Tier %s', 'art-in-heaven'), $tier); ?></option>
                 <?php endforeach; ?>

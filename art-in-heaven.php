@@ -233,33 +233,48 @@ class Art_In_Heaven {
     
     /**
      * Flush rewrite rules if the plugin's rules are missing from the stored rules.
-     * Runs once at priority 99 (after all rules are registered) and only flushes
-     * when needed, so there is no performance hit on normal page loads.
+     * Runs at priority 99 on admin requests only (after all rules are registered).
+     * Uses a transient to avoid repeated flush attempts on every admin page load.
      */
     public function maybe_flush_rewrite_rules() {
-        $rules = get_option('rewrite_rules');
-        if (!is_array($rules)) {
-            flush_rewrite_rules();
+        // Only run in admin context to avoid expensive flushes on frontend requests
+        if (!is_admin() || wp_doing_ajax()) {
             return;
         }
 
-        // Check for the API router rule as a canary
-        if (!isset($rules['^api/([a-z0-9\-]+)/?$'])) {
-            flush_rewrite_rules();
+        // Skip if we already flushed recently (check lasts 12 hours)
+        if (get_transient('aih_rewrite_rules_flushed')) {
             return;
+        }
+
+        $rules = get_option('rewrite_rules');
+        $needs_flush = !is_array($rules);
+
+        // Check for the API router rule as a canary
+        if (!$needs_flush && !isset($rules['^api/([a-z0-9\-]+)/?$'])) {
+            $needs_flush = true;
         }
 
         // Check that the gallery art rewrite rule matches the current gallery page slug.
         // This catches slug changes (e.g. /gallery → /live) that would otherwise leave
         // stale rules pointing at the old slug.
-        $gallery_page_id = get_option('aih_gallery_page', '');
-        $page = $gallery_page_id ? get_post($gallery_page_id) : null;
-        if ($page) {
-            $expected_rule = '^' . preg_quote($page->post_name, '/') . '/art/([0-9]+)/?$';
-            if (!isset($rules[$expected_rule])) {
-                flush_rewrite_rules();
+        if (!$needs_flush) {
+            $gallery_page_id = get_option('aih_gallery_page', '');
+            $page = $gallery_page_id ? get_post($gallery_page_id) : null;
+            if ($page) {
+                $expected_rule = '^' . preg_quote($page->post_name, '/') . '/art/([0-9]+)/?$';
+                if (!isset($rules[$expected_rule])) {
+                    $needs_flush = true;
+                }
             }
         }
+
+        if ($needs_flush) {
+            flush_rewrite_rules();
+        }
+
+        // Mark as checked so we don't re-run on every admin page load
+        set_transient('aih_rewrite_rules_flushed', true, 12 * HOUR_IN_SECONDS);
     }
 
     /**
