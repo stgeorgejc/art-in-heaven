@@ -38,12 +38,19 @@ class AIH_Push {
 
     // ========== VAPID KEY MANAGEMENT ==========
 
+    /** @var array|null Cached VAPID keys for this request */
+    private static $cached_vapid_keys = null;
+
     /**
-     * Get VAPID keys, auto-generating on first call
+     * Get VAPID keys, auto-generating on first call (cached per request)
      *
      * @return array{publicKey: string, privateKey: string, subject: string}
      */
     public static function get_vapid_keys() {
+        if (self::$cached_vapid_keys !== null) {
+            return self::$cached_vapid_keys;
+        }
+
         $public  = get_option('aih_vapid_public_key');
         $private = get_option('aih_vapid_private_key');
         $subject = get_option('aih_vapid_subject');
@@ -64,11 +71,13 @@ class AIH_Push {
             update_option('aih_vapid_subject', $subject);
         }
 
-        return array(
+        self::$cached_vapid_keys = array(
             'publicKey'  => $public,
             'privateKey' => $private,
             'subject'    => $subject,
         );
+
+        return self::$cached_vapid_keys;
     }
 
     // ========== SUBSCRIPTION CRUD ==========
