@@ -7,9 +7,12 @@
 
 // Capture beforeinstallprompt early — Chrome/Edge fire this before user interaction.
 // Stored globally so the logged-in code below can use it for the Android install banner.
+// Note: we do NOT call preventDefault() here — that would suppress Chrome's native
+// install mini-infobar for all users (including unauthenticated ones who never see
+// our custom banner). Letting the native UI show is the correct default; logged-in
+// users still get our custom banner which calls prompt() explicitly.
 var aihDeferredInstallPrompt = null;
 window.addEventListener('beforeinstallprompt', function(e) {
-    e.preventDefault();
     aihDeferredInstallPrompt = e;
     // If AIHPush already initialized, trigger the banner
     if (window.AIHPush && window.AIHPush.initialized) {
