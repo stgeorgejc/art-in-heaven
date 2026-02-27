@@ -21,11 +21,8 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-// Define plugin constants — version is parsed from the plugin header above (single source of truth)
-if (!defined('AIH_VERSION')) {
-    preg_match('/^\s*\*\s*Version:\s*(.+)$/m', file_get_contents(__FILE__), $aih_ver);
-    define('AIH_VERSION', trim($aih_ver[1] ?? '0.0.0'));
-}
+// Define plugin constants — this is the single source of truth for the version
+define('AIH_VERSION', '1.5.4');
 define('AIH_DB_VERSION', '0.9.6');
 define('AIH_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('AIH_PLUGIN_URL', plugin_dir_url(__FILE__));
