@@ -3962,6 +3962,8 @@ body {
     text-transform: uppercase;
     letter-spacing: 1px;
     color: var(--color-muted);
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .aih-info-row span:last-child {
@@ -4656,6 +4658,13 @@ html.aih-lightbox-open body {
         max-height: 55vh;
     }
 
+    .aih-single-details {
+        max-width: 100%;
+        position: sticky;
+        top: 16px;
+        align-self: start;
+    }
+
     .aih-single-details h1 {
         font-size: 28px;
     }
@@ -4665,39 +4674,22 @@ html.aih-lightbox-open body {
         justify-content: space-between;
         gap: 16px;
     }
-}
-
-/* Wider details section - improved grid */
-@media (min-width: 900px) {
-    .aih-single-content {
-        grid-template-columns: 1fr 1fr;
-        gap: 32px;
-    }
-
-    .aih-single-details {
-        max-width: 100%;
-    }
-
-    .aih-piece-info {
-        padding: 20px;
-    }
 
     .aih-info-row span:last-child {
         max-width: 65%;
         text-align: right;
     }
 
-    /* Better bid section scaling */
+    .aih-piece-info {
+        padding: 20px;
+    }
+
     .aih-bid-section {
         padding: 24px;
     }
 
     .aih-current-bid .aih-bid-amount {
         font-size: 32px;
-    }
-
-    .aih-single-details h1 {
-        font-size: 28px;
     }
 }
 
