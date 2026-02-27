@@ -33,6 +33,7 @@ class AIH_Database {
         '1.0' => 'migrate_bids_table',
         '1.1' => 'migrate_art_pieces_table',
         '1.2' => 'cleanup_bidders_table',
+        '1.3' => 'add_bids_composite_index',
     );
 
     /**
@@ -136,7 +137,8 @@ class AIH_Database {
             KEY bidder_art (bidder_id, art_piece_id),
             KEY bidder_status (bidder_id, bid_status),
             KEY art_status (art_piece_id, bid_status),
-            KEY art_bidder_winning (art_piece_id, bidder_id, is_winning)
+            KEY art_bidder_winning (art_piece_id, bidder_id, is_winning),
+            KEY art_bidder_status (art_piece_id, bid_status, bidder_id, is_winning)
         ) $charset_collate;";
         
         // Favorites table - {Year}_Favorites
@@ -534,8 +536,50 @@ class AIH_Database {
     }
     
     /**
+     * Add composite index for optimized poll_status() query.
+     *
+     * Column order (art_piece_id, bid_status, bidder_id, is_winning) matches
+     * the JOIN/WHERE predicates so MySQL can use it as a covering index.
+     *
+     * @param int|null $year
+     */
+    public static function add_bids_composite_index($year = null) {
+        global $wpdb;
+
+        if (!$year) {
+            $year = self::get_auction_year();
+        }
+
+        $table = $wpdb->prefix . absint($year) . '_Bids';
+
+        // Check if table exists first
+        $table_exists = $wpdb->get_var($wpdb->prepare(
+            "SHOW TABLES LIKE %s",
+            $table
+        ));
+
+        if (!$table_exists) {
+            return;
+        }
+
+        // Check if the index already exists
+        $index_exists = $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS
+             WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s AND INDEX_NAME = 'art_bidder_status'",
+            DB_NAME, $table
+        ));
+
+        if (!$index_exists) {
+            $wpdb->query(
+                "ALTER TABLE `" . esc_sql($table) . "`
+                 ADD INDEX `art_bidder_status` (`art_piece_id`, `bid_status`, `bidder_id`, `is_winning`)"
+            );
+        }
+    }
+
+    /**
      * Map old column names to new ones
-     * 
+     *
      * @param string $old_col
      * @return string|null
      */
