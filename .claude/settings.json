@@ -26,6 +26,7 @@
       "Bash(git remote:*)",
       "Bash(git stash:*)",
       "Bash(git status)",
+      "Bash(vendor/bin/phpunit)",
       "mcp__playwright__browser_click",
       "mcp__playwright__browser_close",
       "mcp__playwright__browser_console_messages",
