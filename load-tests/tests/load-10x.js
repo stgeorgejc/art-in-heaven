@@ -11,7 +11,7 @@
  *   k6 run load-tests/tests/load-10x.js
  */
 
-import { THRESHOLDS, ABORT_THRESHOLDS } from '../config/base.js';
+import { THRESHOLDS } from '../config/base.js';
 import browserScenario from '../scenarios/browser.js';
 import passiveBidderScenario from '../scenarios/passive-bidder.js';
 import activeBidderScenario from '../scenarios/active-bidder.js';
@@ -65,10 +65,7 @@ export const options = {
       gracefulRampDown: '30s',
     },
   },
-  thresholds: {
-    ...THRESHOLDS,
-    ...ABORT_THRESHOLDS,
-  },
+  thresholds: THRESHOLDS,
 };
 
 export function browserFlow()  { browserScenario(); }

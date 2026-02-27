@@ -15,6 +15,10 @@ import { TEST_CODES } from '../config/test-data.js';
 import { thinkTime } from '../lib/helpers.js';
 
 export default function checkoutScenario() {
+  if (!TEST_CODES || TEST_CODES.length === 0) {
+    throw new Error('TEST_CODES is empty; configure load-tests/config/test-data.js');
+  }
+
   // Stagger logins
   sleep(Math.random() * 12);
 

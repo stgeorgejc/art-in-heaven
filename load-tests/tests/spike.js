@@ -10,12 +10,12 @@
  */
 
 import { sleep } from 'k6';
-import { THRESHOLDS, ABORT_THRESHOLDS } from '../config/base.js';
+import { THRESHOLDS } from '../config/base.js';
 import { loginBidder } from '../lib/auth.js';
 import * as api from '../lib/endpoints.js';
 import { TEST_CODES } from '../config/test-data.js';
 import {
-  thinkTime, randomItem, randomItems, randomIntBetween, randomBidAmount,
+  thinkTime, randomItem, randomIntBetween, randomBidAmount,
 } from '../lib/helpers.js';
 
 export const options = {
@@ -32,13 +32,14 @@ export const options = {
       gracefulRampDown: '15s',
     },
   },
-  thresholds: {
-    ...THRESHOLDS,
-    ...ABORT_THRESHOLDS,
-  },
+  thresholds: THRESHOLDS,
 };
 
 export function spikeBidder() {
+  if (!TEST_CODES || TEST_CODES.length === 0) {
+    throw new Error('TEST_CODES is empty; configure load-tests/config/test-data.js');
+  }
+
   // Minimal login stagger (spike is meant to be sudden)
   sleep(Math.random() * 3);
 

@@ -25,11 +25,19 @@ export function randomItem(arr) {
 
 /**
  * Pick `count` random unique elements from an array.
- * If count >= arr.length, returns a shuffled copy of the full array.
+ * Uses a partial Fisher-Yates shuffle for unbiased selection.
  */
 export function randomItems(arr, count) {
-  const shuffled = [...arr].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, Math.min(count, arr.length));
+  const n = arr.length;
+  const resultCount = Math.min(count, n);
+  const copy = [...arr];
+
+  for (let i = n - 1; i >= n - resultCount; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+
+  return copy.slice(n - resultCount);
 }
 
 /**

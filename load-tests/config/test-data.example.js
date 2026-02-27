@@ -3,8 +3,7 @@
  * real values.  test-data.js is git-ignored so secrets stay out of VCS.
  *
  * Confirmation codes come from the CCB registration CSV.
- * Art piece IDs are populated dynamically during the smoke test, but you
- * can hard-code them here after a first run if preferred.
+ * Art piece IDs are discovered dynamically from the gallery endpoint at runtime.
  */
 
 // Unique confirmation codes from the testing registration CSV.
@@ -15,7 +14,3 @@ export const TEST_CODES = [
   // 'XXXXXXXX',
   // 'YYYYYYYY',
 ];
-
-// Art piece IDs currently active on the gallery.
-// Leave empty to auto-discover from the gallery endpoint at runtime.
-export const ART_PIECE_IDS = [];

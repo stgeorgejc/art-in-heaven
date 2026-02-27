@@ -12,9 +12,11 @@ import { BASE_URL, GALLERY_PATH } from '../config/base.js';
  */
 export function extractNonces(html) {
   // Frontend nonce (for authenticated AJAX calls)
-  const nonceMatch = html.match(/"nonce"\s*:\s*"([a-f0-9]+)"/);
+  // WordPress nonces are alphanumeric (not just hex), so match [a-zA-Z0-9]+
+  const nonceMatch = html.match(/"nonce"\s*:\s*"([a-zA-Z0-9]+)"/);
   // Public nonce (for login / logout / auth check)
-  const publicMatch = html.match(/"publicNonce"\s*:\s*"([a-f0-9]+)"/);
+  const publicMatch = html.match(/"publicNonce"\s*:\s*"([a-zA-Z0-9]+)"/);
+
   // AJAX URL (defensive — may differ from expected)
   const ajaxMatch = html.match(/"ajaxurl"\s*:\s*"([^"]+)"/);
 

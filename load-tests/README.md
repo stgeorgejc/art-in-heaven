@@ -1,6 +1,6 @@
 # Art in Heaven — Load Testing Suite
 
-k6-based load tests for the gallery at https://aihgallery.org/gallery/.
+k6-based load tests for the Art in Heaven gallery (default path `/live/`, configurable via `GALLERY_PATH` env var).
 
 ## Prerequisites
 
