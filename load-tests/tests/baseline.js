@@ -1,0 +1,72 @@
+/**
+ * Baseline load test — 50 concurrent users (historical peak).
+ *
+ * Usage:
+ *   k6 run load-tests/tests/baseline.js
+ *   k6 run --out json=results.json load-tests/tests/baseline.js
+ */
+
+import { THRESHOLDS, ABORT_THRESHOLDS } from '../config/base.js';
+import browserScenario from '../scenarios/browser.js';
+import passiveBidderScenario from '../scenarios/passive-bidder.js';
+import activeBidderScenario from '../scenarios/active-bidder.js';
+import checkoutScenario from '../scenarios/checkout-user.js';
+
+export const options = {
+  scenarios: {
+    browsers: {
+      executor: 'ramping-vus',
+      exec: 'browserFlow',
+      startVUs: 0,
+      stages: [
+        { duration: '2m', target: 10 },
+        { duration: '10m', target: 10 },
+        { duration: '2m', target: 0 },
+      ],
+      gracefulRampDown: '30s',
+    },
+    passive_bidders: {
+      executor: 'ramping-vus',
+      exec: 'passiveFlow',
+      startVUs: 0,
+      stages: [
+        { duration: '2m', target: 20 },
+        { duration: '10m', target: 20 },
+        { duration: '2m', target: 0 },
+      ],
+      gracefulRampDown: '30s',
+    },
+    active_bidders: {
+      executor: 'ramping-vus',
+      exec: 'activeFlow',
+      startVUs: 0,
+      stages: [
+        { duration: '2m', target: 18 },
+        { duration: '10m', target: 18 },
+        { duration: '2m', target: 0 },
+      ],
+      gracefulRampDown: '30s',
+    },
+    checkout_users: {
+      executor: 'ramping-vus',
+      exec: 'checkoutFlow',
+      startVUs: 0,
+      stages: [
+        { duration: '5m', target: 0 },    // wait for bids to accumulate
+        { duration: '2m', target: 2 },
+        { duration: '5m', target: 2 },
+        { duration: '2m', target: 0 },
+      ],
+      gracefulRampDown: '30s',
+    },
+  },
+  thresholds: {
+    ...THRESHOLDS,
+    ...ABORT_THRESHOLDS,
+  },
+};
+
+export function browserFlow()  { browserScenario(); }
+export function passiveFlow()  { passiveBidderScenario(); }
+export function activeFlow()   { activeBidderScenario(); }
+export function checkoutFlow() { checkoutScenario(); }
