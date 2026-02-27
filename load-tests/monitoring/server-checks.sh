@@ -5,7 +5,7 @@
 # Run this on the VPS via SSH in a separate terminal while k6 tests execute.
 #
 # Usage:
-#   ssh user@server 'bash -s' < monitoring/server-checks.sh
+#   ssh user@server 'bash -s' < load-tests/monitoring/server-checks.sh
 #   # or copy to server and run:
 #   chmod +x server-checks.sh && ./server-checks.sh
 # =============================================================================

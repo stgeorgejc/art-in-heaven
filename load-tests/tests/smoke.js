@@ -6,9 +6,7 @@
  *   k6 run -e BASE_URL=https://staging.example.com load-tests/tests/smoke.js
  */
 
-import http from 'k6/http';
 import { check, sleep } from 'k6';
-import { BASE_URL, GALLERY_PATH } from '../config/base.js';
 import { loadGalleryPage, loginBidder } from '../lib/auth.js';
 import * as api from '../lib/endpoints.js';
 import { TEST_CODES } from '../config/test-data.js';
@@ -22,8 +20,12 @@ export const options = {
 };
 
 export default function () {
+  if (!TEST_CODES || TEST_CODES.length === 0) {
+    throw new Error('Smoke test requires at least one confirmation code in TEST_CODES; configure load-tests/config/test-data.js.');
+  }
+
   const code = TEST_CODES[0];
-  console.log(`Smoke test using confirmation code: ${code}`);
+  console.log('Smoke test using first configured confirmation code.');
 
   // ── 1. Gallery page load (unauthenticated) ──────────────────────────────
   console.log('\n--- 1. Gallery page load ---');

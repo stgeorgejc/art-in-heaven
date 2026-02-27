@@ -16,6 +16,10 @@ import {
 } from '../lib/helpers.js';
 
 export default function passiveBidderScenario() {
+  if (!TEST_CODES || TEST_CODES.length === 0) {
+    throw new Error('TEST_CODES is empty; configure load-tests/config/test-data.js');
+  }
+
   // Stagger logins to respect auth rate limit (5/60s per IP)
   sleep(Math.random() * 12);
 
