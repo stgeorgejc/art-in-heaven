@@ -419,14 +419,23 @@ body.aih-active .wp-site-blocks {
 .aih-gallery-header {
     display: flex;
     flex-direction: column;
-    gap: 0;
-    margin-bottom: 0;
+    gap: 4px;
+    margin-bottom: 4px;
     padding-bottom: 0;
     border-bottom: none;
 }
 
-.aih-gallery-title h1 {
+/* Gallery page only: collapse header gap since h1 is hidden on mobile */
+.aih-gallery-page .aih-gallery-header {
+    gap: 0;
+    margin-bottom: 8px;
+}
+
+.aih-gallery-page .aih-gallery-title h1 {
     display: none; /* Hidden on mobile — header nav shows active page */
+}
+
+.aih-gallery-title h1 {
     font-family: var(--font-display);
     font-size: 1.1rem;
     font-weight: 500;
@@ -2309,8 +2318,11 @@ body {
         letter-spacing: 2px;
     }
 
-    .aih-gallery-title h1 {
+    .aih-gallery-page .aih-gallery-title h1 {
         display: block;
+    }
+
+    .aih-gallery-title h1 {
         font-size: 32px;
     }
 
@@ -3748,11 +3760,17 @@ body {
     font-weight: 500;
     transition: color var(--transition);
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 45%;
 }
 
-/* On mobile, hide "Back to " — show just "← Gallery" */
-.aih-back-text {
+/* On mobile, show short label; on tablet+, show full label */
+.aih-back-link-full {
     display: none;
+}
+.aih-back-link-short {
+    display: inline;
 }
 
 .aih-back-link:hover {
@@ -4520,8 +4538,11 @@ html.aih-lightbox-open body {
         font-size: 14px;
     }
 
-    .aih-back-text {
+    .aih-back-link-full {
         display: inline;
+    }
+    .aih-back-link-short {
+        display: none;
     }
 
     .aih-nav-center {
@@ -4697,6 +4718,14 @@ html.aih-lightbox-open body {
         position: sticky;
         top: 16px;
         align-self: start;
+    }
+}
+
+/* Override single-item image height on large desktops (must follow 900px+ rule) */
+@media (min-width: 1400px) {
+    .aih-single-image > img,
+    .aih-single-image > picture > img {
+        max-height: 45vh;
     }
 
     .aih-single-details h1 {
