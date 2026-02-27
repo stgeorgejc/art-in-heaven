@@ -18,8 +18,6 @@ class AIH_Status {
     const STATUS_ACTIVE = 'active';
     const STATUS_DRAFT = 'draft';
     const STATUS_ENDED = 'ended';
-    const STATUS_PAUSED = 'paused';
-    const STATUS_CANCELED = 'canceled';
     
     /**
      * All valid statuses for validation
@@ -28,8 +26,6 @@ class AIH_Status {
         self::STATUS_ACTIVE,
         self::STATUS_DRAFT,
         self::STATUS_ENDED,
-        self::STATUS_PAUSED,
-        self::STATUS_CANCELED,
     );
     
     /**
@@ -37,8 +33,6 @@ class AIH_Status {
      */
     private static $closed_statuses = array(
         self::STATUS_ENDED,
-        self::STATUS_PAUSED,
-        self::STATUS_CANCELED,
     );
     
     /**
@@ -55,6 +49,7 @@ class AIH_Status {
     public static function get_status_sql($alias = 'a', $now_placeholder = '%s') {
         return "CASE
             WHEN {$alias}.status = 'sold' THEN 'sold'
+            WHEN {$alias}.status = 'ended' AND {$alias}.auction_end IS NOT NULL AND {$alias}.auction_end > {$now_placeholder} AND ({$alias}.auction_start IS NULL OR {$alias}.auction_start <= {$now_placeholder}) THEN 'active'
             WHEN {$alias}.status = 'ended' THEN 'ended'
             WHEN {$alias}.status = 'active' AND {$alias}.auction_end IS NOT NULL AND {$alias}.auction_end <= {$now_placeholder} THEN 'ended'
             WHEN {$alias}.status = 'active' AND {$alias}.auction_start IS NOT NULL AND {$alias}.auction_start > {$now_placeholder} THEN 'scheduled'
@@ -301,23 +296,8 @@ class AIH_Status {
             $result['status'] = $db_status;
             $result['can_bid'] = false;
             
-            switch ($db_status) {
-                case self::STATUS_ENDED:
-                    $result['display_status'] = 'Ended';
-                    $result['reason'] = 'Database status is ended';
-                    break;
-                case self::STATUS_PAUSED:
-                    $result['display_status'] = 'Paused';
-                    $result['reason'] = 'Auction is paused by admin';
-                    break;
-                case self::STATUS_CANCELED:
-                    $result['display_status'] = 'Canceled';
-                    $result['reason'] = 'Auction was canceled';
-                    break;
-                default:
-                    $result['display_status'] = ucfirst($db_status);
-                    $result['reason'] = "Database status is {$db_status}";
-            }
+            $result['display_status'] = 'Ended';
+            $result['reason'] = 'Database status is ended';
             
             return $result;
         }
@@ -507,8 +487,6 @@ class AIH_Status {
             self::STATUS_ACTIVE => __('Active', 'art-in-heaven'),
             self::STATUS_DRAFT => __('Draft (hidden from public)', 'art-in-heaven'),
             self::STATUS_ENDED => __('Ended (closed for bidding)', 'art-in-heaven'),
-            self::STATUS_PAUSED => __('Paused (temporarily closed)', 'art-in-heaven'),
-            self::STATUS_CANCELED => __('Canceled', 'art-in-heaven'),
         );
     }
 }

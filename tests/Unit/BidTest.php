@@ -177,30 +177,7 @@ class BidTest extends TestCase
         $this->assertStringContainsString('not accepting bids', $result['message']);
     }
 
-    public function testPlaceBidAuctionPaused(): void
-    {
-        $this->wpdb->pushGetRow($this->makeArtPiece([
-            'computed_status' => 'paused',
-        ]));
 
-        $bid = new AIH_Bid();
-        $result = $bid->place_bid(1, 'BIDDER1', 150.00);
-
-        $this->assertFalse($result['success']);
-        $this->assertStringContainsString('not accepting bids', $result['message']);
-    }
-
-    public function testPlaceBidAuctionCanceled(): void
-    {
-        $this->wpdb->pushGetRow($this->makeArtPiece([
-            'computed_status' => 'canceled',
-        ]));
-
-        $bid = new AIH_Bid();
-        $result = $bid->place_bid(1, 'BIDDER1', 150.00);
-
-        $this->assertFalse($result['success']);
-    }
 
     // ── Maximum bid enforcement ──
 

@@ -66,8 +66,6 @@ class StatusTest extends TestCase
         $this->assertTrue(AIH_Status::is_valid_status('active'));
         $this->assertTrue(AIH_Status::is_valid_status('draft'));
         $this->assertTrue(AIH_Status::is_valid_status('ended'));
-        $this->assertTrue(AIH_Status::is_valid_status('paused'));
-        $this->assertTrue(AIH_Status::is_valid_status('canceled'));
     }
 
     public function testIsValidStatusRejectsInvalid(): void
@@ -75,6 +73,8 @@ class StatusTest extends TestCase
         $this->assertFalse(AIH_Status::is_valid_status('unknown'));
         $this->assertFalse(AIH_Status::is_valid_status(''));
         $this->assertFalse(AIH_Status::is_valid_status('Active')); // case-sensitive
+        $this->assertFalse(AIH_Status::is_valid_status('paused'));
+        $this->assertFalse(AIH_Status::is_valid_status('canceled'));
     }
 
     // ── is_closed_status() ──
@@ -82,8 +82,8 @@ class StatusTest extends TestCase
     public function testIsClosedStatus(): void
     {
         $this->assertTrue(AIH_Status::is_closed_status('ended'));
-        $this->assertTrue(AIH_Status::is_closed_status('paused'));
-        $this->assertTrue(AIH_Status::is_closed_status('canceled'));
+        $this->assertFalse(AIH_Status::is_closed_status('paused'));
+        $this->assertFalse(AIH_Status::is_closed_status('canceled'));
         $this->assertFalse(AIH_Status::is_closed_status('active'));
         $this->assertFalse(AIH_Status::is_closed_status('draft'));
     }
@@ -167,32 +167,6 @@ class StatusTest extends TestCase
         ];
         $result = AIH_Status::compute_status($piece);
         $this->assertSame('ended', $result['status']);
-        $this->assertFalse($result['can_bid']);
-    }
-
-    public function testComputeStatusPausedOverrides(): void
-    {
-        $piece = (object) [
-            'id' => 1,
-            'status' => 'paused',
-            'auction_start' => $this->pastDate(),
-            'auction_end' => $this->futureDate(),
-        ];
-        $result = AIH_Status::compute_status($piece);
-        $this->assertSame('paused', $result['status']);
-        $this->assertFalse($result['can_bid']);
-    }
-
-    public function testComputeStatusCanceledOverrides(): void
-    {
-        $piece = (object) [
-            'id' => 1,
-            'status' => 'canceled',
-            'auction_start' => $this->pastDate(),
-            'auction_end' => $this->futureDate(),
-        ];
-        $result = AIH_Status::compute_status($piece);
-        $this->assertSame('canceled', $result['status']);
         $this->assertFalse($result['can_bid']);
     }
 
@@ -299,8 +273,6 @@ class StatusTest extends TestCase
         $this->assertArrayHasKey('active', $options);
         $this->assertArrayHasKey('draft', $options);
         $this->assertArrayHasKey('ended', $options);
-        $this->assertArrayHasKey('paused', $options);
-        $this->assertArrayHasKey('canceled', $options);
-        $this->assertCount(5, $options);
+        $this->assertCount(3, $options);
     }
 }
