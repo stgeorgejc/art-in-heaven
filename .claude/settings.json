@@ -50,5 +50,9 @@
       "mcp__playwright__browser_type",
       "mcp__playwright__browser_wait_for"
     ]
-  }
+  },
+  "enabledMcpjsonServers": [
+    "playwright"
+  ],
+  "enableAllProjectMcpServers": true
 }

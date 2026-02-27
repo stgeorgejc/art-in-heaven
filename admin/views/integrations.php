@@ -85,21 +85,23 @@ $is_sandbox = get_option('aih_pushpay_sandbox', 0);
                 <tr>
                     <th scope="row"><label for="aih_api_username"><?php _e('API Username', 'art-in-heaven'); ?></label></th>
                     <td>
-                        <?php
-                        $raw_ccb_username = AIH_Security::decrypt(get_option('aih_api_username', ''));
-                        $masked_ccb_username = $raw_ccb_username ? str_repeat("\xE2\x80\xA2", max(0, strlen($raw_ccb_username) - 4)) . substr($raw_ccb_username, -4) : '';
-                        ?>
-                        <input type="text" id="aih_api_username" name="aih_api_username" value="<?php echo esc_attr($masked_ccb_username); ?>" class="regular-text" autocomplete="off">
+                        <input type="text" id="aih_api_username" name="aih_api_username" value="" class="regular-text" autocomplete="off" placeholder="<?php esc_attr_e('Enter new value to change', 'art-in-heaven'); ?>">
+                        <?php if ( get_option('aih_api_username', '') ) : ?>
+                            <p class="description" style="color: #4a7c59;"><?php _e('Currently set. Leave blank to keep existing value.', 'art-in-heaven'); ?></p>
+                        <?php else : ?>
+                            <p class="description"><?php _e('Not configured.', 'art-in-heaven'); ?></p>
+                        <?php endif; ?>
                     </td>
                 </tr>
                 <tr>
                     <th scope="row"><label for="aih_api_password"><?php _e('API Password', 'art-in-heaven'); ?></label></th>
                     <td>
-                        <?php
-                        $raw_ccb_password = AIH_Security::decrypt(get_option('aih_api_password', ''));
-                        $masked_ccb_password = $raw_ccb_password ? str_repeat("\xE2\x80\xA2", max(0, strlen($raw_ccb_password) - 4)) . substr($raw_ccb_password, -4) : '';
-                        ?>
-                        <input type="password" id="aih_api_password" name="aih_api_password" value="<?php echo esc_attr($masked_ccb_password); ?>" class="regular-text" autocomplete="off">
+                        <input type="password" id="aih_api_password" name="aih_api_password" value="" class="regular-text" autocomplete="off" placeholder="<?php esc_attr_e('Enter new value to change', 'art-in-heaven'); ?>">
+                        <?php if ( get_option('aih_api_password', '') ) : ?>
+                            <p class="description" style="color: #4a7c59;"><?php _e('Currently set. Leave blank to keep existing value.', 'art-in-heaven'); ?></p>
+                        <?php else : ?>
+                            <p class="description"><?php _e('Not configured.', 'art-in-heaven'); ?></p>
+                        <?php endif; ?>
                     </td>
                 </tr>
                 <tr>
@@ -225,21 +227,23 @@ $is_sandbox = get_option('aih_pushpay_sandbox', 0);
                     <tr>
                         <th scope="row"><label for="aih_pushpay_sandbox_client_id"><?php _e('Client ID', 'art-in-heaven'); ?></label></th>
                         <td>
-                            <?php
-                            $raw_sb_client_id = AIH_Security::decrypt(get_option('aih_pushpay_sandbox_client_id', ''));
-                            $masked_sb_client_id = $raw_sb_client_id ? str_repeat("\xE2\x80\xA2", max(0, strlen($raw_sb_client_id) - 4)) . substr($raw_sb_client_id, -4) : '';
-                            ?>
-                            <input type="text" id="aih_pushpay_sandbox_client_id" name="aih_pushpay_sandbox_client_id" value="<?php echo esc_attr($masked_sb_client_id); ?>" class="regular-text">
+                            <input type="text" id="aih_pushpay_sandbox_client_id" name="aih_pushpay_sandbox_client_id" value="" class="regular-text" placeholder="<?php esc_attr_e('Enter new value to change', 'art-in-heaven'); ?>">
+                            <?php if ( get_option('aih_pushpay_sandbox_client_id', '') ) : ?>
+                                <p class="description" style="color: #4a7c59;"><?php _e('Currently set. Leave blank to keep existing value.', 'art-in-heaven'); ?></p>
+                            <?php else : ?>
+                                <p class="description"><?php _e('Not configured.', 'art-in-heaven'); ?></p>
+                            <?php endif; ?>
                         </td>
                     </tr>
                     <tr>
                         <th scope="row"><label for="aih_pushpay_sandbox_client_secret"><?php _e('Client Secret', 'art-in-heaven'); ?></label></th>
                         <td>
-                            <?php
-                            $raw_sb_client_secret = AIH_Security::decrypt(get_option('aih_pushpay_sandbox_client_secret', ''));
-                            $masked_sb_client_secret = $raw_sb_client_secret ? str_repeat("\xE2\x80\xA2", max(0, strlen($raw_sb_client_secret) - 4)) . substr($raw_sb_client_secret, -4) : '';
-                            ?>
-                            <input type="password" id="aih_pushpay_sandbox_client_secret" name="aih_pushpay_sandbox_client_secret" value="<?php echo esc_attr($masked_sb_client_secret); ?>" class="regular-text">
+                            <input type="password" id="aih_pushpay_sandbox_client_secret" name="aih_pushpay_sandbox_client_secret" value="" class="regular-text" placeholder="<?php esc_attr_e('Enter new value to change', 'art-in-heaven'); ?>">
+                            <?php if ( get_option('aih_pushpay_sandbox_client_secret', '') ) : ?>
+                                <p class="description" style="color: #4a7c59;"><?php _e('Currently set. Leave blank to keep existing value.', 'art-in-heaven'); ?></p>
+                            <?php else : ?>
+                                <p class="description"><?php _e('Not configured.', 'art-in-heaven'); ?></p>
+                            <?php endif; ?>
                         </td>
                     </tr>
                     <tr>
@@ -281,21 +285,23 @@ $is_sandbox = get_option('aih_pushpay_sandbox', 0);
                     <tr>
                         <th scope="row"><label for="aih_pushpay_client_id"><?php _e('Client ID', 'art-in-heaven'); ?></label></th>
                         <td>
-                            <?php
-                            $raw_pp_client_id = AIH_Security::decrypt(get_option('aih_pushpay_client_id', ''));
-                            $masked_pp_client_id = $raw_pp_client_id ? str_repeat("\xE2\x80\xA2", max(0, strlen($raw_pp_client_id) - 4)) . substr($raw_pp_client_id, -4) : '';
-                            ?>
-                            <input type="text" id="aih_pushpay_client_id" name="aih_pushpay_client_id" value="<?php echo esc_attr($masked_pp_client_id); ?>" class="regular-text">
+                            <input type="text" id="aih_pushpay_client_id" name="aih_pushpay_client_id" value="" class="regular-text" placeholder="<?php esc_attr_e('Enter new value to change', 'art-in-heaven'); ?>">
+                            <?php if ( get_option('aih_pushpay_client_id', '') ) : ?>
+                                <p class="description" style="color: #4a7c59;"><?php _e('Currently set. Leave blank to keep existing value.', 'art-in-heaven'); ?></p>
+                            <?php else : ?>
+                                <p class="description"><?php _e('Not configured.', 'art-in-heaven'); ?></p>
+                            <?php endif; ?>
                         </td>
                     </tr>
                     <tr>
                         <th scope="row"><label for="aih_pushpay_client_secret"><?php _e('Client Secret', 'art-in-heaven'); ?></label></th>
                         <td>
-                            <?php
-                            $raw_pp_client_secret = AIH_Security::decrypt(get_option('aih_pushpay_client_secret', ''));
-                            $masked_pp_client_secret = $raw_pp_client_secret ? str_repeat("\xE2\x80\xA2", max(0, strlen($raw_pp_client_secret) - 4)) . substr($raw_pp_client_secret, -4) : '';
-                            ?>
-                            <input type="password" id="aih_pushpay_client_secret" name="aih_pushpay_client_secret" value="<?php echo esc_attr($masked_pp_client_secret); ?>" class="regular-text">
+                            <input type="password" id="aih_pushpay_client_secret" name="aih_pushpay_client_secret" value="" class="regular-text" placeholder="<?php esc_attr_e('Enter new value to change', 'art-in-heaven'); ?>">
+                            <?php if ( get_option('aih_pushpay_client_secret', '') ) : ?>
+                                <p class="description" style="color: #4a7c59;"><?php _e('Currently set. Leave blank to keep existing value.', 'art-in-heaven'); ?></p>
+                            <?php else : ?>
+                                <p class="description"><?php _e('Not configured.', 'art-in-heaven'); ?></p>
+                            <?php endif; ?>
                         </td>
                     </tr>
                     <tr>
@@ -424,11 +430,12 @@ $is_sandbox = get_option('aih_pushpay_sandbox', 0);
                 <tr>
                     <th scope="row"><label for="aih_mercure_jwt_secret"><?php _e('JWT Secret', 'art-in-heaven'); ?></label></th>
                     <td>
-                        <?php
-                        $raw_mercure_jwt = AIH_Security::decrypt(get_option('aih_mercure_jwt_secret', ''));
-                        $masked_mercure_jwt = $raw_mercure_jwt ? str_repeat("\xE2\x80\xA2", max(0, strlen($raw_mercure_jwt) - 4)) . substr($raw_mercure_jwt, -4) : '';
-                        ?>
-                        <input type="password" id="aih_mercure_jwt_secret" name="aih_mercure_jwt_secret" value="<?php echo esc_attr($masked_mercure_jwt); ?>" class="regular-text" autocomplete="off">
+                        <input type="password" id="aih_mercure_jwt_secret" name="aih_mercure_jwt_secret" value="" class="regular-text" autocomplete="off" placeholder="<?php esc_attr_e('Enter new value to change', 'art-in-heaven'); ?>">
+                        <?php if ( get_option('aih_mercure_jwt_secret', '') ) : ?>
+                            <p class="description" style="color: #4a7c59;"><?php _e('Currently set. Leave blank to keep existing value.', 'art-in-heaven'); ?></p>
+                        <?php else : ?>
+                            <p class="description"><?php _e('Not configured.', 'art-in-heaven'); ?></p>
+                        <?php endif; ?>
                         <p class="description"><?php _e('Shared secret between PHP and the Mercure hub for JWT signing. Must match the MERCURE_PUBLISHER_JWT_KEY and MERCURE_SUBSCRIBER_JWT_KEY in your Mercure config. Stored encrypted.', 'art-in-heaven'); ?></p>
                     </td>
                 </tr>

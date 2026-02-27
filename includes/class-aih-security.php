@@ -572,8 +572,27 @@ class AIH_Security {
     }
 
     /**
+     * Create a sanitize callback that encrypts non-empty values and preserves
+     * existing encrypted values when the field is submitted empty.
+     *
+     * @param string $option_name The wp_options option name to preserve when empty.
+     * @return \Closure Sanitize callback compatible with register_setting().
+     */
+    public static function make_sanitize_encrypt( $option_name ) {
+        return function ( $value ) use ( $option_name ) {
+            $value = sanitize_text_field( $value );
+
+            if ( $value === '' ) {
+                return get_option( $option_name, '' );
+            }
+
+            return self::encrypt( $value );
+        };
+    }
+
+    /**
      * Check if this is a REST API request
-     * 
+     *
      * @return bool
      */
     public static function is_rest_request() {
