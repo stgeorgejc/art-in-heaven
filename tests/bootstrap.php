@@ -20,8 +20,10 @@ define('DAY_IN_SECONDS', 86400);
 define('LOGGED_IN_KEY', 'test-encryption-key-for-unit-tests-only-not-real');
 define('AUTH_KEY', 'test-auth-key-for-unit-tests-only');
 
-// Plugin constants
-define('AIH_VERSION', '1.5.4');
+// Plugin constants — version parsed from plugin header (single source of truth)
+$aih_header = file_get_contents(dirname(__DIR__) . '/art-in-heaven.php');
+preg_match('/^\s*\*\s*Version:\s*(.+)$/m', $aih_header, $aih_ver);
+define('AIH_VERSION', trim($aih_ver[1] ?? '0.0.0'));
 define('AIH_DB_VERSION', '0.9.6');
 define('AIH_PLUGIN_DIR', dirname(__DIR__) . '/');
 define('AIH_PLUGIN_URL', 'https://example.com/wp-content/plugins/art-in-heaven/');

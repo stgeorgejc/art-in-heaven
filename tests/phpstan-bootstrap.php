@@ -6,8 +6,10 @@
  * WordPress constants are provided by szepeviktor/phpstan-wordpress stubs.
  */
 
-// Plugin constants (WP core constants come from stubs)
-define('AIH_VERSION', '1.5.4');
+// Plugin constants — version parsed from plugin header (single source of truth)
+$aih_header = file_get_contents(__DIR__ . '/../art-in-heaven.php');
+preg_match('/^\s*\*\s*Version:\s*(.+)$/m', $aih_header, $aih_ver);
+define('AIH_VERSION', trim($aih_ver[1] ?? '0.0.0'));
 define('AIH_DB_VERSION', '0.9.6');
 define('AIH_PLUGIN_DIR', __DIR__ . '/../');
 define('AIH_PLUGIN_URL', 'https://example.com/wp-content/plugins/art-in-heaven/');
