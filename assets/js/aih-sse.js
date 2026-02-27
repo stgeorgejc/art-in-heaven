@@ -159,9 +159,6 @@
                 case 'outbid':
                     this.handleOutbid(data);
                     break;
-                case 'auction_ended':
-                    this.handleAuctionEnded(data);
-                    break;
             }
         },
 
@@ -187,16 +184,6 @@
                 window.showToast('You\'ve been outbid on "' + title + '"!', 'error');
             }
             // Trigger immediate status poll to update badges
-            if (typeof window.aihPollStatus === 'function') {
-                window.aihPollStatus();
-            }
-        },
-
-        /**
-         * Handle auction ended (public topic)
-         */
-        handleAuctionEnded: function(data) {
-            // Trigger a status poll for authoritative state update
             if (typeof window.aihPollStatus === 'function') {
                 window.aihPollStatus();
             }

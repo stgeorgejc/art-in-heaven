@@ -49,9 +49,6 @@ class AIH_Mercure {
 
         // Publish events when bids are placed (after push notifications at priority 20)
         add_action('aih_bid_placed', array($this, 'on_bid_placed'), 25, 4);
-
-        // Publish auction ended events
-        add_action('aih_auction_ended', array($this, 'on_auction_ended'), 10, 1);
     }
 
     // =========================================================================
@@ -365,20 +362,4 @@ class AIH_Mercure {
         }
     }
 
-    /**
-     * Handle auction ended event
-     *
-     * @param int $art_piece_id
-     */
-    public function on_auction_ended($art_piece_id) {
-        $prefix = self::get_topic_prefix();
-
-        $this->publish(
-            $prefix . '/auction/' . intval($art_piece_id),
-            array(
-                'type'         => 'auction_ended',
-                'art_piece_id' => intval($art_piece_id),
-            )
-        );
-    }
 }

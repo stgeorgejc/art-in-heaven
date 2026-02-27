@@ -66,8 +66,6 @@ class StatusTest extends TestCase
         $this->assertTrue(AIH_Status::is_valid_status('active'));
         $this->assertTrue(AIH_Status::is_valid_status('draft'));
         $this->assertTrue(AIH_Status::is_valid_status('ended'));
-        $this->assertTrue(AIH_Status::is_valid_status('paused'));
-        $this->assertTrue(AIH_Status::is_valid_status('canceled'));
     }
 
     public function testIsValidStatusRejectsInvalid(): void
@@ -75,6 +73,8 @@ class StatusTest extends TestCase
         $this->assertFalse(AIH_Status::is_valid_status('unknown'));
         $this->assertFalse(AIH_Status::is_valid_status(''));
         $this->assertFalse(AIH_Status::is_valid_status('Active')); // case-sensitive
+        $this->assertFalse(AIH_Status::is_valid_status('paused'));
+        $this->assertFalse(AIH_Status::is_valid_status('canceled'));
     }
 
     // ── is_closed_status() ──
@@ -82,8 +82,8 @@ class StatusTest extends TestCase
     public function testIsClosedStatus(): void
     {
         $this->assertTrue(AIH_Status::is_closed_status('ended'));
-        $this->assertTrue(AIH_Status::is_closed_status('paused'));
-        $this->assertTrue(AIH_Status::is_closed_status('canceled'));
+        $this->assertFalse(AIH_Status::is_closed_status('paused'));
+        $this->assertFalse(AIH_Status::is_closed_status('canceled'));
         $this->assertFalse(AIH_Status::is_closed_status('active'));
         $this->assertFalse(AIH_Status::is_closed_status('draft'));
     }
@@ -157,42 +157,68 @@ class StatusTest extends TestCase
 
     // ── compute_status() ──
 
-    public function testComputeStatusEndedOverrides(): void
+    public function testComputeStatusEndedReactivatesWhenEndTimeExtended(): void
     {
         $piece = (object) [
             'id' => 1,
             'status' => 'ended',
-            'auction_start' => '2025-01-01 00:00:00',
+            'auction_start' => $this->pastDate(),
             'auction_end' => $this->futureDate(), // future end, but status says ended
+        ];
+        $result = AIH_Status::compute_status($piece);
+        $this->assertSame('active', $result['status']);
+        $this->assertTrue($result['can_bid']);
+    }
+
+    public function testComputeStatusEndedStaysEndedWhenEndTimePast(): void
+    {
+        $piece = (object) [
+            'id' => 1,
+            'status' => 'ended',
+            'auction_start' => $this->pastDate('-2 years'),
+            'auction_end' => $this->pastDate(),
         ];
         $result = AIH_Status::compute_status($piece);
         $this->assertSame('ended', $result['status']);
         $this->assertFalse($result['can_bid']);
     }
 
-    public function testComputeStatusPausedOverrides(): void
+    public function testComputeStatusEndedNoReactivationWhenStartInFuture(): void
     {
         $piece = (object) [
             'id' => 1,
-            'status' => 'paused',
-            'auction_start' => $this->pastDate(),
-            'auction_end' => $this->futureDate(),
+            'status' => 'ended',
+            'auction_start' => $this->futureDate('+6 months'),
+            'auction_end' => $this->futureDate('+1 year'),
         ];
         $result = AIH_Status::compute_status($piece);
-        $this->assertSame('paused', $result['status']);
+        $this->assertSame('ended', $result['status']);
         $this->assertFalse($result['can_bid']);
     }
 
-    public function testComputeStatusCanceledOverrides(): void
+    public function testComputeStatusEndedReactivatesWithNullStart(): void
     {
         $piece = (object) [
             'id' => 1,
-            'status' => 'canceled',
-            'auction_start' => $this->pastDate(),
+            'status' => 'ended',
+            'auction_start' => null,
             'auction_end' => $this->futureDate(),
         ];
         $result = AIH_Status::compute_status($piece);
-        $this->assertSame('canceled', $result['status']);
+        $this->assertSame('active', $result['status']);
+        $this->assertTrue($result['can_bid']);
+    }
+
+    public function testComputeStatusEndedStaysEndedWithNullEnd(): void
+    {
+        $piece = (object) [
+            'id' => 1,
+            'status' => 'ended',
+            'auction_start' => $this->pastDate(),
+            'auction_end' => null,
+        ];
+        $result = AIH_Status::compute_status($piece);
+        $this->assertSame('ended', $result['status']);
         $this->assertFalse($result['can_bid']);
     }
 
@@ -291,6 +317,14 @@ class StatusTest extends TestCase
         $this->assertStringContainsString('a.status', $sql);
     }
 
+    public function testGetStatusSqlContainsReactivationClause(): void
+    {
+        $sql = AIH_Status::get_status_sql('a', '%s');
+        // Verify the ended→active reactivation clause exists
+        $this->assertStringContainsString("a.status = 'ended' AND a.auction_end IS NOT NULL AND a.auction_end >", $sql);
+        $this->assertStringContainsString("THEN 'active'", $sql);
+    }
+
     // ── get_status_options() ──
 
     public function testGetStatusOptionsReturnsAllStatuses(): void
@@ -299,8 +333,6 @@ class StatusTest extends TestCase
         $this->assertArrayHasKey('active', $options);
         $this->assertArrayHasKey('draft', $options);
         $this->assertArrayHasKey('ended', $options);
-        $this->assertArrayHasKey('paused', $options);
-        $this->assertArrayHasKey('canceled', $options);
-        $this->assertCount(5, $options);
+        $this->assertCount(3, $options);
     }
 }

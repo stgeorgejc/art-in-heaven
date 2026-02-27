@@ -105,8 +105,6 @@ class Art_In_Heaven {
         require_once AIH_PLUGIN_DIR . 'includes/class-aih-pushpay.php';
         require_once AIH_PLUGIN_DIR . 'includes/class-aih-ajax.php';
         require_once AIH_PLUGIN_DIR . 'includes/class-aih-shortcodes.php';
-        require_once AIH_PLUGIN_DIR . 'includes/class-aih-cron-scheduler.php';
-
         // Composer autoloader (web-push library)
         require_once AIH_PLUGIN_DIR . 'vendor/autoload.php';
         require_once AIH_PLUGIN_DIR . 'includes/class-aih-push.php';
@@ -152,10 +150,9 @@ class Art_In_Heaven {
         
         // Custom cron schedule
         add_filter('cron_schedules', array($this, 'add_cron_schedules'));
-        
+
         // Cron
         add_action('aih_hourly_cleanup', array($this, 'run_hourly_cleanup'));
-        add_action('aih_check_expired_auctions', array($this, 'check_expired_auctions'));
         add_action('aih_auto_sync_pushpay', array('AIH_Pushpay_API', 'run_auto_sync'));
         
         // Cache invalidation
@@ -218,11 +215,6 @@ class Art_In_Heaven {
      * Add custom cron schedules
      */
     public function add_cron_schedules($schedules) {
-        // Add 5-minute schedule for auction status checks
-        $schedules['every_five_minutes'] = array(
-            'interval' => 300, // 5 minutes in seconds
-            'display'  => __('Every 5 Minutes', 'art-in-heaven')
-        );
         // Add 30-second schedule for frequent CCB sync during live events
         $schedules['every_thirty_seconds'] = array(
             'interval' => 30, // 30 seconds
@@ -337,13 +329,8 @@ class Art_In_Heaven {
             wp_schedule_event(time(), 'hourly', 'aih_hourly_cleanup');
         }
 
-        // Schedule auction status check every 5 minutes for timely draft->active transitions
-        // Clear any existing hourly schedule and reschedule at 5-minute interval
+        // Clean up deprecated cron hooks
         wp_clear_scheduled_hook('aih_check_expired_auctions');
-        if (!wp_next_scheduled('aih_check_expired_auctions')) {
-            wp_schedule_event(time(), 'every_five_minutes', 'aih_check_expired_auctions');
-        }
-        
         // Clean up deprecated five-minute check (removed in v0.9.89)
         wp_clear_scheduled_hook('aih_five_minute_check');
         
@@ -355,11 +342,6 @@ class Art_In_Heaven {
         // Schedule auto-sync for Pushpay transactions (if enabled)
         if (get_option('aih_pushpay_auto_sync_enabled', false)) {
             AIH_Pushpay_API::schedule_auto_sync();
-        }
-
-        // Schedule precise cron events for all existing art pieces
-        if (class_exists('AIH_Cron_Scheduler')) {
-            AIH_Cron_Scheduler::schedule_all_existing_pieces();
         }
 
         $this->create_upload_directories();
@@ -382,11 +364,6 @@ class Art_In_Heaven {
         wp_clear_scheduled_hook('aih_five_minute_check');
         AIH_Auth::unschedule_auto_sync();
         AIH_Pushpay_API::unschedule_auto_sync();
-
-        // Clear all scheduled piece-specific cron events
-        if (class_exists('AIH_Cron_Scheduler')) {
-            AIH_Cron_Scheduler::clear_all_scheduled_events();
-        }
 
         flush_rewrite_rules();
         if (class_exists('AIH_Cache')) AIH_Cache::flush_all();
@@ -414,7 +391,6 @@ class Art_In_Heaven {
         AIH_Shortcodes::get_instance();
         AIH_Checkout::get_instance();
         AIH_Assets::get_instance();
-        if (class_exists('AIH_Cron_Scheduler')) AIH_Cron_Scheduler::get_instance();
         AIH_API_Router::get_instance();
         AIH_Mercure::get_instance();
 
@@ -422,8 +398,6 @@ class Art_In_Heaven {
             AIH_Admin::get_instance();
         }
         
-        // Auto-manage auction statuses based on start/end times
-        $this->throttled_expired_check();
     }
 
     /**
@@ -562,81 +536,9 @@ class Art_In_Heaven {
         echo '<link rel="apple-touch-icon" href="' . $icon_url . '">' . "\n";
     }
 
-    private function throttled_expired_check() {
-        // Run status check every 30 seconds max
-        $last_check = get_transient('aih_last_expired_check');
-        if ($last_check === false) {
-            $this->check_expired_auctions();
-            set_transient('aih_last_expired_check', time(), 30); // 30 seconds
-        }
-    }
-    
-    public function check_expired_auctions() {
-        // Wrap in try-catch to prevent cron failures
-        try {
-            global $wpdb;
-
-            // Single table existence check (removed redundant SHOW TABLES queries)
-            if (!class_exists('AIH_Database') || !AIH_Database::tables_exist()) {
-                return;
-            }
-
-            $table = AIH_Database::get_table('art_pieces');
-            if (!$table) return;
-
-            $now = current_time('mysql');
-            
-            // Activate draft auctions whose start time has passed
-            $activated = $wpdb->query($wpdb->prepare(
-                "UPDATE $table
-                 SET status = 'active'
-                 WHERE status = 'draft'
-                 AND auction_start IS NOT NULL
-                 AND auction_start <= %s
-                 AND (auction_end IS NULL OR auction_end > %s)",
-                $now,
-                $now
-            ));
-
-            // Mark active auctions as ended if their end time has passed
-            $ended = $wpdb->query($wpdb->prepare(
-                "UPDATE $table
-                 SET status = 'ended'
-                 WHERE status = 'active'
-                 AND auction_end IS NOT NULL
-                 AND auction_end <= %s",
-                $now
-            ));
-
-            // Fire auction_ended action for pieces that just ended (for Mercure SSE)
-            if ($ended > 0) {
-                $just_ended = $wpdb->get_col($wpdb->prepare(
-                    "SELECT id FROM $table WHERE status = 'ended' AND auction_end IS NOT NULL
-                     AND auction_end > DATE_SUB(%s, INTERVAL 6 MINUTE) AND auction_end <= %s",
-                    $now, $now
-                ));
-                foreach ($just_ended as $ended_id) {
-                    do_action('aih_auction_ended', intval($ended_id));
-                }
-            }
-
-            // Clear targeted caches if any records were updated
-            if (($activated > 0 || $ended > 0) && class_exists('AIH_Cache')) {
-                $this->invalidate_art_cache();
-                if ($ended > 0) {
-                    $this->invalidate_bid_cache();
-                }
-            }
-        } catch (Exception $e) {
-            // Log error but don't let cron fail
-            error_log('AIH check_expired_auctions error: ' . $e->getMessage());
-        }
-    }
-    
     public function run_hourly_cleanup() {
         try {
             if (class_exists('AIH_Cache')) AIH_Cache::cleanup_expired();
-            $this->check_expired_auctions();
         } catch (Exception $e) {
             error_log('AIH run_hourly_cleanup error: ' . $e->getMessage());
         }

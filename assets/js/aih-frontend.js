@@ -162,6 +162,10 @@
                 if (seconds <= 0) {
                     $countdown.text('Ended');
                     $el.closest('.aih-art-card, .aih-single-item').addClass('ended');
+                    // Refresh status from server now that auction ended
+                    if (typeof window.aihPollStatus === 'function') {
+                        window.aihPollStatus();
+                    }
                 }
             }
         });

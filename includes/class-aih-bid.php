@@ -45,7 +45,7 @@ class AIH_Bid {
                         ({$status_sql}) as computed_status,
                         (SELECT MAX(bid_amount) FROM {$this->table} WHERE art_piece_id = a.id AND bid_status = 'valid') as current_highest
                  FROM $art_table a WHERE a.id = %d FOR UPDATE",
-                $now, $now, $art_piece_id
+                $now, $now, $now, $now, $art_piece_id
             ));
             
             if (!$art_piece) {
@@ -265,7 +265,7 @@ class AIH_Bid {
                    LIMIT 1
                )
              ORDER BY b.bid_time DESC",
-            $bidder_id, $now, $now, $bidder_id, $bidder_id
+            $bidder_id, $now, $now, $now, $now, $bidder_id, $bidder_id
         ));
     }
     
@@ -454,7 +454,7 @@ class AIH_Bid {
              ) order_info ON a.id = order_info.art_piece_id
              WHERE b.is_winning = 1
              ORDER BY a.auction_end DESC",
-            $now, $now
+            $now, $now, $now, $now
         ));
     }
     
