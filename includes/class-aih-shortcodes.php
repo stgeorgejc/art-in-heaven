@@ -67,7 +67,7 @@ class AIH_Shortcodes {
 
         $slug = $page->post_name;
         add_rewrite_rule(
-            '^' . preg_quote($slug, '/') . '/art/([A-Za-z0-9]+)/?$',
+            '^' . preg_quote($slug, '/') . '/art/([A-Za-z0-9-]+)/?$',
             'index.php?pagename=' . $slug . '&aih_art_id=$matches[1]',
             'top'
         );

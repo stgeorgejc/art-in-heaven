@@ -225,7 +225,7 @@ class AIH_Push {
 
         $vapid = self::get_vapid_keys();
 
-        $url = AIH_Template_Helper::get_art_url($catalog_art_id);
+        $url = $catalog_art_id ? AIH_Template_Helper::get_art_url($catalog_art_id) : '';
 
         $payload = wp_json_encode(array(
             'type'         => 'outbid',
