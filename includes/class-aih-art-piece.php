@@ -754,7 +754,6 @@ class AIH_Art_Piece {
                     CASE
                         WHEN a.status = 'draft' THEN 'draft'
                         WHEN a.auction_end IS NOT NULL AND a.auction_end <= %s THEN 'ended'
-                        WHEN a.status = 'ended' AND (a.auction_end IS NULL OR a.auction_end > %s) AND (a.auction_start IS NULL OR a.auction_start <= %s) THEN 'active'
                         WHEN a.status = 'ended' THEN 'ended'
                         WHEN a.auction_start IS NOT NULL AND a.auction_start > %s THEN 'upcoming'
                         ELSE 'active'
@@ -768,7 +767,7 @@ class AIH_Art_Piece {
              GROUP BY a.id
              $having
              ORDER BY a.auction_end ASC",
-            $now, $now, $now, $now, $now, $now
+            $now, $now, $now, $now
         ));
     }
     
