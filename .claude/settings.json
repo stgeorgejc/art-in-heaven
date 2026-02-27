@@ -26,6 +26,7 @@
       "Bash(git remote:*)",
       "Bash(git stash:*)",
       "Bash(git status)",
+      "Bash(k6:*)",
       "Bash(vendor/bin/phpunit)",
       "mcp__playwright__browser_click",
       "mcp__playwright__browser_close",
@@ -51,8 +52,6 @@
       "mcp__playwright__browser_wait_for"
     ]
   },
-  "enabledMcpjsonServers": [
-    "playwright"
-  ],
-  "enableAllProjectMcpServers": true
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": ["playwright"]
 }
