@@ -34,6 +34,35 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Bump plugin version to match release tag
+        run: |
+          TAG="${{ needs.release.outputs.tag_name }}"
+          VERSION="${TAG#v}"
+          echo "Bumping version to $VERSION"
+
+          # Main plugin file: header and constant
+          sed -i "s/^ \* Version: .*/ * Version: $VERSION/" art-in-heaven.php
+          sed -i "s/define('AIH_VERSION', '.*');/define('AIH_VERSION', '$VERSION');/" art-in-heaven.php
+
+          # JS file headers
+          sed -i "s/^ \* Version: .*/ * Version: $VERSION/" assets/js/aih-frontend.js
+          sed -i "s/^ \* Version: .*/ * Version: $VERSION/" assets/js/aih-admin.js
+
+          # Test bootstraps
+          sed -i "s/define('AIH_VERSION', '.*');/define('AIH_VERSION', '$VERSION');/" tests/bootstrap.php
+          sed -i "s/define('AIH_VERSION', '.*');/define('AIH_VERSION', '$VERSION');/" tests/phpstan-bootstrap.php
+
+          # Commit and push if anything changed
+          if git diff --quiet; then
+            echo "Version already up to date"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add -A
+            git commit -m "chore: bump plugin version to $VERSION [skip ci]"
+            git push origin HEAD:main
+          fi
+
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
