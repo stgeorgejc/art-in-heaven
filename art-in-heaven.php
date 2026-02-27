@@ -530,6 +530,7 @@ class Art_In_Heaven {
         // Preserves any existing directives; creates the tag if none exists.
         echo "<script>(function(){var m=document.querySelector('meta[name=viewport]');if(m){var c=m.getAttribute('content')||'';if(c.indexOf('viewport-fit')===-1){m.setAttribute('content',c+',viewport-fit=cover');}}else{m=document.createElement('meta');m.name='viewport';m.content='width=device-width,initial-scale=1,viewport-fit=cover';document.head.appendChild(m);}})();</script>\n";
         echo '<link rel="manifest" href="' . $manifest . '">' . "\n";
+        echo '<meta name="mobile-web-app-capable" content="yes">' . "\n";
         echo '<meta name="apple-mobile-web-app-capable" content="yes">' . "\n";
         echo '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">' . "\n";
         echo '<meta name="theme-color" content="#b8956b">' . "\n";
@@ -579,8 +580,8 @@ class Art_In_Heaven {
 
         // Google Fonts loaded async in add_preconnect_hints() to avoid render-blocking
 
-        // Elegant theme CSS (loaded in <head> to prevent FOUC)
-        wp_enqueue_style('aih-elegant-theme', $this->get_asset_url('assets/css/elegant-theme.css'), array(), AIH_VERSION);
+        // Elegant theme CSS — uses AIH_Assets which prefers .min.css in production
+        AIH_Assets::enqueue_elegant_theme();
 
         wp_enqueue_script('aih-frontend', $this->get_asset_url('assets/js/aih-frontend.js'), array('jquery'), AIH_VERSION, true);
         wp_script_add_data('aih-frontend', 'strategy', 'defer');

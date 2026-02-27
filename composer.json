@@ -22,6 +22,7 @@
     "scripts": {
         "test": "phpunit",
         "analyze": "phpstan analyse",
-        "setup-hooks": "git config core.hooksPath .githooks && echo 'Git hooks installed from .githooks/'"
+        "setup-hooks": "git config core.hooksPath .githooks && echo 'Git hooks installed from .githooks/'",
+        "build-css": "npx clean-css-cli@5 -o assets/css/elegant-theme.min.css assets/css/elegant-theme.css && echo 'Minified elegant-theme.css'"
     }
 }
