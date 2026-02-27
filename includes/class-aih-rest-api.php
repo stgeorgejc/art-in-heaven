@@ -427,9 +427,9 @@ class AIH_REST_API {
     public function verify_code($request) {
         $code = $request->get_param('code');
         
-        // Rate limiting
-        $ip = AIH_Security::get_client_ip();
-        if (!AIH_Security::check_rate_limit('auth_' . $ip, 5, 60)) {
+        // Rate limit per browser (cookie token), falling back to IP if no cookie
+        $rl_id = ! empty( $_COOKIE['aih_rl_token'] ) ? sanitize_text_field( $_COOKIE['aih_rl_token'] ) : AIH_Security::get_client_ip();
+        if (!AIH_Security::check_rate_limit('auth_' . $rl_id, 5, 60)) {
             return new WP_Error('rate_limited', __('Too many attempts. Please wait.', 'art-in-heaven'), array('status' => 429));
         }
         
