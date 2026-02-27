@@ -2452,20 +2452,27 @@ class AIH_Ajax {
         $art_table = AIH_Database::get_table('art_pieces');
         $bids_table = AIH_Database::get_table('bids');
 
-        // Single consolidated query: art piece data + highest bids + bidder winning/bid status
+        // Single consolidated query with dual LEFT JOIN:
+        // - b: all valid bids (for MAX bid_amount)
+        // - b2: bidder-specific valid bids (for is_winning / has_bid, uses art_bidder_status index)
         $placeholders = implode(',', array_fill(0, count($ids), '%d'));
         $rows = $wpdb->get_results($wpdb->prepare(
             "SELECT
                 ap.id, ap.status, ap.auction_end,
-                MAX(b.bid_amount) as highest,
-                MAX(CASE WHEN b.bidder_id = %s AND b.is_winning = 1 THEN 1 ELSE 0 END) as is_winning,
-                MAX(CASE WHEN b.bidder_id = %s AND b.bid_status = 'valid' THEN 1 ELSE 0 END) as has_bid
+                MAX(b.bid_amount) AS highest,
+                MAX(COALESCE(b2.is_winning, 0)) AS is_winning,
+                CASE WHEN COUNT(b2.id) > 0 THEN 1 ELSE 0 END AS has_bid
              FROM $art_table ap
-             LEFT JOIN $bids_table b ON ap.id = b.art_piece_id
+             LEFT JOIN $bids_table b
+                ON ap.id = b.art_piece_id
                 AND (b.bid_status = 'valid' OR b.bid_status IS NULL)
+             LEFT JOIN $bids_table b2
+                ON ap.id = b2.art_piece_id
+                AND b2.bidder_id = %s
+                AND b2.bid_status = 'valid'
              WHERE ap.id IN ($placeholders)
              GROUP BY ap.id, ap.status, ap.auction_end",
-            ...array_merge(array($bidder_id, $bidder_id), $ids)
+            ...array_merge(array($bidder_id), $ids)
         ), OBJECT_K);
 
         $items = array();
