@@ -2452,63 +2452,39 @@ class AIH_Ajax {
         $art_table = AIH_Database::get_table('art_pieces');
         $bids_table = AIH_Database::get_table('bids');
 
-        // Batch fetch art piece data
+        // Single consolidated query: art piece data + highest bids + bidder winning/bid status
         $placeholders = implode(',', array_fill(0, count($ids), '%d'));
-        $art_pieces = $wpdb->get_results($wpdb->prepare(
-            "SELECT id, status, auction_end FROM $art_table WHERE id IN ($placeholders)",
-            ...$ids
+        $rows = $wpdb->get_results($wpdb->prepare(
+            "SELECT
+                ap.id, ap.status, ap.auction_end,
+                MAX(b.bid_amount) as highest,
+                MAX(CASE WHEN b.bidder_id = %s AND b.is_winning = 1 THEN 1 ELSE 0 END) as is_winning,
+                MAX(CASE WHEN b.bidder_id = %s AND b.bid_status = 'valid' THEN 1 ELSE 0 END) as has_bid
+             FROM $art_table ap
+             LEFT JOIN $bids_table b ON ap.id = b.art_piece_id
+                AND (b.bid_status = 'valid' OR b.bid_status IS NULL)
+             WHERE ap.id IN ($placeholders)
+             GROUP BY ap.id, ap.status, ap.auction_end",
+            ...array_merge(array($bidder_id, $bidder_id), $ids)
         ), OBJECT_K);
-
-        // Batch fetch highest bids per piece
-        $highest_bids = $wpdb->get_results($wpdb->prepare(
-            "SELECT art_piece_id, MAX(bid_amount) as highest
-             FROM $bids_table
-             WHERE art_piece_id IN ($placeholders) AND (bid_status = 'valid' OR bid_status IS NULL)
-             GROUP BY art_piece_id",
-            ...$ids
-        ), OBJECT_K);
-
-        // Batch fetch winning status for this bidder
-        $winning_rows = $wpdb->get_results($wpdb->prepare(
-            "SELECT art_piece_id FROM $bids_table
-             WHERE art_piece_id IN ($placeholders) AND bidder_id = %s AND is_winning = 1",
-            ...array_merge($ids, array($bidder_id))
-        ));
-        $winning_ids = array();
-        foreach ($winning_rows as $row) {
-            $winning_ids[$row->art_piece_id] = true;
-        }
-
-        // Batch fetch which pieces this bidder has bid on
-        $bid_rows = $wpdb->get_results($wpdb->prepare(
-            "SELECT DISTINCT art_piece_id FROM $bids_table
-             WHERE art_piece_id IN ($placeholders) AND bidder_id = %s AND bid_status = 'valid'",
-            ...array_merge($ids, array($bidder_id))
-        ));
-        $has_bid_ids = array();
-        foreach ($bid_rows as $row) {
-            $has_bid_ids[$row->art_piece_id] = true;
-        }
 
         $items = array();
         foreach ($ids as $id) {
-            $piece = isset($art_pieces[$id]) ? $art_pieces[$id] : null;
-            $highest = isset($highest_bids[$id]) ? floatval($highest_bids[$id]->highest) : 0;
-            $has_bids = $highest > 0;
-            $is_winning = isset($winning_ids[$id]);
+            $row = isset($rows[$id]) ? $rows[$id] : null;
+            $highest = $row ? floatval($row->highest) : 0;
 
             $status = 'active';
-            if ($piece) {
-                if ($piece->status === 'ended' || (!empty($piece->auction_end) && $piece->auction_end <= $now)) {
+            if ($row) {
+                if ($row->status === 'ended' || (!empty($row->auction_end) && $row->auction_end <= $now)) {
                     $status = 'ended';
                 }
             }
 
             $items[$id] = array(
-                'is_winning' => $is_winning,
-                'has_bids'   => $has_bids,
+                'is_winning' => $row ? (bool) $row->is_winning : false,
+                'has_bids'   => $highest > 0,
                 'status'     => $status,
-                'has_bid'    => isset($has_bid_ids[$id]),
+                'has_bid'    => $row ? (bool) $row->has_bid : false,
             );
         }
 

@@ -29,10 +29,17 @@ class AIH_Pushpay_API {
         return self::$instance;
     }
     
+    /** @var array|null Cached settings for this request */
+    private static $cached_settings = null;
+
     /**
-     * Get API settings
+     * Get API settings (cached per request to avoid repeated get_option calls)
      */
     public function get_settings() {
+        if (self::$cached_settings !== null) {
+            return self::$cached_settings;
+        }
+
         $is_sandbox = get_option('aih_pushpay_sandbox', 0);
         $decrypt = class_exists('AIH_Security') ? array('AIH_Security', 'decrypt') : null;
 
@@ -64,6 +71,7 @@ class AIH_Pushpay_API {
             $raw['client_secret'] = call_user_func($decrypt, $raw['client_secret']);
         }
 
+        self::$cached_settings = $raw;
         return $raw;
     }
     
