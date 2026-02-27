@@ -649,4 +649,62 @@ class SecurityTest extends TestCase
 
         unset($_SERVER['HTTP_CF_CONNECTING_IP']);
     }
+
+    // ── make_sanitize_encrypt() ──
+
+    public function testMakeSanitizeEncryptEncryptsNewValue(): void
+    {
+        if (!function_exists('openssl_encrypt')) {
+            $this->markTestSkipped('OpenSSL extension not available.');
+        }
+
+        $callback = AIH_Security::make_sanitize_encrypt('aih_test_option');
+        $result = $callback('my-new-secret');
+
+        $this->assertStringStartsWith('enc2:', $result);
+        $this->assertSame('my-new-secret', AIH_Security::decrypt($result));
+    }
+
+    public function testMakeSanitizeEncryptPreservesExistingWhenEmpty(): void
+    {
+        $existing_encrypted = 'enc2:existingencrypteddata';
+
+        Functions\expect('get_option')
+            ->once()
+            ->with('aih_test_option', '')
+            ->andReturn($existing_encrypted);
+
+        $callback = AIH_Security::make_sanitize_encrypt('aih_test_option');
+        $result = $callback('');
+
+        $this->assertSame($existing_encrypted, $result);
+    }
+
+    public function testMakeSanitizeEncryptPreservesExistingWhenWhitespaceOnly(): void
+    {
+        $existing_encrypted = 'enc2:existingencrypteddata';
+
+        Functions\expect('get_option')
+            ->once()
+            ->with('aih_test_option', '')
+            ->andReturn($existing_encrypted);
+
+        $callback = AIH_Security::make_sanitize_encrypt('aih_test_option');
+        $result = $callback('   ');
+
+        $this->assertSame($existing_encrypted, $result);
+    }
+
+    public function testMakeSanitizeEncryptReturnsEmptyWhenNothingExists(): void
+    {
+        Functions\expect('get_option')
+            ->once()
+            ->with('aih_test_option', '')
+            ->andReturn('');
+
+        $callback = AIH_Security::make_sanitize_encrypt('aih_test_option');
+        $result = $callback('');
+
+        $this->assertSame('', $result);
+    }
 }
