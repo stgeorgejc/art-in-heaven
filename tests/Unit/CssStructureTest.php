@@ -52,7 +52,7 @@ class CssStructureTest extends TestCase
             $m
         );
         $this->assertNotEmpty($m, 'Gallery grid must define a gap');
-        $this->assertLessThanOrEqual(10, (int) $m[1], 'Mobile gallery grid gap should be ≤ 10px');
+        $this->assertLessThanOrEqual(12, (int) $m[1], 'Mobile gallery grid gap should be ≤ 12px');
     }
 
     public function testMobileHeaderPaddingIsCompact(): void

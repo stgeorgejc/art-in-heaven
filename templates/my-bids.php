@@ -75,8 +75,8 @@ $payment_statuses = $checkout->get_bidder_payment_statuses($bidder_id);
                     $status_class = 'won';
                     $status_text = 'Won';
                 } elseif ($is_ended) {
-                    $status_class = 'ended';
-                    $status_text = 'Ended';
+                    $status_class = 'outbid';
+                    $status_text = 'Outbid';
                 } elseif ($is_winning) {
                     $status_class = 'winning';
                     $status_text = 'Winning';
