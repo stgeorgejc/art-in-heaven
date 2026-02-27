@@ -650,7 +650,7 @@ class Art_In_Heaven {
             $content = $post->post_content;
             if (has_shortcode($content, 'art_in_heaven_gallery')) {
                 // Gallery shortcode also serves single-item (/art/{id}) and my-bids (?my_bids=1)
-                $art_id = intval(get_query_var('aih_art_id', 0));
+                $art_id = get_query_var('aih_art_id', '');
                 if ($art_id) {
                     wp_enqueue_script('aih-single-item', $this->get_asset_url('assets/js/aih-single-item.js'), array('jquery', 'aih-frontend'), AIH_VERSION, true);
                     wp_script_add_data('aih-single-item', 'strategy', 'defer');

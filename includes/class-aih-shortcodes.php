@@ -67,7 +67,7 @@ class AIH_Shortcodes {
 
         $slug = $page->post_name;
         add_rewrite_rule(
-            '^' . preg_quote($slug, '/') . '/art/([0-9]+)/?$',
+            '^' . preg_quote($slug, '/') . '/art/([A-Za-z0-9]+)/?$',
             'index.php?pagename=' . $slug . '&aih_art_id=$matches[1]',
             'top'
         );
@@ -82,11 +82,20 @@ class AIH_Shortcodes {
     }
 
     /**
-     * 301 redirect legacy ?art_id= URLs to clean /art/{id}/ URLs
+     * 301 redirect legacy ?art_id= URLs to clean /art/{art_id}/ URLs
      */
     public function redirect_legacy_art_urls() {
         if (isset($_GET['art_id']) && !empty($_GET['art_id'])) {
-            $clean_url = AIH_Template_Helper::get_art_url(intval($_GET['art_id']));
+            $value = sanitize_text_field($_GET['art_id']);
+            // Legacy URLs used the database ID (numeric); look up the catalog art_id
+            if (ctype_digit($value)) {
+                $art_model = new AIH_Art_Piece();
+                $piece = $art_model->get(intval($value));
+                if ($piece && !empty($piece->art_id)) {
+                    $value = $piece->art_id;
+                }
+            }
+            $clean_url = AIH_Template_Helper::get_art_url($value);
             wp_safe_redirect($clean_url, 301);
             exit;
         }
@@ -173,10 +182,10 @@ class AIH_Shortcodes {
         }
         
         // Check if viewing individual art piece (clean URL or legacy query string)
-        $art_id = intval(get_query_var('aih_art_id', 0));
+        $art_id = sanitize_text_field(get_query_var('aih_art_id', ''));
         if ($art_id) {
             $art_model = new AIH_Art_Piece();
-            $art_piece = $art_model->get($art_id);
+            $art_piece = $art_model->get_by_art_id($art_id);
 
             if ($art_piece && (!isset($art_piece->computed_status) || $art_piece->computed_status !== 'upcoming')) {
                 ob_start();

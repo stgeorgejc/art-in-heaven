@@ -59,11 +59,11 @@ $art_table_nav = AIH_Database::get_table('art_pieces');
 $art_id_nav = intval($art_piece->id);
 
 $prev_piece = $wpdb->get_row($wpdb->prepare(
-    "SELECT id FROM {$art_table_nav} WHERE id < %d AND status IN ('active','ended') ORDER BY id DESC LIMIT 1",
+    "SELECT id, art_id FROM {$art_table_nav} WHERE id < %d AND status IN ('active','ended') ORDER BY id DESC LIMIT 1",
     $art_id_nav
 ));
 $next_piece = $wpdb->get_row($wpdb->prepare(
-    "SELECT id FROM {$art_table_nav} WHERE id > %d AND status IN ('active','ended') ORDER BY id ASC LIMIT 1",
+    "SELECT id, art_id FROM {$art_table_nav} WHERE id > %d AND status IN ('active','ended') ORDER BY id ASC LIMIT 1",
     $art_id_nav
 ));
 $total_nav_count = (int) $wpdb->get_var(
@@ -74,8 +74,8 @@ $current_position = (int) $wpdb->get_var($wpdb->prepare(
     $art_id_nav
 ));
 
-$prev_id = $prev_piece ? $prev_piece->id : null;
-$next_id = $next_piece ? $next_piece->id : null;
+$prev_art_id = $prev_piece ? $prev_piece->art_id : null;
+$next_art_id = $next_piece ? $next_piece->art_id : null;
 
 $checkout_url = AIH_Template_Helper::get_checkout_url();
 
@@ -101,14 +101,14 @@ if (empty($image_urls) && $primary_image) {
         <div class="aih-single-nav-bar">
             <a href="<?php echo esc_url($gallery_url); ?>" class="aih-back-link">&larr; <?php _e('Back to Gallery', 'art-in-heaven'); ?></a>
             <div class="aih-nav-center">
-                <?php if ($prev_id): ?>
-                <a href="<?php echo esc_url(AIH_Template_Helper::get_art_url($prev_id)); ?>" class="aih-nav-arrow" title="<?php esc_attr_e('Previous', 'art-in-heaven'); ?>">&larr;</a>
+                <?php if ($prev_art_id): ?>
+                <a href="<?php echo esc_url(AIH_Template_Helper::get_art_url($prev_art_id)); ?>" class="aih-nav-arrow" title="<?php esc_attr_e('Previous', 'art-in-heaven'); ?>">&larr;</a>
                 <?php else: ?>
                 <span class="aih-nav-arrow disabled">&larr;</span>
                 <?php endif; ?>
                 <span class="aih-piece-counter"><?php echo $current_position; ?> / <?php echo $total_nav_count; ?></span>
-                <?php if ($next_id): ?>
-                <a href="<?php echo esc_url(AIH_Template_Helper::get_art_url($next_id)); ?>" class="aih-nav-arrow" title="<?php esc_attr_e('Next', 'art-in-heaven'); ?>">&rarr;</a>
+                <?php if ($next_art_id): ?>
+                <a href="<?php echo esc_url(AIH_Template_Helper::get_art_url($next_art_id)); ?>" class="aih-nav-arrow" title="<?php esc_attr_e('Next', 'art-in-heaven'); ?>">&rarr;</a>
                 <?php else: ?>
                 <span class="aih-nav-arrow disabled">&rarr;</span>
                 <?php endif; ?>
