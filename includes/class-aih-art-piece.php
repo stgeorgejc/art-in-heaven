@@ -640,6 +640,10 @@ class AIH_Art_Piece {
         // Update the end time
         $result = $wpdb->query($wpdb->prepare("UPDATE {$this->table} SET auction_end = %s WHERE id IN ($placeholders)", array_merge(array($new_end_time), $ids)));
 
+        if ($result === false || $result === 0) {
+            return $result;
+        }
+
         // If new end time is in the future, reactivate ended pieces
         if ($new_end_time > $now) {
             $wpdb->query($wpdb->prepare(
@@ -656,7 +660,7 @@ class AIH_Art_Piece {
             ));
         }
 
-        // Fire update action for each piece so cron events get rescheduled
+        // Fire update action for each piece
         foreach ($ids as $id) {
             do_action('aih_art_updated', $id, array('auction_end' => $new_end_time));
         }
