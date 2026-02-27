@@ -78,14 +78,20 @@ jobs:
       - name: Build source release (no vendor)
         run: |
           zip -r art-in-heaven-source.zip . \
-            -x '.git/*' '.github/*' '.claude/*' '*.md' '.DS_Store' \
-               'node_modules/*' 'tests/*' 'vendor/*' '.gitignore'
+            -x '.git/*' '.github/*' '.claude/*' '.githooks/*' \
+               '*.md' '.DS_Store' '.gitignore' '.mcp.json' \
+               'node_modules/*' 'tests/*' 'load-tests/*' 'vendor/*' \
+               'composer.json' 'composer.lock' 'phpstan.neon' 'phpunit.xml' \
+               '.playwright-mcp/*'
 
       - name: Build pre-packaged release (with vendor)
         run: |
           zip -r art-in-heaven.zip . \
-            -x '.git/*' '.github/*' '.claude/*' '*.md' '.DS_Store' \
-               'node_modules/*' 'tests/*' '.gitignore'
+            -x '.git/*' '.github/*' '.claude/*' '.githooks/*' \
+               '*.md' '.DS_Store' '.gitignore' '.mcp.json' \
+               'node_modules/*' 'tests/*' 'load-tests/*' \
+               'composer.json' 'composer.lock' 'phpstan.neon' 'phpunit.xml' \
+               '.playwright-mcp/*'
 
       - name: Upload release artifacts
         run: |
@@ -109,10 +115,19 @@ jobs:
             --exclude='.git/' \
             --exclude='.github/' \
             --exclude='.claude/' \
+            --exclude='.githooks/' \
             --exclude='*.md' \
             --exclude='.DS_Store' \
+            --exclude='.gitignore' \
+            --exclude='.mcp.json' \
             --exclude='node_modules/' \
             --exclude='tests/' \
+            --exclude='load-tests/' \
+            --exclude='composer.json' \
+            --exclude='composer.lock' \
+            --exclude='phpstan.neon' \
+            --exclude='phpunit.xml' \
+            --exclude='.playwright-mcp/' \
             --exclude='art-in-heaven*.zip' \
             -e "ssh -i ~/.ssh/deploy_key" \
             ./ \

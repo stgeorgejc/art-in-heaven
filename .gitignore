@@ -21,3 +21,9 @@ firebase-debug.log
 
 # Playwright MCP
 .playwright-mcp/
+
+# Load test secrets (contains real confirmation codes)
+load-tests/config/test-data.js
+
+# Load test results (generated at runtime)
+load-tests/results/
