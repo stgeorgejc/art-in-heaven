@@ -10,6 +10,19 @@ if (!defined('ABSPATH')) exit;
 
 $sub_heading = isset($sub_heading) ? $sub_heading : __('Enter your confirmation code to access the auction', 'art-in-heaven');
 $gallery_url = isset($gallery_url) ? $gallery_url : home_url();
+
+// Per-browser rate limit token (see login.php for details)
+if ( empty( $_COOKIE['aih_rl_token'] ) ) {
+    $token = bin2hex( random_bytes( 16 ) );
+    setcookie( 'aih_rl_token', $token, [
+        'expires'  => 0,
+        'path'     => '/',
+        'secure'   => is_ssl(),
+        'httponly'  => true,
+        'samesite' => 'Lax',
+    ] );
+    $_COOKIE['aih_rl_token'] = $token;
+}
 ?>
 <div class="aih-page">
     <header class="aih-header">

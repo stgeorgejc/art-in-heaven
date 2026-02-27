@@ -8,6 +8,20 @@ global $wpdb;
 
 $redirect_to = isset($_GET['redirect_to']) ? wp_validate_redirect(esc_url($_GET['redirect_to']), home_url()) : '';
 
+// Set a per-browser token so auth rate limiting is per device, not per IP.
+// This prevents all users on shared WiFi from exhausting a single IP bucket.
+if ( empty( $_COOKIE['aih_rl_token'] ) ) {
+    $token = bin2hex( random_bytes( 16 ) );
+    setcookie( 'aih_rl_token', $token, [
+        'expires'  => 0,
+        'path'     => '/',
+        'secure'   => is_ssl(),
+        'httponly'  => true,
+        'samesite' => 'Lax',
+    ] );
+    $_COOKIE['aih_rl_token'] = $token; // available to JS-initiated AJAX in same page load
+}
+
 // Gallery URL - try settings first, then search for shortcode
 $gallery_page = get_option('aih_gallery_page', '');
 if (!$gallery_page) {

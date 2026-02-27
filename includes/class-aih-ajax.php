@@ -130,9 +130,9 @@ class AIH_Ajax {
     public function verify_confirmation_code() {
         check_ajax_referer('aih_public_nonce', 'nonce');
 
-        // Rate limiting: 5 attempts per 60 seconds
-        $ip = AIH_Security::get_client_ip();
-        if (!AIH_Security::check_rate_limit('ajax_auth_' . $ip, 5, 60)) {
+        // Rate limit per browser (cookie token), falling back to IP if no cookie
+        $rl_id = ! empty( $_COOKIE['aih_rl_token'] ) ? sanitize_text_field( $_COOKIE['aih_rl_token'] ) : AIH_Security::get_client_ip();
+        if (!AIH_Security::check_rate_limit('ajax_auth_' . $rl_id, 5, 60)) {
             wp_send_json_error(array('message' => __('Too many attempts. Please wait.', 'art-in-heaven')));
         }
 
