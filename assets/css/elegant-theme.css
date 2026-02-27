@@ -425,6 +425,16 @@ body.aih-active .wp-site-blocks {
     border-bottom: none;
 }
 
+/* Gallery page only: collapse header gap since h1 is hidden on mobile */
+.aih-gallery-page .aih-gallery-header {
+    gap: 0;
+    margin-bottom: 8px;
+}
+
+.aih-gallery-page .aih-gallery-title h1 {
+    display: none; /* Hidden on mobile — header nav shows active page */
+}
+
 .aih-gallery-title h1 {
     font-family: var(--font-display);
     font-size: 1.1rem;
@@ -751,13 +761,17 @@ body.filter-open {
 @media (min-width: 480px) {
     .aih-gallery-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 8px;
+        gap: 12px;
     }
 }
 
 @media (min-width: 768px) {
     .aih-gallery-grid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .aih-card-title {
+        font-size: 19px;
     }
 }
 
@@ -1073,7 +1087,7 @@ body.filter-open {
 }
 
 .aih-card-body {
-    padding: 4px 5px;
+    padding: 6px 8px;
     min-width: 0;
     max-width: 100%;
     min-height: auto;
@@ -1155,7 +1169,7 @@ body.filter-open {
 }
 
 .aih-card-footer {
-    padding: 3px 4px 4px;
+    padding: 6px 8px;
     border-top: 1px solid var(--color-border);
     background: var(--color-bg);
     min-width: 0;
@@ -2154,7 +2168,7 @@ body {
     }
 
     .aih-card-body {
-        padding: 8px 6px;
+        padding: 8px 10px;
     }
 
     .aih-card-artist {
@@ -2162,7 +2176,7 @@ body {
     }
 
     .aih-gallery-grid {
-        gap: 10px;
+        gap: 12px;
     }
 }
 
@@ -2185,7 +2199,7 @@ body {
     }
 
     .aih-card-body {
-        padding: 8px 8px;
+        padding: 10px 12px;
     }
 
     .aih-gallery-grid {
@@ -2239,10 +2253,11 @@ body {
     /* Controls layout */
     .aih-gallery-controls {
         flex-wrap: nowrap;
+        gap: 12px;
     }
 
     .aih-search-box {
-        flex: 0 0 150px;
+        flex: 0 1 240px;
         width: auto;
         order: 0;
     }
@@ -2250,12 +2265,12 @@ body {
     .aih-search-input {
         height: 32px;
         padding: 0 12px;
-        font-size: 13px;
+        font-size: 16px; /* >=16px prevents iOS Safari auto-zoom on focus */
         width: 240px;
     }
 
     .aih-filter-toggle {
-        height: 32px;
+        height: 36px;
         order: 0;
     }
 
@@ -2303,13 +2318,17 @@ body {
         letter-spacing: 2px;
     }
 
+    .aih-gallery-page .aih-gallery-title h1 {
+        display: block;
+    }
+
     .aih-gallery-title h1 {
         font-size: 32px;
     }
 
     .aih-card-title {
-        font-size: 22px;
-        line-height: 1.6;
+        font-size: 17px;
+        line-height: 1.5;
     }
 
     .aih-card-artist {
@@ -2329,12 +2348,12 @@ body {
     }
 
     .aih-gallery-grid {
-        gap: 20px;
+        gap: 16px;
     }
 
     .aih-gallery-grid.single-view {
         max-width: 450px;
-        gap: 20px;
+        gap: 16px;
     }
 
     /* Card styles */
@@ -2544,13 +2563,13 @@ body {
     }
 
     .aih-gallery-controls {
-        gap: 8px;
+        gap: 16px;
         margin-top: 12px;
     }
 
     .aih-search-input {
         height: 36px;
-        font-size: 11px;
+        font-size: 16px; /* >=16px prevents iOS Safari auto-zoom on focus */
     }
 
     .aih-filter-toggle {
@@ -2576,10 +2595,15 @@ body {
         transition: transform 0.4s ease;
     }
     
+    .aih-card-title {
+        font-size: 22px;
+        line-height: 1.5;
+    }
+
     .aih-card-body {
         padding: 14px 16px;
     }
-    
+
     .aih-card-footer {
         padding: 10px 14px 12px;
     }
@@ -2604,7 +2628,7 @@ body {
 
     .aih-single-image > img,
     .aih-single-image > picture > img {
-        max-height: 55vh;
+        max-height: 50vh;
     }
 
     .aih-single-image {
@@ -2660,8 +2684,7 @@ body {
     }
 
     .aih-search-box {
-        width: 240px;
-        flex-shrink: 0;
+        flex: 0 0 240px;
     }
 
     .aih-filter-group {
@@ -3731,6 +3754,7 @@ body {
     text-decoration: none;
     font-weight: 500;
     transition: color var(--transition);
+    white-space: nowrap;
 }
 
 .aih-back-link:hover {
@@ -4663,7 +4687,7 @@ html.aih-lightbox-open body {
 
     .aih-single-image > img,
     .aih-single-image > picture > img {
-        max-height: 55vh;
+        max-height: 50vh;
     }
 
     .aih-single-details {
@@ -4671,6 +4695,14 @@ html.aih-lightbox-open body {
         position: sticky;
         top: 16px;
         align-self: start;
+    }
+}
+
+/* Override single-item image height on large desktops (must follow 900px+ rule) */
+@media (min-width: 1400px) {
+    .aih-single-image > img,
+    .aih-single-image > picture > img {
+        max-height: 45vh;
     }
 
     .aih-single-details h1 {
