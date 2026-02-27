@@ -7,7 +7,7 @@
  */
 
 // Plugin constants (WP core constants come from stubs)
-define('AIH_VERSION', '1.0.0');
+define('AIH_VERSION', '1.5.4');
 define('AIH_DB_VERSION', '0.9.6');
 define('AIH_PLUGIN_DIR', __DIR__ . '/../');
 define('AIH_PLUGIN_URL', 'https://example.com/wp-content/plugins/art-in-heaven/');

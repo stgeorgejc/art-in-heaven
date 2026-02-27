@@ -21,7 +21,7 @@ define('LOGGED_IN_KEY', 'test-encryption-key-for-unit-tests-only-not-real');
 define('AUTH_KEY', 'test-auth-key-for-unit-tests-only');
 
 // Plugin constants
-define('AIH_VERSION', '1.0.0');
+define('AIH_VERSION', '1.5.4');
 define('AIH_DB_VERSION', '0.9.6');
 define('AIH_PLUGIN_DIR', dirname(__DIR__) . '/');
 define('AIH_PLUGIN_URL', 'https://example.com/wp-content/plugins/art-in-heaven/');
