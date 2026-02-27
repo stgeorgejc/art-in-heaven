@@ -131,12 +131,12 @@ class AIH_Template_Helper {
      *
      * Generates a pretty URL like /gallery/art/5/ instead of ?art_id=5
      *
-     * @param int $art_piece_id The art piece ID
+     * @param string $art_id The catalog art_id (e.g. "50", "A050")
      * @return string The clean URL
      */
-    public static function get_art_url($art_piece_id) {
+    public static function get_art_url($art_id) {
         $gallery_url = self::get_gallery_url();
-        return trailingslashit($gallery_url) . 'art/' . intval($art_piece_id) . '/';
+        return trailingslashit($gallery_url) . 'art/' . rawurlencode($art_id) . '/';
     }
 
     /**

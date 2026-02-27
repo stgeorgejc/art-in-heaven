@@ -189,11 +189,13 @@ class AIH_Push {
             return; // No one to notify (first bid)
         }
 
-        // Get art piece title
-        $title = $wpdb->get_var($wpdb->prepare(
-            "SELECT title FROM `{$art_table}` WHERE id = %d",
+        // Get art piece title and catalog art_id
+        $art_row = $wpdb->get_row($wpdb->prepare(
+            "SELECT title, art_id FROM `{$art_table}` WHERE id = %d",
             $art_piece_id
         ));
+        $title = $art_row ? $art_row->title : '';
+        $catalog_art_id = $art_row ? $art_row->art_id : '';
 
         if (empty($title)) {
             $title = 'Art Piece #' . $art_piece_id;
@@ -203,19 +205,19 @@ class AIH_Push {
         self::record_outbid_event($outbid_bidder, $art_piece_id, $title);
 
         // Defer push notification sending to after HTTP response
-        $push_data = compact('outbid_bidder', 'art_piece_id', 'title');
+        $push_data = compact('outbid_bidder', 'art_piece_id', 'catalog_art_id', 'title');
         add_action('shutdown', function() use ($push_data) {
             if (function_exists('fastcgi_finish_request')) {
                 fastcgi_finish_request();
             }
-            AIH_Push::get_instance()->send_push($push_data['outbid_bidder'], $push_data['art_piece_id'], $push_data['title']);
+            AIH_Push::get_instance()->send_push($push_data['outbid_bidder'], $push_data['art_piece_id'], $push_data['catalog_art_id'], $push_data['title']);
         });
     }
 
     /**
      * Send push notification to outbid bidder (runs deferred in shutdown hook).
      */
-    public function send_push($outbid_bidder, $art_piece_id, $title) {
+    public function send_push($outbid_bidder, $art_piece_id, $catalog_art_id, $title) {
         $subscriptions = self::get_subscriptions($outbid_bidder);
         if (empty($subscriptions)) {
             return;
@@ -223,7 +225,7 @@ class AIH_Push {
 
         $vapid = self::get_vapid_keys();
 
-        $url = AIH_Template_Helper::get_art_url($art_piece_id);
+        $url = AIH_Template_Helper::get_art_url($catalog_art_id);
 
         $payload = wp_json_encode(array(
             'type'         => 'outbid',
