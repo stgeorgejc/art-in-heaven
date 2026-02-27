@@ -36,3 +36,11 @@ define('AIH_TEST_CODE_PREFIX', 'AIHTEST');
 require_once __DIR__ . '/../includes/class-aih-security.php';
 require_once __DIR__ . '/../includes/class-aih-status.php';
 require_once __DIR__ . '/../includes/class-aih-template-helper.php';
+
+// Additional classes for Bid, Checkout, and Favorites testing.
+// Note: class-aih-auth.php has a file-scope add_action() call, so it must be
+// loaded AFTER Brain Monkey setUp() — see AuthTest::setUp().
+require_once __DIR__ . '/../includes/class-aih-database.php';
+require_once __DIR__ . '/../includes/class-aih-bid.php';
+require_once __DIR__ . '/../includes/class-aih-checkout.php';
+require_once __DIR__ . '/../includes/class-aih-favorites.php';
