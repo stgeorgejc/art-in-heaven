@@ -34,6 +34,27 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Bump plugin version to match release tag
+        run: |
+          TAG="${{ needs.release.outputs.tag_name }}"
+          VERSION="${TAG#v}"
+          echo "Bumping version to $VERSION"
+
+          # Update the define() constant (source of truth) and the WP plugin header
+          sed -i "s/define('AIH_VERSION', '.*');/define('AIH_VERSION', '$VERSION');/" art-in-heaven.php
+          sed -i "s/^ \* Version: .*/ * Version: $VERSION/" art-in-heaven.php
+
+          # Commit and push if anything changed
+          if git diff --quiet; then
+            echo "Version already up to date"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add art-in-heaven.php
+            git commit -m "chore: bump plugin version to $VERSION [skip ci]"
+            git push origin HEAD:main
+          fi
+
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
