@@ -143,6 +143,12 @@ class AIH_Assets {
             );
         }
 
+        // If neither replacement matched, return original tag unchanged
+        // to avoid duplicating a render-blocking <link> inside <noscript>.
+        if ($async_tag === $tag) {
+            return $tag;
+        }
+
         // noscript fallback for users without JS
         $noscript = str_replace(
             array(
