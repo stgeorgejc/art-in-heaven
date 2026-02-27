@@ -99,7 +99,7 @@ if (empty($image_urls) && $primary_image) {
 
     <main class="aih-main">
         <div class="aih-single-nav-bar">
-            <a href="<?php echo esc_url($gallery_url); ?>" class="aih-back-link">&larr; <span class="aih-back-link-full"><?php _e('Back to Gallery', 'art-in-heaven'); ?></span><span class="aih-back-link-short"><?php _e('Gallery', 'art-in-heaven'); ?></span></a>
+            <a href="<?php echo esc_url($gallery_url); ?>" class="aih-back-link">&larr; <?php _e('Back to Gallery', 'art-in-heaven'); ?></a>
             <div class="aih-nav-center">
                 <?php if ($prev_art_id): ?>
                 <a href="<?php echo esc_url(AIH_Template_Helper::get_art_url($prev_art_id)); ?>" class="aih-nav-arrow" title="<?php esc_attr_e('Previous', 'art-in-heaven'); ?>">&larr;</a>

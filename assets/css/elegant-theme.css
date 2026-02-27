@@ -2735,11 +2735,6 @@ body {
     .aih-page .aih-header-inner {
         padding: 16px 48px;
     }
-
-    .aih-single-image > img,
-    .aih-single-image > picture > img {
-        max-height: 45vh;
-    }
 }
 
 @media (min-width: 1600px) {
@@ -3760,17 +3755,6 @@ body {
     font-weight: 500;
     transition: color var(--transition);
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 45%;
-}
-
-/* On mobile, show short label; on tablet+, show full label */
-.aih-back-link-full {
-    display: none;
-}
-.aih-back-link-short {
-    display: inline;
 }
 
 .aih-back-link:hover {
@@ -4536,13 +4520,6 @@ html.aih-lightbox-open body {
         text-align: left;
         order: 0;
         font-size: 14px;
-    }
-
-    .aih-back-link-full {
-        display: inline;
-    }
-    .aih-back-link-short {
-        display: none;
     }
 
     .aih-nav-center {
