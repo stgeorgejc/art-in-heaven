@@ -862,57 +862,6 @@ class AIH_Art_Piece {
         return $counts;
     }
     
-    public function update_expired_auctions() {
-        global $wpdb;
-        $now = current_time('mysql');
-        return $wpdb->query($wpdb->prepare(
-            "UPDATE {$this->table} SET status = 'ended' WHERE auction_end < %s AND status = 'active'",
-            $now
-        ));
-    }
-    
-    /**
-     * Auto-activate auctions that have reached their start time
-     * Changes status from 'draft' to 'active' when auction_start <= now
-     */
-    public function auto_activate_auctions() {
-        global $wpdb;
-        $now = current_time('mysql');
-        return $wpdb->query($wpdb->prepare(
-            "UPDATE {$this->table} SET status = 'active' WHERE auction_start <= %s AND auction_end > %s AND status = 'draft'",
-            $now,
-            $now
-        ));
-    }
-    
-    /**
-     * Auto-reactivate ended auctions whose end time was extended
-     * Changes status from 'ended' to 'active' when auction_end is now in the future
-     */
-    public function auto_reactivate_auctions() {
-        global $wpdb;
-        $now = current_time('mysql');
-        return $wpdb->query($wpdb->prepare(
-            "UPDATE {$this->table} SET status = 'active' WHERE status = 'ended' AND auction_end > %s AND (auction_start IS NULL OR auction_start <= %s)",
-            $now,
-            $now
-        ));
-    }
-
-    /**
-     * Auto-draft future auctions
-     * Changes status from 'active' to 'draft' when auction_start is in the future
-     * This handles cases where admin extends the start time
-     */
-    public function auto_draft_future_auctions() {
-        global $wpdb;
-        $now = current_time('mysql');
-        return $wpdb->query($wpdb->prepare(
-            "UPDATE {$this->table} SET status = 'draft' WHERE auction_start > %s AND status = 'active'",
-            $now
-        ));
-    }
-    
     /**
      * Get reporting statistics for the dashboard.
      *

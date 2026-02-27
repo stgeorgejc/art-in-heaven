@@ -28,12 +28,6 @@ class AIH_Status {
         self::STATUS_ENDED,
     );
     
-    /**
-     * Statuses that prevent bidding regardless of time
-     */
-    private static $closed_statuses = array(
-        self::STATUS_ENDED,
-    );
     
     /**
      * Get the SQL CASE statement for computing auction status.
@@ -146,7 +140,7 @@ class AIH_Status {
      * @return bool
      */
     public static function is_closed_status($status) {
-        return in_array($status, self::$closed_statuses, true);
+        return $status === self::STATUS_ENDED;
     }
     
     /**
@@ -291,14 +285,21 @@ class AIH_Status {
         
         $db_status = $art_piece->status ?? '';
         
-        // Handle closed statuses first - these override time-based logic
-        if (self::is_closed_status($db_status)) {
-            $result['status'] = $db_status;
-            $result['can_bid'] = false;
-            
+        // Handle ended status — but check if auction was reactivated (end time extended)
+        if ($db_status === self::STATUS_ENDED) {
+            if ($end !== null && $end > $now && ($start === null || $start <= $now)) {
+                // End time was extended past now — auction is actually active
+                $result['status'] = self::STATUS_ACTIVE;
+                $result['display_status'] = 'Active (reactivated)';
+                $result['reason'] = 'Database says ended but end time is in the future';
+                $result['can_bid'] = true;
+                return $result;
+            }
+
+            $result['status'] = self::STATUS_ENDED;
             $result['display_status'] = 'Ended';
             $result['reason'] = 'Database status is ended';
-            
+            $result['can_bid'] = false;
             return $result;
         }
         

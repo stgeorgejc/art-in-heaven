@@ -330,6 +330,10 @@ jQuery(document).ready(function($) {
             if (diff <= 0) {
                 $el.find('.aih-time-value').text('Ended');
                 $el.addClass('ended');
+                // Refresh status from server now that auction ended
+                if (typeof window.aihPollStatus === 'function') {
+                    window.aihPollStatus();
+                }
                 return;
             }
 
