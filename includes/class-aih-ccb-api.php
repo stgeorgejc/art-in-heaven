@@ -204,12 +204,17 @@ class AIH_CCB_API {
         
         // Parse the XML response
         $registrants = $this->parse_form_responses($response['data']);
-        
+
+        // Check for CCB API-level errors embedded in the XML
+        if (isset($registrants['ccb_error'])) {
+            return $this->error('CCB API error: ' . $registrants['ccb_error']);
+        }
+
         return array(
             'success' => true,
             'data' => $registrants,
             'count' => count($registrants),
-            'raw' => $response['data'], // Include raw XML for debugging
+            'raw' => $response['data'],
         );
     }
     
@@ -229,6 +234,14 @@ class AIH_CCB_API {
             );
         }
         
+        if ($result['count'] === 0) {
+            return array(
+                'success' => false,
+                'message' => __('Connected to CCB, but no registrants found. Check that the Form ID is correct.', 'art-in-heaven'),
+                'count' => 0,
+            );
+        }
+
         return array(
             'success' => true,
             'message' => sprintf('Connected! Found %d registrants.', $result['count']),
@@ -237,10 +250,34 @@ class AIH_CCB_API {
     }
     
     /**
+     * Check CCB XML response for API-level errors
+     *
+     * CCB returns errors as HTTP 200 with XML like:
+     * <ccb_api><response><errors><error number="002" type="Service Permission">
+     *   Invalid username or password.</error></errors></response></ccb_api>
+     *
+     * @param SimpleXMLElement $xml Parsed XML response
+     * @return string|null Error message if found, null if no errors
+     */
+    private function check_ccb_errors($xml) {
+        $errors = $xml->xpath('//errors/error');
+        if (!empty($errors)) {
+            $messages = array();
+            foreach ($errors as $error) {
+                $type = trim((string) ($error['type'] ?? ''));
+                $text = trim((string) $error);
+                $messages[] = $type ? "{$type}: {$text}" : $text;
+            }
+            return implode('; ', $messages);
+        }
+        return null;
+    }
+
+    /**
      * Parse form_responses XML into array of registrants using SimpleXML
      *
      * @param string $xml_string Raw XML response
-     * @return array Array of parsed registrant data
+     * @return array Array of parsed registrant data, or array with 'ccb_error' key on API error
      */
     private function parse_form_responses($xml_string) {
         $registrants = array();
@@ -259,6 +296,12 @@ class AIH_CCB_API {
 
         libxml_clear_errors();
         libxml_use_internal_errors($prev_use_errors);
+
+        // Check for CCB API-level errors (e.g. invalid credentials, permission denied)
+        $ccb_error = $this->check_ccb_errors($xml);
+        if ($ccb_error) {
+            return array('ccb_error' => $ccb_error);
+        }
 
         // Navigate to form_response elements — the XML structure may vary,
         // so search recursively using xpath
