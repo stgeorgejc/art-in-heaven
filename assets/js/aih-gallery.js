@@ -2,6 +2,9 @@
  * Art in Heaven - Gallery Page JavaScript
  */
 jQuery(document).ready(function($) {
+    // Guard: only run on gallery pages where the wrapper exists
+    if (!$('#aih-gallery-wrapper').length) return;
+
     // Search & Filter
     var serverTime = parseInt($('#aih-gallery-wrapper').data('server-time')) || new Date().getTime();
     var timeOffset = serverTime - new Date().getTime();

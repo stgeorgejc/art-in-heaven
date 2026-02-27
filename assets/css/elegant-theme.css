@@ -743,9 +743,16 @@ body.filter-open {
    ============================================ */
 .aih-gallery-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
     width: 100%;
+}
+
+@media (min-width: 480px) {
+    .aih-gallery-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
 }
 
 @media (min-width: 768px) {
@@ -1568,7 +1575,8 @@ body.filter-open {
     overflow: hidden;
 }
 
-.aih-single-image > img {
+.aih-single-image > img,
+.aih-single-image > picture > img {
     width: 100%;
     height: auto;
     display: block;
@@ -1983,19 +1991,24 @@ body.filter-open {
     justify-content: center;
     width: 18px;
     height: 18px;
-    /* Outline heart for unpressed state */
-    -webkit-text-stroke: 1.5px var(--color-muted);
-    color: transparent;
 }
 
-.aih-fav-btn:hover .aih-fav-icon {
-    -webkit-text-stroke-color: var(--color-accent);
+.aih-fav-btn .aih-fav-icon svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: var(--color-muted);
+    stroke-width: 2;
+    transition: fill 0.2s ease, stroke 0.2s ease;
 }
 
-.aih-fav-btn.active .aih-fav-icon {
-    /* Filled heart for pressed state */
-    -webkit-text-stroke: 0;
-    color: white;
+.aih-fav-btn:hover .aih-fav-icon svg {
+    stroke: var(--color-accent);
+}
+
+.aih-fav-btn.active .aih-fav-icon svg {
+    fill: white;
+    stroke: white;
 }
 
 /* ============================================
@@ -2590,7 +2603,8 @@ body {
         gap: 48px;
     }
 
-    .aih-single-image > img {
+    .aih-single-image > img,
+    .aih-single-image > picture > img {
         max-height: 55vh;
     }
 
@@ -2607,10 +2621,6 @@ body {
     .aih-nav-center {
         gap: 12px;
     }
-
-    .aih-single-details .aih-bid-section { order: 0; }
-    .aih-single-details .aih-piece-info { order: 0; }
-    .aih-single-details .aih-bid-history { order: 0; }
 
     .aih-artist {
         margin-bottom: 24px;
@@ -3825,7 +3835,8 @@ body {
     align-items: center;
 }
 
-.aih-single-image > img {
+.aih-single-image > img,
+.aih-single-image > picture > img {
     width: auto;
     max-width: 100%;
     height: auto;
@@ -3912,10 +3923,7 @@ body {
     flex-direction: column;
 }
 
-/* Reorder on mobile: bid section above piece info */
-.aih-single-details .aih-bid-section { order: -1; }
-.aih-single-details .aih-piece-info { order: 1; }
-.aih-single-details .aih-bid-history { order: 2; }
+/* Natural DOM order: details above bid on all breakpoints */
 
 .aih-single-meta {
     display: flex;
@@ -4654,7 +4662,8 @@ html.aih-lightbox-open body {
         gap: 32px;
     }
 
-    .aih-single-image > img {
+    .aih-single-image > img,
+    .aih-single-image > picture > img {
         max-height: 55vh;
     }
 
