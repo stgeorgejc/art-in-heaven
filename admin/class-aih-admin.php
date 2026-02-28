@@ -64,16 +64,6 @@ class AIH_Admin {
                 array($this, 'render_dashboard')
             );
         }
-        
-        // Art Pieces - accessible to art managers
-        add_submenu_page(
-            $default_slug,
-            __('Art Pieces', 'art-in-heaven'),
-            __('Art Pieces', 'art-in-heaven'),
-            AIH_Roles::CAP_MANAGE_ART,
-            'art-in-heaven-art',
-            array($this, 'render_art_pieces')
-        );
 
         // Add New Art - accessible to art managers
         add_submenu_page(
@@ -84,6 +74,28 @@ class AIH_Admin {
             'art-in-heaven-add',
             array($this, 'render_add_art')
         );
+
+        // Art Pieces - accessible to art managers
+        add_submenu_page(
+            $default_slug,
+            __('Art Pieces', 'art-in-heaven'),
+            __('Art Pieces', 'art-in-heaven'),
+            AIH_Roles::CAP_MANAGE_ART,
+            'art-in-heaven-art',
+            array($this, 'render_art_pieces')
+        );
+
+        // Bidders - requires bidder management access (super admin only)
+        if (AIH_Roles::can_manage_bidders()) {
+            add_submenu_page(
+                $default_slug,
+                __('Bidders', 'art-in-heaven'),
+                __('Bidders', 'art-in-heaven'),
+                AIH_Roles::CAP_MANAGE_BIDDERS,
+                'art-in-heaven-bidders',
+                array($this, 'render_bidders')
+            );
+        }
 
         // Bids - requires view bids access
         if (AIH_Roles::can_view_bids()) {
@@ -97,15 +109,27 @@ class AIH_Admin {
             );
         }
 
-        // Orders - requires financial access (super admin only)
+        // Engagement Stats - requires reports access (super admin only)
+        if (AIH_Roles::can_view_reports()) {
+            add_submenu_page(
+                $default_slug,
+                __('Engagement Stats', 'art-in-heaven'),
+                __('Engagement Stats', 'art-in-heaven'),
+                AIH_Roles::CAP_VIEW_REPORTS,
+                'art-in-heaven-stats',
+                array($this, 'render_stats')
+            );
+        }
+
+        // Winners, Payments, Orders - requires financial access (super admin only)
         if (AIH_Roles::can_view_financial()) {
             add_submenu_page(
                 $default_slug,
-                __('Orders & Payments', 'art-in-heaven'),
-                __('Orders', 'art-in-heaven'),
+                __('Winners & Sales', 'art-in-heaven'),
+                __('Winners', 'art-in-heaven'),
                 AIH_Roles::CAP_VIEW_FINANCIAL,
-                'art-in-heaven-orders',
-                array($this, 'render_orders')
+                'art-in-heaven-winners',
+                array($this, 'render_winners')
             );
 
             add_submenu_page(
@@ -117,14 +141,13 @@ class AIH_Admin {
                 array($this, 'render_payments')
             );
 
-            // Winners & Sales - requires financial access
             add_submenu_page(
                 $default_slug,
-                __('Winners & Sales', 'art-in-heaven'),
-                __('Winners', 'art-in-heaven'),
+                __('Orders & Payments', 'art-in-heaven'),
+                __('Orders', 'art-in-heaven'),
                 AIH_Roles::CAP_VIEW_FINANCIAL,
-                'art-in-heaven-winners',
-                array($this, 'render_winners')
+                'art-in-heaven-orders',
+                array($this, 'render_orders')
             );
         }
 
@@ -140,15 +163,24 @@ class AIH_Admin {
             );
         }
 
-        // Bidders - requires bidder management access (super admin only)
-        if (AIH_Roles::can_manage_bidders()) {
+        // Transactions & Integrations - requires settings access (super admin only)
+        if (AIH_Roles::can_manage_settings()) {
             add_submenu_page(
                 $default_slug,
-                __('Bidders', 'art-in-heaven'),
-                __('Bidders', 'art-in-heaven'),
-                AIH_Roles::CAP_MANAGE_BIDDERS,
-                'art-in-heaven-bidders',
-                array($this, 'render_bidders')
+                __('Transactions', 'art-in-heaven'),
+                __('Transactions', 'art-in-heaven'),
+                AIH_Roles::CAP_MANAGE_SETTINGS,
+                'art-in-heaven-transactions',
+                array($this, 'render_transactions')
+            );
+
+            add_submenu_page(
+                $default_slug,
+                __('Integrations', 'art-in-heaven'),
+                __('Integrations', 'art-in-heaven'),
+                AIH_Roles::CAP_MANAGE_SETTINGS,
+                'art-in-heaven-integrations',
+                array($this, 'render_integrations')
             );
         }
 
@@ -161,15 +193,6 @@ class AIH_Admin {
                 AIH_Roles::CAP_VIEW_REPORTS,
                 'art-in-heaven-reports',
                 array($this, 'render_reports')
-            );
-
-            add_submenu_page(
-                $default_slug,
-                __('Engagement Stats', 'art-in-heaven'),
-                __('Engagement Stats', 'art-in-heaven'),
-                AIH_Roles::CAP_VIEW_REPORTS,
-                'art-in-heaven-stats',
-                array($this, 'render_stats')
             );
         }
 
@@ -185,28 +208,7 @@ class AIH_Admin {
             );
         }
 
-        // Integrations - requires settings access (super admin only)
-        if (AIH_Roles::can_manage_settings()) {
-            add_submenu_page(
-                $default_slug,
-                __('Integrations', 'art-in-heaven'),
-                __('Integrations', 'art-in-heaven'),
-                AIH_Roles::CAP_MANAGE_SETTINGS,
-                'art-in-heaven-integrations',
-                array($this, 'render_integrations')
-            );
-
-            add_submenu_page(
-                $default_slug,
-                __('Transactions', 'art-in-heaven'),
-                __('Transactions', 'art-in-heaven'),
-                AIH_Roles::CAP_MANAGE_SETTINGS,
-                'art-in-heaven-transactions',
-                array($this, 'render_transactions')
-            );
-        }
-
-        // Settings - requires settings access (super admin only)
+        // Settings & Log Viewer - requires settings access (super admin only)
         if (AIH_Roles::can_manage_settings()) {
             add_submenu_page(
                 $default_slug,
