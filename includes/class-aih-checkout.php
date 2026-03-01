@@ -316,7 +316,7 @@ class AIH_Checkout {
     public function get_all_orders($args = array()) {
         global $wpdb;
 
-        $defaults = array('status' => '', 'bidder_id' => '', 'orderby' => 'created_at', 'order' => 'DESC');
+        $defaults = array('status' => '', 'bidder_id' => '', 'orderby' => 'created_at', 'order' => 'DESC', 'limit' => 50, 'offset' => 0);
         $args = wp_parse_args($args, $defaults);
 
         $orders_table = AIH_Database::get_table('orders');
@@ -336,9 +336,12 @@ class AIH_Checkout {
         if (!empty($args['status'])) $where .= $wpdb->prepare(" AND o.payment_status = %s", $args['status']);
         if (!empty($args['bidder_id'])) $where .= $wpdb->prepare(" AND o.bidder_id = %s", $args['bidder_id']);
 
+        $limit = intval($args['limit']);
+        $offset = intval($args['offset']);
+
         // Use derived table for item_count instead of correlated subquery
         // Join both bidders and registrants tables, prefer bidders data but fall back to registrants
-        return $wpdb->get_results(
+        return $wpdb->get_results($wpdb->prepare(
             "SELECT o.*,
                     COALESCE(bd.name_first, rg.name_first) as name_first,
                     COALESCE(bd.name_last, rg.name_last) as name_last,
@@ -355,8 +358,37 @@ class AIH_Checkout {
                  GROUP BY oi.order_id
              ) oic ON o.id = oic.order_id
              WHERE $where
-             ORDER BY o.{$args['orderby']} {$args['order']}"
-        );
+             ORDER BY o.{$args['orderby']} {$args['order']}
+             LIMIT %d OFFSET %d",
+            $limit,
+            $offset
+        ));
+    }
+
+    public function count_orders($args = array()) {
+        global $wpdb;
+
+        $defaults = array('status' => '', 'bidder_id' => '');
+        $args = wp_parse_args($args, $defaults);
+
+        $orders_table = AIH_Database::get_table('orders');
+
+        $where = "1=1";
+        $where_values = array();
+        if (!empty($args['status'])) {
+            $where .= " AND payment_status = %s";
+            $where_values[] = $args['status'];
+        }
+        if (!empty($args['bidder_id'])) {
+            $where .= " AND bidder_id = %s";
+            $where_values[] = $args['bidder_id'];
+        }
+
+        $query = "SELECT COUNT(*) FROM $orders_table WHERE $where";
+        if (!empty($where_values)) {
+            return (int) $wpdb->get_var($wpdb->prepare($query, $where_values));
+        }
+        return (int) $wpdb->get_var($query);
     }
     
     public function get_bidder_orders($bidder_id) {

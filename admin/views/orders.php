@@ -382,7 +382,7 @@ if (!defined('ABSPATH')) {
         <!-- Search Bar -->
         <div class="aih-filter-bar">
             <input type="text" id="aih-search-orders" class="regular-text" placeholder="<?php _e('Search by order #, email, or name...', 'art-in-heaven'); ?>">
-            <span class="aih-filter-count"><span id="aih-visible-count"><?php echo count($orders); ?></span> <?php _e('orders', 'art-in-heaven'); ?></span>
+            <span class="aih-filter-count"><span id="aih-visible-count"><?php echo intval($total_orders_filtered); ?></span> <?php _e('orders', 'art-in-heaven'); ?></span>
         </div>
 
         <div class="aih-table-wrap">
@@ -446,6 +446,28 @@ if (!defined('ABSPATH')) {
             </tbody>
         </table>
         </div><!-- /.aih-table-wrap -->
+
+        <?php if ($total_pages > 1): ?>
+        <div class="tablenav bottom">
+            <div class="tablenav-pages">
+                <span class="displaying-num"><?php printf(_n('%s item', '%s items', $total_orders_filtered, 'art-in-heaven'), number_format($total_orders_filtered)); ?></span>
+                <span class="pagination-links">
+                    <?php
+                    $page_links = paginate_links(array(
+                        'base' => add_query_arg('paged', '%#%'),
+                        'format' => '',
+                        'prev_text' => '&laquo;',
+                        'next_text' => '&raquo;',
+                        'total' => $total_pages,
+                        'current' => $current_page
+                    ));
+                    echo wp_kses_post($page_links);
+                    ?>
+                </span>
+            </div>
+        </div>
+        <?php endif; ?>
+
         </div><!-- /.aih-tab-content -->
 
         <?php if (current_user_can('manage_options')): ?>
