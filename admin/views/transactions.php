@@ -380,7 +380,7 @@ $matchable_orders = $wpdb->get_results(
 .aih-mode-badge.production { background: #d1fae5; color: #065f46; }
 .aih-last-sync { color: #8a8a8a; font-size: 13px; }
 .aih-sync-actions { display: flex; gap: 10px; }
-.aih-sync-actions .dashicons { margin-right: 5px; line-height: 1.4; }
+.aih-sync-actions .dashicons { margin-right: 5px; line-height: 1; font-size: 18px; width: 18px; height: 18px; vertical-align: middle; }
 
 .aih-stats-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px; }
 .aih-stat-card { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); text-align: center; }
@@ -574,6 +574,6 @@ jQuery(document).ready(function($) {
 
 // Spin animation
 var style = document.createElement('style');
-style.textContent = '@keyframes aih-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } } .aih-spin { animation: aih-spin 1s linear infinite; }';
+style.textContent = '@keyframes aih-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } } .aih-spin.dashicons { animation: aih-spin 1s linear infinite; transform-origin: center center; }';
 document.head.appendChild(style);
 </script>
