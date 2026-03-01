@@ -618,9 +618,17 @@ class AIH_Admin {
 
         $checkout = AIH_Checkout::get_instance();
         $status_filter = isset($_GET['status']) ? sanitize_text_field($_GET['status']) : '';
-        $orders = $checkout->get_all_orders(array('status' => $status_filter));
-        $payment_stats = $checkout->get_payment_stats();
         $single_order = isset($_GET['order_id']) ? $checkout->get_order(intval($_GET['order_id'])) : null;
+
+        // Pagination
+        $per_page = 50;
+        $current_page = isset($_GET['paged']) ? max(1, intval($_GET['paged'])) : 1;
+        $offset = ($current_page - 1) * $per_page;
+
+        $orders = $checkout->get_all_orders(array('status' => $status_filter, 'limit' => $per_page, 'offset' => $offset));
+        $total_orders_filtered = $checkout->count_orders(array('status' => $status_filter));
+        $total_pages = ceil($total_orders_filtered / $per_page);
+        $payment_stats = $checkout->get_payment_stats();
 
         // Ensure payment_stats has all required properties
         if (!$payment_stats) {
