@@ -121,7 +121,7 @@ class AIH_Admin {
             );
         }
 
-        // Winners, Payments, Orders - requires financial access (super admin only)
+        // Winners, Orders - requires financial access (super admin only)
         if (AIH_Roles::can_view_financial()) {
             add_submenu_page(
                 $default_slug,
@@ -134,17 +134,8 @@ class AIH_Admin {
 
             add_submenu_page(
                 $default_slug,
-                __('Payments', 'art-in-heaven'),
-                __('Payments', 'art-in-heaven'),
-                AIH_Roles::CAP_VIEW_FINANCIAL,
-                'art-in-heaven-payments',
-                array($this, 'render_payments')
-            );
-
-            add_submenu_page(
-                $default_slug,
                 __('Orders & Payments', 'art-in-heaven'),
-                __('Orders', 'art-in-heaven'),
+                __('Orders & Payments', 'art-in-heaven'),
                 AIH_Roles::CAP_VIEW_FINANCIAL,
                 'art-in-heaven-orders',
                 array($this, 'render_orders')
@@ -534,12 +525,103 @@ class AIH_Admin {
         if (!AIH_Roles::can_view_financial()) {
             wp_die(__('You do not have permission to access this page.', 'art-in-heaven'));
         }
+        // Handle manual payment status updates (Mark Payment on won items without orders)
+        $payment_message = null;
+        $payment_message_type = null;
+        if (isset($_POST['aih_update_payment']) && wp_verify_nonce($_POST['aih_payment_nonce'], 'aih_update_payment')) {
+            global $wpdb;
+            $art_piece_id = intval($_POST['art_piece_id']);
+            $payment_status = sanitize_text_field($_POST['payment_status']);
+            if (!in_array($payment_status, array('pending', 'paid', 'refunded'), true)) {
+                $payment_status = 'pending';
+            }
+            $payment_method = sanitize_text_field($_POST['payment_method']);
+            if (!in_array($payment_method, array('pushpay', 'cash', 'check', 'card', 'other'), true)) {
+                $payment_method = 'other';
+            }
+            $payment_reference = sanitize_text_field($_POST['payment_reference']);
+            $payment_notes = sanitize_textarea_field($_POST['payment_notes']);
+
+            $mp_orders_table = AIH_Database::get_table('orders');
+            $mp_order_items_table = AIH_Database::get_table('order_items');
+            $mp_bids_table = AIH_Database::get_table('bids');
+            $mp_art_table = AIH_Database::get_table('art_pieces');
+
+            $existing_order = $wpdb->get_row($wpdb->prepare(
+                "SELECT o.* FROM $mp_orders_table o
+                 JOIN $mp_order_items_table oi ON o.id = oi.order_id
+                 WHERE oi.art_piece_id = %d",
+                $art_piece_id
+            ));
+
+            if ($existing_order) {
+                $wpdb->update(
+                    $mp_orders_table,
+                    array(
+                        'payment_status' => $payment_status,
+                        'payment_method' => $payment_method,
+                        'payment_reference' => $payment_reference,
+                        'notes' => $payment_notes,
+                        'payment_date' => $payment_status === 'paid' ? current_time('mysql') : null,
+                        'updated_at' => current_time('mysql')
+                    ),
+                    array('id' => $existing_order->id),
+                    array('%s', '%s', '%s', '%s', '%s', '%s'),
+                    array('%d')
+                );
+                $payment_message = __('Payment status updated.', 'art-in-heaven');
+                $payment_message_type = 'success';
+            } else {
+                $winning_bid = $wpdb->get_row($wpdb->prepare(
+                    "SELECT b.*, a.title FROM $mp_bids_table b
+                     JOIN $mp_art_table a ON b.art_piece_id = a.id
+                     WHERE b.art_piece_id = %d AND b.is_winning = 1",
+                    $art_piece_id
+                ));
+
+                if ($winning_bid) {
+                    $order_number = 'AIH-' . strtoupper(bin2hex(random_bytes(4)));
+                    $tax_rate = floatval(get_option('aih_tax_rate', 0));
+                    $tax = $winning_bid->bid_amount * ($tax_rate / 100);
+                    $total = $winning_bid->bid_amount + $tax;
+
+                    $wpdb->insert($mp_orders_table, array(
+                        'order_number' => $order_number,
+                        'bidder_id' => $winning_bid->bidder_id,
+                        'subtotal' => $winning_bid->bid_amount,
+                        'tax' => $tax,
+                        'total' => $total,
+                        'payment_status' => $payment_status,
+                        'payment_method' => $payment_method,
+                        'payment_reference' => $payment_reference,
+                        'notes' => $payment_notes,
+                        'payment_date' => $payment_status === 'paid' ? current_time('mysql') : null,
+                        'created_at' => current_time('mysql')
+                    ));
+
+                    $order_id = $wpdb->insert_id;
+
+                    $wpdb->insert($mp_order_items_table, array(
+                        'order_id' => $order_id,
+                        'art_piece_id' => $art_piece_id,
+                        'winning_bid' => $winning_bid->bid_amount
+                    ));
+
+                    $payment_message = __('Order created and payment status set.', 'art-in-heaven');
+                    $payment_message_type = 'success';
+                } else {
+                    $payment_message = __('No winning bid found for this art piece.', 'art-in-heaven');
+                    $payment_message_type = 'error';
+                }
+            }
+        }
+
         $checkout = AIH_Checkout::get_instance();
         $status_filter = isset($_GET['status']) ? sanitize_text_field($_GET['status']) : '';
         $orders = $checkout->get_all_orders(array('status' => $status_filter));
         $payment_stats = $checkout->get_payment_stats();
         $single_order = isset($_GET['order_id']) ? $checkout->get_order(intval($_GET['order_id'])) : null;
-        
+
         // Ensure payment_stats has all required properties
         if (!$payment_stats) {
             $payment_stats = new stdClass();
@@ -549,12 +631,35 @@ class AIH_Admin {
         $payment_stats->pending_orders = isset($payment_stats->pending_orders) ? $payment_stats->pending_orders : 0;
         $payment_stats->total_collected = isset($payment_stats->total_collected) ? $payment_stats->total_collected : 0;
         $payment_stats->total_pending = isset($payment_stats->total_pending) ? $payment_stats->total_pending : 0;
-        
+
         // Ensure orders is an array
         if (!$orders) {
             $orders = array();
         }
-        
+
+        // Won items without orders
+        global $wpdb;
+        $bids_table = AIH_Database::get_table('bids');
+        $art_table = AIH_Database::get_table('art_pieces');
+        $order_items_table = AIH_Database::get_table('order_items');
+        $bidders_table = AIH_Database::get_table('bidders');
+
+        $won_without_orders = $wpdb->get_results(
+            "SELECT a.*, b.bid_amount as winning_amount, b.bidder_id,
+                    COALESCE(bd.name_first, '') as winner_first,
+                    COALESCE(bd.name_last, '') as winner_last
+             FROM $bids_table b
+             JOIN $art_table a ON b.art_piece_id = a.id
+             LEFT JOIN $order_items_table oi ON oi.art_piece_id = a.id
+             LEFT JOIN $bidders_table bd ON b.bidder_id = bd.confirmation_code
+             WHERE b.is_winning = 1
+             AND (a.auction_end < NOW() OR a.status = 'ended')
+             AND oi.id IS NULL
+             ORDER BY a.auction_end DESC
+             LIMIT 1000"
+        );
+        $payment_stats->items_needing_orders = count($won_without_orders);
+
         include AIH_PLUGIN_DIR . 'admin/views/orders.php';
     }
     
@@ -570,13 +675,6 @@ class AIH_Admin {
             wp_die(__('You do not have permission to access this page.', 'art-in-heaven'));
         }
         include AIH_PLUGIN_DIR . 'admin/views/pickup.php';
-    }
-
-    public function render_payments() {
-        if (!AIH_Roles::can_view_financial()) {
-            wp_die(__('You do not have permission to access this page.', 'art-in-heaven'));
-        }
-        include AIH_PLUGIN_DIR . 'admin/views/payments.php';
     }
 
     public function render_bidders() {
