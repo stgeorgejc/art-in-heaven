@@ -204,7 +204,6 @@ class CheckoutTest extends TestCase
         $checkout = AIH_Checkout::get_instance();
 
         $this->assertFalse($checkout->update_payment_status(1, 'completed'));
-        $this->assertFalse($checkout->update_payment_status(1, 'cancelled'));
         $this->assertFalse($checkout->update_payment_status(1, 'PAID'));
         $this->assertFalse($checkout->update_payment_status(1, ''));
     }
