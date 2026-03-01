@@ -39,21 +39,43 @@ class AIH_Checkout {
         $art_table = AIH_Database::get_table('art_pieces');
         $order_items_table = AIH_Database::get_table('order_items');
         
+        $orders_table = AIH_Database::get_table('orders');
+
         return $wpdb->get_results($wpdb->prepare(
             "SELECT a.*, a.id as art_piece_id, b.bid_amount as winning_amount, b.bid_amount as winning_bid, b.bid_time
              FROM $bids_table b
              JOIN $art_table a ON b.art_piece_id = a.id
              LEFT JOIN $order_items_table oi ON oi.art_piece_id = a.id
+             LEFT JOIN $orders_table o ON oi.order_id = o.id
              WHERE b.bidder_id = %s
              AND b.is_winning = 1
              AND (a.auction_end < %s OR a.status = 'ended')
-             AND oi.id IS NULL
+             AND (oi.id IS NULL OR o.payment_status NOT IN ('paid'))
              ORDER BY a.auction_end DESC",
             $bidder_id,
             current_time('mysql')
         ));
     }
-    
+
+    /**
+     * Cancel all pending orders for a bidder so items return to checkout.
+     */
+    public function cancel_pending_orders($bidder_id) {
+        global $wpdb;
+        $orders_table = AIH_Database::get_table('orders');
+
+        $pending_ids = $wpdb->get_col($wpdb->prepare(
+            "SELECT id FROM $orders_table WHERE bidder_id = %s AND payment_status = 'pending'",
+            $bidder_id
+        ));
+
+        foreach ($pending_ids as $order_id) {
+            $this->update_payment_status((int) $order_id, 'cancelled', '', '', 'Auto-cancelled: bidder returned to checkout');
+        }
+
+        return count($pending_ids);
+    }
+
     /**
      * Get payment status for all art pieces a bidder has won (keyed by art_piece_id)
      */
@@ -270,7 +292,7 @@ class AIH_Checkout {
         $orders_table = AIH_Database::get_table('orders');
 
         // Validate status against allowlist
-        $allowed_statuses = array('pending', 'paid', 'refunded', 'failed');
+        $allowed_statuses = array('pending', 'paid', 'refunded', 'failed', 'cancelled');
         if (!in_array($status, $allowed_statuses, true)) {
             return false;
         }

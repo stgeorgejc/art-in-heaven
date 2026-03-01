@@ -72,6 +72,12 @@ jQuery(document).ready(function($) {
                 html += '<div class="aih-order-total-row aih-order-total-final"><span>Total</span><span>$' + data.total.toFixed(2) + '</span></div>';
                 html += '</div>';
 
+                if (data.payment_status === 'pending') {
+                    html += '<div class="aih-order-pay-now" style="text-align: center; margin-top: 16px;">';
+                    html += '<button type="button" class="aih-btn aih-pay-now-btn" data-order="' + escapeHtml(orderNumber) + '">Pay Now</button>';
+                    html += '</div>';
+                }
+
                 $body.html(html);
             } else {
                 var msg = (r.data && r.data.message) ? r.data.message : 'Unknown error';
@@ -79,6 +85,23 @@ jQuery(document).ready(function($) {
             }
         }, function() {
             $body.html('<p class="aih-error">Connection error. Please try again.</p>');
+        });
+    });
+
+    // Pay Now button — regenerate PushPay link and redirect
+    $(document).on('click', '.aih-pay-now-btn', function() {
+        var $btn = $(this).prop('disabled', true).text('Redirecting...');
+        var order = $(this).data('order');
+        aihPost('pushpay-link', {action: 'aih_get_pushpay_link', nonce: aihAjax.nonce, order_number: order}, function(r) {
+            if (r.success && r.data.pushpay_url) {
+                window.location.href = r.data.pushpay_url;
+            } else {
+                $btn.prop('disabled', false).text('Pay Now');
+                alert(r.data && r.data.message ? r.data.message : 'Could not generate payment link.');
+            }
+        }, function() {
+            $btn.prop('disabled', false).text('Pay Now');
+            alert('Connection error. Please try again.');
         });
     });
 
