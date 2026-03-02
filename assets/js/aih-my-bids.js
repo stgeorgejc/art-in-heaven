@@ -74,7 +74,7 @@ jQuery(document).ready(function($) {
 
                 if (data.payment_status === 'pending') {
                     html += '<div class="aih-order-pay-now" style="text-align: center; margin-top: 16px;">';
-                    html += '<button type="button" class="aih-btn aih-pay-now-btn" data-order="' + escapeHtml(orderNumber) + '">Pay Now</button>';
+                    html += '<button type="button" class="aih-btn aih-pay-now-btn" data-order="' + escapeHtml(orderNumber) + '">' + escapeHtml(aihAjax.strings.payNow) + '</button>';
                     html += '</div>';
                 }
 
@@ -90,18 +90,18 @@ jQuery(document).ready(function($) {
 
     // Pay Now button — regenerate PushPay link and redirect
     $(document).on('click', '.aih-pay-now-btn', function() {
-        var $btn = $(this).prop('disabled', true).text('Redirecting...');
+        var $btn = $(this).prop('disabled', true).text(aihAjax.strings.redirecting);
         var order = $(this).data('order');
         aihPost('pushpay-link', {action: 'aih_get_pushpay_link', nonce: aihAjax.nonce, order_number: order}, function(r) {
             if (r.success && r.data.pushpay_url) {
                 window.location.href = r.data.pushpay_url;
             } else {
-                $btn.prop('disabled', false).text('Pay Now');
-                alert(r.data && r.data.message ? r.data.message : 'Could not generate payment link.');
+                $btn.prop('disabled', false).text(aihAjax.strings.payNow);
+                alert(r.data && r.data.message ? r.data.message : aihAjax.strings.paymentLinkError);
             }
         }, function() {
-            $btn.prop('disabled', false).text('Pay Now');
-            alert('Connection error. Please try again.');
+            $btn.prop('disabled', false).text(aihAjax.strings.payNow);
+            alert(aihAjax.strings.connectionError);
         });
     });
 

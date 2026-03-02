@@ -641,6 +641,9 @@ class Art_In_Heaven {
                 'bidPlaced'      => __('Your bid has been placed!', 'art-in-heaven'),
                 'connectionError'=> __('Connection error. Please try again.', 'art-in-heaven'),
                 'networkError'   => __('Network error. Please try again.', 'art-in-heaven'),
+                'payNow'         => __('Pay Now', 'art-in-heaven'),
+                'redirecting'    => __('Redirecting...', 'art-in-heaven'),
+                'paymentLinkError' => __('Could not generate payment link.', 'art-in-heaven'),
         );
 
         wp_localize_script('aih-frontend', 'aihAjax', $localize_data);
