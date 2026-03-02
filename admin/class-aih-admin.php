@@ -528,7 +528,7 @@ class AIH_Admin {
         // Handle manual payment status updates (Mark Payment on won items without orders)
         $payment_message = null;
         $payment_message_type = null;
-        if (isset($_POST['aih_update_payment']) && wp_verify_nonce($_POST['aih_payment_nonce'], 'aih_update_payment')) {
+        if (isset($_POST['aih_update_payment'], $_POST['aih_payment_nonce']) && wp_verify_nonce(wp_unslash($_POST['aih_payment_nonce']), 'aih_update_payment')) {
             global $wpdb;
             $art_piece_id = intval($_POST['art_piece_id']);
             $payment_status = sanitize_text_field($_POST['payment_status']);
@@ -652,7 +652,7 @@ class AIH_Admin {
         $order_items_table = AIH_Database::get_table('order_items');
         $bidders_table = AIH_Database::get_table('bidders');
 
-        $won_without_orders = $wpdb->get_results(
+        $won_without_orders = $wpdb->get_results($wpdb->prepare(
             "SELECT a.*, b.bid_amount as winning_amount, b.bidder_id,
                     COALESCE(bd.name_first, '') as winner_first,
                     COALESCE(bd.name_last, '') as winner_last
@@ -661,11 +661,12 @@ class AIH_Admin {
              LEFT JOIN $order_items_table oi ON oi.art_piece_id = a.id
              LEFT JOIN $bidders_table bd ON b.bidder_id = bd.confirmation_code
              WHERE b.is_winning = 1
-             AND (a.auction_end < NOW() OR a.status = 'ended')
+             AND (a.auction_end < %s OR a.status = 'ended')
              AND oi.id IS NULL
              ORDER BY a.auction_end DESC
-             LIMIT 1000"
-        );
+             LIMIT 1000",
+            current_time('mysql')
+        ));
         $payment_stats->items_needing_orders = count($won_without_orders);
 
         include AIH_PLUGIN_DIR . 'admin/views/orders.php';

@@ -50,7 +50,7 @@ class AIH_Checkout {
              WHERE b.bidder_id = %s
              AND b.is_winning = 1
              AND (a.auction_end < %s OR a.status = 'ended')
-             AND (oi.id IS NULL OR o.payment_status NOT IN ('paid'))
+             AND (oi.id IS NULL OR o.payment_status IN ('cancelled'))
              ORDER BY a.auction_end DESC",
             $bidder_id,
             current_time('mysql')
@@ -58,15 +58,18 @@ class AIH_Checkout {
     }
 
     /**
-     * Cancel all pending orders for a bidder so items return to checkout.
+     * Cancel stale pending orders for a bidder so items return to checkout.
+     * Only cancels orders older than 10 minutes to avoid cancelling in-flight payments.
+     * Callers must verify the bidder is authorized before invoking.
      */
     public function cancel_pending_orders($bidder_id) {
         global $wpdb;
         $orders_table = AIH_Database::get_table('orders');
 
         $pending_ids = $wpdb->get_col($wpdb->prepare(
-            "SELECT id FROM $orders_table WHERE bidder_id = %s AND payment_status = 'pending'",
-            $bidder_id
+            "SELECT id FROM $orders_table WHERE bidder_id = %s AND payment_status = 'pending' AND created_at < %s",
+            $bidder_id,
+            gmdate('Y-m-d H:i:s', time() - 10 * MINUTE_IN_SECONDS)
         ));
 
         foreach ($pending_ids as $order_id) {
