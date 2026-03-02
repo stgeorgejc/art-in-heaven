@@ -35,8 +35,11 @@ if (!empty($_GET['paymentToken'])) {
     $payment_result = 'cancelled';
 }
 
-// Get won items
+// Cancel any pending (unpaid) orders so their items return to checkout
 $checkout = AIH_Checkout::get_instance();
+if (empty($_GET['paymentToken']) && !isset($_GET['sr'])) {
+    $checkout->cancel_pending_orders($bidder_id);
+}
 $won_items = $checkout->get_won_items($bidder_id);
 $orders = $checkout->get_bidder_orders($bidder_id);
 $art_images = new AIH_Art_Images();
@@ -360,14 +363,40 @@ jQuery(document).ready(function($) {
                 html += '<div class="aih-order-total-row aih-order-total-final"><span>Total</span><span>$' + data.total.toFixed(2) + '</span></div>';
                 html += '</div>';
 
+                if (data.payment_status === 'pending') {
+                    html += '<div class="aih-order-pay-now" style="text-align: center; margin-top: 16px;">';
+                    html += '<button type="button" class="aih-btn aih-pay-now-btn" data-order="' + escapeHtml(orderNumber) + '"><?php echo esc_js(__('Pay Now', 'art-in-heaven')); ?></button>';
+                    html += '</div>';
+                }
+
                 $body.html(html);
-                orderCache[orderNumber] = html;
+                // Don't cache pending orders so Pay Now button stays fresh
+                if (data.payment_status !== 'pending') {
+                    orderCache[orderNumber] = html;
+                }
             } else {
                 var msg = (r.data && r.data.message) ? r.data.message : 'Unknown error';
                 $body.html('<p class="aih-error">Error: ' + escapeHtml(msg) + '</p>');
             }
         }, function() {
             $body.html('<p class="aih-error">Connection error. Please try again.</p>');
+        });
+    });
+
+    // Pay Now button — regenerate PushPay link and redirect
+    $(document).on('click', '.aih-pay-now-btn', function() {
+        var $btn = $(this).prop('disabled', true).text('<?php echo esc_js(__('Redirecting...', 'art-in-heaven')); ?>');
+        var order = $(this).data('order');
+        aihPost('pushpay-link', {action: 'aih_get_pushpay_link', nonce: aihAjax.nonce, order_number: order}, function(r) {
+            if (r.success && r.data.pushpay_url) {
+                window.location.href = r.data.pushpay_url;
+            } else {
+                $btn.prop('disabled', false).text('<?php echo esc_js(__('Pay Now', 'art-in-heaven')); ?>');
+                alert(r.data && r.data.message ? r.data.message : '<?php echo esc_js(__('Could not generate payment link.', 'art-in-heaven')); ?>');
+            }
+        }, function() {
+            $btn.prop('disabled', false).text('<?php echo esc_js(__('Pay Now', 'art-in-heaven')); ?>');
+            alert('<?php echo esc_js(__('Connection error. Please try again.', 'art-in-heaven')); ?>');
         });
     });
 

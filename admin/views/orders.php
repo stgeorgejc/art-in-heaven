@@ -275,6 +275,12 @@ if (!defined('ABSPATH')) {
         <!-- Orders List View -->
         <h1><?php _e('Orders & Payments', 'art-in-heaven'); ?></h1>
 
+        <?php if ($payment_message): ?>
+        <div class="notice notice-<?php echo esc_attr($payment_message_type); ?> is-dismissible">
+            <p><?php echo esc_html($payment_message); ?></p>
+        </div>
+        <?php endif; ?>
+
         <div class="aih-dashboard-stats">
             <div class="aih-stat-card">
                 <div class="aih-stat-icon total"><span class="dashicons dashicons-cart"></span></div>
@@ -304,7 +310,54 @@ if (!defined('ABSPATH')) {
                     <span class="aih-stat-label"><?php _e('Total Collected', 'art-in-heaven'); ?></span>
                 </div>
             </div>
+            <?php if ($payment_stats->items_needing_orders > 0): ?>
+            <div class="aih-stat-card">
+                <div class="aih-stat-icon upcoming"><span class="dashicons dashicons-warning"></span></div>
+                <div class="aih-stat-content">
+                    <span class="aih-stat-number"><?php echo intval($payment_stats->items_needing_orders); ?></span>
+                    <span class="aih-stat-label"><?php _e('Items Needing Orders', 'art-in-heaven'); ?></span>
+                </div>
+            </div>
+            <?php endif; ?>
         </div>
+
+        <!-- Won Items Without Orders -->
+        <?php if (!empty($won_without_orders)): ?>
+        <div class="aih-card" style="margin: 20px 0;">
+            <h2><?php _e('Won Items Without Orders', 'art-in-heaven'); ?></h2>
+            <p class="description"><?php _e('These items have winning bids but no order created yet. Create an order and mark payment status.', 'art-in-heaven'); ?></p>
+
+            <table class="wp-list-table widefat fixed striped aih-admin-table">
+                <thead>
+                    <tr>
+                        <th><?php _e('Art ID', 'art-in-heaven'); ?></th>
+                        <th><?php _e('Title', 'art-in-heaven'); ?></th>
+                        <th><?php _e('Winner', 'art-in-heaven'); ?></th>
+                        <th><?php _e('Amount', 'art-in-heaven'); ?></th>
+                        <th><?php _e('Actions', 'art-in-heaven'); ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($won_without_orders as $item): ?>
+                    <tr>
+                        <td data-label="<?php esc_attr_e('Art ID', 'art-in-heaven'); ?>"><code><?php echo esc_html($item->art_id); ?></code></td>
+                        <td data-label="<?php esc_attr_e('Title', 'art-in-heaven'); ?>"><strong><?php echo esc_html($item->title); ?></strong></td>
+                        <td data-label="<?php esc_attr_e('Winner', 'art-in-heaven'); ?>"><?php echo esc_html(trim($item->winner_first . ' ' . $item->winner_last) ?: $item->bidder_id); ?></td>
+                        <td data-label="<?php esc_attr_e('Amount', 'art-in-heaven'); ?>"><strong>$<?php echo number_format($item->winning_amount, 2); ?></strong></td>
+                        <td class="aih-col-actions" data-label="">
+                            <button type="button" class="button aih-mark-paid-btn"
+                                    data-art-id="<?php echo intval($item->id); ?>"
+                                    data-title="<?php echo esc_attr($item->title); ?>"
+                                    data-amount="<?php echo esc_attr($item->winning_amount); ?>">
+                                <?php _e('Mark Payment', 'art-in-heaven'); ?>
+                            </button>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+        <?php endif; ?>
 
         <!-- Tabs -->
         <nav class="nav-tab-wrapper">
@@ -329,7 +382,7 @@ if (!defined('ABSPATH')) {
         <!-- Search Bar -->
         <div class="aih-filter-bar">
             <input type="text" id="aih-search-orders" class="regular-text" placeholder="<?php _e('Search by order #, email, or name...', 'art-in-heaven'); ?>">
-            <span class="aih-filter-count"><span id="aih-visible-count"><?php echo count($orders); ?></span> <?php _e('orders', 'art-in-heaven'); ?></span>
+            <span class="aih-filter-count"><span id="aih-visible-count"><?php echo intval($total_orders_filtered); ?></span> <?php _e('orders', 'art-in-heaven'); ?></span>
         </div>
 
         <div class="aih-table-wrap">
@@ -393,7 +446,94 @@ if (!defined('ABSPATH')) {
             </tbody>
         </table>
         </div><!-- /.aih-table-wrap -->
+
+        <?php if ($total_pages > 1): ?>
+        <div class="tablenav bottom">
+            <div class="tablenav-pages">
+                <span class="displaying-num"><?php printf(_n('%s item', '%s items', $total_orders_filtered, 'art-in-heaven'), number_format($total_orders_filtered)); ?></span>
+                <span class="pagination-links">
+                    <?php
+                    $page_links = paginate_links(array(
+                        'base' => add_query_arg('paged', '%#%'),
+                        'format' => '',
+                        'prev_text' => '&laquo;',
+                        'next_text' => '&raquo;',
+                        'total' => $total_pages,
+                        'current' => $current_page
+                    ));
+                    echo wp_kses_post($page_links);
+                    ?>
+                </span>
+            </div>
+        </div>
+        <?php endif; ?>
+
         </div><!-- /.aih-tab-content -->
+
+        <?php if (current_user_can('manage_options')): ?>
+        <p style="margin-top: 30px;">
+            <a href="<?php echo esc_url(admin_url('admin.php?page=art-in-heaven-transactions')); ?>" class="button">
+                <?php _e('Manage Pushpay Transactions', 'art-in-heaven'); ?>
+            </a>
+        </p>
+        <?php endif; ?>
+
+        <!-- Mark Payment Modal -->
+        <div id="aih-payment-modal" class="aih-modal" style="display:none;">
+            <div class="aih-modal-content">
+                <span class="aih-modal-close">&times;</span>
+                <h2 id="aih-modal-title"><?php _e('Mark Payment', 'art-in-heaven'); ?></h2>
+
+                <form method="post" id="aih-mark-payment-form">
+                    <?php wp_nonce_field('aih_update_payment', 'aih_payment_nonce'); ?>
+                    <input type="hidden" name="aih_update_payment" value="1">
+                    <input type="hidden" name="art_piece_id" id="aih-art-piece-id" value="">
+
+                    <table class="form-table">
+                        <tr>
+                            <th><label for="mark_payment_status"><?php _e('Payment Status', 'art-in-heaven'); ?></label></th>
+                            <td>
+                                <select name="payment_status" id="mark_payment_status" required>
+                                    <option value="pending"><?php _e('Pending', 'art-in-heaven'); ?></option>
+                                    <option value="paid"><?php _e('Paid', 'art-in-heaven'); ?></option>
+                                    <option value="refunded"><?php _e('Refunded', 'art-in-heaven'); ?></option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th><label for="mark_payment_method"><?php _e('Payment Method', 'art-in-heaven'); ?></label></th>
+                            <td>
+                                <select name="payment_method" id="mark_payment_method" required>
+                                    <option value="cash"><?php _e('Cash', 'art-in-heaven'); ?></option>
+                                    <option value="check"><?php _e('Check', 'art-in-heaven'); ?></option>
+                                    <option value="card"><?php _e('Credit Card', 'art-in-heaven'); ?></option>
+                                    <option value="pushpay"><?php _e('Pushpay', 'art-in-heaven'); ?></option>
+                                    <option value="other"><?php _e('Other', 'art-in-heaven'); ?></option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th><label for="mark_payment_reference"><?php _e('Reference #', 'art-in-heaven'); ?></label></th>
+                            <td>
+                                <input type="text" name="payment_reference" id="mark_payment_reference" class="regular-text" placeholder="<?php esc_attr_e('Check number, transaction ID, etc.', 'art-in-heaven'); ?>">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th><label for="mark_payment_notes"><?php _e('Notes', 'art-in-heaven'); ?></label></th>
+                            <td>
+                                <textarea name="payment_notes" id="mark_payment_notes" rows="3" class="large-text"></textarea>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <p class="submit">
+                        <button type="submit" class="button button-primary"><?php _e('Save Payment', 'art-in-heaven'); ?></button>
+                        <button type="button" class="button aih-modal-cancel"><?php _e('Cancel', 'art-in-heaven'); ?></button>
+                    </p>
+                </form>
+            </div>
+        </div>
+
     <?php endif; ?>
 </div>
 
@@ -484,6 +624,28 @@ jQuery(document).ready(function($) {
                 }
             }
         });
+    });
+
+    // Mark payment button (for items without orders)
+    $('.aih-mark-paid-btn').on('click', function() {
+        var artId = $(this).data('art-id');
+        var title = $(this).data('title');
+        var amount = $(this).data('amount');
+
+        $('#aih-art-piece-id').val(artId);
+        $('#aih-modal-title').text('<?php echo esc_js(__('Mark Payment:', 'art-in-heaven')); ?> ' + title + ' ($' + parseFloat(amount).toFixed(2) + ')');
+        $('#mark_payment_status').val('paid');
+        $('#aih-payment-modal').show();
+    });
+
+    // Close modals (mark payment)
+    $('.aih-modal-close, .aih-modal-cancel').on('click', function() {
+        $(this).closest('.aih-modal').hide();
+    });
+    $('.aih-modal').on('click', function(e) {
+        if (e.target === this) {
+            $(this).hide();
+        }
     });
 
     // Delete order
@@ -630,5 +792,30 @@ jQuery(document).ready(function($) {
 </script>
 
 <style>
-/* orders minimal overrides - main styles in aih-admin.css */
+/* Mark Payment modal styles */
+#aih-payment-modal .aih-modal-content {
+    background: #fff;
+    padding: 20px 30px;
+    border-radius: 8px;
+    max-width: 500px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    position: relative;
+}
+#aih-payment-modal .aih-modal-close {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 28px;
+    cursor: pointer;
+    color: #666;
+}
+#aih-payment-modal .aih-modal-close:hover {
+    color: #000;
+}
+#aih-payment-modal h2 {
+    margin-top: 0;
+    padding-right: 30px;
+}
 </style>

@@ -192,7 +192,7 @@ class CheckoutTest extends TestCase
     {
         $checkout = AIH_Checkout::get_instance();
 
-        $valid_statuses = ['pending', 'paid', 'refunded', 'failed'];
+        $valid_statuses = ['pending', 'paid', 'refunded', 'failed', 'cancelled'];
         foreach ($valid_statuses as $status) {
             $result = $checkout->update_payment_status(1, $status);
             $this->assertNotFalse($result, "Status '$status' should be accepted");
@@ -204,7 +204,6 @@ class CheckoutTest extends TestCase
         $checkout = AIH_Checkout::get_instance();
 
         $this->assertFalse($checkout->update_payment_status(1, 'completed'));
-        $this->assertFalse($checkout->update_payment_status(1, 'cancelled'));
         $this->assertFalse($checkout->update_payment_status(1, 'PAID'));
         $this->assertFalse($checkout->update_payment_status(1, ''));
     }

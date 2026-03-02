@@ -60,12 +60,36 @@ if (!isset($art_pieces)) { $art_pieces = array(); }
     </div>
 
     <!-- Statistics by Tier - Individual Art Pieces -->
-    <h2 style="margin-top: 30px;"><?php _e('Statistics by Tier', 'art-in-heaven'); ?></h2>
+    <h2 style="margin-top: 30px;"><?php _e('Statistics by Tier (Active Art Pieces)', 'art-in-heaven'); ?></h2>
     <p class="description"><?php _e('Click column headers to sort. Shows individual art pieces sorted by tier.', 'art-in-heaven'); ?></p>
 
     <?php
-    // Sort art pieces by tier, then by art_id
-    $sorted_pieces = $art_pieces;
+    // Filter to only active art pieces
+    $active_pieces = array_filter($art_pieces, function($piece) {
+        return $piece->status === 'active' && $piece->seconds_remaining > 0;
+    });
+
+    // Collect unique tiers for the dropdown (from active pieces only)
+    $unique_tiers = array();
+    foreach ($active_pieces as $piece) {
+        $t = !empty($piece->tier) ? $piece->tier : __('No Tier', 'art-in-heaven');
+        $unique_tiers[$t] = true;
+    }
+    ksort($unique_tiers);
+    ?>
+    <div style="margin: 12px 0;">
+        <label for="aih-tier-filter"><strong><?php _e('Filter by Tier:', 'art-in-heaven'); ?></strong></label>
+        <select id="aih-tier-filter" style="margin-left: 6px; min-width: 160px;">
+            <option value=""><?php _e('All Tiers', 'art-in-heaven'); ?></option>
+            <?php foreach (array_keys($unique_tiers) as $tier_option): ?>
+                <option value="<?php echo esc_attr($tier_option); ?>"><?php echo esc_html($tier_option); ?></option>
+            <?php endforeach; ?>
+        </select>
+    </div>
+
+    <?php
+    // Sort active art pieces by tier, then by art_id
+    $sorted_pieces = $active_pieces;
     usort($sorted_pieces, function($a, $b) {
         $tier_a = !empty($a->tier) ? $a->tier : 'ZZZ'; // Put empty tiers at end
         $tier_b = !empty($b->tier) ? $b->tier : 'ZZZ';
@@ -74,7 +98,7 @@ if (!isset($art_pieces)) { $art_pieces = array(); }
         return strcmp($a->art_id, $b->art_id);
     });
 
-    // Calculate tier totals for summary row
+    // Calculate tier totals for summary row (all art pieces)
     $tier_stats = array();
     foreach ($art_pieces as $piece) {
         $tier = !empty($piece->tier) ? $piece->tier : __('No Tier', 'art-in-heaven');
@@ -310,6 +334,18 @@ if (!isset($art_pieces)) { $art_pieces = array(); }
 
 <script type="text/javascript">
 jQuery(document).ready(function($) {
+    // Tier dropdown filter
+    $('#aih-tier-filter').on('change', function() {
+        var selected = $(this).val();
+        $('#aih-tier-pivot tbody tr').each(function() {
+            if (!selected || $(this).attr('data-tier') === selected) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+    });
+
     // Tier pivot table sorting
     var $tierTable = $('#aih-tier-pivot');
     var $tierTbody = $tierTable.find('tbody');

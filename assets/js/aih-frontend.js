@@ -428,13 +428,13 @@
     });
     
     // Prevent right-click on images (basic protection)
-    $(document).on('contextmenu', '.aih-card-image img, .aih-detail-image img, .aih-single-image img', function(e) {
+    $(document).on('contextmenu', '.aih-card-image img, .aih-detail-image img, .aih-single-image img, #aih-lightbox-img', function(e) {
         e.preventDefault();
         return false;
     });
-    
+
     // Prevent drag on images
-    $(document).on('dragstart', '.aih-card-image img, .aih-detail-image img, .aih-single-image img', function(e) {
+    $(document).on('dragstart', '.aih-card-image img, .aih-detail-image img, .aih-single-image img, #aih-lightbox-img', function(e) {
         e.preventDefault();
         return false;
     });

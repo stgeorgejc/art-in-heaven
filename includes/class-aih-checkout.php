@@ -39,21 +39,46 @@ class AIH_Checkout {
         $art_table = AIH_Database::get_table('art_pieces');
         $order_items_table = AIH_Database::get_table('order_items');
         
+        $orders_table = AIH_Database::get_table('orders');
+
         return $wpdb->get_results($wpdb->prepare(
             "SELECT a.*, a.id as art_piece_id, b.bid_amount as winning_amount, b.bid_amount as winning_bid, b.bid_time
              FROM $bids_table b
              JOIN $art_table a ON b.art_piece_id = a.id
              LEFT JOIN $order_items_table oi ON oi.art_piece_id = a.id
+             LEFT JOIN $orders_table o ON oi.order_id = o.id
              WHERE b.bidder_id = %s
              AND b.is_winning = 1
              AND (a.auction_end < %s OR a.status = 'ended')
-             AND oi.id IS NULL
+             AND (oi.id IS NULL OR o.payment_status IN ('cancelled'))
              ORDER BY a.auction_end DESC",
             $bidder_id,
             current_time('mysql')
         ));
     }
-    
+
+    /**
+     * Cancel stale pending orders for a bidder so items return to checkout.
+     * Only cancels orders older than 10 minutes to avoid cancelling in-flight payments.
+     * Callers must verify the bidder is authorized before invoking.
+     */
+    public function cancel_pending_orders($bidder_id) {
+        global $wpdb;
+        $orders_table = AIH_Database::get_table('orders');
+
+        $pending_ids = $wpdb->get_col($wpdb->prepare(
+            "SELECT id FROM $orders_table WHERE bidder_id = %s AND payment_status = 'pending' AND created_at < %s",
+            $bidder_id,
+            gmdate('Y-m-d H:i:s', time() - 10 * MINUTE_IN_SECONDS)
+        ));
+
+        foreach ($pending_ids as $order_id) {
+            $this->update_payment_status((int) $order_id, 'cancelled', '', '', 'Auto-cancelled: bidder returned to checkout');
+        }
+
+        return count($pending_ids);
+    }
+
     /**
      * Get payment status for all art pieces a bidder has won (keyed by art_piece_id)
      */
@@ -270,7 +295,7 @@ class AIH_Checkout {
         $orders_table = AIH_Database::get_table('orders');
 
         // Validate status against allowlist
-        $allowed_statuses = array('pending', 'paid', 'refunded', 'failed');
+        $allowed_statuses = array('pending', 'paid', 'refunded', 'failed', 'cancelled');
         if (!in_array($status, $allowed_statuses, true)) {
             return false;
         }
@@ -294,7 +319,7 @@ class AIH_Checkout {
     public function get_all_orders($args = array()) {
         global $wpdb;
 
-        $defaults = array('status' => '', 'bidder_id' => '', 'orderby' => 'created_at', 'order' => 'DESC');
+        $defaults = array('status' => '', 'bidder_id' => '', 'orderby' => 'created_at', 'order' => 'DESC', 'limit' => 50, 'offset' => 0);
         $args = wp_parse_args($args, $defaults);
 
         $orders_table = AIH_Database::get_table('orders');
@@ -314,9 +339,12 @@ class AIH_Checkout {
         if (!empty($args['status'])) $where .= $wpdb->prepare(" AND o.payment_status = %s", $args['status']);
         if (!empty($args['bidder_id'])) $where .= $wpdb->prepare(" AND o.bidder_id = %s", $args['bidder_id']);
 
+        $limit = intval($args['limit']);
+        $offset = intval($args['offset']);
+
         // Use derived table for item_count instead of correlated subquery
         // Join both bidders and registrants tables, prefer bidders data but fall back to registrants
-        return $wpdb->get_results(
+        return $wpdb->get_results($wpdb->prepare(
             "SELECT o.*,
                     COALESCE(bd.name_first, rg.name_first) as name_first,
                     COALESCE(bd.name_last, rg.name_last) as name_last,
@@ -333,8 +361,37 @@ class AIH_Checkout {
                  GROUP BY oi.order_id
              ) oic ON o.id = oic.order_id
              WHERE $where
-             ORDER BY o.{$args['orderby']} {$args['order']}"
-        );
+             ORDER BY o.{$args['orderby']} {$args['order']}
+             LIMIT %d OFFSET %d",
+            $limit,
+            $offset
+        ));
+    }
+
+    public function count_orders($args = array()) {
+        global $wpdb;
+
+        $defaults = array('status' => '', 'bidder_id' => '');
+        $args = wp_parse_args($args, $defaults);
+
+        $orders_table = AIH_Database::get_table('orders');
+
+        $where = "1=1";
+        $where_values = array();
+        if (!empty($args['status'])) {
+            $where .= " AND payment_status = %s";
+            $where_values[] = $args['status'];
+        }
+        if (!empty($args['bidder_id'])) {
+            $where .= " AND bidder_id = %s";
+            $where_values[] = $args['bidder_id'];
+        }
+
+        $query = "SELECT COUNT(*) FROM $orders_table WHERE $where";
+        if (!empty($where_values)) {
+            return (int) $wpdb->get_var($wpdb->prepare($query, $where_values));
+        }
+        return (int) $wpdb->get_var($query);
     }
     
     public function get_bidder_orders($bidder_id) {
