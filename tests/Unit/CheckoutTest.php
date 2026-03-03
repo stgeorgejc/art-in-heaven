@@ -340,4 +340,26 @@ class CheckoutTest extends TestCase
         $this->assertCount(0, $this->wpdb->insert_log);
         $this->assertCount(0, $this->wpdb->update_log);
     }
+
+    public function testMarkManualPaymentInvalidMethod(): void
+    {
+        $checkout = AIH_Checkout::get_instance();
+        $result = $checkout->mark_manual_payment(1, 'paid', 'bitcoin');
+
+        $this->assertFalse($result['success']);
+        $this->assertSame('Invalid payment method.', $result['message']);
+        $this->assertCount(0, $this->wpdb->insert_log);
+        $this->assertCount(0, $this->wpdb->update_log);
+    }
+
+    public function testMarkManualPaymentAcceptsEmptyMethod(): void
+    {
+        // Empty method is valid (default parameter)
+        $this->wpdb->get_row_queue[] = (object) ['id' => 1];
+
+        $checkout = AIH_Checkout::get_instance();
+        $result = $checkout->mark_manual_payment(1, 'paid');
+
+        $this->assertTrue($result['success']);
+    }
 }

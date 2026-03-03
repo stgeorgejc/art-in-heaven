@@ -343,6 +343,14 @@ class AIH_Checkout {
             );
         }
 
+        $allowed_methods = array( 'pushpay', 'cash', 'check', 'card', 'other', '' );
+        if ( ! in_array( $method, $allowed_methods, true ) ) {
+            return array(
+                'success' => false,
+                'message' => __( 'Invalid payment method.', 'art-in-heaven' ),
+            );
+        }
+
         $orders_table      = AIH_Database::get_table( 'orders' );
         $order_items_table = AIH_Database::get_table( 'order_items' );
         $bids_table        = AIH_Database::get_table( 'bids' );

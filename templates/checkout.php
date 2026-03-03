@@ -385,18 +385,18 @@ jQuery(document).ready(function($) {
 
     // Pay Now button — regenerate PushPay link and redirect
     $(document).on('click', '.aih-pay-now-btn', function() {
-        var $btn = $(this).prop('disabled', true).text('<?php echo esc_js(__('Redirecting...', 'art-in-heaven')); ?>');
+        var $btn = $(this).prop('disabled', true).text(aihAjax.strings.redirecting);
         var order = $(this).data('order');
         aihPost('pushpay-link', {action: 'aih_get_pushpay_link', nonce: aihAjax.nonce, order_number: order}, function(r) {
             if (r.success && r.data.pushpay_url) {
                 window.location.href = r.data.pushpay_url;
             } else {
-                $btn.prop('disabled', false).text('<?php echo esc_js(__('Pay Now', 'art-in-heaven')); ?>');
-                alert(r.data && r.data.message ? r.data.message : '<?php echo esc_js(__('Could not generate payment link.', 'art-in-heaven')); ?>');
+                $btn.prop('disabled', false).text(aihAjax.strings.payNow);
+                showToast(r.data && r.data.message ? r.data.message : aihAjax.strings.paymentLinkError, 'error');
             }
         }, function() {
-            $btn.prop('disabled', false).text('<?php echo esc_js(__('Pay Now', 'art-in-heaven')); ?>');
-            alert('<?php echo esc_js(__('Connection error. Please try again.', 'art-in-heaven')); ?>');
+            $btn.prop('disabled', false).text(aihAjax.strings.payNow);
+            showToast(aihAjax.strings.connectionError, 'error');
         });
     });
 

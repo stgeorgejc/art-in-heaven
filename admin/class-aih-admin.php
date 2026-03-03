@@ -529,20 +529,12 @@ class AIH_Admin {
         $payment_message = null;
         $payment_message_type = null;
         if (isset($_POST['aih_update_payment'], $_POST['aih_payment_nonce']) && wp_verify_nonce(wp_unslash($_POST['aih_payment_nonce']), 'aih_update_payment')) {
-            $art_piece_id = intval($_POST['art_piece_id']);
-            $payment_status = sanitize_text_field($_POST['payment_status']);
-            if (!in_array($payment_status, array('pending', 'paid', 'refunded'), true)) {
-                $payment_status = 'pending';
-            }
-            $payment_method = sanitize_text_field($_POST['payment_method']);
-            if (!in_array($payment_method, array('pushpay', 'cash', 'check', 'card', 'other'), true)) {
-                $payment_method = 'other';
-            }
-            $payment_reference = sanitize_text_field($_POST['payment_reference']);
-            $payment_notes = sanitize_textarea_field($_POST['payment_notes']);
-
             $result = AIH_Checkout::get_instance()->mark_manual_payment(
-                $art_piece_id, $payment_status, $payment_method, $payment_reference, $payment_notes
+                intval($_POST['art_piece_id']),
+                sanitize_text_field($_POST['payment_status']),
+                sanitize_text_field($_POST['payment_method']),
+                sanitize_text_field($_POST['payment_reference']),
+                sanitize_textarea_field($_POST['payment_notes'])
             );
             $payment_message = $result['message'];
             $payment_message_type = $result['success'] ? 'success' : 'error';
