@@ -98,9 +98,9 @@ if (!isset($art_pieces)) { $art_pieces = array(); }
         return strcmp($a->art_id, $b->art_id);
     });
 
-    // Calculate tier totals for summary row (all art pieces)
+    // Calculate tier totals for summary row (active art pieces only)
     $tier_stats = array();
-    foreach ($art_pieces as $piece) {
+    foreach ($active_pieces as $piece) {
         $tier = !empty($piece->tier) ? $piece->tier : __('No Tier', 'art-in-heaven');
         if (!isset($tier_stats[$tier])) {
             $tier_stats[$tier] = array('count' => 0, 'bids' => 0, 'bidders' => 0, 'value' => 0, 'with_bids' => 0);

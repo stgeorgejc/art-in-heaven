@@ -97,11 +97,11 @@ jQuery(document).ready(function($) {
                 window.location.href = r.data.pushpay_url;
             } else {
                 $btn.prop('disabled', false).text(aihAjax.strings.payNow);
-                alert(r.data && r.data.message ? r.data.message : aihAjax.strings.paymentLinkError);
+                showToast(r.data && r.data.message ? r.data.message : aihAjax.strings.paymentLinkError, 'error');
             }
         }, function() {
             $btn.prop('disabled', false).text(aihAjax.strings.payNow);
-            alert(aihAjax.strings.connectionError);
+            showToast(aihAjax.strings.connectionError, 'error');
         });
     });
 

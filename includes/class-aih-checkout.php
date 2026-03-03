@@ -59,8 +59,11 @@ class AIH_Checkout {
 
     /**
      * Cancel stale pending orders for a bidder so items return to checkout.
-     * Only cancels orders older than 10 minutes to avoid cancelling in-flight payments.
-     * Callers must verify the bidder is authorized before invoking.
+     *
+     * Only cancels orders older than 10 minutes to avoid racing with
+     * concurrent tabs or in-flight PushPay payments.
+     *
+     * Callers must verify the bidder is authorized before invoking this method.
      */
     public function cancel_pending_orders($bidder_id) {
         global $wpdb;
