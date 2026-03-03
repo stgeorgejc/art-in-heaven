@@ -36,6 +36,12 @@ class CheckoutTest extends TestCase
             public int $insert_id = 1;
             public string $last_error = '';
 
+            /** @var list<list<string>> Queued return values for get_col() */
+            public array $get_col_queue = [];
+
+            /** @var list<array{table: string, data: array, where: array}> */
+            public array $update_log = [];
+
             public function query(string $sql): bool
             {
                 return true;
@@ -53,12 +59,19 @@ class CheckoutTest extends TestCase
 
             public function update(string $table, array $data, array $where, array|null $format = null, array|null $where_format = null): int|false
             {
+                $this->update_log[] = ['table' => $table, 'data' => $data, 'where' => $where];
                 return 1;
             }
 
             public function get_var(string $sql = ''): mixed
             {
                 return null;
+            }
+
+            /** @return list<string> */
+            public function get_col(string $sql = ''): array
+            {
+                return array_shift($this->get_col_queue) ?? [];
             }
         };
         $GLOBALS['wpdb'] = $this->wpdb;
@@ -206,5 +219,32 @@ class CheckoutTest extends TestCase
         $this->assertFalse($checkout->update_payment_status(1, 'completed'));
         $this->assertFalse($checkout->update_payment_status(1, 'PAID'));
         $this->assertFalse($checkout->update_payment_status(1, ''));
+    }
+
+    // ── cancel_pending_orders ──
+
+    public function testCancelPendingOrdersCancelsAndReturnsCount(): void
+    {
+        $this->wpdb->get_col_queue[] = ['10', '20', '30'];
+
+        $checkout = AIH_Checkout::get_instance();
+        $count = $checkout->cancel_pending_orders('BIDDER1');
+
+        $this->assertSame(3, $count);
+        $this->assertCount(3, $this->wpdb->update_log);
+        foreach ($this->wpdb->update_log as $entry) {
+            $this->assertSame('cancelled', $entry['data']['payment_status']);
+        }
+    }
+
+    public function testCancelPendingOrdersReturnsZeroWhenNone(): void
+    {
+        $this->wpdb->get_col_queue[] = [];
+
+        $checkout = AIH_Checkout::get_instance();
+        $count = $checkout->cancel_pending_orders('BIDDER2');
+
+        $this->assertSame(0, $count);
+        $this->assertCount(0, $this->wpdb->update_log);
     }
 }
