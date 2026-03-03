@@ -319,6 +319,116 @@ class AIH_Checkout {
         return $result;
     }
     
+    /**
+     * Mark a manual payment for a won art piece from the admin panel.
+     *
+     * If an order already exists for the art piece, updates its payment status.
+     * Otherwise, finds the winning bid, creates a new order, and sets payment fields.
+     *
+     * @param int    $art_piece_id  The art piece ID.
+     * @param string $status        Payment status (pending|paid|refunded).
+     * @param string $method        Payment method.
+     * @param string $reference     Payment reference.
+     * @param string $notes         Admin notes.
+     * @return array{success: bool, message: string}
+     */
+    public function mark_manual_payment( $art_piece_id, $status, $method = '', $reference = '', $notes = '' ) {
+        global $wpdb;
+
+        $allowed_statuses = array( 'pending', 'paid', 'refunded' );
+        if ( ! in_array( $status, $allowed_statuses, true ) ) {
+            return array(
+                'success' => false,
+                'message' => __( 'Invalid payment status.', 'art-in-heaven' ),
+            );
+        }
+
+        $orders_table      = AIH_Database::get_table( 'orders' );
+        $order_items_table = AIH_Database::get_table( 'order_items' );
+        $bids_table        = AIH_Database::get_table( 'bids' );
+        $art_table         = AIH_Database::get_table( 'art_pieces' );
+
+        // Step 1: Check for an existing order for this art piece.
+        $existing_order = $wpdb->get_row( $wpdb->prepare(
+            "SELECT o.* FROM $orders_table o
+             JOIN $order_items_table oi ON o.id = oi.order_id
+             WHERE oi.art_piece_id = %d",
+            $art_piece_id
+        ) );
+
+        if ( $existing_order ) {
+            $this->update_payment_status(
+                (int) $existing_order->id,
+                $status,
+                $method,
+                $reference,
+                $notes
+            );
+            return array(
+                'success' => true,
+                'message' => __( 'Payment status updated.', 'art-in-heaven' ),
+            );
+        }
+
+        // Step 2: No order exists — find the winning bid.
+        $winning_bid = $wpdb->get_row( $wpdb->prepare(
+            "SELECT b.*, a.title FROM $bids_table b
+             JOIN $art_table a ON b.art_piece_id = a.id
+             WHERE b.art_piece_id = %d AND b.is_winning = 1",
+            $art_piece_id
+        ) );
+
+        if ( ! $winning_bid ) {
+            return array(
+                'success' => false,
+                'message' => __( 'No winning bid found for this art piece.', 'art-in-heaven' ),
+            );
+        }
+
+        // Step 3: Create a new order.
+        do {
+            $order_number = 'AIH-' . strtoupper( wp_generate_password( 8, false ) );
+            $exists       = $wpdb->get_var( $wpdb->prepare(
+                "SELECT 1 FROM $orders_table WHERE order_number = %s",
+                $order_number
+            ) );
+        } while ( $exists );
+
+        $totals = $this->calculate_totals( array( (object) array( 'winning_amount' => $winning_bid->bid_amount ) ) );
+
+        $wpdb->insert( $orders_table, array(
+            'order_number'    => $order_number,
+            'bidder_id'       => $winning_bid->bidder_id,
+            'subtotal'        => $totals['subtotal'],
+            'tax'             => $totals['tax'],
+            'total'           => $totals['total'],
+            'payment_status'  => $status,
+            'payment_method'  => $method,
+            'payment_reference' => $reference,
+            'notes'           => $notes,
+            'payment_date'    => $status === 'paid' ? current_time( 'mysql' ) : null,
+            'created_at'      => current_time( 'mysql' ),
+        ) );
+
+        $order_id = $wpdb->insert_id;
+
+        $wpdb->insert( $order_items_table, array(
+            'order_id'     => $order_id,
+            'art_piece_id' => $art_piece_id,
+            'winning_bid'  => $winning_bid->bid_amount,
+        ) );
+
+        // Invalidate payment stats cache.
+        if ( class_exists( 'AIH_Cache' ) ) {
+            AIH_Cache::delete( 'payment_stats' );
+        }
+
+        return array(
+            'success' => true,
+            'message' => __( 'Order created and payment status set.', 'art-in-heaven' ),
+        );
+    }
+
     public function get_all_orders($args = array()) {
         global $wpdb;
 

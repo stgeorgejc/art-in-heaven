@@ -529,7 +529,6 @@ class AIH_Admin {
         $payment_message = null;
         $payment_message_type = null;
         if (isset($_POST['aih_update_payment'], $_POST['aih_payment_nonce']) && wp_verify_nonce(wp_unslash($_POST['aih_payment_nonce']), 'aih_update_payment')) {
-            global $wpdb;
             $art_piece_id = intval($_POST['art_piece_id']);
             $payment_status = sanitize_text_field($_POST['payment_status']);
             if (!in_array($payment_status, array('pending', 'paid', 'refunded'), true)) {
@@ -542,78 +541,11 @@ class AIH_Admin {
             $payment_reference = sanitize_text_field($_POST['payment_reference']);
             $payment_notes = sanitize_textarea_field($_POST['payment_notes']);
 
-            $mp_orders_table = AIH_Database::get_table('orders');
-            $mp_order_items_table = AIH_Database::get_table('order_items');
-            $mp_bids_table = AIH_Database::get_table('bids');
-            $mp_art_table = AIH_Database::get_table('art_pieces');
-
-            $existing_order = $wpdb->get_row($wpdb->prepare(
-                "SELECT o.* FROM $mp_orders_table o
-                 JOIN $mp_order_items_table oi ON o.id = oi.order_id
-                 WHERE oi.art_piece_id = %d",
-                $art_piece_id
-            ));
-
-            if ($existing_order) {
-                $wpdb->update(
-                    $mp_orders_table,
-                    array(
-                        'payment_status' => $payment_status,
-                        'payment_method' => $payment_method,
-                        'payment_reference' => $payment_reference,
-                        'notes' => $payment_notes,
-                        'payment_date' => $payment_status === 'paid' ? current_time('mysql') : null,
-                        'updated_at' => current_time('mysql')
-                    ),
-                    array('id' => $existing_order->id),
-                    array('%s', '%s', '%s', '%s', '%s', '%s'),
-                    array('%d')
-                );
-                $payment_message = __('Payment status updated.', 'art-in-heaven');
-                $payment_message_type = 'success';
-            } else {
-                $winning_bid = $wpdb->get_row($wpdb->prepare(
-                    "SELECT b.*, a.title FROM $mp_bids_table b
-                     JOIN $mp_art_table a ON b.art_piece_id = a.id
-                     WHERE b.art_piece_id = %d AND b.is_winning = 1",
-                    $art_piece_id
-                ));
-
-                if ($winning_bid) {
-                    $order_number = 'AIH-' . strtoupper(bin2hex(random_bytes(4)));
-                    $tax_rate = floatval(get_option('aih_tax_rate', 0));
-                    $tax = $winning_bid->bid_amount * ($tax_rate / 100);
-                    $total = $winning_bid->bid_amount + $tax;
-
-                    $wpdb->insert($mp_orders_table, array(
-                        'order_number' => $order_number,
-                        'bidder_id' => $winning_bid->bidder_id,
-                        'subtotal' => $winning_bid->bid_amount,
-                        'tax' => $tax,
-                        'total' => $total,
-                        'payment_status' => $payment_status,
-                        'payment_method' => $payment_method,
-                        'payment_reference' => $payment_reference,
-                        'notes' => $payment_notes,
-                        'payment_date' => $payment_status === 'paid' ? current_time('mysql') : null,
-                        'created_at' => current_time('mysql')
-                    ));
-
-                    $order_id = $wpdb->insert_id;
-
-                    $wpdb->insert($mp_order_items_table, array(
-                        'order_id' => $order_id,
-                        'art_piece_id' => $art_piece_id,
-                        'winning_bid' => $winning_bid->bid_amount
-                    ));
-
-                    $payment_message = __('Order created and payment status set.', 'art-in-heaven');
-                    $payment_message_type = 'success';
-                } else {
-                    $payment_message = __('No winning bid found for this art piece.', 'art-in-heaven');
-                    $payment_message_type = 'error';
-                }
-            }
+            $result = AIH_Checkout::get_instance()->mark_manual_payment(
+                $art_piece_id, $payment_status, $payment_method, $payment_reference, $payment_notes
+            );
+            $payment_message = $result['message'];
+            $payment_message_type = $result['success'] ? 'success' : 'error';
         }
 
         $checkout = AIH_Checkout::get_instance();
