@@ -49,9 +49,6 @@ class AIH_Mercure {
 
         // Publish events when bids are placed (after push notifications at priority 20)
         add_action('aih_bid_placed', array($this, 'on_bid_placed'), 25, 4);
-
-        // Publish auction ended events
-        add_action('aih_auction_ended', array($this, 'on_auction_ended'), 10, 1);
     }
 
     // =========================================================================
@@ -59,12 +56,46 @@ class AIH_Mercure {
     // =========================================================================
 
     /**
+     * Check if Mercure is configured (hub URL and JWT secret are set).
+     *
+     * @return bool
+     */
+    public function is_configured() {
+        $hub_url = self::get_hub_url();
+        $secret  = self::get_jwt_secret();
+        return !empty($hub_url) && !empty($secret);
+    }
+
+    /**
+     * Verify the Mercure hub is reachable.
+     *
+     * @return array{status: string, error?: string, code?: int}
+     */
+    public function health_check() {
+        if (!$this->is_configured()) {
+            return array('status' => 'not_configured');
+        }
+
+        $response = wp_remote_get(self::get_hub_url(), array('timeout' => 5));
+
+        if (is_wp_error($response)) {
+            return array('status' => 'unreachable', 'error' => $response->get_error_message());
+        }
+
+        $code = wp_remote_retrieve_response_code($response);
+        return array(
+            'status' => $code < 500 ? 'ok' : 'error',
+            'code'   => $code,
+        );
+    }
+
+    /**
      * Check if Mercure integration is enabled
      *
      * @return bool
      */
     public static function is_enabled() {
-        if (!get_option('aih_mercure_enabled', false)) {
+        if (!get_option('aih_mercure_enabled', 0)) {
             return false;
         }
 
@@ -286,15 +317,13 @@ class AIH_Mercure {
     public function on_bid_placed($bid_id, $art_piece_id, $new_bidder_id, $amount) {
         global $wpdb;
         $prefix = self::get_topic_prefix();
-        $bid_increment = floatval(get_option('aih_bid_increment', 1));
 
-        // 1. Public bid update
+        // 1. Public bid update (no bid amounts — silent auction)
         $this->publish(
             $prefix . '/auction/' . intval($art_piece_id),
             array(
                 'type'         => 'bid_update',
                 'art_piece_id' => intval($art_piece_id),
-                'min_bid'      => $amount + $bid_increment,
                 'has_bids'     => true,
                 'status'       => 'active',
             )
@@ -333,20 +362,4 @@ class AIH_Mercure {
         }
     }
 
-    /**
-     * Handle auction ended event
-     *
-     * @param int $art_piece_id
-     */
-    public function on_auction_ended($art_piece_id) {
-        $prefix = self::get_topic_prefix();
-
-        $this->publish(
-            $prefix . '/auction/' . intval($art_piece_id),
-            array(
-                'type'         => 'auction_ended',
-                'art_piece_id' => intval($art_piece_id),
-            )
-        );
-    }
 }

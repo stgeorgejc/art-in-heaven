@@ -27,11 +27,88 @@ class AIH_Shortcodes {
         add_shortcode('art_in_heaven_login', array($this, 'login_shortcode'));
         add_shortcode('art_in_heaven_winners', array($this, 'winners_shortcode'));
         add_shortcode('art_in_heaven_my_wins', array($this, 'my_wins_shortcode'));
-        
-        // Handle login redirect
+
+        // Clean URLs: register rewrite rule for /gallery/art/{id}
+        add_action('init', array($this, 'register_art_rewrite_rules'));
+        add_filter('query_vars', array($this, 'register_art_query_vars'));
+        add_action('update_option_aih_gallery_page', array($this, 'flush_art_rewrite_rules'));
+
+        // Handle login redirect and legacy URL redirect
+        add_action('template_redirect', array($this, 'redirect_legacy_art_urls'), 5);
         add_action('template_redirect', array($this, 'check_login_required'));
     }
-    
+
+    /**
+     * Register rewrite rule for clean art piece URLs
+     *
+     * Maps {gallery-slug}/art/{id} to the gallery page with aih_art_id query var.
+     */
+    public function register_art_rewrite_rules() {
+        $gallery_page_id = get_option('aih_gallery_page', '');
+
+        // Validate the stored page ID actually exists
+        $page = $gallery_page_id ? get_post($gallery_page_id) : null;
+
+        // Shortcode fallback: find the page containing [art_in_heaven_gallery]
+        if (!$page) {
+            global $wpdb;
+            $gallery_page_id = $wpdb->get_var($wpdb->prepare(
+                "SELECT ID FROM {$wpdb->posts}
+                 WHERE post_type = 'page'
+                 AND post_status = 'publish'
+                 AND post_content LIKE %s
+                 LIMIT 1",
+                '%[' . $wpdb->esc_like('art_in_heaven_gallery') . '%'
+            ));
+            $page = $gallery_page_id ? get_post($gallery_page_id) : null;
+        }
+
+        if (!$page) return;
+
+        $slug = $page->post_name;
+        add_rewrite_rule(
+            '^' . preg_quote($slug, '/') . '/art/([A-Za-z0-9-]+)/?$',
+            'index.php?pagename=' . $slug . '&aih_art_id=$matches[1]',
+            'top'
+        );
+    }
+
+    /**
+     * Register custom query variable for clean art URLs
+     */
+    public function register_art_query_vars($vars) {
+        $vars[] = 'aih_art_id';
+        return $vars;
+    }
+
+    /**
+     * 301 redirect legacy ?art_id= URLs to clean /art/{art_id}/ URLs
+     */
+    public function redirect_legacy_art_urls() {
+        if (isset($_GET['art_id']) && !empty($_GET['art_id'])) {
+            $value = sanitize_text_field($_GET['art_id']);
+            // Legacy URLs used the database ID (numeric); look up the catalog art_id
+            if (ctype_digit($value)) {
+                $art_model = new AIH_Art_Piece();
+                $piece = $art_model->get(intval($value));
+                if ($piece && !empty($piece->art_id)) {
+                    $value = $piece->art_id;
+                }
+            }
+            $clean_url = AIH_Template_Helper::get_art_url($value);
+            wp_safe_redirect($clean_url, 301);
+            exit;
+        }
+    }
+
+    /**
+     * Flush rewrite rules when gallery page option changes
+     */
+    public function flush_art_rewrite_rules() {
+        $this->register_art_rewrite_rules();
+        flush_rewrite_rules();
+    }
+
     /**
      * Check if login is required and redirect
      */
@@ -56,7 +133,7 @@ class AIH_Shortcodes {
         foreach ($requires_login as $shortcode) {
             if (has_shortcode($post->post_content, $shortcode)) {
                 $redirect_url = add_query_arg('redirect_to', urlencode(get_permalink()), $login_page);
-                wp_redirect($redirect_url);
+                wp_safe_redirect($redirect_url);
                 exit;
             }
         }
@@ -77,7 +154,7 @@ class AIH_Shortcodes {
             }
             $bidder = $auth->get_current_bidder();
             $name = !empty($bidder->name_first) ? $bidder->name_first : (!empty($bidder->email_primary) ? $bidder->email_primary : '');
-            return '<div class="aih-login-success"><p>' . sprintf(__('Welcome, %s! You are already signed in.', 'art-in-heaven'), esc_html($name)) . '</p><button type="button" onclick="jQuery.post(aihAjax.ajaxurl, {action:\'aih_logout\'}, function(){location.reload();});" class="aih-btn-secondary">' . __('Sign Out', 'art-in-heaven') . '</button></div>';
+            return '<div class="aih-login-success"><p>' . sprintf(__('Welcome, %s! You are already signed in.', 'art-in-heaven'), esc_html($name)) . '</p><button type="button" onclick="jQuery.post(aihAjax.ajaxurl, {action:\'aih_logout\', nonce:aihAjax.publicNonce}, function(){location.reload();});" class="aih-btn-secondary">' . __('Sign Out', 'art-in-heaven') . '</button></div>';
         }
         
         $redirect_to = isset($_GET['redirect_to']) ? esc_url($_GET['redirect_to']) : '';
@@ -104,11 +181,12 @@ class AIH_Shortcodes {
             return ob_get_clean();
         }
         
-        // Check if viewing individual art piece
-        if (isset($_GET['art_id']) && !empty($_GET['art_id'])) {
+        // Check if viewing individual art piece (clean URL or legacy query string)
+        $art_id = sanitize_text_field(get_query_var('aih_art_id', ''));
+        if ($art_id) {
             $art_model = new AIH_Art_Piece();
-            $art_piece = $art_model->get(intval($_GET['art_id']));
-            
+            $art_piece = $art_model->get_by_art_id($art_id);
+
             if ($art_piece && (!isset($art_piece->computed_status) || $art_piece->computed_status !== 'upcoming')) {
                 ob_start();
                 include AIH_PLUGIN_DIR . 'templates/single-item.php';

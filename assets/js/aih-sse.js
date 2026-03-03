@@ -22,15 +22,25 @@
         reconnectTimer: null,
         reconnectAttempts: 0,
         maxReconnectAttempts: 10,
+        lastEventId: null,
+        lastMessageTime: 0,
+        heartbeatTimer: null,
+        heartbeatInterval: 30000,  // Check every 30s
+        heartbeatTimeout: 90000,   // Reconnect if no message for 90s
 
         /**
-         * Initialize SSE connection
+         * Initialize SSE connection (fetches Mercure auth cookie first)
          */
         init: function() {
             if (typeof EventSource === 'undefined') {
                 return; // Browser doesn't support SSE
             }
-            this.connect();
+            var self = this;
+            // Set Mercure auth cookie via AJAX before connecting EventSource
+            $.get(aihAjax.ajaxurl, { action: 'aih_mercure_cookie' })
+                .always(function() {
+                    self.connect();
+                });
         },
 
         /**
@@ -85,6 +95,11 @@
 
             var url = this.buildUrl();
 
+            // Include Last-Event-ID on reconnection to resume from where we left off
+            if (this.lastEventId) {
+                url += (url.indexOf('?') > -1 ? '&' : '?') + 'Last-Event-ID=' + encodeURIComponent(this.lastEventId);
+            }
+
             // Don't connect if no topics to subscribe to
             if (url.indexOf('topic=') === -1) {
                 return;
@@ -104,10 +119,18 @@
             this.eventSource.onopen = function() {
                 self.connected = true;
                 self.reconnectAttempts = 0;
+                self.lastMessageTime = Date.now();
                 self.disablePolling();
+                self.startHeartbeat();
+                console.log('[AIH] SSE connected to Mercure hub — polling disabled');
             };
 
             this.eventSource.onmessage = function(event) {
+                self.lastMessageTime = Date.now();
+                // Track the last event ID for reconnection resume
+                if (event.lastEventId) {
+                    self.lastEventId = event.lastEventId;
+                }
                 try {
                     var data = JSON.parse(event.data);
                     self.handleEvent(data);
@@ -117,6 +140,7 @@
             };
 
             this.eventSource.onerror = function() {
+                console.warn('[AIH] SSE disconnected — falling back to polling');
                 self.onDisconnect();
             };
         },
@@ -126,6 +150,7 @@
          */
         handleEvent: function(data) {
             if (!data || !data.type) return;
+            console.log('[AIH] SSE event received:', data.type, data);
 
             switch (data.type) {
                 case 'bid_update':
@@ -134,9 +159,6 @@
                 case 'outbid':
                     this.handleOutbid(data);
                     break;
-                case 'auction_ended':
-                    this.handleAuctionEnded(data);
-                    break;
             }
         },
 
@@ -144,31 +166,8 @@
          * Handle real-time bid update (public topic)
          */
         handleBidUpdate: function(data) {
-            var id = data.art_piece_id;
-
-            // Gallery page: update card min bid
-            var $card = $('.aih-card[data-id="' + id + '"]');
-            if ($card.length) {
-                var $input = $card.find('.aih-bid-input');
-                if ($input.length && data.min_bid) {
-                    $input.attr('min', data.min_bid).attr('placeholder',
-                        '$' + parseFloat(data.min_bid).toFixed(0));
-                    $input.data('min', data.min_bid);
-                }
-            }
-
-            // Single item page: update min bid
-            var $wrapper = $('#aih-single-wrapper');
-            if ($wrapper.length && parseInt($wrapper.attr('data-piece-id')) === id) {
-                var $bidInput = $('#bid-amount');
-                if ($bidInput.length && data.min_bid) {
-                    $bidInput.attr('min', data.min_bid).attr('placeholder',
-                        '$' + parseFloat(data.min_bid).toFixed(0));
-                    $bidInput.data('min', data.min_bid);
-                }
-            }
-
             // Trigger a status poll to update per-bidder state (winning/outbid badges)
+            // No bid amounts are exposed — silent auction
             if (typeof window.aihPollStatus === 'function') {
                 window.aihPollStatus();
             }
@@ -191,20 +190,11 @@
         },
 
         /**
-         * Handle auction ended (public topic)
-         */
-        handleAuctionEnded: function(data) {
-            // Trigger a status poll for authoritative state update
-            if (typeof window.aihPollStatus === 'function') {
-                window.aihPollStatus();
-            }
-        },
-
-        /**
          * Signal polling to stop when SSE is connected
          */
         disablePolling: function() {
             window.aihSSEConnected = true;
+            this.updateConnectionStatus('realtime');
         },
 
         /**
@@ -212,6 +202,42 @@
          */
         enablePolling: function() {
             window.aihSSEConnected = false;
+            this.updateConnectionStatus('polling');
+        },
+
+        /**
+         * Dispatch connection status change event
+         */
+        updateConnectionStatus: function(status) {
+            window.aihConnectionStatus = status;
+            window.dispatchEvent(new CustomEvent('aih:connectionchange', { detail: { status: status } }));
+        },
+
+        /**
+         * Start heartbeat timer to detect silent SSE disconnects.
+         * If no message received for heartbeatTimeout ms, force reconnect.
+         */
+        startHeartbeat: function() {
+            this.stopHeartbeat();
+            var self = this;
+            this.heartbeatTimer = setInterval(function() {
+                if (!self.connected || document.hidden) return;
+                var elapsed = Date.now() - self.lastMessageTime;
+                if (elapsed > self.heartbeatTimeout) {
+                    console.warn('[AIH] SSE heartbeat timeout (' + Math.round(elapsed / 1000) + 's) — reconnecting');
+                    self.onDisconnect();
+                }
+            }, this.heartbeatInterval);
+        },
+
+        /**
+         * Stop heartbeat timer
+         */
+        stopHeartbeat: function() {
+            if (this.heartbeatTimer) {
+                clearInterval(this.heartbeatTimer);
+                this.heartbeatTimer = null;
+            }
         },
 
         /**
@@ -219,6 +245,7 @@
          */
         onDisconnect: function() {
             this.connected = false;
+            this.stopHeartbeat();
             this.enablePolling();
 
             if (this.eventSource) {
@@ -249,6 +276,7 @@
                 clearTimeout(this.reconnectTimer);
                 this.reconnectTimer = null;
             }
+            this.stopHeartbeat();
             this.connected = false;
             this.enablePolling();
         }

@@ -38,12 +38,19 @@ class AIH_Push {
 
     // ========== VAPID KEY MANAGEMENT ==========
 
+    /** @var array|null Cached VAPID keys for this request */
+    private static $cached_vapid_keys = null;
+
     /**
-     * Get VAPID keys, auto-generating on first call
+     * Get VAPID keys, auto-generating on first call (cached per request)
      *
      * @return array{publicKey: string, privateKey: string, subject: string}
      */
     public static function get_vapid_keys() {
+        if (self::$cached_vapid_keys !== null) {
+            return self::$cached_vapid_keys;
+        }
+
         $public  = get_option('aih_vapid_public_key');
         $private = get_option('aih_vapid_private_key');
         $subject = get_option('aih_vapid_subject');
@@ -64,11 +71,13 @@ class AIH_Push {
             update_option('aih_vapid_subject', $subject);
         }
 
-        return array(
+        self::$cached_vapid_keys = array(
             'publicKey'  => $public,
             'privateKey' => $private,
             'subject'    => $subject,
         );
+
+        return self::$cached_vapid_keys;
     }
 
     // ========== SUBSCRIPTION CRUD ==========
@@ -147,7 +156,7 @@ class AIH_Push {
         $table = AIH_Database::get_table('push_subscriptions');
 
         return $wpdb->get_results($wpdb->prepare(
-            "SELECT * FROM `{$table}` WHERE bidder_id = %s",
+            "SELECT * FROM `{$table}` WHERE bidder_id = %s ORDER BY created_at DESC LIMIT 5",
             $bidder_id
         ));
     }
@@ -189,11 +198,13 @@ class AIH_Push {
             return; // No one to notify (first bid)
         }
 
-        // Get art piece title
-        $title = $wpdb->get_var($wpdb->prepare(
-            "SELECT title FROM `{$art_table}` WHERE id = %d",
+        // Get art piece title and catalog art_id
+        $art_row = $wpdb->get_row($wpdb->prepare(
+            "SELECT title, art_id FROM `{$art_table}` WHERE id = %d",
             $art_piece_id
         ));
+        $title = $art_row ? $art_row->title : '';
+        $catalog_art_id = $art_row ? $art_row->art_id : '';
 
         if (empty($title)) {
             $title = 'Art Piece #' . $art_piece_id;
@@ -204,12 +215,12 @@ class AIH_Push {
 
         // Defer push notification sending to after HTTP response
         if (get_option('aih_push_enabled', 1)) {
-            $push_data = compact('outbid_bidder', 'art_piece_id', 'title');
+            $push_data = compact('outbid_bidder', 'art_piece_id', 'catalog_art_id', 'title');
             add_action('shutdown', function() use ($push_data) {
                 if (function_exists('fastcgi_finish_request')) {
                     fastcgi_finish_request();
                 }
-                AIH_Push::get_instance()->send_push($push_data['outbid_bidder'], $push_data['art_piece_id'], $push_data['title']);
+                AIH_Push::get_instance()->send_push($push_data['outbid_bidder'], $push_data['art_piece_id'], $push_data['catalog_art_id'], $push_data['title']);
             });
         }
     }
@@ -217,7 +228,7 @@ class AIH_Push {
     /**
      * Send push notification to outbid bidder (runs deferred in shutdown hook).
      */
-    public function send_push($outbid_bidder, $art_piece_id, $title) {
+    public function send_push($outbid_bidder, $art_piece_id, $catalog_art_id, $title) {
         $subscriptions = self::get_subscriptions($outbid_bidder);
         if (empty($subscriptions)) {
             return;
@@ -225,8 +236,7 @@ class AIH_Push {
 
         $vapid = self::get_vapid_keys();
 
-        $gallery_page = get_option('aih_gallery_page');
-        $url = $gallery_page ? get_permalink($gallery_page) : home_url('/');
+        $url = $catalog_art_id ? AIH_Template_Helper::get_art_url($catalog_art_id) : '';
 
         $payload = wp_json_encode(array(
             'type'         => 'outbid',
@@ -279,6 +289,10 @@ class AIH_Push {
      * @param int    $art_piece_id
      * @param string $title
      */
+    // Note: This read-modify-write pattern is non-atomic. Under high concurrency,
+    // an outbid event can be lost if two events are recorded simultaneously.
+    // SSE/push notifications are the primary channels; this is a polling fallback.
+    // For production with 1000+ users, an external object cache (Redis) is recommended.
     public static function record_outbid_event($bidder_id, $art_piece_id, $title) {
         $key    = 'aih_outbid_' . $bidder_id;
         $events = get_transient($key);
@@ -302,6 +316,10 @@ class AIH_Push {
      * @param string $bidder_id
      * @return array
      */
+    // Note: This read-then-delete pattern is non-atomic. Under high concurrency,
+    // an outbid event written between get_transient() and delete_transient() will be lost.
+    // SSE/push notifications are the primary channels; this is a polling fallback.
+    // For production with 1000+ users, an external object cache (Redis) is recommended.
     public static function consume_outbid_events($bidder_id) {
         $key    = 'aih_outbid_' . $bidder_id;
         $events = get_transient($key);

@@ -42,7 +42,7 @@ class AIH_Art_Piece {
      */
     public function get_all($args = array()) {
         global $wpdb;
-        
+
         $defaults = array(
             'status' => '',
             'orderby' => 'auction_end',
@@ -58,8 +58,17 @@ class AIH_Art_Piece {
             'min_bid' => null,
             'max_bid' => null,
         );
-        
+
         $args = wp_parse_args($args, $defaults);
+
+        // Check cache first
+        if (class_exists('AIH_Cache')) {
+            $cache_key = 'art_pieces_' . md5(serialize($args));
+            $cached = AIH_Cache::get($cache_key);
+            if ($cached !== null) {
+                return $cached;
+            }
+        }
         
         // Use WordPress current time for timezone-aware comparison
         $now = current_time('mysql');
@@ -165,18 +174,9 @@ class AIH_Art_Piece {
             $having_clause = "HAVING bid_count = 0";
         }
         
-        // Build computed auction_status field (handles NULL dates)
-        // Dates take priority over stored status so extending times re-activates ended pieces
-        $auction_status_case = "CASE
-            WHEN a.status = 'draft' AND a.auction_start IS NOT NULL AND a.auction_start <= %s AND (a.auction_end IS NULL OR a.auction_end > %s) THEN 'active'
-            WHEN a.status = 'draft' THEN 'draft'
-            WHEN a.auction_end IS NOT NULL AND a.auction_end <= %s THEN 'ended'
-            WHEN a.status = 'ended' AND (a.auction_end IS NULL OR a.auction_end > %s) AND (a.auction_start IS NULL OR a.auction_start <= %s) THEN 'active'
-            WHEN a.status = 'ended' THEN 'ended'
-            WHEN a.auction_start IS NOT NULL AND a.auction_start > %s THEN 'upcoming'
-            ELSE 'active'
-        END";
-        
+        // Build computed auction_status using the shared SQL fragment
+        $auction_status_case = AIH_Status::get_status_sql('a', '%s');
+
         $img_subquery = $this->get_primary_image_subquery();
 
         if ($args['bidder_id']) {
@@ -196,14 +196,12 @@ class AIH_Art_Piece {
                       $having_clause
                       ORDER BY $order_clause
                       $limit_clause";
-            // Add values for computed_status CASE
+            // Add values for shared status CASE (4 placeholders) + TIMESTAMPDIFF (2)
             array_unshift($values, $args['bidder_id']);
-            array_unshift($values, $now); // for upcoming: auction_start > check
-            array_unshift($values, $now); // for ended reactivate: auction_start <= check
-            array_unshift($values, $now); // for ended reactivate: auction_end > check
-            array_unshift($values, $now); // for auction_end <= check (ended)
-            array_unshift($values, $now); // for draft auto-active auction_end check
-            array_unshift($values, $now); // for draft auto-active auction_start check
+            array_unshift($values, $now); // for status SQL: auction_start > (scheduled check)
+            array_unshift($values, $now); // for status SQL: auction_end <= (ended check)
+            array_unshift($values, $now); // for status SQL: auction_start <= (reactivation check)
+            array_unshift($values, $now); // for status SQL: auction_end > (reactivation check)
             array_unshift($values, $now); // seconds_until_start
             array_unshift($values, $now); // seconds_remaining
         } else {
@@ -222,22 +220,26 @@ class AIH_Art_Piece {
                       $having_clause
                       ORDER BY $order_clause
                       $limit_clause";
-            // Add values for computed_status CASE
-            array_unshift($values, $now); // for upcoming: auction_start > check
-            array_unshift($values, $now); // for ended reactivate: auction_start <= check
-            array_unshift($values, $now); // for ended reactivate: auction_end > check
-            array_unshift($values, $now); // for auction_end <= check (ended)
-            array_unshift($values, $now); // for draft auto-active auction_end check
-            array_unshift($values, $now); // for draft auto-active auction_start check
+            // Add values for shared status CASE (4 placeholders) + TIMESTAMPDIFF (2)
+            array_unshift($values, $now); // for status SQL: auction_start > (scheduled check)
+            array_unshift($values, $now); // for status SQL: auction_end <= (ended check)
+            array_unshift($values, $now); // for status SQL: auction_start <= (reactivation check)
+            array_unshift($values, $now); // for status SQL: auction_end > (reactivation check)
             array_unshift($values, $now); // seconds_until_start
             array_unshift($values, $now); // seconds_remaining
         }
-        
-        if (!empty($values)) {
-            $query = $wpdb->prepare($query, $values);
+
+        $query = $wpdb->prepare($query, $values);
+
+        $results = $wpdb->get_results($query);
+
+        // Cache the results
+        if (class_exists('AIH_Cache')) {
+            $cache_key = 'art_pieces_' . md5(serialize($args));
+            AIH_Cache::set($cache_key, $results, 5 * MINUTE_IN_SECONDS, 'art_pieces');
         }
-        
-        return $wpdb->get_results($query);
+
+        return $results;
     }
     
     /**
@@ -288,23 +290,32 @@ class AIH_Art_Piece {
     
     public function get($id) {
         global $wpdb;
+
+        // Check cache first
+        if (class_exists('AIH_Cache')) {
+            $cached = AIH_Cache::get('art_piece_' . $id);
+            if ($cached !== null) {
+                return $cached;
+            }
+        }
+
         $now = current_time('mysql');
-        return $wpdb->get_row($wpdb->prepare(
-            "SELECT *,
-             TIMESTAMPDIFF(SECOND, %s, auction_end) as seconds_remaining,
-             TIMESTAMPDIFF(SECOND, %s, auction_start) as seconds_until_start,
-             CASE
-                WHEN status = 'draft' AND auction_start IS NOT NULL AND auction_start <= %s AND (auction_end IS NULL OR auction_end > %s) THEN 'active'
-                WHEN status = 'draft' THEN 'draft'
-                WHEN auction_end IS NOT NULL AND auction_end <= %s THEN 'ended'
-                WHEN status = 'ended' AND (auction_end IS NULL OR auction_end > %s) AND (auction_start IS NULL OR auction_start <= %s) THEN 'active'
-                WHEN status = 'ended' THEN 'ended'
-                WHEN auction_start IS NOT NULL AND auction_start > %s THEN 'upcoming'
-                ELSE 'active'
-             END as computed_status
-             FROM {$this->table} WHERE id = %d",
-            $now, $now, $now, $now, $now, $now, $now, $now, $id
+        $status_sql = AIH_Status::get_status_sql('a', '%s');
+        $result = $wpdb->get_row($wpdb->prepare(
+            "SELECT a.*,
+             TIMESTAMPDIFF(SECOND, %s, a.auction_end) as seconds_remaining,
+             TIMESTAMPDIFF(SECOND, %s, a.auction_start) as seconds_until_start,
+             ({$status_sql}) as computed_status
+             FROM {$this->table} a WHERE a.id = %d",
+            $now, $now, $now, $now, $now, $now, $id
         ));
+
+        // Cache the result
+        if ($result && class_exists('AIH_Cache')) {
+            AIH_Cache::set('art_piece_' . $id, $result, 5 * MINUTE_IN_SECONDS, 'art_pieces');
+        }
+
+        return $result;
     }
     
     public function get_by_art_id($art_id) {
@@ -565,40 +576,58 @@ class AIH_Art_Piece {
         // Fire action before deletion so listeners can clean up
         do_action('aih_art_deleted', $id);
 
-        $wpdb->delete(AIH_Database::get_table('bids'), array('art_piece_id' => $id), array('%d'));
-        $wpdb->delete(AIH_Database::get_table('favorites'), array('art_piece_id' => $id), array('%d'));
-        $wpdb->delete(AIH_Database::get_table('art_images'), array('art_piece_id' => $id), array('%d'));
+        $wpdb->query('START TRANSACTION');
 
-        // Clean up order items and orphaned orders
-        $order_items_table = AIH_Database::get_table('order_items');
-        $orders_table = AIH_Database::get_table('orders');
+        try {
+            $wpdb->delete(AIH_Database::get_table('bids'), array('art_piece_id' => $id), array('%d'));
+            $wpdb->delete(AIH_Database::get_table('favorites'), array('art_piece_id' => $id), array('%d'));
+            $wpdb->delete(AIH_Database::get_table('art_images'), array('art_piece_id' => $id), array('%d'));
 
-        // Get order IDs that reference this art piece
-        $order_ids = $wpdb->get_col($wpdb->prepare(
-            "SELECT DISTINCT order_id FROM $order_items_table WHERE art_piece_id = %d",
-            $id
-        ));
+            // Clean up order items and orphaned orders
+            $order_items_table = AIH_Database::get_table('order_items');
+            $orders_table = AIH_Database::get_table('orders');
 
-        // Delete order items for this art piece
-        $wpdb->delete($order_items_table, array('art_piece_id' => $id), array('%d'));
-
-        // Delete any orders that now have no items left
-        if (!empty($order_ids)) {
-            $placeholders = implode(',', array_fill(0, count($order_ids), '%d'));
-            $wpdb->query($wpdb->prepare(
-                "DELETE FROM $orders_table WHERE id IN ($placeholders) AND id NOT IN (SELECT order_id FROM $order_items_table)",
-                $order_ids
+            // Get order IDs that reference this art piece
+            $order_ids = $wpdb->get_col($wpdb->prepare(
+                "SELECT DISTINCT order_id FROM $order_items_table WHERE art_piece_id = %d",
+                $id
             ));
+
+            // Delete order items for this art piece
+            $wpdb->delete($order_items_table, array('art_piece_id' => $id), array('%d'));
+
+            // Delete any orders that now have no items left
+            if (!empty($order_ids)) {
+                $placeholders = implode(',', array_fill(0, count($order_ids), '%d'));
+                $wpdb->query($wpdb->prepare(
+                    "DELETE FROM $orders_table WHERE id IN ($placeholders) AND id NOT IN (SELECT order_id FROM $order_items_table)",
+                    $order_ids
+                ));
+            }
+
+            $result = $wpdb->delete($this->table, array('id' => $id), array('%d'));
+
+            if ($result === false) {
+                $wpdb->query('ROLLBACK');
+                return false;
+            }
+
+            $wpdb->query('COMMIT');
+
+            // Invalidate counts cache so tabs update immediately
+            if ($result && class_exists('AIH_Cache')) {
+                AIH_Cache::delete('art_piece_counts');
+            }
+
+            return $result;
+
+        } catch (Exception $e) {
+            $wpdb->query('ROLLBACK');
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('[AIH] Art piece delete error: ' . $e->getMessage());
+            }
+            return false;
         }
-
-        $result = $wpdb->delete($this->table, array('id' => $id), array('%d'));
-
-        // Invalidate counts cache so tabs update immediately
-        if ($result && class_exists('AIH_Cache')) {
-            AIH_Cache::delete('art_piece_counts');
-        }
-
-        return $result;
     }
     
     public function bulk_update_end_times($ids, $new_end_time) {
@@ -606,7 +635,37 @@ class AIH_Art_Piece {
         if (empty($ids)) return false;
         $ids = array_map('intval', $ids);
         $placeholders = implode(',', array_fill(0, count($ids), '%d'));
-        return $wpdb->query($wpdb->prepare("UPDATE {$this->table} SET auction_end = %s WHERE id IN ($placeholders)", array_merge(array($new_end_time), $ids)));
+        $now = current_time('mysql');
+
+        // Update the end time
+        $result = $wpdb->query($wpdb->prepare("UPDATE {$this->table} SET auction_end = %s WHERE id IN ($placeholders)", array_merge(array($new_end_time), $ids)));
+
+        if ($result === false || $result === 0) {
+            return $result;
+        }
+
+        // If new end time is in the future, reactivate ended pieces
+        if ($new_end_time > $now) {
+            $wpdb->query($wpdb->prepare(
+                "UPDATE {$this->table} SET status = 'active' WHERE status = 'ended' AND (auction_start IS NULL OR auction_start <= %s) AND id IN ($placeholders)",
+                array_merge(array($now), $ids)
+            ));
+        }
+
+        // If new end time is in the past, mark active pieces as ended
+        if ($new_end_time <= $now) {
+            $wpdb->query($wpdb->prepare(
+                "UPDATE {$this->table} SET status = 'ended' WHERE status = 'active' AND id IN ($placeholders)",
+                $ids
+            ));
+        }
+
+        // Fire update action for each piece
+        foreach ($ids as $id) {
+            do_action('aih_art_updated', $id, array('auction_end' => $new_end_time));
+        }
+
+        return $result;
     }
     
     public function bulk_update_start_times($ids, $new_start_time) {
@@ -695,7 +754,6 @@ class AIH_Art_Piece {
                     CASE
                         WHEN a.status = 'draft' THEN 'draft'
                         WHEN a.auction_end IS NOT NULL AND a.auction_end <= %s THEN 'ended'
-                        WHEN a.status = 'ended' AND (a.auction_end IS NULL OR a.auction_end > %s) AND (a.auction_start IS NULL OR a.auction_start <= %s) THEN 'active'
                         WHEN a.status = 'ended' THEN 'ended'
                         WHEN a.auction_start IS NOT NULL AND a.auction_start > %s THEN 'upcoming'
                         ELSE 'active'
@@ -709,7 +767,7 @@ class AIH_Art_Piece {
              GROUP BY a.id
              $having
              ORDER BY a.auction_end ASC",
-            $now, $now, $now, $now, $now, $now
+            $now, $now, $now, $now
         ));
     }
     
@@ -772,6 +830,21 @@ class AIH_Art_Piece {
         $counts->active_with_bids = (int) ($bid_row->active_with_bids ?? 0);
         $counts->active_no_bids = (int) ($bid_row->active_no_bids ?? 0);
 
+        // Query 2b: Ended bid counts
+        $ended_bid_row = $wpdb->get_row($wpdb->prepare(
+            "SELECT
+                COUNT(DISTINCT CASE WHEN b.id IS NOT NULL THEN a.id END) as ended_with_bids,
+                COUNT(DISTINCT CASE WHEN b.id IS NULL THEN a.id END) as ended_no_bids
+            FROM {$this->table} a
+            LEFT JOIN $bids_table b ON a.id = b.art_piece_id
+            WHERE a.status = 'ended'
+               OR (a.status = 'active' AND a.auction_end IS NOT NULL AND a.auction_end <= %s)",
+            $now
+        ));
+
+        $counts->ended_with_bids = (int) ($ended_bid_row->ended_with_bids ?? 0);
+        $counts->ended_no_bids = (int) ($ended_bid_row->ended_no_bids ?? 0);
+
         // Query 3: Global bid/favorites counts (replaces 2 separate queries)
         $global_row = $wpdb->get_row(
             "SELECT
@@ -790,57 +863,6 @@ class AIH_Art_Piece {
         }
 
         return $counts;
-    }
-    
-    public function update_expired_auctions() {
-        global $wpdb;
-        $now = current_time('mysql');
-        return $wpdb->query($wpdb->prepare(
-            "UPDATE {$this->table} SET status = 'ended' WHERE auction_end < %s AND status = 'active'",
-            $now
-        ));
-    }
-    
-    /**
-     * Auto-activate auctions that have reached their start time
-     * Changes status from 'draft' to 'active' when auction_start <= now
-     */
-    public function auto_activate_auctions() {
-        global $wpdb;
-        $now = current_time('mysql');
-        return $wpdb->query($wpdb->prepare(
-            "UPDATE {$this->table} SET status = 'active' WHERE auction_start <= %s AND auction_end > %s AND status = 'draft'",
-            $now,
-            $now
-        ));
-    }
-    
-    /**
-     * Auto-reactivate ended auctions whose end time was extended
-     * Changes status from 'ended' to 'active' when auction_end is now in the future
-     */
-    public function auto_reactivate_auctions() {
-        global $wpdb;
-        $now = current_time('mysql');
-        return $wpdb->query($wpdb->prepare(
-            "UPDATE {$this->table} SET status = 'active' WHERE status = 'ended' AND auction_end > %s AND (auction_start IS NULL OR auction_start <= %s)",
-            $now,
-            $now
-        ));
-    }
-
-    /**
-     * Auto-draft future auctions
-     * Changes status from 'active' to 'draft' when auction_start is in the future
-     * This handles cases where admin extends the start time
-     */
-    public function auto_draft_future_auctions() {
-        global $wpdb;
-        $now = current_time('mysql');
-        return $wpdb->query($wpdb->prepare(
-            "UPDATE {$this->table} SET status = 'draft' WHERE auction_start > %s AND status = 'active'",
-            $now
-        ));
     }
     
     /**

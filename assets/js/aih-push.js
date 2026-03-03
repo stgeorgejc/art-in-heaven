@@ -5,6 +5,21 @@
  * for outbid notifications. Manages the header bell button state.
  */
 
+// Capture beforeinstallprompt early — Chrome/Edge fire this before user interaction.
+// Stored globally so the logged-in code below can use it for the Android install banner.
+// Note: we do NOT call preventDefault() here — that would suppress Chrome's native
+// install mini-infobar for all users (including unauthenticated ones who never see
+// our custom banner). Letting the native UI show is the correct default; logged-in
+// users still get our custom banner which calls prompt() explicitly.
+var aihDeferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', function(e) {
+    aihDeferredInstallPrompt = e;
+    // If AIHPush already initialized, trigger the banner
+    if (window.AIHPush && window.AIHPush.initialized) {
+        window.AIHPush.maybeAutoShowAndroidBanner();
+    }
+});
+
 (function($) {
     'use strict';
 
@@ -16,11 +31,32 @@
     }
 
     var AIHPush = {
+        initialized: false,
         pushSubscribed: false,
         pollTimer: null,
         swRegistration: null,
         shownEvents: {},
         bellBtn: null,
+        iosInstallShown: false,
+
+        /**
+         * Detect iOS Safari running in browser (not as installed PWA).
+         * Returns true only for real Safari on iOS — not Chrome/Firefox for iOS,
+         * and not when already running in standalone (home-screen) mode.
+         */
+        isIOSSafariNonStandalone: function() {
+            var ua = navigator.userAgent;
+            var isIOS = /iPad|iPhone|iPod/.test(ua) ||
+                        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+            if (!isIOS) return false;
+
+            var isSafari = /Safari/.test(ua) && !/CriOS|FxiOS|Chrome/.test(ua);
+            if (!isSafari) return false;
+
+            var isStandalone = window.navigator.standalone === true ||
+                               window.matchMedia('(display-mode: standalone)').matches;
+            return !isStandalone;
+        },
 
         init: function() {
             this.bellBtn = document.getElementById('aih-notify-btn');
@@ -41,10 +77,22 @@
                 });
             }
 
+            // Android/Chrome install prompt (works alongside push — independent concern)
+            if (aihDeferredInstallPrompt) {
+                this.maybeAutoShowAndroidBanner();
+            }
+
             // Check if push is supported
             if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
-                this.updateBellState('unsupported');
+                // iOS Safari (non-standalone): show bell with install prompt instead of hiding it
+                if (this.isIOSSafariNonStandalone()) {
+                    this.updateBellState('default');
+                    this.maybeAutoShowIOSBanner();
+                } else {
+                    this.updateBellState('unsupported');
+                }
                 this.startPolling();
+                this.initialized = true;
                 return;
             }
 
@@ -56,6 +104,8 @@
             // Always start polling as a safety net — push may fail silently
             self.startPolling();
 
+            this.initialized = true;
+
             navigator.serviceWorker.register(aihAjax.swUrl, { scope: '/' })
                 .then(function(registration) {
                     self.swRegistration = registration;
@@ -66,6 +116,8 @@
                         self.pushSubscribed = true;
                         self.syncSubscription(subscription);
                         self.updateBellState('granted');
+                        // Verify subscription still exists server-side
+                        self.verifySubscription(subscription);
                     } else if (Notification.permission === 'granted') {
                         // Permission granted but not subscribed — re-subscribe
                         self.subscribe();
@@ -74,6 +126,28 @@
                 .catch(function() {
                     // Service worker failed — polling already running
                 });
+
+            // Listen for messages from the service worker (push → page bridge)
+            navigator.serviceWorker.addEventListener('message', function(event) {
+                if (!event.data || event.data.type !== 'aih-push') return;
+                var payload = event.data.data;
+                if (!payload) return;
+
+                // Dedup: skip if we already showed this via SSE/polling
+                var dedupeKey = (payload.type || '') + '-' + (payload.art_piece_id || '');
+                if (self.shownEvents[dedupeKey]) return;
+                self.shownEvents[dedupeKey] = true;
+
+                if (payload.type === 'outbid' && typeof window.showOutbidAlert === 'function') {
+                    var title = payload.title || 'an item';
+                    window.showOutbidAlert(payload.art_piece_id, title, payload.url);
+                }
+
+                // Trigger status poll for fresh badge/state data
+                if (typeof window.aihPollStatus === 'function') {
+                    window.aihPollStatus();
+                }
+            });
         },
 
         // ========== BELL BUTTON STATE ==========
@@ -116,6 +190,12 @@
          * Handle bell button click
          */
         handleBellClick: function() {
+            // iOS Safari (non-standalone): show install banner instead of error
+            if (this.isIOSSafariNonStandalone()) {
+                this.showIOSInstallBanner();
+                return;
+            }
+
             if (!('Notification' in window) || !('PushManager' in window)) {
                 if (typeof window.showToast === 'function') {
                     window.showToast('Your browser does not support push notifications.', 'error');
@@ -127,8 +207,9 @@
 
             if (permission === 'granted') {
                 if (this.pushSubscribed) {
-                    if (typeof window.showToast === 'function') {
-                        window.showToast('Notifications are already enabled!', 'success');
+                    // Open notification drawer
+                    if (typeof window.aihToggleDrawer === 'function') {
+                        window.aihToggleDrawer();
                     }
                 } else {
                     // Granted but not subscribed — try subscribing
@@ -234,6 +315,155 @@
             $('body').append($modal);
         },
 
+        // ========== iOS INSTALL BANNER ==========
+
+        /**
+         * Show bottom-sheet modal guiding iOS Safari users to Add to Home Screen.
+         */
+        showIOSInstallBanner: function() {
+            if ($('#aih-ios-install').length) {
+                $('#aih-ios-install').addClass('active');
+                return;
+            }
+
+            // Inline SVG for iOS share icon
+            var shareIcon = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>';
+
+            var $modal = $(
+                '<div id="aih-ios-install" class="aih-ios-install-overlay active">' +
+                    '<div class="aih-ios-install-card">' +
+                        '<button type="button" class="aih-ios-install-close" aria-label="Close">&times;</button>' +
+                        '<div class="aih-ios-install-icon">' +
+                            '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>' +
+                        '</div>' +
+                        '<h3>Install Art in Heaven</h3>' +
+                        '<p>Get instant bid alerts on your phone — just 3 quick steps:</p>' +
+                        '<ol class="aih-ios-install-steps">' +
+                            '<li>Tap the <strong>Share</strong> button ' + shareIcon + ' in Safari</li>' +
+                            '<li>Scroll down and tap <strong>"Add to Home Screen"</strong></li>' +
+                            '<li>Tap <strong>"Add"</strong> to install</li>' +
+                        '</ol>' +
+                        '<button type="button" class="aih-install-btn aih-ios-acknowledge-btn">Got it!</button>' +
+                    '</div>' +
+                '</div>'
+            );
+
+            var self = this;
+            function closeBanner() {
+                $modal.removeClass('active');
+                try {
+                    localStorage.setItem('aih_ios_banner_dismissed', Date.now().toString());
+                } catch (e) {}
+            }
+
+            $modal.find('.aih-ios-install-close').on('click', closeBanner);
+            $modal.find('.aih-ios-acknowledge-btn').on('click', closeBanner);
+            $modal.on('click', function(e) {
+                if (e.target === this) closeBanner();
+            });
+
+            $('body').append($modal);
+        },
+
+        /**
+         * Auto-show the iOS install banner once, with a 7-day cooldown.
+         */
+        maybeAutoShowIOSBanner: function() {
+            try {
+                var dismissed = localStorage.getItem('aih_ios_banner_dismissed');
+                if (dismissed) {
+                    var elapsed = Date.now() - parseInt(dismissed, 10);
+                    if (elapsed < 7 * 24 * 60 * 60 * 1000) return; // 7 days
+                }
+            } catch (e) {}
+
+            var self = this;
+            setTimeout(function() {
+                self.showIOSInstallBanner();
+            }, 3000);
+        },
+
+        // ========== ANDROID INSTALL BANNER ==========
+
+        /**
+         * Show bottom-sheet install banner for Android/Chrome with a real "Install" button.
+         * Uses the deferred beforeinstallprompt event to trigger the native install dialog.
+         */
+        showAndroidInstallBanner: function() {
+            if (!aihDeferredInstallPrompt) return;
+            if ($('#aih-android-install').length) {
+                $('#aih-android-install').addClass('active');
+                return;
+            }
+
+            var $modal = $(
+                '<div id="aih-android-install" class="aih-ios-install-overlay active">' +
+                    '<div class="aih-ios-install-card">' +
+                        '<button type="button" class="aih-ios-install-close" aria-label="Close">&times;</button>' +
+                        '<div class="aih-ios-install-icon">' +
+                            '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>' +
+                        '</div>' +
+                        '<h3>Install Art in Heaven</h3>' +
+                        '<p>Add the app to your home screen for a faster experience and instant bid alerts.</p>' +
+                        '<button type="button" class="aih-install-btn aih-android-install-btn">Install App</button>' +
+                        '<button type="button" class="aih-install-dismiss-btn">Not now</button>' +
+                    '</div>' +
+                '</div>'
+            );
+
+            function closeBanner() {
+                $modal.removeClass('active');
+                try {
+                    localStorage.setItem('aih_android_banner_dismissed', Date.now().toString());
+                } catch (e) {}
+            }
+
+            $modal.find('.aih-ios-install-close').on('click', closeBanner);
+            $modal.find('.aih-install-dismiss-btn').on('click', closeBanner);
+            $modal.on('click', function(e) {
+                if (e.target === this) closeBanner();
+            });
+
+            $modal.find('.aih-android-install-btn').on('click', function() {
+                if (!aihDeferredInstallPrompt) return;
+                try {
+                    aihDeferredInstallPrompt.prompt();
+                    aihDeferredInstallPrompt.userChoice.then(function() {
+                        aihDeferredInstallPrompt = null;
+                        closeBanner();
+                    }).catch(function() {
+                        aihDeferredInstallPrompt = null;
+                        closeBanner();
+                    });
+                } catch (e) {
+                    aihDeferredInstallPrompt = null;
+                    closeBanner();
+                }
+            });
+
+            $('body').append($modal);
+        },
+
+        /**
+         * Auto-show the Android install banner once, with a 7-day cooldown.
+         */
+        maybeAutoShowAndroidBanner: function() {
+            if (window.matchMedia('(display-mode: standalone)').matches) return;
+
+            try {
+                var dismissed = localStorage.getItem('aih_android_banner_dismissed');
+                if (dismissed) {
+                    var elapsed = Date.now() - parseInt(dismissed, 10);
+                    if (elapsed < 7 * 24 * 60 * 60 * 1000) return; // 7 days
+                }
+            } catch (e) {}
+
+            var self = this;
+            setTimeout(function() {
+                self.showAndroidInstallBanner();
+            }, 3000);
+        },
+
         // ========== PERMISSION & SUBSCRIPTION ==========
 
         /**
@@ -321,6 +551,27 @@
             });
         },
 
+        /**
+         * Verify subscription exists server-side; re-subscribe if stale.
+         */
+        verifySubscription: function(subscription) {
+            var self = this;
+            aihPost('push-verify', {
+                action:   'aih_push_verify',
+                nonce:    aihAjax.nonce,
+                endpoint: subscription.endpoint
+            }, function(response) {
+                // Server knows this subscription — all good
+            }, function() {
+                // Server doesn't recognize it — unsubscribe and re-subscribe
+                console.warn('[AIH] Push subscription unknown to server — re-subscribing');
+                subscription.unsubscribe().then(function() {
+                    self.pushSubscribed = false;
+                    self.subscribe();
+                });
+            });
+        },
+
         // ========== POLLING FALLBACK ==========
 
         /**
@@ -355,7 +606,7 @@
          * Polling fallback: check for outbid events using smart intervals
          */
         pollOutbid: function() {
-            if (window.aihSSEConnected) return; // SSE handles real-time outbid notifications
+            console.log('[AIH] Polling for outbid events' + (window.aihSSEConnected ? ' (background check)' : ' (fallback)'));
             var self = this;
             aihPost('check-outbid', {
                 action: 'aih_check_outbid',
@@ -369,6 +620,7 @@
                         if (self.shownEvents[eventKey]) continue;
                         self.shownEvents[eventKey] = true;
                         // Show persistent alert card (falls back to toast)
+                        console.log('[AIH] Outbid via POLLING:', evt.title, '(art #' + evt.art_piece_id + ')');
                         if (typeof window.showOutbidAlert === 'function') {
                             window.showOutbidAlert(evt.art_piece_id, evt.title);
                         } else if (typeof window.showToast === 'function') {
@@ -386,7 +638,9 @@
         startPolling: function() {
             if (this.pollTimer) clearTimeout(this.pollTimer);
             var self = this;
-            var interval = document.hidden ? 60000 : this.getSmartInterval();
+            // Use slower interval when SSE is connected (background safety net)
+            var interval = document.hidden ? 60000 :
+                           (window.aihSSEConnected ? 60000 : this.getSmartInterval());
             this.pollTimer = setTimeout(function() {
                 self.pollOutbid();
                 self.startPolling();
@@ -433,6 +687,21 @@
             AIHPush.startPolling();
         }
     });
+
+    // Offline/online detection — dispatch connection status changes
+    window.addEventListener('offline', function() {
+        window.aihConnectionStatus = 'offline';
+        window.dispatchEvent(new CustomEvent('aih:connectionchange', { detail: { status: 'offline' } }));
+    });
+
+    window.addEventListener('online', function() {
+        // Go back to polling; SSE will promote to 'realtime' if it reconnects
+        window.aihConnectionStatus = 'polling';
+        window.dispatchEvent(new CustomEvent('aih:connectionchange', { detail: { status: 'polling' } }));
+    });
+
+    // Set initial connection status
+    window.aihConnectionStatus = navigator.onLine ? 'polling' : 'offline';
 
     // Expose for external triggering (e.g. after bid, from other scripts)
     window.AIHPush = AIHPush;

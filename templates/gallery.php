@@ -52,8 +52,6 @@ if ($is_logged_in) {
     $payment_statuses = $checkout->get_bidder_payment_statuses($bidder_id);
 }
 
-$bid_increment = floatval(get_option('aih_bid_increment', 1));
-
 // Batch pre-fetch bid data to avoid N+1 queries in the loop
 $piece_ids = array_map(function($p) { return $p->id; }, $art_pieces);
 $highest_bids = $bid_model->get_highest_bids_batch($piece_ids);
@@ -162,6 +160,7 @@ $bidder_bid_ids = $bid_model->get_bidder_bid_ids_batch($piece_ids, $bidder_id);
         </div>
         <?php else: ?>
         <div class="aih-gallery-grid" id="aih-gallery">
+            <?php $card_index = 0; ?>
             <?php foreach ($art_pieces as $piece):
                 $bidder_has_bid_check = false;
                 $is_favorite = !empty($piece->is_favorite);
@@ -169,7 +168,7 @@ $bidder_bid_ids = $bid_model->get_bidder_bid_ids_batch($piece_ids, $bidder_id);
                 $current_bid = isset($highest_bids[$piece->id]) ? $highest_bids[$piece->id] : 0;
                 $has_bids = $current_bid > 0;
                 $display_bid = $has_bids ? $current_bid : $piece->starting_bid;
-                $min_bid = $has_bids ? $current_bid + $bid_increment : $piece->starting_bid;
+                $min_bid = $piece->starting_bid;
                 $primary_image = $piece->watermarked_url ?: $piece->image_url;
 
                 // Proper status calculation - check computed_status first, then calculate from dates
@@ -229,11 +228,18 @@ $bidder_bid_ids = $bid_model->get_bidder_bid_ids_batch($piece_ids, $bidder_id);
 
                 <div class="aih-card-image" data-favorite="<?php echo $is_favorite ? '1' : '0'; ?>">
                     <?php if ($primary_image): ?>
-                    <a href="?art_id=<?php echo intval($piece->id); ?>">
-                        <img src="<?php echo esc_url($primary_image); ?>" alt="<?php echo esc_attr($piece->title); ?>" loading="lazy">
+                    <a href="<?php echo esc_url(AIH_Template_Helper::get_art_url($piece->art_id)); ?>">
+                        <?php echo AIH_Template_Helper::picture_tag(
+                            $primary_image,
+                            $piece->title,
+                            '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw',
+                            array(),
+                            $card_index < 3 ? 'eager' : 'lazy',
+                            $card_index === 0 ? 'high' : null
+                        ); ?>
                     </a>
                     <?php else: ?>
-                    <a href="?art_id=<?php echo intval($piece->id); ?>" class="aih-placeholder-link">
+                    <a href="<?php echo esc_url(AIH_Template_Helper::get_art_url($piece->art_id)); ?>" class="aih-placeholder-link">
                         <div class="aih-placeholder">
                             <span class="aih-placeholder-id"><?php echo esc_html($piece->art_id); ?></span>
                             <span class="aih-placeholder-text"><?php _e('No Image', 'art-in-heaven'); ?></span>
@@ -250,7 +256,7 @@ $bidder_bid_ids = $bid_model->get_bidder_bid_ids_batch($piece_ids, $bidder_id);
                     <?php endif; ?>
 
                     <button type="button" class="aih-fav-btn <?php echo $is_favorite ? 'active' : ''; ?>" data-id="<?php echo intval($piece->id); ?>" aria-label="<?php echo $is_favorite ? esc_attr__('Remove from favorites', 'art-in-heaven') : esc_attr__('Add to favorites', 'art-in-heaven'); ?>" aria-pressed="<?php echo $is_favorite ? 'true' : 'false'; ?>">
-                        <span class="aih-fav-icon">&#9829;</span>
+                        <span class="aih-fav-icon"><svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></span>
                     </button>
 
                     <?php if (!$is_ended && $piece->auction_end && !empty($piece->show_end_time)): ?>
@@ -262,7 +268,7 @@ $bidder_bid_ids = $bid_model->get_bidder_bid_ids_batch($piece_ids, $bidder_id);
 
                 <div class="aih-card-body">
                     <h3 class="aih-card-title">
-                        <a href="?art_id=<?php echo intval($piece->id); ?>"><?php echo esc_html($piece->title); ?></a>
+                        <a href="<?php echo esc_url(AIH_Template_Helper::get_art_url($piece->art_id)); ?>"><?php echo esc_html($piece->title); ?></a>
                     </h3>
                     <p class="aih-card-artist"><?php echo esc_html($piece->artist); ?></p>
                     <p class="aih-card-bid">
@@ -288,6 +294,7 @@ $bidder_bid_ids = $bid_model->get_bidder_bid_ids_batch($piece_ids, $bidder_id);
 
                 <div class="aih-bid-message"></div>
             </article>
+            <?php $card_index++; ?>
             <?php endforeach; ?>
         </div>
         <?php endif; ?>

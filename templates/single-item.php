@@ -24,14 +24,12 @@ endif;
 $favorites = new AIH_Favorites();
 $bid_model = new AIH_Bid();
 $art_images = new AIH_Art_Images();
-$bid_increment = floatval(get_option('aih_bid_increment', 1));
-
 $is_favorite = $bidder_id ? $favorites->is_favorite($bidder_id, $art_piece->id) : false;
 $is_winning = $bidder_id ? $bid_model->is_bidder_winning($art_piece->id, $bidder_id) : false;
 $current_bid = $bid_model->get_highest_bid_amount($art_piece->id);
 $has_bids = $current_bid > 0;
 $display_bid = $has_bids ? $current_bid : $art_piece->starting_bid;
-$min_bid = $has_bids ? $current_bid + $bid_increment : $art_piece->starting_bid;
+$min_bid = $art_piece->starting_bid;
 
 // Get bidder's successful bid history for this piece
 $my_bid_history = $bidder_id ? $bid_model->get_bidder_bids_for_art_piece($art_piece->id, $bidder_id) : array();
@@ -55,18 +53,29 @@ if ($computed_status === 'ended') {
 $images = $art_images->get_images($art_piece->id);
 $primary_image = !empty($images) ? $images[0]->watermarked_url : ($art_piece->watermarked_url ?: $art_piece->image_url);
 
-// Navigation - include active and ended pieces, exclude upcoming
-// TODO: optimize to fetch only IDs for navigation
-$art_model = new AIH_Art_Piece();
-$nav_active = $art_model->get_all(array('status' => 'active', 'bidder_id' => $bidder_id));
-$nav_ended = $art_model->get_all(array('status' => 'ended', 'bidder_id' => $bidder_id));
-$all_pieces = array_merge($nav_active, $nav_ended);
-$current_index = -1;
-foreach ($all_pieces as $i => $p) {
-    if ($p->id == $art_piece->id) { $current_index = $i; break; }
-}
-$prev_id = $current_index > 0 ? $all_pieces[$current_index - 1]->id : null;
-$next_id = $current_index < count($all_pieces) - 1 ? $all_pieces[$current_index + 1]->id : null;
+// Navigation - use targeted queries instead of fetching ALL art pieces
+global $wpdb;
+$art_table_nav = AIH_Database::get_table('art_pieces');
+$art_id_nav = intval($art_piece->id);
+
+$prev_piece = $wpdb->get_row($wpdb->prepare(
+    "SELECT id, art_id FROM {$art_table_nav} WHERE id < %d AND status IN ('active','ended') ORDER BY id DESC LIMIT 1",
+    $art_id_nav
+));
+$next_piece = $wpdb->get_row($wpdb->prepare(
+    "SELECT id, art_id FROM {$art_table_nav} WHERE id > %d AND status IN ('active','ended') ORDER BY id ASC LIMIT 1",
+    $art_id_nav
+));
+$total_nav_count = (int) $wpdb->get_var(
+    "SELECT COUNT(*) FROM {$art_table_nav} WHERE status IN ('active','ended')"
+);
+$current_position = (int) $wpdb->get_var($wpdb->prepare(
+    "SELECT COUNT(*) FROM {$art_table_nav} WHERE id <= %d AND status IN ('active','ended')",
+    $art_id_nav
+));
+
+$prev_art_id = $prev_piece ? $prev_piece->art_id : null;
+$next_art_id = $next_piece ? $next_piece->art_id : null;
 
 $checkout_url = AIH_Template_Helper::get_checkout_url();
 
@@ -92,14 +101,14 @@ if (empty($image_urls) && $primary_image) {
         <div class="aih-single-nav-bar">
             <a href="<?php echo esc_url($gallery_url); ?>" class="aih-back-link">&larr; <?php _e('Back to Gallery', 'art-in-heaven'); ?></a>
             <div class="aih-nav-center">
-                <?php if ($prev_id): ?>
-                <a href="?art_id=<?php echo intval($prev_id); ?>" class="aih-nav-arrow" title="<?php esc_attr_e('Previous', 'art-in-heaven'); ?>">&larr;</a>
+                <?php if ($prev_art_id): ?>
+                <a href="<?php echo esc_url(AIH_Template_Helper::get_art_url($prev_art_id)); ?>" class="aih-nav-arrow" title="<?php esc_attr_e('Previous', 'art-in-heaven'); ?>">&larr;</a>
                 <?php else: ?>
                 <span class="aih-nav-arrow disabled">&larr;</span>
                 <?php endif; ?>
-                <span class="aih-piece-counter"><?php echo $current_index + 1; ?> / <?php echo count($all_pieces); ?></span>
-                <?php if ($next_id): ?>
-                <a href="?art_id=<?php echo intval($next_id); ?>" class="aih-nav-arrow" title="<?php esc_attr_e('Next', 'art-in-heaven'); ?>">&rarr;</a>
+                <span class="aih-piece-counter"><?php echo $current_position; ?> / <?php echo $total_nav_count; ?></span>
+                <?php if ($next_art_id): ?>
+                <a href="<?php echo esc_url(AIH_Template_Helper::get_art_url($next_art_id)); ?>" class="aih-nav-arrow" title="<?php esc_attr_e('Next', 'art-in-heaven'); ?>">&rarr;</a>
                 <?php else: ?>
                 <span class="aih-nav-arrow disabled">&rarr;</span>
                 <?php endif; ?>
@@ -112,7 +121,7 @@ if (empty($image_urls) && $primary_image) {
             <div class="aih-single-content">
                 <div class="aih-single-image <?php echo count($images) > 1 ? 'has-multiple-images' : ''; ?>">
                     <?php if ($primary_image): ?>
-                    <img src="<?php echo esc_url($primary_image); ?>" alt="<?php echo esc_attr($art_piece->title); ?>" id="aih-main-image">
+                    <?php echo AIH_Template_Helper::picture_tag($primary_image, $art_piece->title, '(max-width: 768px) 100vw, 60vw', array('id' => 'aih-main-image')); ?>
                     <?php if (count($images) > 1): ?>
                     <button type="button" class="aih-img-nav aih-img-nav-prev" aria-label="<?php esc_attr_e('Previous image', 'art-in-heaven'); ?>">&lsaquo;</button>
                     <button type="button" class="aih-img-nav aih-img-nav-next" aria-label="<?php esc_attr_e('Next image', 'art-in-heaven'); ?>">&rsaquo;</button>
@@ -143,7 +152,7 @@ if (empty($image_urls) && $primary_image) {
                     <span class="aih-art-id-badge-single"><?php echo esc_html($art_piece->art_id); ?></span>
 
                     <button type="button" class="aih-fav-btn <?php echo $is_favorite ? 'active' : ''; ?>" data-id="<?php echo intval($art_piece->id); ?>" aria-label="<?php echo $is_favorite ? esc_attr__('Remove from favorites', 'art-in-heaven') : esc_attr__('Add to favorites', 'art-in-heaven'); ?>" aria-pressed="<?php echo $is_favorite ? 'true' : 'false'; ?>">
-                        <span class="aih-fav-icon">&#9829;</span>
+                        <span class="aih-fav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></span>
                     </button>
 
                     <?php if (count($images) > 1): ?>

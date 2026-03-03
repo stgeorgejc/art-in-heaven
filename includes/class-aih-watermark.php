@@ -258,11 +258,11 @@ class AIH_Watermark {
                     for ($x_pos = -$width * 0.5; $x_pos < $width * 1.5; $x_pos += $spacing_x) {
                         // Shadow
                         $shadow = imagecolorallocatealpha($image, 0, 0, 0, 60);
-                        @imagettftext($image, $font_size, 30, $x_pos + 3, $y_pos + 3, $shadow, $font_file, $text);
-                        
+                        @imagettftext($image, $font_size, 30, (int) ($x_pos + 3), (int) ($y_pos + 3), $shadow, $font_file, $text);
+
                         // White text
                         $white = imagecolorallocatealpha($image, 255, 255, 255, 50);
-                        @imagettftext($image, $font_size, 30, $x_pos, $y_pos, $white, $font_file, $text);
+                        @imagettftext($image, $font_size, 30, (int) $x_pos, (int) $y_pos, $white, $font_file, $text);
                     }
                 }
                 
@@ -459,15 +459,6 @@ class AIH_Watermark {
     }
     
     /**
-     * Add cross-hatch pattern for extra protection (DISABLED - removed diagonal lines)
-     */
-    private function add_crosshatch_pattern($image, $width, $height) {
-        // Diagonal lines removed per user request
-        // This function intentionally left empty
-        return;
-    }
-    
-    /**
      * Add prominent center watermark
      */
     private function add_center_watermark($image, $width, $height, $text, $font_file = null) {
@@ -518,39 +509,6 @@ class AIH_Watermark {
     }
     
     /**
-     * Draw large watermark text without TTF fonts
-     */
-    private function draw_large_watermark($image, $text, $x, $y, $img_width, $img_height) {
-        // Use largest built-in font (5)
-        $font = 5;
-        $char_width = imagefontwidth($font);
-        $char_height = imagefontheight($font);
-        
-        // Colors - MORE VISIBLE
-        $white = imagecolorallocatealpha($image, 255, 255, 255, 25); // More opaque
-        $shadow = imagecolorallocatealpha($image, 0, 0, 0, 35); // More opaque
-        
-        // Draw text block multiple times for visibility
-        $lines = array($text, $text, $text);
-        
-        $line_y = $y;
-        foreach ($lines as $line) {
-            // Heavy shadow
-            for ($s = 3; $s >= 1; $s--) {
-                imagestring($image, $font, $x + $s, $line_y + $s, $line, $shadow);
-            }
-            // Main text
-            imagestring($image, $font, $x, $line_y, $line, $white);
-            $line_y += $char_height + 8;
-        }
-        
-        // Add X pattern through this block
-        $line_color = imagecolorallocatealpha($image, 255, 255, 255, 50);
-        imageline($image, $x, $y, $x + 150, $y + 80, $line_color);
-        imageline($image, $x + 150, $y, $x, $y + 80, $line_color);
-    }
-    
-    /**
      * Process uploaded image and create watermarked version
      */
     public function process_upload($attachment_id) {
@@ -597,6 +555,9 @@ class AIH_Watermark {
         $result = $this->apply_watermark($file_path, $output_path);
         
         if ($result) {
+            // Generate responsive AVIF/WebP variants
+            AIH_Image_Optimizer::generate_variants($output_path);
+
             // Return URL to watermarked image
             return $upload_dir['baseurl'] . '/art-in-heaven/watermarked/' . $filename;
         }
@@ -633,10 +594,14 @@ class AIH_Watermark {
         $upload_dir = wp_upload_dir();
         $watermarked_path = $upload_dir['basedir'] . '/art-in-heaven/watermarked/' . $filename;
         
+        // Clean up responsive variants
+        $watermarked_url = $upload_dir['baseurl'] . '/art-in-heaven/watermarked/' . $filename;
+        AIH_Image_Optimizer::cleanup_variants($watermarked_url);
+
         if (file_exists($watermarked_path)) {
             return unlink($watermarked_path);
         }
-        
+
         return true;
     }
 }

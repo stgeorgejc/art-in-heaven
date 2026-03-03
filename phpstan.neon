@@ -1,0 +1,25 @@
+parameters:
+    level: 5
+    treatPhpDocTypesAsCertain: false
+    parallel:
+        maximumNumberOfProcesses: 1
+    paths:
+        - art-in-heaven.php
+        - includes
+        - admin/class-aih-admin.php
+    excludePaths:
+        # Large AJAX handler — analyze separately to avoid memory issues
+        - includes/class-aih-ajax.php
+    bootstrapFiles:
+        - tests/phpstan-bootstrap.php
+    ignoreErrors:
+        # AIH_Ajax class is excluded from analysis (memory), references are valid at runtime
+        - identifier: class.notFound
+          message: '#AIH_Ajax#'
+        # WordPress DB_NAME constant is defined in wp-config.php at runtime
+        - identifier: constant.notFound
+          message: '#DB_NAME#'
+        # WordPress DOING_AJAX constant — acceptable to use directly
+        - identifier: phpstanWP.wpConstant.fetch
+        # Properties reserved for future use or used via magic methods
+        - identifier: property.onlyWritten

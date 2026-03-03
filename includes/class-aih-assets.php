@@ -40,19 +40,17 @@ class AIH_Assets {
      * Register all plugin assets (but don't enqueue yet)
      */
     public function register_assets() {
-        // Register Google Fonts
-        wp_register_style(
-            'aih-google-fonts',
-            'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap',
-            array(),
-            null
-        );
+        // Google Fonts loaded async via Art_In_Heaven::add_preconnect_hints()
 
-        // Register elegant theme CSS
+        // Register elegant theme CSS (prefer .min in production)
+        $css_file = 'assets/css/elegant-theme.css';
+        if (!(defined('SCRIPT_DEBUG') && SCRIPT_DEBUG) && file_exists(AIH_PLUGIN_DIR . 'assets/css/elegant-theme.min.css')) {
+            $css_file = 'assets/css/elegant-theme.min.css';
+        }
         wp_register_style(
             'aih-elegant-theme',
-            AIH_PLUGIN_URL . 'assets/css/elegant-theme.css',
-            array('aih-google-fonts'),
+            AIH_PLUGIN_URL . $css_file,
+            array(),
             AIH_VERSION
         );
 
@@ -67,8 +65,13 @@ class AIH_Assets {
             return;
         }
 
-        wp_enqueue_style('aih-google-fonts');
         wp_enqueue_style('aih-elegant-theme');
+
+        // Inline critical CSS so above-fold content renders immediately,
+        // then make the full stylesheet non-render-blocking.
+        // Priority 7 outputs before wp_print_styles (priority 8).
+        add_action('wp_head', array(__CLASS__, 'output_critical_css'), 7);
+        add_filter('style_loader_tag', array(__CLASS__, 'make_css_async'), 10, 2);
 
         self::$elegant_theme_enqueued = true;
     }
@@ -93,26 +96,70 @@ class AIH_Assets {
      * @return string
      */
     public static function get_elegant_theme_path() {
+        if (!(defined('SCRIPT_DEBUG') && SCRIPT_DEBUG)) {
+            $min_path = AIH_PLUGIN_DIR . 'assets/css/elegant-theme.min.css';
+            if (file_exists($min_path)) {
+                return $min_path;
+            }
+        }
         return AIH_PLUGIN_DIR . 'assets/css/elegant-theme.css';
     }
 
     /**
-     * Inline critical CSS for above-the-fold content
-     * Used for templates that need immediate styling
+     * Output critical CSS inline in <head> for immediate above-fold rendering.
+     * Hooked at wp_head priority 7, before wp_print_styles (priority 8).
      */
-    public static function inline_critical_css() {
-        if (self::$elegant_theme_enqueued) {
-            return;
+    public static function output_critical_css() {
+        echo '<style id="aih-critical-css">' . self::get_critical_css() . '</style>' . "\n";
+    }
+
+    /**
+     * Make the elegant theme stylesheet non-render-blocking.
+     * Uses media="print" with onload swap — same pattern as Google Fonts.
+     * Critical CSS (inlined above) covers above-fold content during load.
+     *
+     * @param string $tag  The link tag HTML.
+     * @param string $handle The stylesheet handle.
+     * @return string Modified tag.
+     */
+    public static function make_css_async($tag, $handle) {
+        if ('aih-elegant-theme' !== $handle) {
+            return $tag;
         }
 
-        // Only inline if not already enqueued via wp_enqueue
-        $css_file = self::get_elegant_theme_path();
-        if (file_exists($css_file)) {
-            echo '<style id="aih-critical-css">';
-            // Include only critical above-fold CSS for faster rendering
-            echo self::get_critical_css();
-            echo '</style>';
+        // Swap media="all" to print with onload restore
+        $async_tag = str_replace(
+            "media='all'",
+            "media='print' onload=\"this.media='all'\"",
+            $tag
+        );
+
+        // WordPress may use double quotes instead
+        if ($async_tag === $tag) {
+            $async_tag = str_replace(
+                'media="all"',
+                'media="print" onload="this.media=\'all\'"',
+                $tag
+            );
         }
+
+        // If neither replacement matched, return original tag unchanged
+        // to avoid duplicating a render-blocking <link> inside <noscript>.
+        if ($async_tag === $tag) {
+            return $tag;
+        }
+
+        // noscript fallback for users without JS
+        $noscript = str_replace(
+            array(
+                "media='print' onload=\"this.media='all'\"",
+                'media="print" onload="this.media=\'all\'"',
+            ),
+            array("media='all'", 'media="all"'),
+            $async_tag
+        );
+
+        return $async_tag . '<noscript>' . $noscript . '</noscript>';
     }
 
     /**
@@ -152,6 +199,25 @@ class AIH_Assets {
                 top: 0;
                 z-index: 100;
             }
+            .aih-header-inner {
+                padding: 6px 10px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 4px;
+                max-width: 100%;
+                margin: 0 auto;
+                width: 100%;
+            }
+            .aih-logo {
+                font-family: var(--font-display);
+                font-size: 1rem;
+                font-weight: 600;
+                color: var(--color-primary);
+                text-decoration: none;
+                white-space: nowrap;
+            }
+            .aih-nav { display: flex; gap: 6px; align-items: center; }
             .aih-main {
                 flex: 1 1 auto;
                 width: 100%;

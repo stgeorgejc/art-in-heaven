@@ -165,23 +165,8 @@ wp_clear_scheduled_hook('aih_send_ending_reminders');
 wp_clear_scheduled_hook('aih_five_minute_check');
 wp_clear_scheduled_hook('aih_auto_sync_registrants');
 wp_clear_scheduled_hook('aih_auto_sync_pushpay');
-
-// Clear all piece-specific scheduled cron events
-$crons = _get_cron_array();
-if (!empty($crons)) {
-    foreach ($crons as $timestamp => $cron) {
-        if (isset($cron['aih_scheduled_activate_piece'])) {
-            foreach ($cron['aih_scheduled_activate_piece'] as $event) {
-                wp_unschedule_event($timestamp, 'aih_scheduled_activate_piece', $event['args']);
-            }
-        }
-        if (isset($cron['aih_scheduled_end_piece'])) {
-            foreach ($cron['aih_scheduled_end_piece'] as $event) {
-                wp_unschedule_event($timestamp, 'aih_scheduled_end_piece', $event['args']);
-            }
-        }
-    }
-}
+wp_clear_scheduled_hook('aih_scheduled_activate_piece');
+wp_clear_scheduled_hook('aih_scheduled_end_piece');
 
 // Delete rate limit transients
 $wpdb->query(

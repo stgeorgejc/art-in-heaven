@@ -266,8 +266,8 @@ class AIH_Admin {
         register_setting('aih_settings', 'aih_auction_year', array('sanitize_callback' => 'intval'));
         register_setting('aih_settings', 'aih_event_date', array('sanitize_callback' => 'sanitize_text_field'));
         register_setting('aih_settings', 'aih_event_end_date', array('sanitize_callback' => 'sanitize_text_field'));
-        register_setting('aih_settings', 'aih_login_page', array('sanitize_callback' => 'esc_url_raw'));
-        register_setting('aih_settings', 'aih_gallery_page', array('sanitize_callback' => 'esc_url_raw'));
+        register_setting('aih_settings', 'aih_login_page', array('sanitize_callback' => 'absint'));
+        register_setting('aih_settings', 'aih_gallery_page', array('sanitize_callback' => 'absint'));
         register_setting('aih_settings', 'aih_show_sold_items', array(
             'type' => 'boolean',
             'default' => true,
@@ -323,13 +323,13 @@ class AIH_Admin {
         // API settings - now in aih_integrations group
         register_setting('aih_integrations', 'aih_api_base_url', array('sanitize_callback' => 'esc_url_raw'));
         register_setting('aih_integrations', 'aih_api_form_id', array('sanitize_callback' => 'sanitize_text_field'));
-        register_setting('aih_integrations', 'aih_api_username', array('sanitize_callback' => array('AIH_Security', 'sanitize_encrypt')));
-        register_setting('aih_integrations', 'aih_api_password', array('sanitize_callback' => array('AIH_Security', 'sanitize_encrypt')));
+        register_setting('aih_integrations', 'aih_api_username', array('sanitize_callback' => AIH_Security::make_sanitize_encrypt('aih_api_username')));
+        register_setting('aih_integrations', 'aih_api_password', array('sanitize_callback' => AIH_Security::make_sanitize_encrypt('aih_api_password')));
         register_setting('aih_integrations', 'aih_auto_sync_enabled', array(
             'type' => 'boolean',
             'default' => false,
             'sanitize_callback' => function($value) {
-                $enabled = (bool) $value;
+                $enabled = $value ? 1 : 0;
                 // Schedule or unschedule based on setting
                 if ($enabled) {
                     AIH_Auth::schedule_auto_sync();
@@ -356,13 +356,13 @@ class AIH_Admin {
         register_setting('aih_integrations', 'aih_pushpay_merchant_handle', array('sanitize_callback' => 'sanitize_text_field'));
         register_setting('aih_integrations', 'aih_pushpay_fund', array('sanitize_callback' => 'sanitize_text_field'));
         register_setting('aih_integrations', 'aih_pushpay_redirect_key', array('sanitize_callback' => 'sanitize_text_field'));
-        register_setting('aih_integrations', 'aih_pushpay_client_id', array('sanitize_callback' => array('AIH_Security', 'sanitize_encrypt')));
-        register_setting('aih_integrations', 'aih_pushpay_client_secret', array('sanitize_callback' => array('AIH_Security', 'sanitize_encrypt')));
+        register_setting('aih_integrations', 'aih_pushpay_client_id', array('sanitize_callback' => AIH_Security::make_sanitize_encrypt('aih_pushpay_client_id')));
+        register_setting('aih_integrations', 'aih_pushpay_client_secret', array('sanitize_callback' => AIH_Security::make_sanitize_encrypt('aih_pushpay_client_secret')));
         register_setting('aih_integrations', 'aih_pushpay_organization_key', array('sanitize_callback' => 'sanitize_text_field'));
 
         // Pushpay settings - Sandbox (in aih_integrations group)
-        register_setting('aih_integrations', 'aih_pushpay_sandbox_client_id', array('sanitize_callback' => array('AIH_Security', 'sanitize_encrypt')));
-        register_setting('aih_integrations', 'aih_pushpay_sandbox_client_secret', array('sanitize_callback' => array('AIH_Security', 'sanitize_encrypt')));
+        register_setting('aih_integrations', 'aih_pushpay_sandbox_client_id', array('sanitize_callback' => AIH_Security::make_sanitize_encrypt('aih_pushpay_sandbox_client_id')));
+        register_setting('aih_integrations', 'aih_pushpay_sandbox_client_secret', array('sanitize_callback' => AIH_Security::make_sanitize_encrypt('aih_pushpay_sandbox_client_secret')));
         register_setting('aih_integrations', 'aih_pushpay_sandbox_organization_key', array('sanitize_callback' => 'sanitize_text_field'));
         register_setting('aih_integrations', 'aih_pushpay_sandbox_merchant_key', array('sanitize_callback' => 'sanitize_text_field'));
         register_setting('aih_integrations', 'aih_pushpay_sandbox_merchant_handle', array('sanitize_callback' => 'sanitize_text_field'));
@@ -372,7 +372,7 @@ class AIH_Admin {
             'type' => 'boolean',
             'default' => false,
             'sanitize_callback' => function($value) {
-                $enabled = (bool) $value;
+                $enabled = $value ? 1 : 0;
                 // Schedule or unschedule based on setting
                 if ($enabled) {
                     $interval = isset($_POST['aih_pushpay_auto_sync_interval']) ? sanitize_text_field($_POST['aih_pushpay_auto_sync_interval']) : get_option('aih_pushpay_auto_sync_interval', 'hourly');
@@ -410,7 +410,7 @@ class AIH_Admin {
             'type' => 'boolean',
             'default' => false,
             'sanitize_callback' => function($value) {
-                return (bool) $value;
+                return $value ? 1 : 0;
             }
         ));
         register_setting('aih_integrations', 'aih_push_enabled', array(
@@ -433,7 +433,7 @@ class AIH_Admin {
         register_setting('aih_integrations', 'aih_mercure_jwt_secret', array(
             'type' => 'string',
             'default' => '',
-            'sanitize_callback' => array('AIH_Security', 'sanitize_encrypt')
+            'sanitize_callback' => AIH_Security::make_sanitize_encrypt('aih_mercure_jwt_secret')
         ));
     }
     

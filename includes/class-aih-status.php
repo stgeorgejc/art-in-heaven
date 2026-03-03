@@ -18,8 +18,6 @@ class AIH_Status {
     const STATUS_ACTIVE = 'active';
     const STATUS_DRAFT = 'draft';
     const STATUS_ENDED = 'ended';
-    const STATUS_PAUSED = 'paused';
-    const STATUS_CANCELED = 'canceled';
     
     /**
      * All valid statuses for validation
@@ -28,23 +26,36 @@ class AIH_Status {
         self::STATUS_ACTIVE,
         self::STATUS_DRAFT,
         self::STATUS_ENDED,
-        self::STATUS_PAUSED,
-        self::STATUS_CANCELED,
     );
+    
     
     /**
-     * Statuses that prevent bidding regardless of time
+     * Get the SQL CASE statement for computing auction status.
+     *
+     * Returns a reusable SQL CASE fragment that mirrors the PHP status
+     * logic. Callers must supply the placeholder values for "now" via
+     * $wpdb->prepare().
+     *
+     * @param string $alias           Table alias used in the query (default 'a').
+     * @param string $now_placeholder The prepare() placeholder for the current time (default '%s').
+     * @return string SQL CASE expression.
      */
-    private static $closed_statuses = array(
-        self::STATUS_ENDED,
-        self::STATUS_PAUSED,
-        self::STATUS_CANCELED,
-    );
-    
+    public static function get_status_sql($alias = 'a', $now_placeholder = '%s') {
+        return "CASE
+            WHEN {$alias}.status = 'sold' THEN 'sold'
+            WHEN {$alias}.status = 'ended' AND {$alias}.auction_end IS NOT NULL AND {$alias}.auction_end > {$now_placeholder} AND ({$alias}.auction_start IS NULL OR {$alias}.auction_start <= {$now_placeholder}) THEN 'active'
+            WHEN {$alias}.status = 'ended' THEN 'ended'
+            WHEN {$alias}.status = 'active' AND {$alias}.auction_end IS NOT NULL AND {$alias}.auction_end <= {$now_placeholder} THEN 'ended'
+            WHEN {$alias}.status = 'active' AND {$alias}.auction_start IS NOT NULL AND {$alias}.auction_start > {$now_placeholder} THEN 'scheduled'
+            WHEN {$alias}.status = 'active' THEN 'active'
+            ELSE {$alias}.status
+        END";
+    }
+
     /**
      * Get the current WordPress time as a DateTime object
      * Uses WordPress's configured timezone from Settings > General
-     * 
+     *
      * @return DateTime
      */
     public static function get_now() {
@@ -93,7 +104,7 @@ class AIH_Status {
             $dt = new DateTime($date_value, $wp_timezone);
             return $dt;
         } catch (Exception $e) {
-            error_log('AIH_Status::parse_date failed: ' . $e->getMessage() . ' for value: ' . print_r($date_value, true));
+            if (defined('WP_DEBUG') && WP_DEBUG) { error_log('AIH_Status::parse_date failed: ' . $e->getMessage() . ' for value: ' . print_r($date_value, true)); }
             return null;
         }
     }
@@ -129,7 +140,7 @@ class AIH_Status {
      * @return bool
      */
     public static function is_closed_status($status) {
-        return in_array($status, self::$closed_statuses, true);
+        return $status === self::STATUS_ENDED;
     }
     
     /**
@@ -274,29 +285,21 @@ class AIH_Status {
         
         $db_status = $art_piece->status ?? '';
         
-        // Handle closed statuses first - these override time-based logic
-        if (self::is_closed_status($db_status)) {
-            $result['status'] = $db_status;
-            $result['can_bid'] = false;
-            
-            switch ($db_status) {
-                case self::STATUS_ENDED:
-                    $result['display_status'] = 'Ended';
-                    $result['reason'] = 'Database status is ended';
-                    break;
-                case self::STATUS_PAUSED:
-                    $result['display_status'] = 'Paused';
-                    $result['reason'] = 'Auction is paused by admin';
-                    break;
-                case self::STATUS_CANCELED:
-                    $result['display_status'] = 'Canceled';
-                    $result['reason'] = 'Auction was canceled';
-                    break;
-                default:
-                    $result['display_status'] = ucfirst($db_status);
-                    $result['reason'] = "Database status is {$db_status}";
+        // Handle ended status — but check if auction was reactivated (end time extended)
+        if ($db_status === self::STATUS_ENDED) {
+            if ($end !== null && $end > $now && ($start === null || $start <= $now)) {
+                // End time was extended past now — auction is actually active
+                $result['status'] = self::STATUS_ACTIVE;
+                $result['display_status'] = 'Active (reactivated)';
+                $result['reason'] = 'Database says ended but end time is in the future';
+                $result['can_bid'] = true;
+                return $result;
             }
-            
+
+            $result['status'] = self::STATUS_ENDED;
+            $result['display_status'] = 'Ended';
+            $result['reason'] = 'Database status is ended';
+            $result['can_bid'] = false;
             return $result;
         }
         
@@ -432,44 +435,46 @@ class AIH_Status {
         $now = self::get_now();
 
         // Debug logging to trace status calculation
-        error_log(sprintf(
-            'AIH_Status::calculate_auto_status - start_raw: %s, end_raw: %s, requested: %s, times_changed: %s, now: %s, start_parsed: %s, end_parsed: %s, end<=now: %s, start>now: %s',
-            var_export($auction_start, true),
-            var_export($auction_end, true),
-            $requested_status,
-            $times_changed ? 'true' : 'false',
-            $now->format('Y-m-d H:i:s T'),
-            $start ? $start->format('Y-m-d H:i:s T') : 'null',
-            $end ? $end->format('Y-m-d H:i:s T') : 'null',
-            ($end !== null && $end <= $now) ? 'TRUE' : 'FALSE',
-            ($start !== null && $start > $now) ? 'TRUE' : 'FALSE'
-        ));
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log(sprintf(
+                'AIH_Status::calculate_auto_status - start_raw: %s, end_raw: %s, requested: %s, times_changed: %s, now: %s, start_parsed: %s, end_parsed: %s, end<=now: %s, start>now: %s',
+                var_export($auction_start, true),
+                var_export($auction_end, true),
+                $requested_status,
+                $times_changed ? 'true' : 'false',
+                $now->format('Y-m-d H:i:s T'),
+                $start ? $start->format('Y-m-d H:i:s T') : 'null',
+                $end ? $end->format('Y-m-d H:i:s T') : 'null',
+                ($end !== null && $end <= $now) ? 'TRUE' : 'FALSE',
+                ($start !== null && $start > $now) ? 'TRUE' : 'FALSE'
+            ));
+        }
 
         // If requesting draft, respect it
         if ($requested_status === self::STATUS_DRAFT) {
-            error_log('AIH_Status: Returning DRAFT (requested)');
+            if (defined('WP_DEBUG') && WP_DEBUG) { error_log('AIH_Status: Returning DRAFT (requested)'); }
             return self::STATUS_DRAFT;
         }
 
         // If requesting a closed status AND times didn't change, respect it
         // But if times changed, recalculate based on new times
         if (self::is_closed_status($requested_status) && !$times_changed) {
-            error_log('AIH_Status: Returning ' . $requested_status . ' (closed, times unchanged)');
+            if (defined('WP_DEBUG') && WP_DEBUG) { error_log('AIH_Status: Returning ' . $requested_status . ' (closed, times unchanged)'); }
             return $requested_status;
         }
 
         // Calculate based on times
         if ($end !== null && $end <= $now) {
-            error_log('AIH_Status: Returning ENDED (end <= now)');
+            if (defined('WP_DEBUG') && WP_DEBUG) { error_log('AIH_Status: Returning ENDED (end <= now)'); }
             return self::STATUS_ENDED;
         }
 
         if ($start !== null && $start > $now) {
-            error_log('AIH_Status: Returning DRAFT (start > now)');
+            if (defined('WP_DEBUG') && WP_DEBUG) { error_log('AIH_Status: Returning DRAFT (start > now)'); }
             return self::STATUS_DRAFT;
         }
 
-        error_log('AIH_Status: Returning ACTIVE (default)');
+        if (defined('WP_DEBUG') && WP_DEBUG) { error_log('AIH_Status: Returning ACTIVE (default)'); }
         return self::STATUS_ACTIVE;
     }
     
@@ -483,8 +488,6 @@ class AIH_Status {
             self::STATUS_ACTIVE => __('Active', 'art-in-heaven'),
             self::STATUS_DRAFT => __('Draft (hidden from public)', 'art-in-heaven'),
             self::STATUS_ENDED => __('Ended (closed for bidding)', 'art-in-heaven'),
-            self::STATUS_PAUSED => __('Paused (temporarily closed)', 'art-in-heaven'),
-            self::STATUS_CANCELED => __('Canceled', 'art-in-heaven'),
         );
     }
 }

@@ -1,0 +1,15 @@
+# Default: project team reviews all changes
+*                       @stgeorgejc/aih-team
+
+# CI/CD and GitHub config require admin review
+.github/                @stgeorgejc/aih-admin
+.githooks/              @stgeorgejc/aih-admin
+composer.json           @stgeorgejc/aih-admin
+phpunit.xml             @stgeorgejc/aih-admin
+phpstan.neon            @stgeorgejc/aih-admin
+
+# Exclude files Dependabot updates so auto-merge isn't blocked by CODEOWNERS
+# (no owner = no CODEOWNERS review required)
+composer.lock
+package-lock.json
+.github/workflows/*.yml

@@ -26,8 +26,6 @@ $bid_model = new AIH_Bid();
 $favorites = new AIH_Favorites();
 $art_images = new AIH_Art_Images();
 $my_bids = $bid_model->get_bidder_bids($bidder_id);
-$bid_increment = floatval(get_option('aih_bid_increment', 1));
-
 $cart_count = 0;
 $checkout = AIH_Checkout::get_instance();
 $cart_count = count($checkout->get_won_items($bidder_id));
@@ -66,8 +64,7 @@ $payment_statuses = $checkout->get_bidder_payment_statuses($bidder_id);
                 $images = $art_images->get_images($bid->art_piece_id);
                 $bid_title = isset($bid->title) ? $bid->title : (isset($bid->art_title) ? $bid->art_title : '');
                 $image_url = !empty($images) ? $images[0]->watermarked_url : (isset($bid->watermarked_url) ? $bid->watermarked_url : (isset($bid->image_url) ? $bid->image_url : ''));
-                $highest_bid = $bid_model->get_highest_bid_amount($bid->art_piece_id);
-                $min_bid = $highest_bid + $bid_increment;
+                $min_bid = floatval($bid->starting_bid);
 
                 $is_paid = isset($payment_statuses[$bid->art_piece_id]) && $payment_statuses[$bid->art_piece_id] === 'paid';
 
@@ -78,8 +75,8 @@ $payment_statuses = $checkout->get_bidder_payment_statuses($bidder_id);
                     $status_class = 'won';
                     $status_text = 'Won';
                 } elseif ($is_ended) {
-                    $status_class = 'ended';
-                    $status_text = 'Ended';
+                    $status_class = 'outbid';
+                    $status_text = 'Outbid';
                 } elseif ($is_winning) {
                     $status_class = 'winning';
                     $status_text = 'Winning';
@@ -88,14 +85,14 @@ $payment_statuses = $checkout->get_bidder_payment_statuses($bidder_id);
                     $status_text = 'Outbid';
                 }
             ?>
-            <article class="aih-card <?php echo esc_attr($status_class); ?>" data-id="<?php echo intval($bid->art_piece_id); ?>" <?php if (!empty($bid->auction_end)): ?>data-end="<?php echo esc_attr($bid->auction_end); ?>"<?php endif; ?>>
+            <article class="aih-card <?php echo esc_attr($status_class); ?>" data-id="<?php echo intval($bid->art_piece_id); ?>" data-starting-bid="<?php echo esc_attr($bid->starting_bid); ?>" <?php if (!empty($bid->auction_end)): ?>data-end="<?php echo esc_attr($bid->auction_end); ?>"<?php endif; ?>>
                 <div class="aih-card-image">
                     <?php if ($image_url): ?>
-                    <a href="<?php echo esc_url($gallery_url); ?>?art_id=<?php echo intval($bid->art_piece_id); ?>">
-                        <img src="<?php echo esc_url($image_url); ?>" alt="<?php echo esc_attr($bid_title); ?>" loading="lazy">
+                    <a href="<?php echo esc_url(AIH_Template_Helper::get_art_url($bid->art_id)); ?>">
+                        <?php echo AIH_Template_Helper::picture_tag($image_url, $bid_title, '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw'); ?>
                     </a>
                     <?php else: ?>
-                    <a href="<?php echo esc_url($gallery_url); ?>?art_id=<?php echo intval($bid->art_piece_id); ?>" class="aih-placeholder-link">
+                    <a href="<?php echo esc_url(AIH_Template_Helper::get_art_url($bid->art_id)); ?>" class="aih-placeholder-link">
                         <div class="aih-placeholder">
                             <span class="aih-placeholder-id"><?php echo esc_html(isset($bid->art_id) ? $bid->art_id : ''); ?></span>
                             <span class="aih-placeholder-text"><?php _e('No Image', 'art-in-heaven'); ?></span>
@@ -116,7 +113,7 @@ $payment_statuses = $checkout->get_bidder_payment_statuses($bidder_id);
 
                 <div class="aih-card-body">
                     <h3 class="aih-card-title">
-                        <a href="<?php echo esc_url($gallery_url); ?>?art_id=<?php echo intval($bid->art_piece_id); ?>"><?php echo esc_html($bid_title); ?></a>
+                        <a href="<?php echo esc_url(AIH_Template_Helper::get_art_url($bid->art_id)); ?>"><?php echo esc_html($bid_title); ?></a>
                     </h3>
                     <p class="aih-card-artist"><?php echo esc_html(isset($bid->artist) ? $bid->artist : ''); ?></p>
                 </div>

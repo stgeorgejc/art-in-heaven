@@ -1,6 +1,5 @@
 /* ============================================
    ELEGANT AUCTION THEME - MOBILE FIRST
-   Version: 0.9.7
 
    Note: Google Fonts are loaded via elegant-theme.php
    ============================================ */
@@ -231,6 +230,17 @@ body.aih-active .page-title {
     display: none !important;
 }
 
+/* ── WordPress theme chrome: hide on plugin pages ── */
+body.aih-active .wp-site-blocks > header,
+body.aih-active .wp-site-blocks > footer {
+    display: none !important;
+}
+
+body.aih-active .wp-site-blocks {
+    padding-block-start: 0 !important;
+    padding-block-end: 0 !important;
+}
+
 /* ============================================
    HEADER - MOBILE FIRST
    ============================================ */
@@ -245,12 +255,11 @@ body.aih-active .page-title {
 }
 
 .aih-page .aih-header-inner {
-    padding: 12px 24px;
+    padding: 6px 10px;
     display: flex;
-    flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
-    gap: 12px;
+    gap: 4px;
     max-width: 100%;
     margin: 0 auto;
     width: 100%;
@@ -258,7 +267,7 @@ body.aih-active .page-title {
 
 .aih-logo {
     font-family: var(--font-display);
-    font-size: 20px;
+    font-size: 1rem;
     font-weight: 600;
     color: var(--color-primary);
     text-decoration: none;
@@ -268,12 +277,8 @@ body.aih-active .page-title {
 
 .aih-nav {
     display: flex;
-    gap: 20px;
-    order: 3;
-    width: 100%;
-    justify-content: center;
-    padding-top: 12px;
-    border-top: 1px solid var(--color-border);
+    gap: 6px;
+    align-items: center;
 }
 
 .aih-page .aih-nav-link {
@@ -282,11 +287,12 @@ body.aih-active .page-title {
     font-weight: 500;
     color: var(--color-muted);
     text-decoration: none;
-    letter-spacing: 1.5px;
+    letter-spacing: 1px;
     text-transform: uppercase;
     transition: color var(--transition);
-    padding: 6px 0;
+    padding: 4px 0;
     border-bottom: 2px solid transparent;
+    white-space: nowrap;
 }
 
 .aih-nav-link:hover,
@@ -301,15 +307,16 @@ body.aih-active .page-title {
 .aih-header-actions {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 4px;
 }
 
 .aih-cart-link {
     display: flex;
     align-items: center;
-    gap: 4px;
-    height: 32px;
-    padding: 0 12px;
+    justify-content: center;
+    position: relative;
+    height: 28px;
+    padding: 0 6px;
     background: var(--color-bg);
     border: 1px solid var(--color-border);
     border-radius: var(--radius);
@@ -324,22 +331,29 @@ body.aih-active .page-title {
 }
 
 .aih-cart-count {
+    position: absolute;
+    top: -6px;
+    right: -6px;
     background: var(--color-accent);
     color: white;
     font-size: 10px;
-    font-weight: 600;
-    padding: 2px 6px;
-    border-radius: 10px;
+    font-weight: 700;
+    min-width: 16px;
+    height: 16px;
+    line-height: 16px;
+    text-align: center;
+    padding: 0 4px;
+    border-radius: 8px;
 }
 
 .aih-user-menu {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 6px;
 }
 
 .aih-page .aih-user-name {
-    display: flex;
+    display: none;
     align-items: center;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     font-size: 13px;
@@ -353,6 +367,9 @@ body.aih-active .page-title {
 }
 
 .aih-logout-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-size: 11px;
     font-weight: 500;
     color: var(--color-muted);
@@ -360,9 +377,20 @@ body.aih-active .page-title {
     border: 1px solid var(--color-border);
     border-radius: var(--radius);
     cursor: pointer;
-    height: 32px;
-    padding: 0 12px;
+    height: 28px;
+    padding: 0 6px;
     transition: all var(--transition);
+}
+
+.aih-logout-icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+/* Label hidden on mobile, shown at 900px+ */
+.aih-logout-label {
+    display: none;
 }
 
 .aih-logout-btn:hover {
@@ -376,7 +404,7 @@ body.aih-active .page-title {
 .aih-page .aih-main {
     flex: 1 1 auto;
     width: 100%;
-    padding: 20px 24px;
+    padding: 8px 10px;
     background: var(--color-bg);
     min-height: 0;
     min-width: 0;
@@ -399,19 +427,29 @@ body.aih-active .page-title {
 .aih-gallery-header {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    margin-bottom: 16px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--color-border);
+    gap: 4px;
+    margin-bottom: 4px;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+/* Gallery page only: collapse header gap since h1 is hidden on mobile */
+.aih-gallery-page .aih-gallery-header {
+    gap: 0;
+    margin-bottom: 8px;
+}
+
+.aih-gallery-page .aih-gallery-title h1 {
+    display: none; /* Hidden on mobile — header nav shows active page */
 }
 
 .aih-gallery-title h1 {
     font-family: var(--font-display);
-    font-size: 24px;
+    font-size: 1.1rem;
     font-weight: 500;
     color: var(--color-primary);
     letter-spacing: -0.5px;
-    margin-bottom: 2px;
+    margin-bottom: 0;
     overflow-wrap: break-word;
     word-wrap: break-word;
 }
@@ -420,28 +458,29 @@ body.aih-active .page-title {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     font-size: 12px;
     color: var(--color-muted);
+    display: none;
 }
 
 .aih-gallery-controls {
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 12px;
+    flex-wrap: nowrap;
+    gap: 6px;
+    margin-top: 0;
     align-items: center;
 }
 
 .aih-search-box {
-    flex: 1 1 100%;
-    width: 100%;
+    flex: 1 1 auto;
+    min-width: 0;
     order: 0;
 }
 
 .aih-search-input {
     width: 100%;
-    height: 36px;
-    padding: 5px 8px;
+    height: 30px;
+    padding: 4px 8px;
     font-family: var(--font-body);
-    font-size: 11px;
+    font-size: 16px; /* >=16px prevents iOS Safari auto-zoom on focus */
     color: var(--color-primary);
     background: var(--color-surface);
     border: 1px solid var(--color-border);
@@ -475,10 +514,10 @@ body.aih-active .page-title {
     align-items: center;
     justify-content: center;
     gap: 6px;
-    height: 36px;
-    padding: 0 12px;
+    height: 30px;
+    padding: 0 10px;
     font-family: var(--font-body);
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 500;
     color: var(--color-primary);
     background: var(--color-surface);
@@ -723,13 +762,23 @@ body.filter-open {
 .aih-gallery-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
+    gap: 8px;
     width: 100%;
+}
+
+@media (min-width: 480px) {
+    .aih-gallery-grid {
+        gap: 12px;
+    }
 }
 
 @media (min-width: 768px) {
     .aih-gallery-grid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .aih-card-title {
+        font-size: 19px;
     }
 }
 
@@ -1045,7 +1094,7 @@ body.filter-open {
 }
 
 .aih-card-body {
-    padding: 6px 5px;
+    padding: 6px 8px;
     min-width: 0;
     max-width: 100%;
     min-height: auto;
@@ -1062,7 +1111,7 @@ body.filter-open {
     justify-content: space-between;
     align-items: center;
     margin-top: auto;
-    padding-top: 4px;
+    padding-top: 2px;
     gap: 4px;
 }
 
@@ -1097,8 +1146,8 @@ body.filter-open {
     font-size: 13px;
     font-weight: 500;
     line-height: 1.4;
-    margin-bottom: 3px;
-    padding-bottom: 3px;
+    margin-bottom: 2px;
+    padding-bottom: 2px;
     /* Ellipsis for long titles - 2 lines max */
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -1127,7 +1176,7 @@ body.filter-open {
 }
 
 .aih-card-footer {
-    padding: 4px 4px 6px;
+    padding: 6px 8px;
     border-top: 1px solid var(--color-border);
     background: var(--color-bg);
     min-width: 0;
@@ -1489,7 +1538,7 @@ body.filter-open {
 .aih-single-content {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 32px;
+    gap: 16px;
     align-items: start;
     flex: 1;
     min-width: 0;
@@ -1547,7 +1596,8 @@ body.filter-open {
     overflow: hidden;
 }
 
-.aih-single-image > img {
+.aih-single-image > img,
+.aih-single-image > picture > img {
     width: 100%;
     height: auto;
     display: block;
@@ -1962,22 +2012,26 @@ body.filter-open {
     justify-content: center;
     width: 18px;
     height: 18px;
-    /* Outline heart for unpressed state */
-    -webkit-text-stroke: 1.5px var(--color-muted);
-    color: transparent;
 }
 
-.aih-fav-btn:hover .aih-fav-icon {
-    -webkit-text-stroke-color: var(--color-accent);
+.aih-fav-btn .aih-fav-icon svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: var(--color-muted);
+    stroke-width: 2;
+    transition: fill 0.2s ease, stroke 0.2s ease;
 }
 
-.aih-fav-btn.active .aih-fav-icon {
-    /* Filled heart for pressed state */
-    -webkit-text-stroke: 0;
-    color: white;
+.aih-fav-btn:hover .aih-fav-icon svg {
+    stroke: var(--color-accent);
 }
 
-/* ============================================
+.aih-fav-btn.active .aih-fav-icon svg {
+    fill: white;
+    stroke: white;
+}
+
 /* ============================================
    CHECKOUT PAGE - FULL WIDTH LAYOUT
    ============================================ */
@@ -2098,21 +2152,6 @@ body.filter-open {
     display: block;
 }
 
-/* ============================================
-   SINGLE PAGE - NAVIGATION & PAGE INDICATOR
-   Note: Main styles are in single-item.php
-   ============================================ */
-.aih-back-link {
-    font-size: 13px;
-    color: var(--color-muted);
-    text-decoration: none;
-    transition: color var(--transition);
-}
-
-.aih-back-link:hover {
-    color: var(--color-primary);
-}
-
 /* Prevent text size adjustment on orientation change (iOS) */
 html {
     -webkit-text-size-adjust: 100%;
@@ -2136,7 +2175,7 @@ body {
     }
 
     .aih-card-body {
-        padding: 8px 6px;
+        padding: 8px 10px;
     }
 
     .aih-card-artist {
@@ -2167,11 +2206,11 @@ body {
     }
 
     .aih-card-body {
-        padding: 8px 8px;
+        padding: 10px 12px;
     }
 
     .aih-gallery-grid {
-        gap: 14px;
+        gap: 12px;
     }
 }
 
@@ -2221,21 +2260,24 @@ body {
     /* Controls layout */
     .aih-gallery-controls {
         flex-wrap: nowrap;
+        gap: 12px;
     }
 
     .aih-search-box {
-        flex: 0 0 150px;
+        flex: 0 1 240px;
         width: auto;
         order: 0;
     }
 
     .aih-search-input {
+        height: 32px;
         padding: 0 12px;
-        font-size: 13px;
+        font-size: 16px; /* >=16px prevents iOS Safari auto-zoom on focus */
         width: 240px;
     }
 
     .aih-filter-toggle {
+        height: 36px;
         order: 0;
     }
 
@@ -2283,36 +2325,42 @@ body {
         letter-spacing: 2px;
     }
 
+    .aih-gallery-page .aih-gallery-title h1 {
+        display: block;
+    }
+
     .aih-gallery-title h1 {
         font-size: 32px;
     }
 
     .aih-card-title {
-        font-size: 22px;
-        line-height: 1.6;
+        font-size: 17px;
+        line-height: 1.5;
     }
 
     .aih-card-artist {
         font-size: 11px;
     }
 
-    /* Layout */
-    .aih-main {
+    /* Layout — .aih-page prefix matches base rule specificity */
+    .aih-page .aih-main {
         padding: 24px;
     }
 
     .aih-gallery-header {
         gap: 16px;
         margin-bottom: 28px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--color-border);
     }
 
     .aih-gallery-grid {
-        gap: 20px;
+        gap: 16px;
     }
 
     .aih-gallery-grid.single-view {
         max-width: 450px;
-        gap: 20px;
+        gap: 16px;
     }
 
     /* Card styles */
@@ -2455,41 +2503,86 @@ body {
         font-size: 15px;
     }
     
-    .aih-header-inner {
+    .aih-page .aih-header-inner {
         padding: 16px 48px;
-        flex-wrap: nowrap;
+        gap: 12px;
     }
-    
+
     .aih-logo {
         font-size: 24px;
         flex: 1;
     }
 
     .aih-nav {
-        order: 0;
-        width: auto;
         flex: 0 0 auto;
         justify-content: center;
         gap: 36px;
-        padding-top: 0;
-        border-top: none;
     }
 
     .aih-header-actions {
         flex: 1;
         justify-content: flex-end;
+        gap: 12px;
     }
-    
+
+    .aih-user-menu {
+        gap: 12px;
+    }
+
+    .aih-user-name {
+        display: flex;
+    }
+
+    .aih-logout-btn {
+        height: 32px;
+        padding: 0 12px;
+        gap: 6px;
+    }
+
+    .aih-logout-label {
+        display: inline;
+    }
+
     .aih-nav-link {
         font-size: 12px;
+        letter-spacing: 1.5px;
+        padding: 6px 0;
     }
-    
-    .aih-main {
+
+    .aih-page .aih-main {
         padding: 32px 48px;
     }
-    
+
     .aih-gallery-header {
         gap: 16px;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+    }
+
+    .aih-gallery-title h1 {
+        font-size: 24px;
+        margin-bottom: 2px;
+    }
+
+    .aih-subtitle {
+        display: block;
+        font-size: 12px;
+    }
+
+    .aih-gallery-controls {
+        gap: 16px;
+        margin-top: 12px;
+    }
+
+    .aih-search-input {
+        height: 36px;
+        font-size: 16px; /* >=16px prevents iOS Safari auto-zoom on focus */
+    }
+
+    .aih-filter-toggle {
+        height: 36px;
+        padding: 0 12px;
+        font-size: 12px;
     }
     
     .aih-gallery-grid {
@@ -2509,10 +2602,15 @@ body {
         transition: transform 0.4s ease;
     }
     
+    .aih-card-title {
+        font-size: 22px;
+        line-height: 1.5;
+    }
+
     .aih-card-body {
         padding: 14px 16px;
     }
-    
+
     .aih-card-footer {
         padding: 10px 14px 12px;
     }
@@ -2534,7 +2632,30 @@ body {
         grid-template-columns: 1.2fr 1fr;
         gap: 48px;
     }
-    
+
+    .aih-single-image > img,
+    .aih-single-image > picture > img {
+        max-height: 50vh;
+    }
+
+    .aih-single-image {
+        padding: 12px;
+    }
+
+    .aih-single-nav-bar {
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        gap: 12px;
+    }
+
+    .aih-nav-center {
+        gap: 12px;
+    }
+
+    .aih-artist {
+        margin-bottom: 24px;
+    }
+
     .aih-single-details h1 {
         font-size: 32px;
     }
@@ -2570,8 +2691,7 @@ body {
     }
 
     .aih-search-box {
-        width: 240px;
-        flex-shrink: 0;
+        flex: 0 0 240px;
     }
 
     .aih-filter-group {
@@ -2615,11 +2735,11 @@ body {
    These rules add larger padding for very wide screens.
    ============================================ */
 @media (min-width: 1400px) {
-    .aih-main {
+    .aih-page .aih-main {
         padding: 32px 48px;
     }
 
-    .aih-header-inner {
+    .aih-page .aih-header-inner {
         padding: 16px 48px;
     }
 }
@@ -3050,6 +3170,25 @@ body {
     }
 }
 
+/* Restore header spacing at tablet+ (compacted on mobile for fit) */
+@media (min-width: 600px) {
+    .aih-page .aih-header-inner {
+        gap: 8px;
+    }
+
+    .aih-logo {
+        font-size: 1.1rem;
+    }
+
+    .aih-nav {
+        gap: 12px;
+    }
+
+    .aih-header-actions {
+        gap: 6px;
+    }
+}
+
 /* ============================================
    NOTIFICATION DENIED HELP MODAL
    ============================================ */
@@ -3126,6 +3265,164 @@ body {
 }
 
 /* ============================================
+   iOS PWA INSTALL BANNER (Bottom Sheet)
+   ============================================ */
+.aih-ios-install-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-lightbox);
+    background: rgba(0, 0, 0, 0.5);
+    align-items: flex-end;
+    justify-content: center;
+    padding: 0;
+}
+
+.aih-ios-install-overlay.active {
+    display: flex;
+}
+
+.aih-ios-install-card {
+    background: var(--color-surface, #fff);
+    border-radius: 16px 16px 0 0;
+    padding: 28px 24px calc(24px + env(safe-area-inset-bottom, 0px));
+    width: 100%;
+    max-width: 480px;
+    position: relative;
+    box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.2);
+    font-family: var(--font-body, 'Inter', -apple-system, sans-serif);
+    color: var(--color-primary, #1a1a2e);
+    text-align: center;
+    animation: aih-slide-up 0.3s ease-out;
+}
+
+@keyframes aih-slide-up {
+    from { transform: translateY(100%); }
+    to   { transform: translateY(0); }
+}
+
+.aih-ios-install-icon {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 16px;
+    background: rgba(184, 149, 107, 0.12);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-accent, #b8956b);
+}
+
+.aih-ios-install-card h3 {
+    margin: 0 0 8px;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.aih-ios-install-card p {
+    margin: 0 0 20px;
+    font-size: 13px;
+    color: var(--color-secondary, #666);
+    line-height: 1.5;
+}
+
+.aih-ios-install-steps {
+    text-align: left;
+    margin: 0;
+    padding-left: 22px;
+    font-size: 14px;
+    line-height: 1.8;
+    list-style: none;
+    counter-reset: ios-step;
+}
+
+.aih-ios-install-steps li {
+    counter-increment: ios-step;
+    margin-bottom: 6px;
+    position: relative;
+}
+
+.aih-ios-install-steps li::before {
+    content: counter(ios-step);
+    position: absolute;
+    left: -22px;
+    width: 18px;
+    height: 18px;
+    background: var(--color-accent, #b8956b);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    top: 3px;
+}
+
+.aih-ios-install-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: none;
+    border: none;
+    font-size: 22px;
+    color: var(--color-muted, #999);
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+}
+
+.aih-ios-install-close:hover {
+    color: var(--color-primary, #1a1a2e);
+}
+
+.aih-install-btn {
+    display: block;
+    width: 100%;
+    margin-top: 20px;
+    padding: 14px 24px;
+    background: var(--color-accent, #b8956b);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    font-family: var(--font-body, 'Inter', -apple-system, sans-serif);
+    cursor: pointer;
+    transition: background var(--transition);
+}
+
+.aih-install-btn:hover {
+    background: var(--color-accent-dark, #9a7a55);
+}
+
+.aih-install-dismiss-btn {
+    display: block;
+    width: 100%;
+    margin-top: 8px;
+    padding: 10px 24px;
+    background: none;
+    color: var(--color-muted, #6b6b6b);
+    border: none;
+    font-size: 14px;
+    font-family: var(--font-body, 'Inter', -apple-system, sans-serif);
+    cursor: pointer;
+}
+
+.aih-install-dismiss-btn:hover {
+    color: var(--color-primary, #1c1c1c);
+}
+
+/* Dark mode */
+.aih-page.dark-mode .aih-ios-install-card {
+    background: var(--color-surface, #1e1e2e);
+}
+
+.aih-page.dark-mode .aih-ios-install-icon {
+    background: rgba(184, 149, 107, 0.2);
+}
+
+/* ============================================
    NOTIFICATION BELL BADGE
    ============================================ */
 .aih-notify-badge {
@@ -3143,6 +3440,33 @@ body {
     border-radius: 8px;
     padding: 0 4px;
     pointer-events: none;
+}
+
+/* ============================================
+   CONNECTION STATUS DOT
+   ============================================ */
+.aih-connection-dot {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    border: 1.5px solid var(--color-bg);
+    pointer-events: none;
+    transition: background var(--transition);
+}
+
+.aih-conn-realtime {
+    background: var(--color-success);
+}
+
+.aih-conn-polling {
+    background: #e6a817;
+}
+
+.aih-conn-offline {
+    background: var(--color-error);
 }
 
 /* ============================================
@@ -3439,33 +3763,35 @@ body {
 /* Single Item Page Overrides */
 .aih-single-nav-bar {
     display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 24px;
-    padding-bottom: 16px;
+    gap: 8px;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
     border-bottom: 1px solid var(--color-border);
 }
 
 .aih-back-link {
-    width: 100%;
-    text-align: center;
-    order: 2;
-    font-size: 13px;
+    flex: 1;
+    text-align: left;
+    order: 0;
+    font-size: 12px;
     color: var(--color-accent);
     text-decoration: none;
     font-weight: 500;
+    transition: color var(--transition);
+    white-space: nowrap;
 }
 
 .aih-back-link:hover {
+    color: var(--color-accent-dark);
     text-decoration: underline;
 }
 
 .aih-nav-center {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
     order: 1;
 }
 
@@ -3503,7 +3829,7 @@ body {
 }
 
 .aih-nav-spacer {
-    display: none;
+    flex: 1;
 }
 
 /* Content wrapper with navigation arrows at edges */
@@ -3552,17 +3878,18 @@ body {
     position: relative;
     background: var(--color-surface);
     border: 1px solid var(--color-border);
-    padding: 12px;
+    padding: 8px;
     display: flex;
     flex-direction: column;
     align-items: center;
 }
 
-.aih-single-image > img {
+.aih-single-image > img,
+.aih-single-image > picture > img {
     width: auto;
     max-width: 100%;
     height: auto;
-    max-height: 55vh;
+    max-height: 45vh;
     display: block;
     object-fit: contain;
     cursor: zoom-in;
@@ -3641,7 +3968,11 @@ body {
     overflow-wrap: break-word;
     word-wrap: break-word;
     word-break: break-word;
+    display: flex;
+    flex-direction: column;
 }
+
+/* Natural DOM order: details above bid on all breakpoints */
 
 .aih-single-meta {
     display: flex;
@@ -3660,7 +3991,7 @@ body {
 .aih-artist {
     font-size: clamp(14px, 3.5vw, 16px);
     color: var(--color-muted);
-    margin-bottom: 24px;
+    margin-bottom: 8px;
 }
 
 .aih-piece-info {
@@ -3688,6 +4019,8 @@ body {
     text-transform: uppercase;
     letter-spacing: 1px;
     color: var(--color-muted);
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .aih-info-row span:last-child {
@@ -4209,7 +4542,7 @@ html.aih-lightbox-open body {
     }
 
     .aih-back-link {
-        width: auto;
+        flex: 0 0 auto;
         text-align: left;
         order: 0;
         font-size: 14px;
@@ -4221,7 +4554,7 @@ html.aih-lightbox-open body {
 
     .aih-nav-spacer {
         display: block;
-        width: 100px;
+        flex: 0 0 100px;
     }
 
     .aih-single-content-wrapper > .aih-nav-arrow {
@@ -4378,8 +4711,24 @@ html.aih-lightbox-open body {
         gap: 32px;
     }
 
-    .aih-single-image > img {
-        max-height: 55vh;
+    .aih-single-image > img,
+    .aih-single-image > picture > img {
+        max-height: 50vh;
+    }
+
+    .aih-single-details {
+        max-width: 100%;
+        position: sticky;
+        top: 16px;
+        align-self: start;
+    }
+}
+
+/* Override single-item image height on large desktops (must follow 900px+ rule) */
+@media (min-width: 1400px) {
+    .aih-single-image > img,
+    .aih-single-image > picture > img {
+        max-height: 45vh;
     }
 
     .aih-single-details h1 {
@@ -4391,39 +4740,22 @@ html.aih-lightbox-open body {
         justify-content: space-between;
         gap: 16px;
     }
-}
-
-/* Wider details section - improved grid */
-@media (min-width: 900px) {
-    .aih-single-content {
-        grid-template-columns: 1fr 1fr;
-        gap: 32px;
-    }
-
-    .aih-single-details {
-        max-width: 100%;
-    }
-
-    .aih-piece-info {
-        padding: 20px;
-    }
 
     .aih-info-row span:last-child {
         max-width: 65%;
         text-align: right;
     }
 
-    /* Better bid section scaling */
+    .aih-piece-info {
+        padding: 20px;
+    }
+
     .aih-bid-section {
         padding: 24px;
     }
 
     .aih-current-bid .aih-bid-amount {
         font-size: 32px;
-    }
-
-    .aih-single-details h1 {
-        font-size: 28px;
     }
 }
 
@@ -5844,6 +6176,184 @@ html.aih-lightbox-open body {
 @media (max-width: 600px) {
     .aih-winner-code {
         font-size: 13px;
+    }
+}
+
+/* ============================================
+   NOTIFICATION DRAWER
+   ============================================ */
+.aih-drawer-backdrop {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: var(--z-modal);
+}
+
+.aih-drawer-backdrop.active {
+    display: block;
+}
+
+.aih-notification-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    max-width: 400px;
+    background: var(--color-surface);
+    z-index: var(--z-lightbox);
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--shadow-lg);
+}
+
+.aih-notification-drawer.active {
+    transform: translateX(0);
+}
+
+.aih-drawer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--color-border);
+    flex-shrink: 0;
+    padding-top: calc(16px + var(--safe-area-top));
+}
+
+.aih-drawer-title {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--color-primary);
+    margin: 0;
+}
+
+.aih-drawer-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.aih-drawer-mark-read {
+    background: none;
+    border: none;
+    color: var(--color-accent);
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 4px 0;
+}
+
+.aih-drawer-mark-read:hover {
+    text-decoration: underline;
+}
+
+.aih-drawer-close {
+    background: none;
+    border: none;
+    color: var(--color-muted);
+    font-size: 22px;
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+}
+
+.aih-drawer-close:hover {
+    color: var(--color-primary);
+}
+
+.aih-drawer-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 20px;
+    border-bottom: 1px solid var(--color-border);
+    font-size: 11px;
+    color: var(--color-muted);
+    flex-shrink: 0;
+}
+
+.aih-drawer-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.aih-drawer-list {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: var(--safe-area-bottom);
+}
+
+.aih-drawer-empty {
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--color-muted);
+    font-size: 13px;
+}
+
+.aih-drawer-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--color-border);
+    text-decoration: none;
+    color: var(--color-primary);
+    transition: background var(--transition);
+    background: var(--color-success-bg);
+}
+
+.aih-drawer-item:hover {
+    background: var(--color-bg-alt);
+}
+
+.aih-drawer-item-read {
+    background: transparent;
+}
+
+.aih-drawer-item-read .aih-drawer-item-text {
+    font-weight: 400;
+}
+
+.aih-drawer-item-icon {
+    color: var(--color-error);
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.aih-drawer-item-body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.aih-drawer-item-text {
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.4;
+    overflow-wrap: break-word;
+}
+
+.aih-drawer-item-time {
+    font-size: 11px;
+    color: var(--color-muted);
+}
+
+@media (max-width: 600px) {
+    .aih-notification-drawer {
+        max-width: 100%;
     }
 }
 

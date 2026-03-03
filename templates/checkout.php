@@ -121,7 +121,7 @@ $total = $subtotal + $tax;
                     </label>
                     <div class="aih-checkout-item-image">
                         <?php if ($image_url): ?>
-                        <img src="<?php echo esc_url($image_url); ?>" alt="<?php echo esc_attr(isset($item->title) ? $item->title : ''); ?>">
+                        <?php echo AIH_Template_Helper::picture_tag($image_url, isset($item->title) ? $item->title : '', '80px'); ?>
                         <span class="aih-art-id-badge"><?php echo esc_html(isset($item->art_id) ? $item->art_id : ''); ?></span>
                         <?php else: ?>
                         <div class="aih-checkout-placeholder">
@@ -267,7 +267,12 @@ jQuery(document).ready(function($) {
         });
         if (ids.length === 0) return;
         var $btn = $(this).prop('disabled', true).addClass('loading');
-        $.post(aihApiUrl('create-order'), {action:'aih_create_order', nonce:aihAjax.nonce, 'art_piece_ids[]': ids}, function(r) {
+        // Generate idempotency key to prevent duplicate orders on network retry
+        var idempotencyKey = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            var r = Math.random() * 16 | 0;
+            return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+        });
+        $.post(aihApiUrl('create-order'), {action:'aih_create_order', nonce:aihAjax.nonce, 'art_piece_ids[]': ids, idempotency_key: idempotencyKey}, function(r) {
             if (r.success && r.data.pushpay_url) {
                 window.location.href = r.data.pushpay_url;
             } else {
@@ -330,7 +335,7 @@ jQuery(document).ready(function($) {
                         html += '<div class="aih-order-item-row">';
                         html += '<div class="aih-order-item-image">';
                         if (item.image_url) {
-                            html += '<img src="' + escapeHtml(item.image_url) + '" alt="' + escapeHtml(item.title || '') + '">';
+                            html += aihPictureTag(item.image_url, escapeHtml(item.title || ''), '80px');
                         }
                         if (item.art_id) {
                             html += '<span class="aih-art-id-badge">' + escapeHtml(item.art_id) + '</span>';

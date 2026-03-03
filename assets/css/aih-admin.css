@@ -1,7 +1,6 @@
 /**
  * Art in Heaven Admin Styles
  * Clean, responsive admin portal styling
- * Version: 0.9.7
  * 
  * Constraints:
  * - All classes prefixed with .aih-
@@ -53,6 +52,13 @@
     
     /* Touch target minimum */
     --aih-touch-target: 44px;
+}
+
+/* ============================================
+   GENERIC UTILITIES
+   ============================================ */
+.aih-hidden {
+    display: none;
 }
 
 /* ============================================

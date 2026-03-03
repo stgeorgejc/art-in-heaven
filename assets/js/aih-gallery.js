@@ -2,6 +2,9 @@
  * Art in Heaven - Gallery Page JavaScript
  */
 jQuery(document).ready(function($) {
+    // Guard: only run on gallery pages where the wrapper exists
+    if (!$('#aih-gallery-wrapper').length) return;
+
     // Search & Filter
     var serverTime = parseInt($('#aih-gallery-wrapper').data('server-time')) || new Date().getTime();
     var timeOffset = serverTime - new Date().getTime();
@@ -330,6 +333,10 @@ jQuery(document).ready(function($) {
             if (diff <= 0) {
                 $el.find('.aih-time-value').text('Ended');
                 $el.addClass('ended');
+                // Refresh status from server now that auction ended
+                if (typeof window.aihPollStatus === 'function') {
+                    window.aihPollStatus();
+                }
                 return;
             }
 
@@ -475,11 +482,6 @@ jQuery(document).ready(function($) {
                         } else {
                             $card.find('.aih-badge').remove();
                         }
-                    }
-
-                    var $input = $card.find('.aih-bid-input');
-                    if ($input.length) {
-                        $input.attr('data-min', info.min_bid).data('min', info.min_bid);
                     }
 
                     if (info.has_bids) {

@@ -21,6 +21,22 @@ class AIH_Database {
     private static $cached_year = null;
 
     /**
+     * Ordered list of versioned migrations.
+     *
+     * Each entry maps a version string to the migration method name.
+     * Migrations are run in order; only those with version > current
+     * stored aih_db_migration_version are executed.
+     *
+     * @var array
+     */
+    private static $migrations = array(
+        '1.0' => 'migrate_bids_table',
+        '1.1' => 'migrate_art_pieces_table',
+        '1.2' => 'cleanup_bidders_table',
+        '1.3' => 'add_bids_composite_index',
+    );
+
+    /**
      * Get current auction year
      *
      * @return string
@@ -121,7 +137,8 @@ class AIH_Database {
             KEY bidder_art (bidder_id, art_piece_id),
             KEY bidder_status (bidder_id, bid_status),
             KEY art_status (art_piece_id, bid_status),
-            KEY art_bidder_winning (art_piece_id, bidder_id, is_winning)
+            KEY art_bidder_winning (art_piece_id, bidder_id, is_winning),
+            KEY art_bidder_status (art_piece_id, bid_status, bidder_id, is_winning)
         ) $charset_collate;";
         
         // Favorites table - {Year}_Favorites
@@ -364,15 +381,12 @@ class AIH_Database {
             error_log('AIH: SHOW TABLES LIKE result: ' . var_export($like_result, true) . ' | expected: ' . $check_table);
         }
 
-        // Migrate: Add bid_status column if it doesn't exist
-        self::migrate_bids_table($year);
-        
-        // Migrate: Add show_end_time column if it doesn't exist
-        self::migrate_art_pieces_table($year);
-        
-        // Clean up old columns from bidders table if they exist
-        self::cleanup_bidders_table($year);
-        
+        // Run only migrations that haven't been applied yet
+        self::run_pending_migrations($year);
+
+        // Add foreign key constraints (idempotent -- silently skips if they already exist)
+        self::add_foreign_keys($year);
+
         // Store database version
         update_option('aih_db_version', AIH_DB_VERSION);
         update_option('aih_auction_year', $year);
@@ -522,8 +536,50 @@ class AIH_Database {
     }
     
     /**
+     * Add composite index for optimized poll_status() query.
+     *
+     * Column order (art_piece_id, bid_status, bidder_id, is_winning) matches
+     * the JOIN/WHERE predicates so MySQL can use it as a covering index.
+     *
+     * @param int|null $year
+     */
+    public static function add_bids_composite_index($year = null) {
+        global $wpdb;
+
+        if (!$year) {
+            $year = self::get_auction_year();
+        }
+
+        $table = $wpdb->prefix . absint($year) . '_Bids';
+
+        // Check if table exists first
+        $table_exists = $wpdb->get_var($wpdb->prepare(
+            "SHOW TABLES LIKE %s",
+            $table
+        ));
+
+        if (!$table_exists) {
+            return;
+        }
+
+        // Check if the index already exists
+        $index_exists = $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS
+             WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s AND INDEX_NAME = 'art_bidder_status'",
+            DB_NAME, $table
+        ));
+
+        if (!$index_exists) {
+            $wpdb->query(
+                "ALTER TABLE `" . esc_sql($table) . "`
+                 ADD INDEX `art_bidder_status` (`art_piece_id`, `bid_status`, `bidder_id`, `is_winning`)"
+            );
+        }
+    }
+
+    /**
      * Map old column names to new ones
-     * 
+     *
      * @param string $old_col
      * @return string|null
      */
@@ -537,6 +593,109 @@ class AIH_Database {
         return isset($map[$old_col]) ? $map[$old_col] : null;
     }
     
+    /**
+     * Run pending migrations in version order.
+     *
+     * Reads the current migration version from the aih_db_migration_version option,
+     * runs only those migrations whose version is greater, and updates the stored
+     * version after each successful migration.
+     *
+     * @param int|null $year
+     */
+    public static function run_pending_migrations($year = null) {
+        if (!$year) {
+            $year = self::get_auction_year();
+        }
+
+        $current_version = get_option('aih_db_migration_version', '0');
+
+        foreach (self::$migrations as $version => $method) {
+            if (version_compare($version, $current_version, '<=')) {
+                continue; // Already applied
+            }
+
+            if (method_exists(__CLASS__, $method)) {
+                call_user_func(array(__CLASS__, $method), $year);
+                update_option('aih_db_migration_version', $version, false);
+            }
+        }
+    }
+
+    /**
+     * Add foreign key constraints to enforce referential integrity.
+     *
+     * Uses ALTER TABLE ... ADD CONSTRAINT with error suppression so that
+     * re-running on a database that already has the constraints is safe.
+     *
+     * @param int|null $year
+     */
+    public static function add_foreign_keys($year = null) {
+        global $wpdb;
+
+        if (!$year) {
+            $year = self::get_auction_year();
+        }
+        $year = absint($year);
+
+        $art_table         = $wpdb->prefix . $year . '_ArtPieces';
+        $bids_table        = $wpdb->prefix . $year . '_Bids';
+        $orders_table      = $wpdb->prefix . $year . '_Orders';
+        $order_items_table = $wpdb->prefix . $year . '_OrderItems';
+        $favorites_table   = $wpdb->prefix . $year . '_Favorites';
+
+        $constraints = array(
+            // Bids.art_piece_id -> ArtPieces.id
+            array(
+                'table'      => $bids_table,
+                'name'       => 'fk_bids_art_piece_id',
+                'column'     => 'art_piece_id',
+                'ref_table'  => $art_table,
+                'ref_column' => 'id',
+            ),
+            // OrderItems.order_id -> Orders.id
+            array(
+                'table'      => $order_items_table,
+                'name'       => 'fk_order_items_order_id',
+                'column'     => 'order_id',
+                'ref_table'  => $orders_table,
+                'ref_column' => 'id',
+            ),
+            // OrderItems.art_piece_id -> ArtPieces.id
+            array(
+                'table'      => $order_items_table,
+                'name'       => 'fk_order_items_art_piece_id',
+                'column'     => 'art_piece_id',
+                'ref_table'  => $art_table,
+                'ref_column' => 'id',
+            ),
+            // Favorites.art_piece_id -> ArtPieces.id
+            array(
+                'table'      => $favorites_table,
+                'name'       => 'fk_favorites_art_piece_id',
+                'column'     => 'art_piece_id',
+                'ref_table'  => $art_table,
+                'ref_column' => 'id',
+            ),
+        );
+
+        // Suppress errors so that duplicate constraint warnings don't bubble up
+        $suppress = $wpdb->suppress_errors(true);
+
+        foreach ($constraints as $fk) {
+            $sql = sprintf(
+                "ALTER TABLE `%s` ADD CONSTRAINT `%s` FOREIGN KEY (`%s`) REFERENCES `%s` (`%s`) ON DELETE CASCADE",
+                esc_sql($fk['table']),
+                esc_sql($fk['name']),
+                esc_sql($fk['column']),
+                esc_sql($fk['ref_table']),
+                esc_sql($fk['ref_column'])
+            );
+            $wpdb->query($sql);
+        }
+
+        $wpdb->suppress_errors($suppress);
+    }
+
     /**
      * Plugin deactivation
      */
