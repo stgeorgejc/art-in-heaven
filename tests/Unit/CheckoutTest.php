@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ArtInHeaven\Tests\Unit;
 
+use AIH_Auth;
 use AIH_Checkout;
 use AIH_Database;
 use Brain\Monkey;
@@ -19,6 +20,11 @@ class CheckoutTest extends TestCase
         parent::setUp();
         Monkey\setUp();
 
+        // Load Auth class after Brain Monkey setUp (has file-scope add_action call)
+        if (!class_exists('AIH_Auth')) {
+            require_once __DIR__ . '/../../includes/class-aih-auth.php';
+        }
+
         // Reset singletons and static caches
         $ref = new \ReflectionClass(AIH_Checkout::class);
         $prop = $ref->getProperty('instance');
@@ -29,6 +35,12 @@ class CheckoutTest extends TestCase
         $prop2 = $ref2->getProperty('cached_year');
         $prop2->setAccessible(true);
         $prop2->setValue(null, null);
+
+        // Reset AIH_Auth singleton
+        $ref3 = new \ReflectionClass(AIH_Auth::class);
+        $prop3 = $ref3->getProperty('instance');
+        $prop3->setAccessible(true);
+        $prop3->setValue(null, null);
 
         // Mock $wpdb
         $this->wpdb = new class {
@@ -98,7 +110,7 @@ class CheckoutTest extends TestCase
                 return $options[$key] ?? $default;
             },
             'wp_date' => fn() => '2026',
-            'current_time' => fn() => '2026-01-15 10:00:00',
+            'current_time' => fn($type = 'mysql') => $type === 'timestamp' ? strtotime('2026-01-15 10:00:00') : '2026-01-15 10:00:00',
             'sanitize_key' => fn($v) => preg_replace('/[^a-z0-9_\-]/', '', strtolower((string) $v)),
             '__' => fn($text) => $text,
             'wp_generate_password' => fn() => 'ABCD1234',
@@ -110,6 +122,18 @@ class CheckoutTest extends TestCase
         unset($GLOBALS['wpdb']);
         Monkey\tearDown();
         parent::tearDown();
+    }
+
+    /**
+     * Set the authenticated bidder in AIH_Auth's session cache.
+     */
+    private function setAuthBidder(string $confirmationCode): void
+    {
+        $auth = AIH_Auth::get_instance();
+        $ref = new \ReflectionClass($auth);
+        $prop = $ref->getProperty('session_data');
+        $prop->setAccessible(true);
+        $prop->setValue($auth, ['confirmation_code' => $confirmationCode]);
     }
 
     /**
@@ -238,6 +262,7 @@ class CheckoutTest extends TestCase
 
     public function testCancelPendingOrdersCancelsAndReturnsCount(): void
     {
+        $this->setAuthBidder('BIDDER1');
         $this->wpdb->get_col_queue[] = ['10', '20', '30'];
 
         $checkout = AIH_Checkout::get_instance();
@@ -252,10 +277,22 @@ class CheckoutTest extends TestCase
 
     public function testCancelPendingOrdersReturnsZeroWhenNone(): void
     {
+        $this->setAuthBidder('BIDDER2');
         $this->wpdb->get_col_queue[] = [];
 
         $checkout = AIH_Checkout::get_instance();
         $count = $checkout->cancel_pending_orders('BIDDER2');
+
+        $this->assertSame(0, $count);
+        $this->assertCount(0, $this->wpdb->update_log);
+    }
+
+    public function testCancelPendingOrdersRejectsUnauthorizedBidder(): void
+    {
+        $this->setAuthBidder('BIDDER1');
+
+        $checkout = AIH_Checkout::get_instance();
+        $count = $checkout->cancel_pending_orders('DIFFERENT_BIDDER');
 
         $this->assertSame(0, $count);
         $this->assertCount(0, $this->wpdb->update_log);

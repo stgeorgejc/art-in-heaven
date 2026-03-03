@@ -99,6 +99,7 @@ if (!isset($art_pieces)) { $art_pieces = array(); }
     });
 
     // Calculate tier totals for summary row (active art pieces only)
+    $active_bids_sum = 0;
     $tier_stats = array();
     foreach ($active_pieces as $piece) {
         $tier = !empty($piece->tier) ? $piece->tier : __('No Tier', 'art-in-heaven');
@@ -110,6 +111,7 @@ if (!isset($art_pieces)) { $art_pieces = array(); }
         $tier_stats[$tier]['bidders'] += $piece->unique_bidders;
         $tier_stats[$tier]['value'] += floatval($piece->current_bid ?: $piece->starting_bid);
         if ($piece->total_bids > 0) $tier_stats[$tier]['with_bids']++;
+        $active_bids_sum += $piece->total_bids;
     }
     ?>
 
@@ -133,7 +135,7 @@ if (!isset($art_pieces)) { $art_pieces = array(); }
             <?php
             foreach ($sorted_pieces as $piece):
                 $tier = !empty($piece->tier) ? $piece->tier : __('No Tier', 'art-in-heaven');
-                $piece_bid_rate = $total_bids_sum > 0 ? round(($piece->total_bids / $total_bids_sum) * 100, 1) : 0;
+                $piece_bid_rate = $active_bids_sum > 0 ? round(($piece->total_bids / $active_bids_sum) * 100, 1) : 0;
             ?>
             <tr data-tier="<?php echo esc_attr($tier); ?>"
                 data-art_id="<?php echo esc_attr($piece->art_id); ?>"
@@ -204,7 +206,7 @@ if (!isset($art_pieces)) { $art_pieces = array(); }
         </thead>
         <tbody>
             <?php ksort($tier_stats); foreach ($tier_stats as $tier => $tier_data):
-                $tier_bid_rate = $total_bids_sum > 0 ? round(($tier_data['bids'] / $total_bids_sum) * 100, 1) : 0;
+                $tier_bid_rate = $active_bids_sum > 0 ? round(($tier_data['bids'] / $active_bids_sum) * 100, 1) : 0;
             ?>
             <tr>
                 <td><strong><?php echo esc_html($tier); ?></strong></td>

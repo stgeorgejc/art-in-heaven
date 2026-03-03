@@ -66,13 +66,19 @@ class AIH_Checkout {
      * Callers must verify the bidder is authorized before invoking this method.
      */
     public function cancel_pending_orders($bidder_id) {
+        // Verify the caller's session matches the bidder being cancelled.
+        $current_bidder = AIH_Auth::get_instance()->get_current_bidder_id();
+        if (empty($current_bidder) || $current_bidder !== $bidder_id) {
+            return 0;
+        }
+
         global $wpdb;
         $orders_table = AIH_Database::get_table('orders');
 
         $pending_ids = $wpdb->get_col($wpdb->prepare(
             "SELECT id FROM $orders_table WHERE bidder_id = %s AND payment_status = 'pending' AND created_at < %s",
             $bidder_id,
-            gmdate('Y-m-d H:i:s', time() - 10 * MINUTE_IN_SECONDS)
+            date('Y-m-d H:i:s', current_time('timestamp') - 10 * MINUTE_IN_SECONDS)
         ));
 
         foreach ($pending_ids as $order_id) {
@@ -365,13 +371,19 @@ class AIH_Checkout {
         ) );
 
         if ( $existing_order ) {
-            $this->update_payment_status(
+            $updated = $this->update_payment_status(
                 (int) $existing_order->id,
                 $status,
                 $method,
                 $reference,
                 $notes
             );
+            if ( $updated === false ) {
+                return array(
+                    'success' => false,
+                    'message' => __( 'Failed to update payment status.', 'art-in-heaven' ),
+                );
+            }
             return array(
                 'success' => true,
                 'message' => __( 'Payment status updated.', 'art-in-heaven' ),
@@ -419,12 +431,24 @@ class AIH_Checkout {
         ) );
 
         $order_id = $wpdb->insert_id;
+        if ( ! $order_id ) {
+            return array(
+                'success' => false,
+                'message' => __( 'Failed to create order.', 'art-in-heaven' ),
+            );
+        }
 
-        $wpdb->insert( $order_items_table, array(
+        $item_inserted = $wpdb->insert( $order_items_table, array(
             'order_id'     => $order_id,
             'art_piece_id' => $art_piece_id,
             'winning_bid'  => $winning_bid->bid_amount,
         ) );
+        if ( $item_inserted === false ) {
+            return array(
+                'success' => false,
+                'message' => __( 'Order created but failed to add item.', 'art-in-heaven' ),
+            );
+        }
 
         // Invalidate payment stats cache.
         if ( class_exists( 'AIH_Cache' ) ) {
@@ -440,7 +464,7 @@ class AIH_Checkout {
     public function get_all_orders($args = array()) {
         global $wpdb;
 
-        $defaults = array('status' => '', 'bidder_id' => '', 'orderby' => 'created_at', 'order' => 'DESC', 'limit' => 50, 'offset' => 0);
+        $defaults = array('status' => '', 'bidder_id' => '', 'orderby' => 'created_at', 'order' => 'DESC', 'limit' => 0, 'offset' => 0);
         $args = wp_parse_args($args, $defaults);
 
         $orders_table = AIH_Database::get_table('orders');
@@ -465,8 +489,7 @@ class AIH_Checkout {
 
         // Use derived table for item_count instead of correlated subquery
         // Join both bidders and registrants tables, prefer bidders data but fall back to registrants
-        return $wpdb->get_results($wpdb->prepare(
-            "SELECT o.*,
+        $sql = "SELECT o.*,
                     COALESCE(bd.name_first, rg.name_first) as name_first,
                     COALESCE(bd.name_last, rg.name_last) as name_last,
                     COALESCE(bd.phone_mobile, rg.phone_mobile) as phone,
@@ -482,11 +505,13 @@ class AIH_Checkout {
                  GROUP BY oi.order_id
              ) oic ON o.id = oic.order_id
              WHERE $where
-             ORDER BY o.{$args['orderby']} {$args['order']}
-             LIMIT %d OFFSET %d",
-            $limit,
-            $offset
-        ));
+             ORDER BY o.{$args['orderby']} {$args['order']}";
+
+        if ($limit > 0) {
+            $sql = $wpdb->prepare($sql . " LIMIT %d OFFSET %d", $limit, $offset);
+        }
+
+        return $wpdb->get_results($sql);
     }
 
     public function count_orders($args = array()) {

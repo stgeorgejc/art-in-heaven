@@ -531,10 +531,10 @@ class AIH_Admin {
         if (isset($_POST['aih_update_payment'], $_POST['aih_payment_nonce']) && wp_verify_nonce(wp_unslash($_POST['aih_payment_nonce']), 'aih_update_payment')) {
             $result = AIH_Checkout::get_instance()->mark_manual_payment(
                 intval($_POST['art_piece_id']),
-                sanitize_text_field($_POST['payment_status']),
-                sanitize_text_field($_POST['payment_method']),
-                sanitize_text_field($_POST['payment_reference']),
-                sanitize_textarea_field($_POST['payment_notes'])
+                sanitize_text_field(wp_unslash($_POST['payment_status'])),
+                sanitize_text_field(wp_unslash($_POST['payment_method'])),
+                sanitize_text_field(wp_unslash($_POST['payment_reference'])),
+                sanitize_textarea_field(wp_unslash($_POST['payment_notes']))
             );
             $payment_message = $result['message'];
             $payment_message_type = $result['success'] ? 'success' : 'error';
