@@ -812,7 +812,7 @@ class AIH_Auth {
      * @param string $interval The new interval ('hourly' or 'every_thirty_seconds')
      */
     public static function reschedule_auto_sync($interval) {
-        if (get_option('aih_auto_sync_enabled', false)) {
+        if (get_option('aih_auto_sync_enabled', 0)) {
             self::schedule_auto_sync($interval);
         }
     }

@@ -95,7 +95,7 @@ class AIH_Mercure {
      * @return bool
      */
     public static function is_enabled() {
-        if (!get_option('aih_mercure_enabled', false)) {
+        if (!get_option('aih_mercure_enabled', 0)) {
             return false;
         }
 

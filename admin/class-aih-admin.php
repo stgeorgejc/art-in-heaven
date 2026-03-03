@@ -322,7 +322,7 @@ class AIH_Admin {
             'type' => 'boolean',
             'default' => false,
             'sanitize_callback' => function($value) {
-                $enabled = (bool) $value;
+                $enabled = $value ? 1 : 0;
                 // Schedule or unschedule based on setting
                 if ($enabled) {
                     AIH_Auth::schedule_auto_sync();
@@ -365,7 +365,7 @@ class AIH_Admin {
             'type' => 'boolean',
             'default' => false,
             'sanitize_callback' => function($value) {
-                $enabled = (bool) $value;
+                $enabled = $value ? 1 : 0;
                 // Schedule or unschedule based on setting
                 if ($enabled) {
                     $interval = isset($_POST['aih_pushpay_auto_sync_interval']) ? sanitize_text_field($_POST['aih_pushpay_auto_sync_interval']) : get_option('aih_pushpay_auto_sync_interval', 'hourly');
@@ -403,7 +403,7 @@ class AIH_Admin {
             'type' => 'boolean',
             'default' => false,
             'sanitize_callback' => function($value) {
-                return (bool) $value;
+                return $value ? 1 : 0;
             }
         ));
         register_setting('aih_integrations', 'aih_mercure_hub_url', array(

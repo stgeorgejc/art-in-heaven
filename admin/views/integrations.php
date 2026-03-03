@@ -108,7 +108,7 @@ $is_sandbox = get_option('aih_pushpay_sandbox', 0);
                     <th scope="row"><?php _e('Auto Sync', 'art-in-heaven'); ?></th>
                     <td>
                         <label>
-                            <input type="checkbox" name="aih_auto_sync_enabled" value="1" <?php checked(get_option('aih_auto_sync_enabled', false)); ?>>
+                            <input type="checkbox" name="aih_auto_sync_enabled" value="1" <?php checked(get_option('aih_auto_sync_enabled', 0), 1); ?>>
                             <?php _e('Enable automatic sync of registrants from API', 'art-in-heaven'); ?>
                         </label>
                         <p class="description"><?php _e('Automatically sync new registrants at the selected interval.', 'art-in-heaven'); ?></p>
@@ -348,7 +348,7 @@ $is_sandbox = get_option('aih_pushpay_sandbox', 0);
                     <th scope="row"><?php _e('Auto Sync', 'art-in-heaven'); ?></th>
                     <td>
                         <label>
-                            <input type="checkbox" name="aih_pushpay_auto_sync_enabled" value="1" <?php checked(get_option('aih_pushpay_auto_sync_enabled', false)); ?>>
+                            <input type="checkbox" name="aih_pushpay_auto_sync_enabled" value="1" <?php checked(get_option('aih_pushpay_auto_sync_enabled', 0), 1); ?>>
                             <?php _e('Enable automatic sync of transactions from Pushpay', 'art-in-heaven'); ?>
                         </label>
                         <p class="description"><?php _e('Automatically sync payment transactions at the selected interval.', 'art-in-heaven'); ?></p>
@@ -400,14 +400,14 @@ $is_sandbox = get_option('aih_pushpay_sandbox', 0);
             </h2>
             <p class="description"><?php _e('Enable Server-Sent Events for instant bid updates and outbid notifications. Requires a Mercure hub running on the server. When disabled, the plugin falls back to polling.', 'art-in-heaven'); ?></p>
 
-            <?php $mercure_enabled = get_option('aih_mercure_enabled', false); ?>
+            <?php $mercure_enabled = get_option('aih_mercure_enabled', 0); ?>
 
             <table class="form-table">
                 <tr>
                     <th scope="row"><?php _e('Enable Mercure', 'art-in-heaven'); ?></th>
                     <td>
                         <label>
-                            <input type="checkbox" name="aih_mercure_enabled" value="1" <?php checked($mercure_enabled); ?>>
+                            <input type="checkbox" name="aih_mercure_enabled" value="1" <?php checked($mercure_enabled, 1); ?>>
                             <?php _e('Enable real-time updates via Server-Sent Events', 'art-in-heaven'); ?>
                         </label>
                         <p class="description"><?php _e('Only enable this after the Mercure hub is running and configured.', 'art-in-heaven'); ?></p>

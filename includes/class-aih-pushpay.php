@@ -824,7 +824,7 @@ class AIH_Pushpay_API {
      */
     public static function reschedule_auto_sync($interval) {
         // Check both saved option and current POST (option may not be saved yet during settings save)
-        $enabled = get_option('aih_pushpay_auto_sync_enabled', false);
+        $enabled = get_option('aih_pushpay_auto_sync_enabled', 0);
         if (!$enabled && isset($_POST['aih_pushpay_auto_sync_enabled'])) {
             $enabled = (bool) sanitize_text_field(wp_unslash($_POST['aih_pushpay_auto_sync_enabled']));
         }
