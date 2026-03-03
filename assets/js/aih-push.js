@@ -25,6 +25,14 @@
         init: function() {
             this.bellBtn = document.getElementById('aih-notify-btn');
 
+            // If push is disabled by admin, hide bell and rely on polling/SSE
+            if (!aihAjax.pushEnabled) {
+                if (this.bellBtn) this.bellBtn.style.display = 'none';
+                this.startPolling();
+                this.initialized = true;
+                return;
+            }
+
             // Bind bell button click
             if (this.bellBtn) {
                 var self = this;
@@ -260,6 +268,7 @@
          * Called after a successful bid to prompt if permission is still default.
          */
         promptAfterBid: function() {
+            if (!aihAjax.pushEnabled) return;
             if (this.pushSubscribed) return;
             if (!('Notification' in window)) return;
             if (Notification.permission !== 'default') return;

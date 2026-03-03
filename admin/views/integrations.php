@@ -419,6 +419,28 @@ $is_sandbox = get_option('aih_pushpay_sandbox', 0);
             </div>
         </div>
 
+        <!-- Web Push Notifications Section -->
+        <div class="aih-settings-section">
+            <h2>
+                <span class="dashicons dashicons-bell" style="margin-right: 8px;"></span>
+                <?php _e('Web Push Notifications', 'art-in-heaven'); ?>
+            </h2>
+            <p class="description"><?php _e('Send native browser push notifications when a bidder is outbid. When disabled, bidders still receive outbid alerts via polling (or instantly via Mercure SSE if enabled above).', 'art-in-heaven'); ?></p>
+
+            <table class="form-table">
+                <tr>
+                    <th scope="row"><?php _e('Enable Web Push', 'art-in-heaven'); ?></th>
+                    <td>
+                        <label>
+                            <input type="checkbox" name="aih_push_enabled" value="1" <?php checked(get_option('aih_push_enabled', 1), 1); ?>>
+                            <?php _e('Enable outbid notifications via Web Push (VAPID)', 'art-in-heaven'); ?>
+                        </label>
+                        <p class="description"><?php _e('When disabled, the notification bell is hidden and no push notifications are sent. Polling and SSE channels remain active.', 'art-in-heaven'); ?></p>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
         <?php submit_button(__('Save Integration Settings', 'art-in-heaven')); ?>
     </form>
 </div>
