@@ -335,12 +335,12 @@ class Art_In_Heaven {
         wp_clear_scheduled_hook('aih_five_minute_check');
         
         // Schedule auto-sync for registrants (if enabled)
-        if (get_option('aih_auto_sync_enabled', false)) {
+        if (get_option('aih_auto_sync_enabled', 0)) {
             AIH_Auth::schedule_auto_sync();
         }
 
         // Schedule auto-sync for Pushpay transactions (if enabled)
-        if (get_option('aih_pushpay_auto_sync_enabled', false)) {
+        if (get_option('aih_pushpay_auto_sync_enabled', 0)) {
             AIH_Pushpay_API::schedule_auto_sync();
         }
 
