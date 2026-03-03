@@ -39,6 +39,12 @@ class CheckoutTest extends TestCase
             /** @var list<list<string>> Queued return values for get_col() */
             public array $get_col_queue = [];
 
+            /** @var list<?object> Queued return values for get_row() */
+            public array $get_row_queue = [];
+
+            /** @var list<array{table: string, data: array}> */
+            public array $insert_log = [];
+
             /** @var list<array{table: string, data: array, where: array}> */
             public array $update_log = [];
 
@@ -54,7 +60,13 @@ class CheckoutTest extends TestCase
 
             public function get_row(string $sql = ''): ?object
             {
-                return null;
+                return array_shift($this->get_row_queue);
+            }
+
+            public function insert(string $table, array $data, array|string|null $format = null): int|false
+            {
+                $this->insert_log[] = ['table' => $table, 'data' => $data];
+                return 1;
             }
 
             public function update(string $table, array $data, array $where, array|null $format = null, array|null $where_format = null): int|false
@@ -89,6 +101,7 @@ class CheckoutTest extends TestCase
             'current_time' => fn() => '2026-01-15 10:00:00',
             'sanitize_key' => fn($v) => preg_replace('/[^a-z0-9_\-]/', '', strtolower((string) $v)),
             '__' => fn($text) => $text,
+            'wp_generate_password' => fn() => 'ABCD1234',
         ]);
     }
 
@@ -245,6 +258,86 @@ class CheckoutTest extends TestCase
         $count = $checkout->cancel_pending_orders('BIDDER2');
 
         $this->assertSame(0, $count);
+        $this->assertCount(0, $this->wpdb->update_log);
+    }
+
+    // ── mark_manual_payment ──
+
+    public function testMarkManualPaymentUpdatesExistingOrder(): void
+    {
+        // Queue: existing order found by get_row
+        $this->wpdb->get_row_queue[] = (object) ['id' => 42];
+
+        $checkout = AIH_Checkout::get_instance();
+        $result = $checkout->mark_manual_payment(5, 'paid', 'cash', 'REF-123', 'Paid at event');
+
+        $this->assertTrue($result['success']);
+        $this->assertSame('Payment status updated.', $result['message']);
+
+        // update_payment_status should have called $wpdb->update
+        $this->assertCount(1, $this->wpdb->update_log);
+        $this->assertSame('paid', $this->wpdb->update_log[0]['data']['payment_status']);
+        $this->assertSame(['id' => 42], $this->wpdb->update_log[0]['where']);
+    }
+
+    public function testMarkManualPaymentCreatesNewOrder(): void
+    {
+        // Queue: no existing order, then winning bid found
+        $this->wpdb->get_row_queue[] = null;
+        $this->wpdb->get_row_queue[] = (object) [
+            'id' => 10,
+            'art_piece_id' => 7,
+            'bidder_id' => 'BID99',
+            'bid_amount' => 500.00,
+            'title' => 'Test Art',
+        ];
+
+        $checkout = AIH_Checkout::get_instance();
+        $result = $checkout->mark_manual_payment(7, 'paid', 'check', 'CHK-456', 'Check received');
+
+        $this->assertTrue($result['success']);
+        $this->assertSame('Order created and payment status set.', $result['message']);
+
+        // Should have inserted order + order item = 2 inserts
+        $this->assertCount(2, $this->wpdb->insert_log);
+
+        // First insert: the order
+        $order_data = $this->wpdb->insert_log[0]['data'];
+        $this->assertSame('BID99', $order_data['bidder_id']);
+        $this->assertSame(500.00, $order_data['subtotal']);
+        $this->assertSame('paid', $order_data['payment_status']);
+        $this->assertSame('check', $order_data['payment_method']);
+        $this->assertSame('CHK-456', $order_data['payment_reference']);
+        $this->assertStringStartsWith('AIH-', $order_data['order_number']);
+
+        // Second insert: the order item
+        $item_data = $this->wpdb->insert_log[1]['data'];
+        $this->assertSame(7, $item_data['art_piece_id']);
+        $this->assertSame(500.00, $item_data['winning_bid']);
+    }
+
+    public function testMarkManualPaymentNoWinningBid(): void
+    {
+        // Queue: no existing order, no winning bid
+        $this->wpdb->get_row_queue[] = null;
+        $this->wpdb->get_row_queue[] = null;
+
+        $checkout = AIH_Checkout::get_instance();
+        $result = $checkout->mark_manual_payment(99, 'paid', 'cash');
+
+        $this->assertFalse($result['success']);
+        $this->assertSame('No winning bid found for this art piece.', $result['message']);
+        $this->assertCount(0, $this->wpdb->insert_log);
+    }
+
+    public function testMarkManualPaymentInvalidStatus(): void
+    {
+        $checkout = AIH_Checkout::get_instance();
+        $result = $checkout->mark_manual_payment(1, 'completed');
+
+        $this->assertFalse($result['success']);
+        $this->assertSame('Invalid payment status.', $result['message']);
+        $this->assertCount(0, $this->wpdb->insert_log);
         $this->assertCount(0, $this->wpdb->update_log);
     }
 }
