@@ -917,6 +917,47 @@
     })();
 
     // =============================================
+    // AUCTION ENDED HELPER (for SSE)
+    // =============================================
+    /**
+     * Mark an auction as ended in the DOM (called by SSE auction_ended event).
+     * Applies the same transitions as the countdown timer hitting zero.
+     */
+    window.aihMarkAuctionEnded = function(artPieceId) {
+        // Gallery cards
+        var $card = $('.aih-card[data-id="' + artPieceId + '"]');
+        if ($card.length && !$card.hasClass('ended') && !$card.hasClass('won') && !$card.hasClass('paid')) {
+            $card.addClass('ended');
+            $card.find('[data-seconds]').attr('data-seconds', '0');
+            $card.find('.aih-time-remaining .aih-time-value').text('Ended');
+            $card.find('.aih-time-remaining').addClass('ended');
+        }
+
+        // Single-item page
+        var $wrapper = $('#aih-single-wrapper');
+        if ($wrapper.length && parseInt($wrapper.attr('data-piece-id')) === parseInt(artPieceId)) {
+            var $timer = $('.aih-time-remaining-single');
+            if ($timer.length && !$timer.hasClass('ended')) {
+                $timer.find('.aih-time-value').text('Ended');
+                $timer.addClass('ended');
+                $('#bid-amount').prop('disabled', true).attr('placeholder', 'Ended');
+                $('#place-bid').prop('disabled', true).text('Ended');
+
+                var $badge = $('.aih-badge-single');
+                if ($badge.length) {
+                    if ($badge.text().trim() === 'Winning') {
+                        $badge.attr('class', 'aih-badge aih-badge-won aih-badge-single').text('Won');
+                    } else {
+                        $badge.attr('class', 'aih-badge aih-badge-ended aih-badge-single').text('Ended');
+                    }
+                } else {
+                    $('.aih-single-image').append('<span class="aih-badge aih-badge-ended aih-badge-single">Ended</span>');
+                }
+            }
+        }
+    };
+
+    // =============================================
     // CONNECTION STATUS DOT
     // =============================================
     (function initConnectionStatus() {

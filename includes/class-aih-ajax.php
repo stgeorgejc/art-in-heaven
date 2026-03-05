@@ -2508,30 +2508,46 @@ class AIH_Ajax {
             );
         }
 
-        // Detect newly won auctions and trigger winner notifications
+        // Detect newly ended auctions and trigger notifications
         $push = AIH_Push::get_instance();
-        foreach ($items as $id => $item) {
-            if ($item['status'] === 'ended' && $item['is_winning']) {
-                if (!AIH_Push::was_winner_notified($bidder_id, $id)) {
-                    $row = isset($rows[$id]) ? $rows[$id] : null;
-                    $title = $row ? $row->title : 'Art Piece #' . $id;
-                    $catalog_art_id = $row ? $row->catalog_art_id : '';
-                    AIH_Push::mark_winner_notified($bidder_id, $id);
-                    $push->handle_winner_event($bidder_id, $id, $title);
+        $mercure_available = class_exists('AIH_Mercure') && AIH_Mercure::is_enabled();
+        $mercure_prefix = $mercure_available ? AIH_Mercure::get_topic_prefix() : '';
 
-                    // Publish winner event via Mercure SSE
-                    if (class_exists('AIH_Mercure') && AIH_Mercure::is_enabled()) {
-                        $prefix = AIH_Mercure::get_topic_prefix();
-                        AIH_Mercure::get_instance()->publish(
-                            $prefix . '/bidder/' . $bidder_id,
-                            array(
-                                'type'         => 'winner',
-                                'art_piece_id' => intval($id),
-                                'title'        => $title,
-                            ),
-                            true
-                        );
-                    }
+        foreach ($items as $id => $item) {
+            if ($item['status'] !== 'ended') {
+                continue;
+            }
+
+            // Broadcast auction_ended via Mercure (public topic, once per piece)
+            if ($mercure_available && !get_transient('aih_ended_sse_' . $id)) {
+                set_transient('aih_ended_sse_' . $id, 1, HOUR_IN_SECONDS);
+                AIH_Mercure::get_instance()->publish(
+                    $mercure_prefix . '/auction/' . intval($id),
+                    array(
+                        'type'         => 'auction_ended',
+                        'art_piece_id' => intval($id),
+                    )
+                );
+            }
+
+            // Winner notification (private, per-bidder)
+            if ($item['is_winning'] && !AIH_Push::was_winner_notified($bidder_id, $id)) {
+                $row = isset($rows[$id]) ? $rows[$id] : null;
+                $title = $row ? $row->title : 'Art Piece #' . $id;
+                $push->handle_winner_event($bidder_id, $id, $title);
+                AIH_Push::mark_winner_notified($bidder_id, $id);
+
+                // Publish winner event via Mercure SSE
+                if ($mercure_available) {
+                    AIH_Mercure::get_instance()->publish(
+                        $mercure_prefix . '/bidder/' . $bidder_id,
+                        array(
+                            'type'         => 'winner',
+                            'art_piece_id' => intval($id),
+                            'title'        => $title,
+                        ),
+                        true
+                    );
                 }
             }
         }
