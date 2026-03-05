@@ -8,12 +8,11 @@ if (!defined('ABSPATH')) {
 }
 
 class AIH_Watermark {
-    
-    private $opacity = 50;
-    private $font_size = 24;
-    
+
     /**
      * Check if GD library is available
+     *
+     * @return bool
      */
     public function is_available() {
         return extension_loaded('gd') && function_exists('imagecreatetruecolor');
@@ -21,6 +20,8 @@ class AIH_Watermark {
     
     /**
      * Get watermark text - uses logo text + current year
+     *
+     * @return string
      */
     private function get_watermark_text() {
         $custom_text = get_option('aih_watermark_text', '');
@@ -32,6 +33,8 @@ class AIH_Watermark {
     
     /**
      * Get the TTF font file path, downloading if necessary
+     *
+     * @return string|false
      */
     private function get_font_file() {
         $font_dir = AIH_PLUGIN_DIR . 'assets/fonts/';
@@ -98,6 +101,10 @@ class AIH_Watermark {
 
     /**
      * Apply watermark to an image
+     *
+     * @param string      $image_path  Path to the source image.
+     * @param string|null $output_path Path for the watermarked output.
+     * @return string|false Output path on success, false on failure.
      */
     public function apply_watermark($image_path, $output_path = null) {
         // Check if GD is available
@@ -219,6 +226,11 @@ class AIH_Watermark {
     
     /**
      * Add diagonal watermarks across the image
+     *
+     * @param \GdImage $image  GD image resource.
+     * @param int      $width  Image width.
+     * @param int      $height Image height.
+     * @return void
      */
     private function add_diagonal_watermarks($image, $width, $height) {
         // Get watermark overlay image if set
@@ -279,6 +291,12 @@ class AIH_Watermark {
     
     /**
      * Add watermark using built-in GD fonts (no TTF required)
+     *
+     * @param \GdImage $image  GD image resource.
+     * @param int      $width  Image width.
+     * @param int      $height Image height.
+     * @param string   $text   Watermark text.
+     * @return void
      */
     private function add_builtin_font_watermark($image, $width, $height, $text) {
         $font = 5; // Largest built-in font
@@ -315,6 +333,12 @@ class AIH_Watermark {
     
     /**
      * Apply an overlay image pattern across the entire image
+     *
+     * @param \GdImage $image        GD image resource.
+     * @param string   $overlay_path Path to the overlay image file.
+     * @param int      $width        Image width.
+     * @param int      $height       Image height.
+     * @return void
      */
     private function apply_overlay_pattern($image, $overlay_path, $width, $height) {
         $overlay_info = @getimagesize($overlay_path);
@@ -424,6 +448,12 @@ class AIH_Watermark {
     
     /**
      * Apply opacity to an image by adjusting alpha values of each pixel
+     *
+     * @param \GdImage $image           GD image resource.
+     * @param int      $width           Image width.
+     * @param int      $height          Image height.
+     * @param int      $opacity_percent Opacity percentage (0-100).
+     * @return void
      */
     private function apply_opacity_to_image($image, $width, $height, $opacity_percent) {
         // Disable alpha blending to directly set pixel values
@@ -460,6 +490,13 @@ class AIH_Watermark {
     
     /**
      * Add prominent center watermark
+     *
+     * @param \GdImage    $image     GD image resource.
+     * @param int         $width     Image width.
+     * @param int         $height    Image height.
+     * @param string      $text      Watermark text.
+     * @param string|null $font_file Path to TTF font file.
+     * @return void
      */
     private function add_center_watermark($image, $width, $height, $text, $font_file = null) {
         $center_x = $width / 2;
@@ -510,6 +547,9 @@ class AIH_Watermark {
     
     /**
      * Process uploaded image and create watermarked version
+     *
+     * @param int $attachment_id WordPress attachment ID.
+     * @return string|false Watermarked image URL on success, false on failure.
      */
     public function process_upload($attachment_id) {
         if (!$this->is_available()) {
@@ -568,6 +608,9 @@ class AIH_Watermark {
     
     /**
      * Get watermarked URL for an attachment
+     *
+     * @param int $attachment_id WordPress attachment ID.
+     * @return string|false Watermarked image URL, or false on failure.
      */
     public function get_watermarked_url($attachment_id) {
         $upload_dir = wp_upload_dir();
@@ -586,6 +629,9 @@ class AIH_Watermark {
     
     /**
      * Delete watermarked version
+     *
+     * @param int $attachment_id WordPress attachment ID.
+     * @return bool True on success or if file didn't exist.
      */
     public function delete_watermarked($attachment_id) {
         $file_path = get_attached_file($attachment_id);

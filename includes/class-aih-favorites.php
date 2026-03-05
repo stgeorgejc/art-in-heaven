@@ -9,6 +9,7 @@ if (!defined('ABSPATH')) {
 
 class AIH_Favorites {
     
+    /** @var string */
     private $table;
     
     public function __construct() {
@@ -17,6 +18,10 @@ class AIH_Favorites {
     
     /**
      * Add to favorites
+     *
+     * @param int|string $bidder_id
+     * @param int $art_piece_id
+     * @return bool
      */
     public function add($bidder_id, $art_piece_id) {
         global $wpdb;
@@ -41,6 +46,10 @@ class AIH_Favorites {
     
     /**
      * Remove from favorites
+     *
+     * @param int|string $bidder_id
+     * @param int $art_piece_id
+     * @return int|false
      */
     public function remove($bidder_id, $art_piece_id) {
         global $wpdb;
@@ -57,6 +66,10 @@ class AIH_Favorites {
     
     /**
      * Toggle favorite
+     *
+     * @param int|string $bidder_id
+     * @param int $art_piece_id
+     * @return array{action: string, is_favorite: bool}
      */
     public function toggle($bidder_id, $art_piece_id) {
         // Debounce: prevent rapid duplicate toggles with a 2-second transient lock
@@ -88,6 +101,10 @@ class AIH_Favorites {
     
     /**
      * Check if art piece is favorite
+     *
+     * @param int|string $bidder_id
+     * @param int $art_piece_id
+     * @return bool
      */
     public function is_favorite($bidder_id, $art_piece_id) {
         global $wpdb;
@@ -103,6 +120,9 @@ class AIH_Favorites {
     
     /**
      * Get all favorites for bidder
+     *
+     * @param int|string $bidder_id
+     * @return array<int, object>
      */
     public function get_bidder_favorites($bidder_id) {
         global $wpdb;
@@ -121,6 +141,9 @@ class AIH_Favorites {
     
     /**
      * Get favorite art piece IDs for bidder
+     *
+     * @param int|string $bidder_id
+     * @return array<int, int>
      */
     public function get_bidder_favorite_ids($bidder_id) {
         global $wpdb;
@@ -133,6 +156,9 @@ class AIH_Favorites {
     
     /**
      * Get favorite count for art piece
+     *
+     * @param int $art_piece_id
+     * @return int
      */
     public function get_favorite_count($art_piece_id) {
         global $wpdb;

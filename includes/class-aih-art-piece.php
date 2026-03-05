@@ -17,6 +17,7 @@ if (!defined('ABSPATH')) {
 
 class AIH_Art_Piece {
     
+    /** @var string */
     private $table;
     
     public function __construct() {
@@ -39,6 +40,9 @@ class AIH_Art_Piece {
     /**
      * Get all art pieces with optional filtering
      * FIXED: Now properly checks both auction_start AND auction_end
+     *
+     * @param array<string, mixed> $args
+     * @return array<int, object>
      */
     public function get_all($args = array()) {
         global $wpdb;
@@ -244,6 +248,9 @@ class AIH_Art_Piece {
     
     /**
      * Get count for filtered results
+     *
+     * @param array<string, mixed> $args
+     * @return int
      */
     public function get_count($args = array()) {
         global $wpdb;
@@ -288,6 +295,12 @@ class AIH_Art_Piece {
         return (int) $wpdb->get_var($query);
     }
     
+    /**
+     * Get a single art piece by ID.
+     *
+     * @param int|string $id
+     * @return object|null
+     */
     public function get($id) {
         global $wpdb;
 
@@ -318,6 +331,12 @@ class AIH_Art_Piece {
         return $result;
     }
     
+    /**
+     * Get a single art piece by its art_id field.
+     *
+     * @param string $art_id
+     * @return object|null
+     */
     public function get_by_art_id($art_id) {
         global $wpdb;
         $now = current_time('mysql');
@@ -341,6 +360,12 @@ class AIH_Art_Piece {
         ));
     }
     
+    /**
+     * Create a new art piece.
+     *
+     * @param array<string, mixed> $data
+     * @return int|false Insert ID on success, false on failure.
+     */
     public function create($data) {
         global $wpdb;
         
@@ -435,6 +460,13 @@ class AIH_Art_Piece {
         return $result ? $wpdb->insert_id : false;
     }
     
+    /**
+     * Update an art piece.
+     *
+     * @param int                  $id
+     * @param array<string, mixed> $data
+     * @return int|false|WP_Error Rows affected, false on failure, or WP_Error on conflict.
+     */
     public function update($id, $data) {
         global $wpdb;
 
@@ -570,6 +602,12 @@ class AIH_Art_Piece {
         return $result;
     }
     
+    /**
+     * Delete an art piece and its related records.
+     *
+     * @param int $id
+     * @return int|false Rows affected or false on failure.
+     */
     public function delete($id) {
         global $wpdb;
 
@@ -630,6 +668,13 @@ class AIH_Art_Piece {
         }
     }
     
+    /**
+     * Bulk update auction end times and adjust statuses accordingly.
+     *
+     * @param array<int, int> $ids
+     * @param string          $new_end_time
+     * @return int|false Rows affected or false on failure.
+     */
     public function bulk_update_end_times($ids, $new_end_time) {
         global $wpdb;
         if (empty($ids)) return false;
@@ -668,6 +713,13 @@ class AIH_Art_Piece {
         return $result;
     }
     
+    /**
+     * Bulk update auction start times and adjust statuses accordingly.
+     *
+     * @param array<int, int> $ids
+     * @param string          $new_start_time
+     * @return int|false Rows affected or false on failure.
+     */
     public function bulk_update_start_times($ids, $new_start_time) {
         global $wpdb;
         if (empty($ids)) return false;
@@ -692,6 +744,9 @@ class AIH_Art_Piece {
     /**
      * Check if auction has ended
      * FIXED: Now properly checks auction_end time, not start time
+     *
+     * @param int $id
+     * @return bool
      */
     public function is_auction_ended($id) {
         $piece = $this->get($id);
@@ -701,6 +756,9 @@ class AIH_Art_Piece {
     
     /**
      * Check if auction is currently active (started and not ended)
+     *
+     * @param int $id
+     * @return bool
      */
     public function is_auction_active($id) {
         $piece = $this->get($id);
@@ -710,6 +768,9 @@ class AIH_Art_Piece {
     
     /**
      * Get all art pieces with stats - FIXED to include ALL statuses
+     *
+     * @param array<string, mixed> $args
+     * @return array<int, object>
      */
     public function get_all_with_stats($args = array()) {
         global $wpdb;

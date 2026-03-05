@@ -17,8 +17,10 @@ if (!defined('ABSPATH')) {
 
 class AIH_Ajax {
     
+    /** @var self|null */
     private static $instance = null;
-    
+
+    /** @return self */
     public static function get_instance() {
         if (null === self::$instance) {
             self::$instance = new self();
@@ -126,7 +128,8 @@ class AIH_Ajax {
     }
     
     // ========== AUTH ==========
-    
+
+    /** @return void */
     public function verify_confirmation_code() {
         check_ajax_referer('aih_public_nonce', 'nonce');
 
@@ -189,7 +192,8 @@ class AIH_Ajax {
     }
     
     // ========== BIDDING ==========
-    
+
+    /** @return void */
     public function place_bid() {
         check_ajax_referer('aih_frontend_nonce', 'nonce');
         $auth = AIH_Auth::get_instance();
@@ -222,6 +226,7 @@ class AIH_Ajax {
         wp_send_json_error($result);
     }
     
+    /** @return void */
     public function toggle_favorite() {
         check_ajax_referer('aih_frontend_nonce', 'nonce');
         $auth = AIH_Auth::get_instance();
@@ -335,6 +340,7 @@ class AIH_Ajax {
         wp_send_json_success(array('items' => $data, 'totals' => $checkout->calculate_totals($items)));
     }
     
+    /** @return void */
     public function create_order() {
         check_ajax_referer('aih_frontend_nonce', 'nonce');
         $auth = AIH_Auth::get_instance();
@@ -362,6 +368,7 @@ class AIH_Ajax {
         wp_send_json_error($result);
     }
     
+    /** @return void */
     public function get_pushpay_link() {
         check_ajax_referer('aih_frontend_nonce', 'nonce');
         $auth = AIH_Auth::get_instance();
@@ -382,6 +389,8 @@ class AIH_Ajax {
 
     /**
      * Get order details for frontend display
+     *
+     * @return void
      */
     public function get_order_details() {
         check_ajax_referer('aih_frontend_nonce', 'nonce');
@@ -432,6 +441,8 @@ class AIH_Ajax {
 
     /**
      * Get all purchased items for My Wins page
+     *
+     * @return void
      */
     public function get_my_purchases() {
         check_ajax_referer('aih_frontend_nonce', 'nonce');
@@ -497,7 +508,8 @@ class AIH_Ajax {
     }
 
     // ========== ADMIN ==========
-    
+
+    /** @return void */
     public function admin_save_art() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
         if (!AIH_Roles::can_manage_art()) wp_send_json_error(array('message' => __('Permission denied.', 'art-in-heaven')));
@@ -688,6 +700,7 @@ class AIH_Ajax {
         }
     }
     
+    /** @return void */
     public function admin_delete_art() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
         if (!AIH_Roles::can_manage_art()) wp_send_json_error(array('message' => __('Permission denied.', 'art-in-heaven')));
@@ -701,6 +714,7 @@ class AIH_Ajax {
         wp_send_json_success(array('message' => __('Deleted.', 'art-in-heaven')));
     }
     
+    /** @return void */
     public function admin_bulk_update_times() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
         if (!AIH_Roles::can_manage_art()) wp_send_json_error(array('message' => __('Permission denied.', 'art-in-heaven')));
@@ -711,6 +725,7 @@ class AIH_Ajax {
         wp_send_json_success(array('message' => count($ids) . ' items updated.'));
     }
     
+    /** @return void */
     public function admin_bulk_update_start_times() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
         if (!AIH_Roles::can_manage_art()) wp_send_json_error(array('message' => __('Permission denied.', 'art-in-heaven')));
@@ -721,6 +736,7 @@ class AIH_Ajax {
         wp_send_json_success(array('message' => count($ids) . ' items updated.'));
     }
     
+    /** @return void */
     public function admin_bulk_show_end_time() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
         if (!AIH_Roles::can_manage_art()) wp_send_json_error(array('message' => __('Permission denied.', 'art-in-heaven')));
@@ -745,6 +761,7 @@ class AIH_Ajax {
         wp_send_json_success(array('message' => sprintf(__('End times %s for %d items.', 'art-in-heaven'), $action, count($ids))));
     }
     
+    /** @return void */
     public function admin_toggle_end_time() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
         if (!AIH_Roles::can_manage_art()) wp_send_json_error(array('message' => __('Permission denied.', 'art-in-heaven')));
@@ -772,6 +789,8 @@ class AIH_Ajax {
     
     /**
      * Inline edit a single field for an art piece
+     *
+     * @return void
      */
     public function admin_inline_edit() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
@@ -919,6 +938,7 @@ class AIH_Ajax {
         ));
     }
     
+    /** @return void */
     public function admin_apply_event_date() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
         if (!AIH_Roles::can_manage_art()) wp_send_json_error(array('message' => __('Permission denied.', 'art-in-heaven')));
@@ -934,6 +954,7 @@ class AIH_Ajax {
         wp_send_json_success(array('message' => sprintf('%d art pieces updated.', $updated)));
     }
     
+    /** @return void */
     public function admin_process_watermark() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
         if (!AIH_Roles::can_manage_art()) wp_send_json_error(array('message' => __('Permission denied.', 'art-in-heaven')));
@@ -944,12 +965,14 @@ class AIH_Ajax {
         wp_send_json_error(array('message' => __('Failed.', 'art-in-heaven')));
     }
     
+    /** @return void */
     public function admin_get_stats() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
         if (!AIH_Roles::can_manage_art()) wp_send_json_error(array('message' => __('Permission denied.', 'art-in-heaven')));
         wp_send_json_success((new AIH_Art_Piece())->get_all_with_stats());
     }
-    
+
+    /** @return void */
     public function admin_update_payment() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
         if (!AIH_Roles::can_view_financial()) wp_send_json_error(array('message' => __('Permission denied.', 'art-in-heaven')));
@@ -971,6 +994,7 @@ class AIH_Ajax {
         wp_send_json_success(array('message' => 'Updated.'));
     }
     
+    /** @return void */
     public function admin_delete_order() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
         if (!AIH_Roles::can_view_financial()) wp_send_json_error(array('message' => __('Permission denied.', 'art-in-heaven')));
@@ -986,6 +1010,8 @@ class AIH_Ajax {
     
     /**
      * Delete a bid (admin only)
+     *
+     * @return void
      */
     public function admin_delete_bid() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
@@ -1087,6 +1113,8 @@ class AIH_Ajax {
     
     /**
      * Update pickup status for an order
+     *
+     * @return void
      */
     public function admin_update_pickup_status() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
@@ -1172,6 +1200,7 @@ class AIH_Ajax {
         ));
     }
     
+    /** @return void */
     public function admin_test_api() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
         if (!AIH_Roles::can_manage_settings()) wp_send_json_error(array('message' => __('Permission denied.', 'art-in-heaven')));
@@ -1180,6 +1209,7 @@ class AIH_Ajax {
         wp_send_json_error($result);
     }
     
+    /** @return void */
     public function admin_create_tables() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
         if (!AIH_Roles::can_manage_auction()) wp_send_json_error(array('message' => __('Permission denied.', 'art-in-heaven')));
@@ -1188,6 +1218,7 @@ class AIH_Ajax {
         wp_send_json_success(array('message' => sprintf('Tables created for %d.', $year)));
     }
     
+    /** @return void */
     public function admin_export_data() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
         if (!AIH_Roles::can_view_reports()) wp_send_json_error(array('message' => __('Permission denied.', 'art-in-heaven')));
@@ -1213,6 +1244,7 @@ class AIH_Ajax {
         wp_send_json_success(array('data' => $data));
     }
 
+    /** @return void */
     public function admin_import_csv() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
         if (!AIH_Roles::can_manage_art()) {
@@ -1407,6 +1439,7 @@ class AIH_Ajax {
         ));
     }
 
+    /** @return void */
     public function admin_sync_bidders() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
         if (!AIH_Roles::can_manage_bidders()) wp_send_json_error(array('message' => __('Permission denied.', 'art-in-heaven')));
@@ -1420,10 +1453,11 @@ class AIH_Ajax {
         wp_send_json_error($result);
     }
     
+    /** @return void */
     public function admin_cleanup_tables() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
         if (!AIH_Roles::can_manage_auction()) wp_send_json_error(array('message' => __('Permission denied.', 'art-in-heaven')));
-        
+
         global $wpdb;
         $year = AIH_Database::get_auction_year();
         $table = $wpdb->prefix . $year . '_Bidders';
@@ -1491,6 +1525,8 @@ class AIH_Ajax {
     
     /**
      * Delete all data from all database tables
+     *
+     * @return void
      */
     public function admin_purge_data() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
@@ -1536,6 +1572,12 @@ class AIH_Ajax {
     /**
      * Format art piece for AJAX response
      * Uses consolidated AIH_Template_Helper::format_art_piece()
+     *
+     * @param object                    $piece
+     * @param string|null               $bidder_id
+     * @param bool                      $full
+     * @param array<string, mixed>|null $batch_data
+     * @return array<string, mixed>
      */
     private function format_art_piece($piece, $bidder_id = null, $full = false, $batch_data = null) {
         return AIH_Template_Helper::format_art_piece($piece, $bidder_id, $full, true, $batch_data);
@@ -1545,6 +1587,8 @@ class AIH_Ajax {
     
     /**
      * Add image to art piece
+     *
+     * @return void
      */
     public function admin_add_image() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
@@ -1606,6 +1650,8 @@ class AIH_Ajax {
     
     /**
      * Remove image from art piece
+     *
+     * @return void
      */
     public function admin_remove_image() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
@@ -1660,6 +1706,8 @@ class AIH_Ajax {
     
     /**
      * Set image as primary
+     *
+     * @return void
      */
     public function admin_set_primary_image() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
@@ -1685,6 +1733,8 @@ class AIH_Ajax {
     
     /**
      * Reorder images
+     *
+     * @return void
      */
     public function admin_reorder_images() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
@@ -1710,6 +1760,8 @@ class AIH_Ajax {
     
     /**
      * Get images for art piece
+     *
+     * @return void
      */
     public function admin_get_images() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
@@ -1731,6 +1783,8 @@ class AIH_Ajax {
     
     /**
      * Set/clear the upload flag to disable intermediate image sizes
+     *
+     * @return void
      */
     public function set_upload_flag() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
@@ -1752,6 +1806,8 @@ class AIH_Ajax {
     
     /**
      * Test Pushpay API connection
+     *
+     * @return void
      */
     public function admin_test_pushpay() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
@@ -1772,6 +1828,8 @@ class AIH_Ajax {
     
     /**
      * Discover Pushpay organization and merchant keys
+     *
+     * @return void
      */
     public function admin_discover_pushpay_keys() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
@@ -1833,6 +1891,8 @@ class AIH_Ajax {
 
     /**
      * Sync Pushpay transactions
+     *
+     * @return void
      */
     public function admin_sync_pushpay() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
@@ -1856,6 +1916,8 @@ class AIH_Ajax {
     
     /**
      * Manually match a transaction to an order
+     *
+     * @return void
      */
     public function admin_match_transaction() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
@@ -1883,6 +1945,8 @@ class AIH_Ajax {
     
     /**
      * Get transaction details
+     *
+     * @return void
      */
     public function admin_get_transaction_details() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
@@ -1958,6 +2022,8 @@ class AIH_Ajax {
     
     /**
      * Regenerate all watermarks
+     *
+     * @return void
      */
     public function admin_regenerate_watermarks() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
@@ -2176,10 +2242,14 @@ class AIH_Ajax {
      * @return string|false  Absolute path to a readable log file, or false.
      */
     private function resolve_log_file() {
-        // 1. WP_DEBUG_LOG set to a custom path
-        if (defined('WP_DEBUG_LOG') && is_string(WP_DEBUG_LOG) && WP_DEBUG_LOG !== '' && WP_DEBUG_LOG !== '1') {
-            if (file_exists(WP_DEBUG_LOG) && is_readable(WP_DEBUG_LOG)) {
-                return WP_DEBUG_LOG;
+        // 1. WP_DEBUG_LOG set to a custom path (WP allows string values)
+        if (defined('WP_DEBUG_LOG')) {
+            /** @var bool|string $log_value */
+            $log_value = WP_DEBUG_LOG;
+            if (is_string($log_value) && $log_value !== '' && $log_value !== '1') {
+                if (file_exists($log_value) && is_readable($log_value)) {
+                    return $log_value;
+                }
             }
         }
 
@@ -2198,6 +2268,7 @@ class AIH_Ajax {
         return false;
     }
 
+    /** @return void */
     public function admin_get_logs() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
 
@@ -2295,6 +2366,7 @@ class AIH_Ajax {
         ));
     }
 
+    /** @return void */
     public function admin_clear_logs() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
 
@@ -2322,6 +2394,8 @@ class AIH_Ajax {
 
     /**
      * Save a push subscription for the current bidder
+     *
+     * @return void
      */
     public function push_subscribe() {
         check_ajax_referer('aih_frontend_nonce', 'nonce');
@@ -2354,6 +2428,8 @@ class AIH_Ajax {
 
     /**
      * Remove a push subscription by endpoint
+     *
+     * @return void
      */
     public function push_unsubscribe() {
         check_ajax_referer('aih_frontend_nonce', 'nonce');
@@ -2371,6 +2447,8 @@ class AIH_Ajax {
      * Verify a push subscription endpoint exists server-side.
      * Used by the client to detect stale subscriptions after browser
      * data clear or server-side purge, then re-subscribe automatically.
+     *
+     * @return void
      */
     public function push_verify() {
         check_ajax_referer('aih_frontend_nonce', 'nonce');
@@ -2401,6 +2479,8 @@ class AIH_Ajax {
 
     /**
      * Return and clear pending outbid and winner events for the current bidder (polling fallback)
+     *
+     * @return void
      */
     public function check_outbid() {
         check_ajax_referer('aih_frontend_nonce', 'nonce');
@@ -2432,6 +2512,8 @@ class AIH_Ajax {
      *
      * Results are cached per-bidder for 3 seconds to reduce DB load
      * when many users are polling simultaneously.
+     *
+     * @return void
      */
     public function poll_status() {
         check_ajax_referer('aih_frontend_nonce', 'nonce');

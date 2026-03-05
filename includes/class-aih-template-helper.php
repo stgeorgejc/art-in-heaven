@@ -18,7 +18,7 @@ class AIH_Template_Helper {
     /** @var AIH_Template_Helper|null */
     private static $instance = null;
 
-    /** @var array Cached page URLs */
+    /** @var array<string, string> Cached page URLs */
     private static $page_cache = array();
 
     /**
@@ -176,10 +176,11 @@ class AIH_Template_Helper {
      * - class-aih-rest-api.php
      *
      * @param object $piece The art piece object
-     * @param int|null $bidder_id Optional bidder ID for personalized data
+     * @param string|null $bidder_id Optional bidder confirmation code for personalized data
      * @param bool $full Whether to include full details
      * @param bool $include_time_string Whether to include formatted time string
-     * @return array Formatted art piece data
+     * @param array<string, mixed>|null $batch_data Optional pre-fetched batch data
+     * @return array<string, mixed> Formatted art piece data
      */
     public static function format_art_piece($piece, $bidder_id = null, $full = false, $include_time_string = false, $batch_data = null) {
         $secs = max(0, intval($piece->seconds_remaining ?? 0));
@@ -259,7 +260,7 @@ class AIH_Template_Helper {
      *
      * Helper to get both bidder ID and name in one call
      *
-     * @return array Array with 'id', 'bidder', and 'name' keys
+     * @return array<string, mixed> Array with 'id', 'bidder', and 'name' keys
      */
     public static function get_current_bidder_info() {
         $auth = AIH_Auth::get_instance();
@@ -284,7 +285,7 @@ class AIH_Template_Helper {
      * @param string $image_url     URL to the watermarked (or original) image
      * @param string $alt           Alt text
      * @param string $sizes         Sizes attribute value
-     * @param array  $attrs         Extra attributes for the <img> tag
+     * @param array<string, string>  $attrs         Extra attributes for the <img> tag
      * @param string $loading       'lazy' (default) or 'eager' for above-fold images
      * @param string $fetchpriority 'high', 'low', or null (browser default)
      * @return string HTML markup
@@ -340,6 +341,8 @@ class AIH_Template_Helper {
 
     /**
      * Clear page URL cache
+     *
+     * @return void
      */
     public static function clear_cache() {
         self::$page_cache = array();
