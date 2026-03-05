@@ -1348,12 +1348,15 @@ class AIH_Ajax {
 
             // Check for existing piece
             $existing = $art_model->get_by_art_id($art_id);
+            $piece_id = null;
+            $is_new = false;
 
             if ($existing) {
                 if ($update_existing) {
                     unset($data['art_id']); // Don't update art_id itself
                     $result = $art_model->update($existing->id, $data);
                     if ($result !== false) {
+                        $piece_id = $existing->id;
                         $summary['updated']++;
                         $row_results[] = array(
                             'row' => $row_num,
@@ -1382,6 +1385,8 @@ class AIH_Ajax {
             } else {
                 $result = $art_model->create($data);
                 if ($result) {
+                    $piece_id = $result;
+                    $is_new = true;
                     $summary['created']++;
                     $row_results[] = array(
                         'row' => $row_num,
@@ -1399,12 +1404,167 @@ class AIH_Ajax {
                     );
                 }
             }
+
+            // Handle image_url if piece was created/updated successfully
+            $image_url = $get('image_url');
+            if ($piece_id && $image_url !== '') {
+                $image_result = $this->import_image_from_url($piece_id, $image_url, $is_new);
+                if ($image_result !== true) {
+                    // Append image warning to the last row result
+                    $idx = count($row_results) - 1;
+                    $row_results[$idx]['message'] .= ' ' . $image_result;
+                } else {
+                    $idx = count($row_results) - 1;
+                    $row_results[$idx]['message'] .= ' ' . __('(with image)', 'art-in-heaven');
+                }
+            }
         }
 
         wp_send_json_success(array(
             'summary' => $summary,
             'rows'    => $row_results,
         ));
+    }
+
+    /**
+     * Convert sharing URLs from popular services to direct download URLs.
+     */
+    private function preprocess_image_url($url) {
+        // Google Drive: drive.google.com/file/d/{ID}/view... → direct download
+        if (preg_match('#drive\.google\.com/file/d/([a-zA-Z0-9_-]+)#', $url, $matches)) {
+            return 'https://drive.google.com/uc?export=download&id=' . $matches[1];
+        }
+        // Google Drive: drive.google.com/open?id={ID}
+        if (preg_match('#drive\.google\.com/open\?id=([a-zA-Z0-9_-]+)#', $url, $matches)) {
+            return 'https://drive.google.com/uc?export=download&id=' . $matches[1];
+        }
+
+        // Dropbox: replace dl=0 with dl=1 for direct download
+        if (strpos($url, 'dropbox.com') !== false) {
+            $url = preg_replace('/[?&]dl=0/', '?dl=1', $url);
+            // If no dl param exists, add it
+            if (strpos($url, 'dl=1') === false) {
+                $url .= (strpos($url, '?') !== false ? '&' : '?') . 'dl=1';
+            }
+            return $url;
+        }
+
+        // OneDrive: convert share link to API download
+        // Format: https://1drv.ms/{code} or https://onedrive.live.com/...?id={ID}
+        if (preg_match('#1drv\.ms/(.+)#', $url, $matches)) {
+            $encoded = rtrim(base64_encode($url), '=');
+            $encoded = str_replace('/', '_', str_replace('+', '-', $encoded));
+            return 'https://api.onedrive.com/v1.0/shares/u!' . $encoded . '/root/content';
+        }
+        if (preg_match('#onedrive\.live\.com/.+[?&]resid=([^&]+)#i', $url, $matches)) {
+            $encoded = rtrim(base64_encode($url), '=');
+            $encoded = str_replace('/', '_', str_replace('+', '-', $encoded));
+            return 'https://api.onedrive.com/v1.0/shares/u!' . $encoded . '/root/content';
+        }
+
+        // Imgur: imgur.com/{ID} → i.imgur.com/{ID}.jpg (non-album, non-gallery)
+        if (preg_match('#imgur\.com/(?!a/|gallery/)([a-zA-Z0-9]+)(?:\.[a-z]+)?$#', $url, $matches)) {
+            return 'https://i.imgur.com/' . $matches[1] . '.jpg';
+        }
+
+        // Box: shared link → direct download API
+        // Format: https://app.box.com/s/{token}
+        if (preg_match('#app\.box\.com/s/([a-zA-Z0-9]+)#', $url, $matches)) {
+            return 'https://app.box.com/shared/static/' . $matches[1] . '.jpg';
+        }
+
+        // PostImg: postimg.cc/{ID} → i.postimg.cc/{ID}.jpg
+        if (preg_match('#postimg\.cc/([a-zA-Z0-9]+)$#', $url, $matches)) {
+            return 'https://i.postimg.cc/' . $matches[1] . '/image.jpg';
+        }
+
+        // ImageBB / ibb.co: ibb.co/{ID} → i.ibb.co/{ID}.jpg
+        if (preg_match('#ibb\.co/([a-zA-Z0-9]+)$#', $url, $matches)) {
+            return 'https://i.ibb.co/' . $matches[1] . '/image.jpg';
+        }
+
+        return $url;
+    }
+
+    /**
+     * Download an image from a URL and attach it to an art piece.
+     *
+     * @param int    $art_piece_id The art piece database ID.
+     * @param string $image_url    The public image URL.
+     * @param bool   $is_new       Whether this is a newly created piece (sets image as primary).
+     * @return true|string True on success, or a warning message string on failure.
+     */
+    private function import_image_from_url($art_piece_id, $image_url, $is_new = true) {
+        if (!filter_var($image_url, FILTER_VALIDATE_URL)) {
+            return __('(image skipped: invalid URL)', 'art-in-heaven');
+        }
+
+        $image_url = $this->preprocess_image_url($image_url);
+
+        require_once ABSPATH . 'wp-admin/includes/media.php';
+        require_once ABSPATH . 'wp-admin/includes/file.php';
+        require_once ABSPATH . 'wp-admin/includes/image.php';
+
+        // Download to temp file
+        $tmp = download_url($image_url, 30);
+        if (is_wp_error($tmp)) {
+            return sprintf(__('(image failed: %s)', 'art-in-heaven'), $tmp->get_error_message());
+        }
+
+        // Verify it's actually an image
+        $mime = wp_check_filetype_and_ext($tmp, basename(wp_parse_url($image_url, PHP_URL_PATH)));
+        if (empty($mime['type']) || strpos($mime['type'], 'image/') !== 0) {
+            // Fallback: check with finfo directly
+            $finfo_mime = function_exists('finfo_file')
+                ? finfo_file(finfo_open(FILEINFO_MIME_TYPE), $tmp)
+                : '';
+            if (empty($finfo_mime) || strpos($finfo_mime, 'image/') !== 0) {
+                @unlink($tmp);
+                return __('(image skipped: URL does not point to an image)', 'art-in-heaven');
+            }
+            // Use finfo result to build a proper filename
+            $ext_map = array('image/jpeg' => 'jpg', 'image/png' => 'png', 'image/gif' => 'gif', 'image/webp' => 'webp');
+            $ext = isset($ext_map[$finfo_mime]) ? $ext_map[$finfo_mime] : 'jpg';
+            $filename = 'imported-' . $art_piece_id . '.' . $ext;
+        } else {
+            $filename = basename(wp_parse_url($image_url, PHP_URL_PATH));
+            // Clean query strings from filename
+            if (strpos($filename, '?') !== false) {
+                $filename = strtok($filename, '?');
+            }
+            // Fallback filename if basename is empty or has no extension
+            if (empty($filename) || !preg_match('/\.(jpe?g|png|gif|webp)$/i', $filename)) {
+                $ext_map = array('image/jpeg' => 'jpg', 'image/png' => 'png', 'image/gif' => 'gif', 'image/webp' => 'webp');
+                $ext = isset($ext_map[$mime['type']]) ? $ext_map[$mime['type']] : 'jpg';
+                $filename = 'imported-' . $art_piece_id . '.' . $ext;
+            }
+        }
+
+        // Sideload into WordPress media library
+        $file_array = array(
+            'name'     => sanitize_file_name($filename),
+            'tmp_name' => $tmp,
+        );
+        $attachment_id = media_handle_sideload($file_array, 0);
+        if (is_wp_error($attachment_id)) {
+            @unlink($tmp);
+            return sprintf(__('(image failed: %s)', 'art-in-heaven'), $attachment_id->get_error_message());
+        }
+
+        // Watermark using existing pipeline
+        $original_url = wp_get_attachment_url($attachment_id);
+        $watermarked_url = $original_url;
+        $watermark = new AIH_Watermark();
+        $wm_result = $watermark->process_upload($attachment_id);
+        if ($wm_result) {
+            $watermarked_url = $wm_result;
+        }
+
+        // Attach to art piece
+        $images_handler = new AIH_Art_Images();
+        $images_handler->add_image($art_piece_id, $attachment_id, $original_url, $watermarked_url, $is_new);
+
+        return true;
     }
 
     public function admin_sync_bidders() {
