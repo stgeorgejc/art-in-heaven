@@ -24,10 +24,11 @@ class AIH_Watermark {
      */
     private function get_watermark_text() {
         $custom_text = get_option('aih_watermark_text', '');
+        $year = (string) (wp_date('Y') ?: date('Y'));
         if (!empty($custom_text)) {
-            return $custom_text . ' ' . wp_date('Y');
+            return $custom_text . ' ' . $year;
         }
-        return 'Art in Heaven ' . wp_date('Y');
+        return 'Art in Heaven ' . $year;
     }
     
     /**

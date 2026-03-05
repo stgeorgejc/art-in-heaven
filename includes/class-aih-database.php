@@ -77,7 +77,7 @@ class AIH_Database {
         // Validate year
         $year = absint($year);
         if ($year < 2020 || $year > 2100) {
-            $year = wp_date('Y');
+            $year = absint(wp_date('Y') ?: date('Y'));
         }
         
         $charset_collate = $wpdb->get_charset_collate();

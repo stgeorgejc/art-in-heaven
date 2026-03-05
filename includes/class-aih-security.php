@@ -123,33 +123,33 @@ class AIH_Security {
                 if ($timestamp === false) {
                     return $args['default'] ?? '';
                 }
-                return wp_date('Y-m-d', $timestamp);
+                return wp_date('Y-m-d', $timestamp) ?: ($args['default'] ?? '');
                 
             case 'datetime':
                 $timestamp = strtotime($value);
                 if ($timestamp === false) {
                     return $args['default'] ?? '';
                 }
-                return wp_date('Y-m-d H:i:s', $timestamp);
+                return wp_date('Y-m-d H:i:s', $timestamp) ?: ($args['default'] ?? '');
                 
             case 'phone':
                 // Remove all non-numeric characters except + for international
-                $value = preg_replace('/[^0-9+]/', '', $value);
+                $value = preg_replace('/[^0-9+]/', '', (string) $value) ?? '';
                 return sanitize_text_field($value);
                 
             case 'currency':
                 // Remove currency symbols, keep numbers and decimal
-                $value = preg_replace('/[^0-9.]/', '', $value);
+                $value = preg_replace('/[^0-9.]/', '', (string) $value) ?? '';
                 return self::sanitize($value, 'float', array('min' => 0, 'precision' => 2));
                 
             case 'confirmation_code':
                 // Alphanumeric, uppercase, specific length
-                $value = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $value));
+                $value = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', (string) $value) ?? '');
                 return substr($value, 0, 20);
                 
             case 'art_id':
                 // Art ID format: letters, numbers, dashes
-                $value = strtoupper(preg_replace('/[^A-Za-z0-9\-]/', '', $value));
+                $value = strtoupper(preg_replace('/[^A-Za-z0-9\-]/', '', (string) $value) ?? '');
                 return sanitize_text_field($value);
                 
             case 'text':
@@ -311,7 +311,7 @@ class AIH_Security {
                 return true;
             }
             $count = wp_cache_incr($cache_key, 1, 'aih_rate_limit');
-            return $count <= $limit;
+            return $count === false || $count <= $limit;
         }
 
         // Fallback to transients (non-atomic -- read-modify-write is subject to race

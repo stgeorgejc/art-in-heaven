@@ -298,7 +298,7 @@ class AIH_Cache {
                 '_transient_timeout_' . self::PREFIX . '%',
                 $time
             )
-        );
+        ) ?? [];
 
         $count = 0;
         foreach ($expired as $timeout_key) {

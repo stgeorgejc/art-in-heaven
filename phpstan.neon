@@ -1,6 +1,9 @@
 parameters:
-    level: 5
+    level: 6
     treatPhpDocTypesAsCertain: false
+    # Suppress missing array element type hints — WordPress arrays rarely need element types
+    # and adding them to every method would create excessive noise without meaningful safety benefit.
+    checkMissingIterableValueType: false
     parallel:
         maximumNumberOfProcesses: 1
     paths:
