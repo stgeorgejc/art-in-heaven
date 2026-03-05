@@ -3557,6 +3557,16 @@ body {
     color: var(--color-primary, #1a1a2e);
 }
 
+/* Winner alert variant — green success styling */
+.aih-alert-card.aih-alert-winner {
+    border-color: #38a169;
+    border-left-color: #38a169;
+}
+
+.aih-alert-winner .aih-alert-icon {
+    color: #38a169;
+}
+
 /* Flash animation for replacement */
 .aih-alert-flash {
     animation: aih-alert-flash 0.5s ease;
@@ -3565,6 +3575,15 @@ body {
 @keyframes aih-alert-flash {
     0%, 100% { border-color: #e53e3e; }
     50% { border-color: var(--color-accent, #c9a96e); background: rgba(201, 169, 110, 0.05); }
+}
+
+.aih-alert-winner.aih-alert-flash {
+    animation: aih-alert-flash-winner 0.5s ease;
+}
+
+@keyframes aih-alert-flash-winner {
+    0%, 100% { border-color: #38a169; }
+    50% { border-color: var(--color-accent, #c9a96e); background: rgba(56, 161, 105, 0.05); }
 }
 
 /* Dark mode adjustments */
