@@ -406,6 +406,13 @@ class AIH_Admin {
                 return $value ? 1 : 0;
             }
         ));
+        register_setting('aih_integrations', 'aih_push_enabled', array(
+            'type' => 'boolean',
+            'default' => true,
+            'sanitize_callback' => function($value) {
+                return $value ? 1 : 0;
+            }
+        ));
         register_setting('aih_integrations', 'aih_mercure_hub_url', array(
             'type' => 'string',
             'default' => 'http://127.0.0.1:3000/.well-known/mercure',

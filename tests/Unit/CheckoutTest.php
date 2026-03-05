@@ -28,12 +28,10 @@ class CheckoutTest extends TestCase
         // Reset singletons and static caches
         $ref = new \ReflectionClass(AIH_Checkout::class);
         $prop = $ref->getProperty('instance');
-        $prop->setAccessible(true);
         $prop->setValue(null, null);
 
         $ref2 = new \ReflectionClass(AIH_Database::class);
         $prop2 = $ref2->getProperty('cached_year');
-        $prop2->setAccessible(true);
         $prop2->setValue(null, null);
 
         // Reset AIH_Auth singleton

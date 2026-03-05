@@ -22,7 +22,6 @@ class BidTest extends TestCase
         // Reset AIH_Database cached year
         $ref = new \ReflectionClass(AIH_Database::class);
         $prop = $ref->getProperty('cached_year');
-        $prop->setAccessible(true);
         $prop->setValue(null, null);
 
         // Mock $wpdb with a queue-based get_row for flexibility
