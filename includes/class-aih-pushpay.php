@@ -265,7 +265,7 @@ class AIH_Pushpay_API {
         $defaults = array(
             'page' => 0,
             'pageSize' => 100,
-            'from' => null, // ISO 8601 date
+            'from' => null, // UTC datetime (e.g. 2026-03-01T00:00:00Z)
             'to' => null,
             'status' => null, // Success, Failed, Processing, etc.
             'fund' => null

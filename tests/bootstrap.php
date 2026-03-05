@@ -46,3 +46,4 @@ require_once __DIR__ . '/../includes/class-aih-bid.php';
 require_once __DIR__ . '/../includes/class-aih-checkout.php';
 require_once __DIR__ . '/../includes/class-aih-favorites.php';
 require_once __DIR__ . '/../includes/class-aih-push.php';
+require_once __DIR__ . '/../includes/class-aih-pushpay.php';

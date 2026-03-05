@@ -106,6 +106,12 @@ Syncs payment status from Pushpay so the plugin can mark orders as paid.
 
 Each environment has its own set of credentials. Switch the toggle to configure each one independently.
 
+### API Date Format
+
+Pushpay requires date/time parameters in **UTC** format with a `Z` suffix (e.g. `2026-03-01T00:00:00Z`). The plugin uses `gmdate('Y-m-d\TH:i:s\Z')` to produce this format. Local timezone offsets (e.g. `2026-03-01T00:00:00-05:00` from PHP's `date('c')`) are silently ignored by the Pushpay API.
+
+Reference: [Pushpay API — Payments](https://pushpay.io/docs/operations/payments) — `from` and `to` parameters require "a date/time (UTC)".
+
 ### Auto-Sync
 
 - Toggle **Auto Sync** on to check for new payments automatically
