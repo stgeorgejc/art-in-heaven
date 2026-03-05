@@ -36,6 +36,60 @@ class AIH_Push {
 
     private function __construct() {}
 
+    // ========== ENDPOINT VALIDATION ==========
+
+    /**
+     * Allowed Web Push service host patterns.
+     *
+     * @var string[]
+     */
+    private static $allowed_push_hosts = array(
+        'fcm.googleapis.com',
+        'updates.push.services.mozilla.com',
+        'push.services.mozilla.com',
+        '.notify.windows.com',
+        '.push.apple.com',
+        'web.push.apple.com',
+    );
+
+    /**
+     * Validate that a push subscription endpoint belongs to a known push service.
+     *
+     * @param string $endpoint The push subscription endpoint URL.
+     * @return bool True if the endpoint host matches a known push service.
+     */
+    public static function is_valid_push_endpoint($endpoint) {
+        if (empty($endpoint)) {
+            return false;
+        }
+
+        $parsed = wp_parse_url($endpoint);
+
+        // Must be HTTPS
+        if (empty($parsed['scheme']) || $parsed['scheme'] !== 'https') {
+            return false;
+        }
+
+        if (empty($parsed['host'])) {
+            return false;
+        }
+
+        $host = strtolower($parsed['host']);
+
+        foreach (self::$allowed_push_hosts as $allowed) {
+            // Wildcard suffix match (e.g. ".notify.windows.com")
+            if (strpos($allowed, '.') === 0) {
+                if (substr($host, -strlen($allowed)) === $allowed) {
+                    return true;
+                }
+            } elseif ($host === $allowed) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     // ========== VAPID KEY MANAGEMENT ==========
 
     /** @var array|null Cached VAPID keys for this request */
@@ -260,6 +314,10 @@ class AIH_Push {
             $webPush = new WebPush($auth);
 
             foreach ($subscriptions as $sub) {
+                if (!self::is_valid_push_endpoint($sub->endpoint)) {
+                    self::delete_subscription($sub->endpoint);
+                    continue;
+                }
                 $subscription = Subscription::create(array(
                     'endpoint'        => $sub->endpoint,
                     'publicKey'       => $sub->p256dh,
@@ -398,6 +456,10 @@ class AIH_Push {
             $webPush = new WebPush($auth);
 
             foreach ($subscriptions as $sub) {
+                if (!self::is_valid_push_endpoint($sub->endpoint)) {
+                    self::delete_subscription($sub->endpoint);
+                    continue;
+                }
                 $subscription = Subscription::create(array(
                     'endpoint'        => $sub->endpoint,
                     'publicKey'       => $sub->p256dh,
