@@ -122,6 +122,12 @@ class AIH_Ajax {
         add_action('wp_ajax_aih_check_outbid', array($this, 'check_outbid'));
         add_action('wp_ajax_nopriv_aih_check_outbid', array($this, 'check_outbid'));
 
+        // Push notification metrics
+        add_action('wp_ajax_aih_push_permission', array($this, 'push_permission'));
+        add_action('wp_ajax_nopriv_aih_push_permission', array($this, 'push_permission'));
+        add_action('wp_ajax_aih_push_clicked', array($this, 'push_clicked'));
+        add_action('wp_ajax_nopriv_aih_push_clicked', array($this, 'push_clicked'));
+
         // Status polling
         add_action('wp_ajax_aih_poll_status', array($this, 'poll_status'));
         add_action('wp_ajax_nopriv_aih_poll_status', array($this, 'poll_status'));
@@ -216,11 +222,12 @@ class AIH_Ajax {
         $result = (new AIH_Bid())->place_bid($art_piece_id, $auth->get_current_bidder_id() ?? '', $bid_amount);
         if ($result['success']) {
             $auth->mark_registrant_has_bid($auth->get_current_bidder_id() ?? '');
+            $bid_source = isset($_POST['bid_source']) ? sanitize_text_field($_POST['bid_source']) : 'organic';
             AIH_Database::log_audit('bid_placed', array(
                 'object_type' => 'bid',
                 'object_id'   => $result['bid_id'] ?? 0,
                 'bidder_id'   => $auth->get_current_bidder_id(),
-                'details'     => array('art_piece_id' => $art_piece_id, 'amount' => $bid_amount),
+                'details'     => array('art_piece_id' => $art_piece_id, 'amount' => $bid_amount, 'bid_source' => $bid_source),
             ));
             wp_send_json_success($result);
         }
@@ -2699,6 +2706,60 @@ class AIH_Ajax {
         } else {
             wp_send_json_error(array('valid' => false, 'message' => 'Subscription not found'));
         }
+    }
+
+    /**
+     * Log a push permission decision (granted or denied) for engagement metrics.
+     */
+    public function push_permission() {
+        check_ajax_referer('aih_frontend_nonce', 'nonce');
+
+        $auth = AIH_Auth::get_instance();
+        if (!$auth->is_logged_in()) {
+            wp_send_json_error(array('message' => 'Not authenticated'));
+        }
+
+        $permission = isset($_POST['permission']) ? sanitize_text_field($_POST['permission']) : '';
+        $source     = isset($_POST['source']) ? sanitize_text_field($_POST['source']) : 'bell';
+
+        if (!in_array($permission, array('granted', 'denied'), true)) {
+            wp_send_json_error(array('message' => 'Invalid permission value'));
+        }
+
+        $event_type = 'granted' === $permission ? 'push_permission_granted' : 'push_permission_denied';
+
+        AIH_Database::log_audit($event_type, array(
+            'bidder_id' => $auth->get_current_bidder_id(),
+            'details'   => array('source' => $source),
+        ));
+
+        wp_send_json_success();
+    }
+
+    /**
+     * Log a push notification click for engagement metrics.
+     */
+    public function push_clicked() {
+        check_ajax_referer('aih_frontend_nonce', 'nonce');
+
+        $auth = AIH_Auth::get_instance();
+        if (!$auth->is_logged_in()) {
+            wp_send_json_error(array('message' => 'Not authenticated'));
+        }
+
+        $notification_type = isset($_POST['notification_type']) ? sanitize_text_field($_POST['notification_type']) : 'outbid';
+        $art_piece_id      = isset($_POST['art_piece_id']) ? intval($_POST['art_piece_id']) : 0;
+
+        AIH_Database::log_audit('push_clicked', array(
+            'bidder_id' => $auth->get_current_bidder_id(),
+            'object_id' => $art_piece_id,
+            'details'   => array(
+                'notification_type' => $notification_type,
+                'art_piece_id'      => $art_piece_id,
+            ),
+        ));
+
+        wp_send_json_success();
     }
 
     /**

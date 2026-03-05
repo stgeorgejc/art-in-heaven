@@ -16,6 +16,15 @@
     // Tries /api/ route first, falls back to admin-ajax.php on network failure
     window.aihPost = function(endpoint, data, successFn, failFn, opts) {
         opts = opts || {};
+        // Auto-attach bid source for attribution when placing bids
+        if (data && data.action === 'aih_place_bid') {
+            try {
+                var ref = sessionStorage.getItem('aih_ref');
+                if (ref) {
+                    data.bid_source = ref;
+                }
+            } catch (e) {}
+        }
         var apiUrl = aihApiUrl(endpoint);
         return $.post(apiUrl, data, successFn).fail(function(jqXHR, textStatus) {
             // If server returned 200 but jQuery couldn't parse JSON (parsererror),

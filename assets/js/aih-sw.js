@@ -59,10 +59,23 @@ self.addEventListener('push', function(event) {
 self.addEventListener('notificationclick', function(event) {
     event.notification.close();
 
-    var url = event.notification.data && event.notification.data.url ? event.notification.data.url : '/';
+    var notifData = event.notification.data || {};
+    var url = notifData.url || '/';
 
     event.waitUntil(
         self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clientList) {
+            // Notify open tabs about the click for metrics tracking
+            var clickMessage = {
+                type: 'aih-push-clicked',
+                data: {
+                    art_piece_id: notifData.art_piece_id || null,
+                    notification_type: notifData.type || 'outbid'
+                }
+            };
+            for (var k = 0; k < clientList.length; k++) {
+                clientList[k].postMessage(clickMessage);
+            }
+
             // Focus existing tab if one matches this exact URL
             for (var i = 0; i < clientList.length; i++) {
                 var client = clientList[i];
