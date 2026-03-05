@@ -223,6 +223,9 @@ class AIH_Ajax {
         if ($result['success']) {
             $auth->mark_registrant_has_bid($auth->get_current_bidder_id() ?? '');
             $bid_source = isset($_POST['bid_source']) ? sanitize_text_field($_POST['bid_source']) : 'organic';
+            if (!in_array($bid_source, array('organic', 'push'), true)) {
+                $bid_source = 'organic';
+            }
             AIH_Database::log_audit('bid_placed', array(
                 'object_type' => 'bid',
                 'object_id'   => $result['bid_id'] ?? 0,
@@ -2721,6 +2724,9 @@ class AIH_Ajax {
 
         $permission = isset($_POST['permission']) ? sanitize_text_field($_POST['permission']) : '';
         $source     = isset($_POST['source']) ? sanitize_text_field($_POST['source']) : 'bell';
+        if (!in_array($source, array('bell', 'after_bid'), true)) {
+            $source = 'other';
+        }
 
         if (!in_array($permission, array('granted', 'denied'), true)) {
             wp_send_json_error(array('message' => 'Invalid permission value'));
@@ -2748,6 +2754,9 @@ class AIH_Ajax {
         }
 
         $notification_type = isset($_POST['notification_type']) ? sanitize_text_field($_POST['notification_type']) : 'outbid';
+        if (!in_array($notification_type, array('outbid', 'winner'), true)) {
+            $notification_type = 'unknown';
+        }
         $art_piece_id      = isset($_POST['art_piece_id']) ? intval($_POST['art_piece_id']) : 0;
 
         AIH_Database::log_audit('push_clicked', array(

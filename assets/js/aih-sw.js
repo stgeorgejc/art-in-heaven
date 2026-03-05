@@ -29,7 +29,8 @@ self.addEventListener('push', function(event) {
         renotify: true,
         data: {
             url: data.url || '/',
-            art_piece_id: data.art_piece_id || null
+            art_piece_id: data.art_piece_id || null,
+            type: data.type || 'outbid'
         }
     };
 

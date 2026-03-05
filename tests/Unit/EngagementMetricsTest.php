@@ -248,17 +248,18 @@ class EngagementMetricsTest extends TestCase
     }
 
     /**
-     * Bid source is sanitized.
+     * Bid source is whitelisted: unknown values default to 'organic'.
      */
-    public function testBidSourceIsSanitized(): void
+    public function testBidSourceWhitelistsUnknownValues(): void
     {
-        $_POST = ['bid_source' => '<script>evil</script>'];
+        $_POST = ['bid_source' => 'evil_value'];
 
-        // sanitize_text_field is stubbed to identity in setUp,
-        // but the real function would strip tags. Test the flow.
         $source = isset($_POST['bid_source']) ? sanitize_text_field($_POST['bid_source']) : 'organic';
+        if (!in_array($source, ['organic', 'push'], true)) {
+            $source = 'organic';
+        }
 
-        $this->assertSame($_POST['bid_source'], $source);
+        $this->assertSame('organic', $source);
     }
 
     // ========== push_permission source variants ==========
@@ -286,6 +287,50 @@ class EngagementMetricsTest extends TestCase
         $this->assertSame('bell', $loggedEvent['details']['source']);
     }
 
+    /**
+     * Permission source whitelists unknown values to 'other'.
+     */
+    public function testPermissionSourceWhitelistsUnknown(): void
+    {
+        $loggedEvent = null;
+
+        Functions\expect('check_ajax_referer')->once()->andReturn(true);
+        Functions\expect('wp_send_json_success')->once();
+
+        $this->runPushPermissionLogic(
+            true,
+            'granted',
+            'malicious_source',
+            function ($event_type, $data) use (&$loggedEvent) {
+                $loggedEvent = $data;
+            }
+        );
+
+        $this->assertSame('other', $loggedEvent['details']['source']);
+    }
+
+    /**
+     * push_clicked normalizes unknown notification_type to 'unknown'.
+     */
+    public function testPushClickedNormalizesUnknownNotificationType(): void
+    {
+        $loggedEvent = null;
+
+        Functions\expect('check_ajax_referer')->once()->andReturn(true);
+        Functions\expect('wp_send_json_success')->once();
+
+        $this->runPushClickedLogic(
+            true,
+            'evil_type',
+            42,
+            function ($event_type, $data) use (&$loggedEvent) {
+                $loggedEvent = $data;
+            }
+        );
+
+        $this->assertSame('unknown', $loggedEvent['details']['notification_type']);
+    }
+
     // ========== HELPERS ==========
 
     /**
@@ -308,6 +353,9 @@ class EngagementMetricsTest extends TestCase
         $sanitizedSource = sanitize_text_field($source);
         if (empty($sanitizedSource)) {
             $sanitizedSource = 'bell';
+        }
+        if (!in_array($sanitizedSource, ['bell', 'after_bid'], true)) {
+            $sanitizedSource = 'other';
         }
 
         if (!in_array($sanitizedPermission, ['granted', 'denied'], true)) {
@@ -342,6 +390,9 @@ class EngagementMetricsTest extends TestCase
         }
 
         $sanitizedType = sanitize_text_field($notificationType);
+        if (!in_array($sanitizedType, ['outbid', 'winner'], true)) {
+            $sanitizedType = 'unknown';
+        }
         $sanitizedId = $artPieceId;
 
         $auditLogger('push_clicked', [

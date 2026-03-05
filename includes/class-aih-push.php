@@ -360,6 +360,7 @@ class AIH_Push {
                     self::delete_subscription($report->getEndpoint());
                     AIH_Database::log_audit('push_expired', array(
                         'bidder_id' => $bidder_id,
+                        'object_id' => $art_piece_id,
                         'details'   => array(
                             'notification_type' => $notification_type,
                             'art_piece_id'      => $art_piece_id,
