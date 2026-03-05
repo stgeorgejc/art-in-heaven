@@ -66,8 +66,19 @@ class BidTest extends TestCase
                 return 1;
             }
 
+            /** @var list<mixed> */
+            private array $get_var_queue = [];
+
+            public function pushGetVar(mixed $value): void
+            {
+                $this->get_var_queue[] = $value;
+            }
+
             public function get_var(string $sql = ''): mixed
             {
+                if (!empty($this->get_var_queue)) {
+                    return array_shift($this->get_var_queue);
+                }
                 return null;
             }
 
@@ -293,5 +304,38 @@ class BidTest extends TestCase
 
         $this->assertTrue($result['success']);
         $this->assertEquals(600.00, $result['current_bid']);
+    }
+
+    // ── is_bidder_winning (string bidder_id) ──
+
+    public function testIsBidderWinningWithStringBidderId(): void
+    {
+        $this->wpdb->pushGetVar('1');
+
+        $bid = new AIH_Bid();
+        $result = $bid->is_bidder_winning(1, '65199753');
+
+        $this->assertTrue($result);
+    }
+
+    public function testIsBidderNotWinningWithStringBidderId(): void
+    {
+        $this->wpdb->pushGetVar(null);
+
+        $bid = new AIH_Bid();
+        $result = $bid->is_bidder_winning(1, '65199753');
+
+        $this->assertFalse($result);
+    }
+
+    public function testIsBidderWinningWithConfirmationCode(): void
+    {
+        $this->wpdb->pushGetVar('1');
+
+        $bid = new AIH_Bid();
+        // Confirmation codes are strings like 'AIHTEST001'
+        $result = $bid->is_bidder_winning(42, 'AIHTEST001');
+
+        $this->assertTrue($result);
     }
 }
