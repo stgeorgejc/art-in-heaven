@@ -61,6 +61,21 @@ window.addEventListener('beforeinstallprompt', function(e) {
         init: function() {
             this.bellBtn = document.getElementById('aih-notify-btn');
 
+            // If push is disabled by admin, keep bell for drawer access but skip push setup
+            if (!aihAjax.pushEnabled) {
+                if (this.bellBtn) {
+                    this.bellBtn.addEventListener('click', function() {
+                        if (typeof window.aihToggleDrawer === 'function') {
+                            window.aihToggleDrawer();
+                        }
+                    });
+                }
+                this.unregisterServiceWorker();
+                this.startPolling();
+                this.initialized = true;
+                return;
+            }
+
             // Bind bell button click
             if (this.bellBtn) {
                 var self = this;
@@ -490,6 +505,7 @@ window.addEventListener('beforeinstallprompt', function(e) {
          * Called after a successful bid to prompt if permission is still default.
          */
         promptAfterBid: function() {
+            if (!aihAjax.pushEnabled) return;
             if (this.pushSubscribed) return;
             if (!('Notification' in window)) return;
             if (Notification.permission !== 'default') return;
@@ -624,6 +640,18 @@ window.addEventListener('beforeinstallprompt', function(e) {
                     }
                 }
             });
+        },
+
+        unregisterServiceWorker: function() {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                    registrations.forEach(function(reg) {
+                        if (reg.active && reg.active.scriptURL.indexOf('aih-sw.js') !== -1) {
+                            reg.unregister();
+                        }
+                    });
+                });
+            }
         },
 
         startPolling: function() {
