@@ -85,15 +85,37 @@ class CheckoutTest extends TestCase
                 return 1;
             }
 
+            /** @var list<mixed> Queued return values for get_var() */
+            public array $get_var_queue = [];
+
+            /** @var list<array<string, mixed>> Queued return values for get_results() */
+            public array $get_results_queue = [];
+
+            /** @var list<string> Captured SQL queries */
+            public array $queries = [];
+
             public function get_var(string $sql = ''): mixed
             {
-                return null;
+                $this->queries[] = $sql;
+                return array_shift($this->get_var_queue);
             }
 
             /** @return list<string> */
             public function get_col(string $sql = ''): array
             {
                 return array_shift($this->get_col_queue) ?? [];
+            }
+
+            /** @return list<object> */
+            public function get_results(string $sql = ''): array
+            {
+                $this->queries[] = $sql;
+                return array_shift($this->get_results_queue) ?? [];
+            }
+
+            public function esc_like(string $text): string
+            {
+                return addcslashes($text, '_%\\');
             }
         };
         $GLOBALS['wpdb'] = $this->wpdb;
@@ -112,6 +134,9 @@ class CheckoutTest extends TestCase
             'sanitize_key' => fn($v) => preg_replace('/[^a-z0-9_\-]/', '', strtolower((string) $v)),
             '__' => fn($text) => $text,
             'wp_generate_password' => fn() => 'ABCD1234',
+            'wp_parse_args' => function ($args, $defaults) {
+                return array_merge($defaults, $args);
+            },
         ]);
     }
 
@@ -396,5 +421,149 @@ class CheckoutTest extends TestCase
         $result = $checkout->mark_manual_payment(1, 'paid');
 
         $this->assertTrue($result['success']);
+    }
+
+    // ── get_all_orders ──
+
+    public function testGetAllOrdersDefaultsReturnArray(): void
+    {
+        $this->wpdb->get_results_queue[] = [];
+
+        $checkout = AIH_Checkout::get_instance();
+        $result = $checkout->get_all_orders();
+
+        $this->assertIsArray($result);
+        $this->assertCount(0, $result);
+    }
+
+    public function testGetAllOrdersBuildsSearchClause(): void
+    {
+        $this->wpdb->get_results_queue[] = [];
+
+        $checkout = AIH_Checkout::get_instance();
+        $checkout->get_all_orders(array('search' => 'Smith'));
+
+        $sql = end($this->wpdb->queries);
+        $this->assertStringContainsString('o.order_number LIKE', $sql);
+        $this->assertStringContainsString('o.bidder_id LIKE', $sql);
+        $this->assertStringContainsString('bd.name_first', $sql);
+        $this->assertStringContainsString('bd.name_last', $sql);
+        $this->assertStringContainsString('rg.email_primary', $sql);
+    }
+
+    public function testGetAllOrdersNoSearchClauseWithoutParam(): void
+    {
+        $this->wpdb->get_results_queue[] = [];
+
+        $checkout = AIH_Checkout::get_instance();
+        $checkout->get_all_orders();
+
+        $sql = end($this->wpdb->queries);
+        $this->assertStringNotContainsString('LIKE', $sql);
+    }
+
+    public function testGetAllOrdersBuildsStatusFilter(): void
+    {
+        $this->wpdb->get_results_queue[] = [];
+
+        $checkout = AIH_Checkout::get_instance();
+        $checkout->get_all_orders(array('status' => 'paid'));
+
+        $sql = end($this->wpdb->queries);
+        $this->assertStringContainsString('o.payment_status', $sql);
+    }
+
+    public function testGetAllOrdersSanitizesOrderby(): void
+    {
+        $this->wpdb->get_results_queue[] = [];
+
+        $checkout = AIH_Checkout::get_instance();
+        // "malicious_column" is not in allowed list, should default to created_at
+        $checkout->get_all_orders(array('orderby' => 'malicious_column'));
+
+        $sql = end($this->wpdb->queries);
+        $this->assertStringContainsString('o.created_at', $sql);
+        $this->assertStringNotContainsString('malicious_column', $sql);
+    }
+
+    public function testGetAllOrdersAppliesLimitOffset(): void
+    {
+        $this->wpdb->get_results_queue[] = [];
+
+        $checkout = AIH_Checkout::get_instance();
+        $checkout->get_all_orders(array('limit' => 50, 'offset' => 100));
+
+        $sql = end($this->wpdb->queries);
+        $this->assertStringContainsString('LIMIT', $sql);
+    }
+
+    public function testGetAllOrdersNoLimitWhenZero(): void
+    {
+        $this->wpdb->get_results_queue[] = [];
+
+        $checkout = AIH_Checkout::get_instance();
+        $checkout->get_all_orders(array('limit' => 0));
+
+        $sql = end($this->wpdb->queries);
+        $this->assertStringNotContainsString('LIMIT', $sql);
+    }
+
+    // ── count_orders ──
+
+    public function testCountOrdersReturnsInt(): void
+    {
+        $this->wpdb->get_var_queue[] = '42';
+
+        $checkout = AIH_Checkout::get_instance();
+        $result = $checkout->count_orders();
+
+        $this->assertSame(42, $result);
+    }
+
+    public function testCountOrdersBuildsSearchClause(): void
+    {
+        $this->wpdb->get_var_queue[] = '5';
+
+        $checkout = AIH_Checkout::get_instance();
+        $checkout->count_orders(array('search' => 'Jones'));
+
+        $sql = end($this->wpdb->queries);
+        $this->assertStringContainsString('o.order_number LIKE', $sql);
+        $this->assertStringContainsString('bd.name_first', $sql);
+        $this->assertStringContainsString('rg.name_last', $sql);
+    }
+
+    public function testCountOrdersNoSearchClauseWithoutParam(): void
+    {
+        $this->wpdb->get_var_queue[] = '10';
+
+        $checkout = AIH_Checkout::get_instance();
+        $checkout->count_orders();
+
+        $sql = end($this->wpdb->queries);
+        $this->assertStringNotContainsString('LIKE', $sql);
+    }
+
+    public function testCountOrdersBuildsStatusFilter(): void
+    {
+        $this->wpdb->get_var_queue[] = '3';
+
+        $checkout = AIH_Checkout::get_instance();
+        $checkout->count_orders(array('status' => 'pending'));
+
+        $sql = end($this->wpdb->queries);
+        $this->assertStringContainsString('o.payment_status', $sql);
+    }
+
+    public function testCountOrdersSearchAndStatusCombined(): void
+    {
+        $this->wpdb->get_var_queue[] = '2';
+
+        $checkout = AIH_Checkout::get_instance();
+        $checkout->count_orders(array('status' => 'paid', 'search' => 'AIH-'));
+
+        $sql = end($this->wpdb->queries);
+        $this->assertStringContainsString('o.payment_status', $sql);
+        $this->assertStringContainsString('LIKE', $sql);
     }
 }
