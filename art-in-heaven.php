@@ -1012,7 +1012,12 @@ class Art_In_Heaven {
         $css_ver = AIH_VERSION . '.' . filemtime($this->get_asset_path('assets/css/aih-admin.css'));
         wp_enqueue_style('aih-admin', $this->get_asset_url('assets/css/aih-admin.css'), array(), $css_ver);
         wp_enqueue_script('aih-admin', $this->get_asset_url('assets/js/aih-admin.js'), array('jquery', 'jquery-ui-datepicker', 'jquery-ui-sortable'), AIH_VERSION, true);
-        
+
+        // Chart.js for engagement stats page
+        if (strpos($hook, 'art-in-heaven-stats') !== false) {
+            wp_enqueue_script('chartjs', 'https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js', array(), '4.4.7', true);
+        }
+
         wp_localize_script('aih-admin', 'aihAdmin', array(
             'ajaxurl' => admin_url('admin-ajax.php'),
             'nonce'   => wp_create_nonce('aih_admin_nonce'),

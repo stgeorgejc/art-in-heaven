@@ -672,7 +672,190 @@ class AIH_Admin {
         }
         $art_model = new AIH_Art_Piece();
         $art_pieces = $art_model->get_all_with_stats();
+        $engagement_metrics = $this->get_engagement_metrics();
         include AIH_PLUGIN_DIR . 'admin/views/stats.php';
+    }
+
+    /**
+     * Query engagement metrics from the audit log for the stats dashboard.
+     *
+     * @return array<string, mixed>
+     */
+    private function get_engagement_metrics() {
+        global $wpdb;
+        $audit_table   = AIH_Database::get_table('audit_log');
+        $bids_table    = AIH_Database::get_table('bids');
+        $bidders_table = AIH_Database::get_table('registrants');
+
+        // Push notification funnel counts
+        $push_events = $wpdb->get_results(
+            "SELECT event_type, COUNT(*) AS cnt
+             FROM `{$audit_table}`
+             WHERE event_type IN (
+                 'push_permission_granted','push_permission_denied',
+                 'push_sent','push_delivered','push_expired','push_clicked'
+             )
+             GROUP BY event_type",
+            OBJECT_K
+        );
+
+        $get_count = function ($key) use ($push_events) {
+            return isset($push_events[$key]) ? (int) $push_events[$key]->cnt : 0;
+        };
+
+        $funnel = array(
+            'permission_granted' => $get_count('push_permission_granted'),
+            'permission_denied'  => $get_count('push_permission_denied'),
+            'push_sent'          => $get_count('push_sent'),
+            'push_delivered'     => $get_count('push_delivered'),
+            'push_expired'       => $get_count('push_expired'),
+            'push_clicked'       => $get_count('push_clicked'),
+        );
+
+        // Bid source attribution
+        $bid_sources = $wpdb->get_results(
+            "SELECT
+                COALESCE(JSON_UNQUOTE(JSON_EXTRACT(details, '$.bid_source')), 'organic') AS source,
+                COUNT(*) AS cnt
+             FROM `{$audit_table}`
+             WHERE event_type = 'bid_placed'
+             GROUP BY source",
+            OBJECT_K
+        );
+
+        $bid_attribution = array(
+            'push'    => isset($bid_sources['push']) ? (int) $bid_sources['push']->cnt : 0,
+            'organic' => isset($bid_sources['organic']) ? (int) $bid_sources['organic']->cnt : 0,
+        );
+        // Capture any other sources
+        foreach ($bid_sources as $src => $row) {
+            if (!isset($bid_attribution[$src])) {
+                $bid_attribution[$src] = (int) $row->cnt;
+            }
+        }
+
+        // Bidders who granted push vs total bidders
+        $push_bidders = (int) $wpdb->get_var(
+            "SELECT COUNT(DISTINCT bidder_id)
+             FROM `{$audit_table}`
+             WHERE event_type = 'push_permission_granted'"
+        );
+
+        $total_bidders_with_bids = (int) $wpdb->get_var(
+            "SELECT COUNT(DISTINCT bidder_id) FROM `{$bids_table}` WHERE bid_status = 'valid'"
+        );
+
+        // Bidding breadth: avg distinct art pieces bid on, push vs non-push bidders
+        $push_bidder_breadth = $wpdb->get_var(
+            "SELECT AVG(piece_count) FROM (
+                SELECT b.bidder_id, COUNT(DISTINCT b.art_piece_id) AS piece_count
+                FROM `{$bids_table}` b
+                INNER JOIN `{$audit_table}` a ON a.bidder_id = b.bidder_id AND a.event_type = 'push_permission_granted'
+                WHERE b.bid_status = 'valid'
+                GROUP BY b.bidder_id
+            ) sub"
+        );
+
+        $nonpush_bidder_breadth = $wpdb->get_var(
+            "SELECT AVG(piece_count) FROM (
+                SELECT b.bidder_id, COUNT(DISTINCT b.art_piece_id) AS piece_count
+                FROM `{$bids_table}` b
+                WHERE b.bid_status = 'valid'
+                  AND b.bidder_id NOT IN (
+                      SELECT DISTINCT bidder_id FROM `{$audit_table}` WHERE event_type = 'push_permission_granted'
+                  )
+                GROUP BY b.bidder_id
+            ) sub"
+        );
+
+        // Bidding depth: avg bids per bidder, push vs non-push
+        $push_bidder_depth = $wpdb->get_var(
+            "SELECT AVG(bid_count) FROM (
+                SELECT b.bidder_id, COUNT(*) AS bid_count
+                FROM `{$bids_table}` b
+                INNER JOIN `{$audit_table}` a ON a.bidder_id = b.bidder_id AND a.event_type = 'push_permission_granted'
+                WHERE b.bid_status = 'valid'
+                GROUP BY b.bidder_id
+            ) sub"
+        );
+
+        $nonpush_bidder_depth = $wpdb->get_var(
+            "SELECT AVG(bid_count) FROM (
+                SELECT b.bidder_id, COUNT(*) AS bid_count
+                FROM `{$bids_table}` b
+                WHERE b.bid_status = 'valid'
+                  AND b.bidder_id NOT IN (
+                      SELECT DISTINCT bidder_id FROM `{$audit_table}` WHERE event_type = 'push_permission_granted'
+                  )
+                GROUP BY b.bidder_id
+            ) sub"
+        );
+
+        // Bidding timeline: bids per hour
+        $bids_by_hour = $wpdb->get_results(
+            "SELECT DATE_FORMAT(created_at, '%Y-%m-%d %H:00') AS hour_bucket,
+                    COUNT(*) AS cnt,
+                    COALESCE(JSON_UNQUOTE(JSON_EXTRACT(details, '$.bid_source')), 'organic') AS source
+             FROM `{$audit_table}`
+             WHERE event_type = 'bid_placed'
+             GROUP BY hour_bucket, source
+             ORDER BY hour_bucket"
+        );
+
+        // Push permission source breakdown
+        $permission_sources = $wpdb->get_results(
+            "SELECT
+                event_type,
+                COALESCE(JSON_UNQUOTE(JSON_EXTRACT(details, '$.source')), 'bell') AS source,
+                COUNT(*) AS cnt
+             FROM `{$audit_table}`
+             WHERE event_type IN ('push_permission_granted', 'push_permission_denied')
+             GROUP BY event_type, source"
+        );
+
+        // Per-bidder engagement summary (top 20 most active)
+        $bidder_engagement = $wpdb->get_results(
+            "SELECT
+                b.bidder_id,
+                COUNT(*) AS total_bids,
+                COUNT(DISTINCT b.art_piece_id) AS pieces_bid_on,
+                MAX(b.bid_time) AS last_bid_time,
+                CASE WHEN a.bidder_id IS NOT NULL THEN 1 ELSE 0 END AS has_push
+             FROM `{$bids_table}` b
+             LEFT JOIN (
+                SELECT DISTINCT bidder_id FROM `{$audit_table}` WHERE event_type = 'push_permission_granted'
+             ) a ON a.bidder_id = b.bidder_id
+             WHERE b.bid_status = 'valid'
+             GROUP BY b.bidder_id, has_push
+             ORDER BY total_bids DESC
+             LIMIT 50"
+        );
+
+        // Notification type breakdown (outbid vs winner)
+        $notif_types = $wpdb->get_results(
+            "SELECT
+                COALESCE(JSON_UNQUOTE(JSON_EXTRACT(details, '$.notification_type')), 'unknown') AS notif_type,
+                event_type,
+                COUNT(*) AS cnt
+             FROM `{$audit_table}`
+             WHERE event_type IN ('push_sent', 'push_delivered', 'push_clicked')
+             GROUP BY notif_type, event_type"
+        );
+
+        return array(
+            'funnel'                => $funnel,
+            'bid_attribution'       => $bid_attribution,
+            'push_bidders'          => $push_bidders,
+            'total_bidders'         => $total_bidders_with_bids,
+            'push_bidder_breadth'   => $push_bidder_breadth ? round((float) $push_bidder_breadth, 1) : 0,
+            'nonpush_bidder_breadth'=> $nonpush_bidder_breadth ? round((float) $nonpush_bidder_breadth, 1) : 0,
+            'push_bidder_depth'     => $push_bidder_depth ? round((float) $push_bidder_depth, 1) : 0,
+            'nonpush_bidder_depth'  => $nonpush_bidder_depth ? round((float) $nonpush_bidder_depth, 1) : 0,
+            'bids_by_hour'          => $bids_by_hour,
+            'permission_sources'    => $permission_sources,
+            'bidder_engagement'     => $bidder_engagement,
+            'notif_types'           => $notif_types,
+        );
     }
 
     /**
