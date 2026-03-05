@@ -55,6 +55,7 @@ class AuctionEndedSseTest extends TestCase
 
         $this->runAuctionEndedLogic(42, true, function () use (&$published) {
             $published = true;
+            return true;
         });
 
         $this->assertTrue($transientSet, 'Dedup transient should be set');
@@ -77,6 +78,7 @@ class AuctionEndedSseTest extends TestCase
 
         $this->runAuctionEndedLogic(42, true, function () use (&$published) {
             $published = true;
+            return true;
         });
 
         $this->assertFalse($published, 'Mercure event should NOT be re-published');
@@ -94,6 +96,7 @@ class AuctionEndedSseTest extends TestCase
 
         $this->runAuctionEndedLogic(42, false, function () use (&$published) {
             $published = true;
+            return true;
         });
 
         $this->assertFalse($published, 'Should not publish when Mercure is unavailable');
@@ -134,8 +137,10 @@ class AuctionEndedSseTest extends TestCase
     private function runAuctionEndedLogic(int $artPieceId, bool $mercureAvailable, callable $publishFn): void
     {
         if ($mercureAvailable && !get_transient('aih_ended_sse_' . $artPieceId)) {
-            set_transient('aih_ended_sse_' . $artPieceId, 1, HOUR_IN_SECONDS);
-            $publishFn();
+            $published = $publishFn();
+            if ($published !== false) {
+                set_transient('aih_ended_sse_' . $artPieceId, 1, HOUR_IN_SECONDS);
+            }
         }
     }
 }

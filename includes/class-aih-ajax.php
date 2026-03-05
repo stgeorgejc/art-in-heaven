@@ -2520,22 +2520,24 @@ class AIH_Ajax {
 
             // Broadcast auction_ended via Mercure (public topic, once per piece)
             if ($mercure_available && !get_transient('aih_ended_sse_' . $id)) {
-                set_transient('aih_ended_sse_' . $id, 1, HOUR_IN_SECONDS);
-                AIH_Mercure::get_instance()->publish(
+                $published = AIH_Mercure::get_instance()->publish(
                     $mercure_prefix . '/auction/' . intval($id),
                     array(
                         'type'         => 'auction_ended',
                         'art_piece_id' => intval($id),
                     )
                 );
+                if ($published) {
+                    set_transient('aih_ended_sse_' . $id, 1, HOUR_IN_SECONDS);
+                }
             }
 
             // Winner notification (private, per-bidder)
             if ($item['is_winning'] && !AIH_Push::was_winner_notified($bidder_id, $id)) {
                 $row = isset($rows[$id]) ? $rows[$id] : null;
                 $title = $row ? $row->title : 'Art Piece #' . $id;
-                $push->handle_winner_event($bidder_id, $id, $title);
                 AIH_Push::mark_winner_notified($bidder_id, $id);
+                $push->handle_winner_event($bidder_id, $id, $title);
 
                 // Publish winner event via Mercure SSE
                 if ($mercure_available) {

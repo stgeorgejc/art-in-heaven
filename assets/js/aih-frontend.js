@@ -935,7 +935,7 @@
 
         // Single-item page
         var $wrapper = $('#aih-single-wrapper');
-        if ($wrapper.length && parseInt($wrapper.attr('data-piece-id')) === parseInt(artPieceId)) {
+        if ($wrapper.length && parseInt($wrapper.attr('data-piece-id'), 10) === parseInt(artPieceId, 10)) {
             var $timer = $('.aih-time-remaining-single');
             if ($timer.length && !$timer.hasClass('ended')) {
                 $timer.find('.aih-time-value').text('Ended');
