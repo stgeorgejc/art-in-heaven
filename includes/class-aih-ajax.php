@@ -1405,17 +1405,34 @@ class AIH_Ajax {
                 }
             }
 
-            // Handle image_url if piece was created/updated successfully
-            $image_url = $get('image_url');
-            if ($piece_id && $image_url !== '') {
-                $image_result = $this->import_image_from_url($piece_id, $image_url, $is_new);
-                if ($image_result !== true) {
-                    // Append image warning to the last row result
-                    $idx = count($row_results) - 1;
-                    $row_results[$idx]['message'] .= ' ' . $image_result;
-                } else {
-                    $idx = count($row_results) - 1;
-                    $row_results[$idx]['message'] .= ' ' . __('(with image)', 'art-in-heaven');
+            // Handle image_url(s) if piece was created/updated successfully
+            // Supports multiple URLs separated by pipe: url1|url2|url3
+            $image_url_raw = $get('image_url');
+            if ($piece_id && $image_url_raw !== '') {
+                $image_urls = array_map('trim', explode('|', $image_url_raw));
+                $image_urls = array_filter($image_urls, 'strlen');
+                $img_ok = 0;
+                $img_warnings = array();
+
+                foreach ($image_urls as $i => $single_url) {
+                    $is_primary = ($i === 0) && $is_new;
+                    $image_result = $this->import_image_from_url($piece_id, $single_url, $is_primary);
+                    if ($image_result === true) {
+                        $img_ok++;
+                    } else {
+                        $img_warnings[] = $image_result;
+                    }
+                }
+
+                $idx = count($row_results) - 1;
+                if ($img_ok > 0) {
+                    $row_results[$idx]['message'] .= ' ' . sprintf(
+                        __('(%d image(s) imported)', 'art-in-heaven'),
+                        $img_ok
+                    );
+                }
+                foreach ($img_warnings as $warning) {
+                    $row_results[$idx]['message'] .= ' ' . $warning;
                 }
             }
         }
@@ -1441,7 +1458,11 @@ class AIH_Ajax {
 
         // Dropbox: replace dl=0 with dl=1 for direct download
         if (strpos($url, 'dropbox.com') !== false) {
-            $url = preg_replace('/[?&]dl=0/', '?dl=1', $url);
+            if (strpos($url, '?dl=0') !== false) {
+                $url = str_replace('?dl=0', '?dl=1', $url);
+            } elseif (strpos($url, '&dl=0') !== false) {
+                $url = str_replace('&dl=0', '&dl=1', $url);
+            }
             // If no dl param exists, add it
             if (strpos($url, 'dl=1') === false) {
                 $url .= (strpos($url, '?') !== false ? '&' : '?') . 'dl=1';
@@ -1497,6 +1518,11 @@ class AIH_Ajax {
     private function import_image_from_url($art_piece_id, $image_url, $is_new = true) {
         if (!filter_var($image_url, FILTER_VALIDATE_URL)) {
             return __('(image skipped: invalid URL)', 'art-in-heaven');
+        }
+
+        $scheme = wp_parse_url($image_url, PHP_URL_SCHEME);
+        if (!in_array($scheme, array('http', 'https'), true)) {
+            return __('(image skipped: only http/https URLs are supported)', 'art-in-heaven');
         }
 
         $image_url = $this->preprocess_image_url($image_url);

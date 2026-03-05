@@ -5,10 +5,11 @@ The CSV import template supports an `image_url` column that automatically downlo
 ## How It Works
 
 1. Add a URL to the `image_url` column in your CSV
-2. During import, the plugin downloads the image
-3. The image is watermarked and optimized (AVIF/WebP variants)
-4. The image is attached as the primary image for the art piece
-5. If the download fails, the art piece is still created — just without an image
+2. For multiple images, separate URLs with a pipe `|` character
+3. During import, the plugin downloads each image
+4. Images are watermarked and optimized (AVIF/WebP variants)
+5. The first image becomes the primary image; additional images are attached in order
+6. If any download fails, the art piece is still created — only that image is skipped
 
 ## Supported URL Sources
 
@@ -80,8 +81,10 @@ These URLs serve HTML pages, not image files, and will fail gracefully:
 ```csv
 art_id,title,artist,medium,dimensions,description,starting_bid,tier,image_url
 ART-001,Sunset Over Mountains,Jane Doe,Oil on Canvas,24 x 36 in,A vibrant sunset landscape,150.00,2,https://drive.google.com/file/d/15WchEp3cMaYcTLL0ZFoTfzmAe52ayhvs/view?usp=drive_link
-ART-002,Ocean Waves,John Smith,Acrylic,18 x 24 in,Crashing waves at dusk,200.00,3,https://i.imgur.com/abc123.jpg
+ART-002,Ocean Waves,John Smith,Acrylic,18 x 24 in,Crashing waves at dusk,200.00,3,https://i.imgur.com/abc123.jpg|https://i.imgur.com/def456.jpg
 ART-003,Still Life,Mary Johnson,Watercolor,12 x 16 in,Flowers in a vase,75.00,1,
 ```
 
-Note: Row 3 has an empty `image_url` — the art piece will be created without an image. You can add images manually later from the edit page.
+- Row 2 imports **two images** — the first becomes the primary, the second is an additional image
+- Row 3 has an empty `image_url` — the art piece will be created without an image. You can add images manually later from the edit page.
+- Use `|` (pipe) to separate multiple image URLs within the same cell
