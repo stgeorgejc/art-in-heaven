@@ -856,7 +856,7 @@ class AIH_Ajax {
             case 'auction_start':
             case 'auction_end':
                 // DB stores local times — format directly without timezone conversion
-                $dt = new DateTime($value, wp_timezone());
+                $display_value = AIH_Status::format_db_date($value, 'M j, g:ia');
                 $display_value = $dt->format('M j, g:ia');
                 break;
         }
