@@ -394,7 +394,7 @@ $art_pieces = $art_model->get_all_with_stats($filter_args);
                         <?php endif; ?>
                         
                         <td class="aih-editable aih-editable-datetime" data-field="auction_start" data-value="<?php echo esc_attr($auction_start_value); ?>" data-label="<?php esc_attr_e('Start', 'art-in-heaven'); ?>">
-                            <span class="aih-cell-value"><?php echo !empty($piece->auction_start) ? (new DateTime($piece->auction_start, wp_timezone()))->format('M j, g:ia') : '—'; ?></span>
+                            <span class="aih-cell-value"><?php echo AIH_Status::format_db_date($piece->auction_start, 'M j, g:ia'); ?></span>
                         </td>
 
                         <td class="aih-editable aih-editable-datetime" data-field="auction_end" data-value="<?php echo esc_attr($auction_end_value); ?>" data-label="<?php esc_attr_e('End', 'art-in-heaven'); ?>">
