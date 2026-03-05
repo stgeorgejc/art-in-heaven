@@ -2400,7 +2400,7 @@ class AIH_Ajax {
     }
 
     /**
-     * Return and clear pending outbid events for the current bidder (polling fallback)
+     * Return and clear pending outbid and winner events for the current bidder (polling fallback)
      */
     public function check_outbid() {
         check_ajax_referer('aih_frontend_nonce', 'nonce');
@@ -2471,7 +2471,7 @@ class AIH_Ajax {
         $placeholders = implode(',', array_fill(0, count($ids), '%d'));
         $rows = $wpdb->get_results($wpdb->prepare(
             "SELECT
-                ap.id, ap.status, ap.auction_end, ap.title, ap.art_id AS catalog_art_id,
+                ap.id, ap.status, ap.auction_end, ap.title,
                 MAX(b.bid_amount) AS highest,
                 MAX(COALESCE(b2.is_winning, 0)) AS is_winning,
                 CASE WHEN COUNT(b2.id) > 0 THEN 1 ELSE 0 END AS has_bid
@@ -2484,7 +2484,7 @@ class AIH_Ajax {
                 AND b2.bidder_id = %s
                 AND b2.bid_status = 'valid'
              WHERE ap.id IN ($placeholders)
-             GROUP BY ap.id, ap.status, ap.auction_end, ap.title, ap.art_id",
+             GROUP BY ap.id, ap.status, ap.auction_end, ap.title",
             ...array_merge(array($bidder_id), $ids)
         ), OBJECT_K);
 

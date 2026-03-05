@@ -147,7 +147,7 @@ window.addEventListener('beforeinstallprompt', function(e) {
 
                 if (typeof window.showAlert === 'function') {
                     var alertType = payload.type || 'outbid';
-                    var alertTitle = payload.title || 'an item';
+                    var alertTitle = payload.item_title || 'an item';
                     window.showAlert(alertType, payload.art_piece_id, alertTitle, payload.url);
                 }
 
