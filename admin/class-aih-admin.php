@@ -534,7 +534,8 @@ class AIH_Admin {
         }
         $checkout = AIH_Checkout::get_instance();
         $status_filter = isset($_GET['status']) ? sanitize_text_field($_GET['status']) : '';
-        $orders = $checkout->get_all_orders(array('status' => $status_filter));
+        $search = isset($_GET['search']) ? sanitize_text_field($_GET['search']) : '';
+        $orders = $checkout->get_all_orders(array('status' => $status_filter, 'search' => $search));
         $payment_stats = $checkout->get_payment_stats();
         $single_order = isset($_GET['order_id']) ? $checkout->get_order(intval($_GET['order_id'])) : null;
         

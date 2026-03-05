@@ -60,7 +60,18 @@ $current_bid   = $highest_bid > 0 ? $highest_bid : $piece->starting_bid;
 // Get favorites count
 $favorites_count = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $favorites_table WHERE art_piece_id = %d", $art_id));
 
+// Search parameter
+$search = isset($_GET['search']) ? sanitize_text_field($_GET['search']) : '';
+
 // Get all bids for this piece - including unsuccessful bids
+$bid_search_where = '';
+if (!empty($search)) {
+    $like = '%' . $wpdb->esc_like($search) . '%';
+    $bid_search_where = $wpdb->prepare(
+        " AND (b.bidder_id LIKE %s OR COALESCE(bd.name_first, r.name_first, '') LIKE %s OR COALESCE(bd.name_last, r.name_last, '') LIKE %s OR CONCAT(COALESCE(bd.name_first, r.name_first, ''), ' ', COALESCE(bd.name_last, r.name_last, '')) LIKE %s OR COALESCE(bd.email_primary, r.email_primary, '') LIKE %s)",
+        $like, $like, $like, $like, $like
+    );
+}
 $all_bids = $wpdb->get_results($wpdb->prepare(
     "SELECT b.*,
             COALESCE(bd.name_first, r.name_first, '') as name_first,
@@ -70,7 +81,7 @@ $all_bids = $wpdb->get_results($wpdb->prepare(
      FROM $bids_table b
      LEFT JOIN $bidders_table bd ON b.bidder_id = bd.confirmation_code
      LEFT JOIN $registrants_table r ON b.bidder_id = r.confirmation_code
-     WHERE b.art_piece_id = %d
+     WHERE b.art_piece_id = %d{$bid_search_where}
      ORDER BY b.bid_amount DESC",
     $art_id
 ));
@@ -296,8 +307,23 @@ if ($computed === 'ended' || ($auction_ended && $piece->status !== 'draft')) {
     <?php else: ?>
         <!-- Search Bar -->
         <div class="aih-filter-bar">
-            <input type="text" id="aih-search-bids" class="regular-text" placeholder="<?php _e('Search by name, email, or code...', 'art-in-heaven'); ?>">
-            <span class="aih-filter-count"><span id="aih-visible-count"><?php echo count($all_bids); ?></span> <?php _e('bids', 'art-in-heaven'); ?></span>
+            <form method="get" class="aih-search-form">
+                <input type="hidden" name="page" value="art-in-heaven-art">
+                <input type="hidden" name="stats" value="1">
+                <input type="hidden" name="id" value="<?php echo intval($art_id); ?>">
+                <input type="search" name="search" value="<?php echo esc_attr($search); ?>" placeholder="<?php esc_attr_e('Search by name, email, or code...', 'art-in-heaven'); ?>">
+                <button type="submit" class="button"><?php _e('Search', 'art-in-heaven'); ?></button>
+                <?php if (!empty($search)): ?>
+                    <a href="<?php echo admin_url('admin.php?page=art-in-heaven-art&stats=1&id=' . intval($art_id)); ?>" class="button"><?php _e('Show All', 'art-in-heaven'); ?></a>
+                <?php endif; ?>
+            </form>
+            <span class="aih-filter-count">
+                <?php if (!empty($search)): ?>
+                    <?php printf(__('%d bids matching "%s"', 'art-in-heaven'), count($all_bids), esc_html($search)); ?>
+                <?php else: ?>
+                    <?php echo count($all_bids); ?> <?php _e('bids', 'art-in-heaven'); ?>
+                <?php endif; ?>
+            </span>
         </div>
 
         <table class="wp-list-table widefat fixed striped" id="aih-bids-table">
@@ -366,33 +392,6 @@ jQuery(document).ready(function($) {
     var $table = $('#aih-bids-table');
     var $tbody = $table.find('tbody');
     var $rows = $tbody.find('tr');
-
-    // Search functionality
-    $('#aih-search-bids').on('input keyup', function() {
-        var search = $(this).val().toLowerCase().trim();
-        var visibleCount = 0;
-
-        $rows.each(function() {
-            var $row = $(this);
-            var name = $row.data('name') || '';
-            var email = $row.data('email') || '';
-            var code = $row.data('code') || '';
-            var show = true;
-
-            if (search && name.indexOf(search) === -1 && email.indexOf(search) === -1 && code.indexOf(search) === -1) {
-                show = false;
-            }
-
-            if (show) {
-                $row.removeClass('aih-hidden');
-                visibleCount++;
-            } else {
-                $row.addClass('aih-hidden');
-            }
-        });
-
-        $('#aih-visible-count').text(visibleCount);
-    });
 
     // Sorting functionality
     $('th.sortable').on('click', function() {

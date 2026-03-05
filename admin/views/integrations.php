@@ -107,10 +107,10 @@ $is_sandbox = get_option('aih_pushpay_sandbox', 0);
                 <tr>
                     <th scope="row"><?php _e('Auto Sync', 'art-in-heaven'); ?></th>
                     <td>
-                        <label>
-                            <input type="checkbox" name="aih_auto_sync_enabled" value="1" <?php checked(get_option('aih_auto_sync_enabled', 0), 1); ?>>
-                            <?php _e('Enable automatic sync of registrants from API', 'art-in-heaven'); ?>
-                        </label>
+                        <select name="aih_auto_sync_enabled">
+                            <option value="0" <?php selected(get_option('aih_auto_sync_enabled', 0), 0); ?>><?php _e('Off', 'art-in-heaven'); ?></option>
+                            <option value="1" <?php selected(get_option('aih_auto_sync_enabled', 0), 1); ?>><?php _e('On', 'art-in-heaven'); ?></option>
+                        </select>
                         <p class="description"><?php _e('Automatically sync new registrants at the selected interval.', 'art-in-heaven'); ?></p>
                     </td>
                 </tr>
@@ -347,10 +347,10 @@ $is_sandbox = get_option('aih_pushpay_sandbox', 0);
                 <tr>
                     <th scope="row"><?php _e('Auto Sync', 'art-in-heaven'); ?></th>
                     <td>
-                        <label>
-                            <input type="checkbox" name="aih_pushpay_auto_sync_enabled" value="1" <?php checked(get_option('aih_pushpay_auto_sync_enabled', 0), 1); ?>>
-                            <?php _e('Enable automatic sync of transactions from Pushpay', 'art-in-heaven'); ?>
-                        </label>
+                        <select name="aih_pushpay_auto_sync_enabled">
+                            <option value="0" <?php selected(get_option('aih_pushpay_auto_sync_enabled', 0), 0); ?>><?php _e('Off', 'art-in-heaven'); ?></option>
+                            <option value="1" <?php selected(get_option('aih_pushpay_auto_sync_enabled', 0), 1); ?>><?php _e('On', 'art-in-heaven'); ?></option>
+                        </select>
                         <p class="description"><?php _e('Automatically sync payment transactions at the selected interval.', 'art-in-heaven'); ?></p>
                     </td>
                 </tr>

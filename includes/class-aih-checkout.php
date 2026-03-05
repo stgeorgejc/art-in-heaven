@@ -294,7 +294,7 @@ class AIH_Checkout {
     public function get_all_orders($args = array()) {
         global $wpdb;
 
-        $defaults = array('status' => '', 'bidder_id' => '', 'orderby' => 'created_at', 'order' => 'DESC');
+        $defaults = array('status' => '', 'bidder_id' => '', 'search' => '', 'orderby' => 'created_at', 'order' => 'DESC');
         $args = wp_parse_args($args, $defaults);
 
         $orders_table = AIH_Database::get_table('orders');
@@ -313,6 +313,13 @@ class AIH_Checkout {
         $where = "1=1";
         if (!empty($args['status'])) $where .= $wpdb->prepare(" AND o.payment_status = %s", $args['status']);
         if (!empty($args['bidder_id'])) $where .= $wpdb->prepare(" AND o.bidder_id = %s", $args['bidder_id']);
+        if (!empty($args['search'])) {
+            $like = '%' . $wpdb->esc_like($args['search']) . '%';
+            $where .= $wpdb->prepare(
+                " AND (o.order_number LIKE %s OR o.bidder_id LIKE %s OR COALESCE(bd.name_first, rg.name_first, '') LIKE %s OR COALESCE(bd.name_last, rg.name_last, '') LIKE %s OR CONCAT(COALESCE(bd.name_first, rg.name_first, ''), ' ', COALESCE(bd.name_last, rg.name_last, '')) LIKE %s OR COALESCE(bd.email_primary, rg.email_primary, '') LIKE %s)",
+                $like, $like, $like, $like, $like, $like
+            );
+        }
 
         // Use derived table for item_count instead of correlated subquery
         // Join both bidders and registrants tables, prefer bidders data but fall back to registrants

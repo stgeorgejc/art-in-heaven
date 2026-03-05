@@ -192,7 +192,7 @@ if (!defined('ABSPATH')) {
 
         <!-- Pickup Modal -->
         <div id="aih-pickup-modal" class="aih-modal" style="display: none;">
-            <div class="aih-modal-content">
+            <div class="aih-modal-content aih-modal-content--sm">
                 <div class="aih-modal-header">
                     <h3><?php _e('Mark as Picked Up', 'art-in-heaven'); ?></h3>
                     <button type="button" class="aih-modal-close">&times;</button>
@@ -220,56 +220,6 @@ if (!defined('ABSPATH')) {
                 </div>
             </div>
         </div>
-
-        <style>
-        .aih-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 100000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .aih-modal-content {
-            background: #fff;
-            border-radius: 12px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-            max-width: 450px;
-            width: 90%;
-        }
-        .aih-modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px;
-            border-bottom: 1px solid #e5e7eb;
-        }
-        .aih-modal-header h3 { margin: 0; font-size: 18px; }
-        .aih-modal-close {
-            background: none;
-            border: none;
-            font-size: 24px;
-            color: #8a8a8a;
-            cursor: pointer;
-            padding: 0;
-            line-height: 1;
-        }
-        .aih-modal-close:hover { color: #111827; }
-        .aih-modal-body { padding: 20px; }
-        .aih-modal-order-info {
-            background: #f9fafb;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-size: 14px;
-        }
-        .aih-form-row { margin-bottom: 15px; }
-        .aih-form-row label { display: block; margin-bottom: 6px; font-weight: 500; }
-        </style>
 
     <?php else: ?>
         <!-- Orders List View -->
@@ -328,8 +278,24 @@ if (!defined('ABSPATH')) {
         <div class="aih-tab-content">
         <!-- Search Bar -->
         <div class="aih-filter-bar">
-            <input type="text" id="aih-search-orders" class="regular-text" placeholder="<?php _e('Search by order #, email, or name...', 'art-in-heaven'); ?>">
-            <span class="aih-filter-count"><span id="aih-visible-count"><?php echo count($orders); ?></span> <?php _e('orders', 'art-in-heaven'); ?></span>
+            <form method="get" class="aih-search-form">
+                <input type="hidden" name="page" value="art-in-heaven-orders">
+                <?php if ($status_filter): ?>
+                    <input type="hidden" name="status" value="<?php echo esc_attr($status_filter); ?>">
+                <?php endif; ?>
+                <input type="search" name="search" value="<?php echo esc_attr($search); ?>" placeholder="<?php esc_attr_e('Search by order #, email, or name...', 'art-in-heaven'); ?>">
+                <button type="submit" class="button"><?php _e('Search', 'art-in-heaven'); ?></button>
+                <?php if (!empty($search)): ?>
+                    <a href="<?php echo admin_url('admin.php?page=art-in-heaven-orders' . ($status_filter ? '&status=' . urlencode($status_filter) : '')); ?>" class="button"><?php _e('Show All', 'art-in-heaven'); ?></a>
+                <?php endif; ?>
+            </form>
+            <span class="aih-filter-count">
+                <?php if (!empty($search)): ?>
+                    <?php printf(__('%d orders matching "%s"', 'art-in-heaven'), count($orders), esc_html($search)); ?>
+                <?php else: ?>
+                    <?php echo count($orders); ?> <?php _e('orders', 'art-in-heaven'); ?>
+                <?php endif; ?>
+            </span>
         </div>
 
         <div class="aih-table-wrap">
@@ -402,32 +368,6 @@ jQuery(document).ready(function($) {
     var $table = $('#aih-orders-table');
     var $tbody = $table.find('tbody');
     var $rows = $tbody.find('tr[data-order]');
-
-    // Search/Filter functionality
-    $('#aih-search-orders').on('input keyup', function() {
-        var search = $(this).val().toLowerCase().trim();
-        var visibleCount = 0;
-
-        $rows.each(function() {
-            var $row = $(this);
-            var order = $row.data('order') || '';
-            var bidder = $row.data('bidder') || '';
-            var show = true;
-
-            if (search && order.indexOf(search) === -1 && bidder.indexOf(search) === -1) {
-                show = false;
-            }
-
-            if (show) {
-                $row.removeClass('aih-hidden');
-                visibleCount++;
-            } else {
-                $row.addClass('aih-hidden');
-            }
-        });
-
-        $('#aih-visible-count').text(visibleCount);
-    });
 
     // Sorting functionality
     $('th.sortable').on('click', function() {
@@ -629,6 +569,3 @@ jQuery(document).ready(function($) {
 });
 </script>
 
-<style>
-/* orders minimal overrides - main styles in aih-admin.css */
-</style>

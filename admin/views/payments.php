@@ -478,100 +478,102 @@ $won_without_orders = $wpdb->get_results(
 <!-- Match Transaction Modal -->
 <div id="aih-match-modal" class="aih-modal" style="display:none;">
     <div class="aih-modal-content">
-        <span class="aih-modal-close">&times;</span>
-        <h2><?php _e('Match Transaction to Order', 'art-in-heaven'); ?></h2>
-        <p id="aih-match-info"></p>
-        
-        <input type="hidden" id="aih-match-txn-id" value="">
-        
-        <table class="form-table">
-            <tr>
-                <th><label for="aih-match-order"><?php _e('Select Order', 'art-in-heaven'); ?></label></th>
-                <td>
-                    <select id="aih-match-order" class="regular-text" style="width: 100%;">
-                        <option value=""><?php _e('— Select an order —', 'art-in-heaven'); ?></option>
-                        <?php 
-                        // Get pending orders for matching
-                        $pending_orders = $wpdb->get_results(
-                            "SELECT o.*, COALESCE(bd.name_first, '') as name_first, COALESCE(bd.name_last, '') as name_last
-                             FROM {$orders_table} o
-                             LEFT JOIN {$bidders_table} bd ON o.bidder_id = bd.confirmation_code
-                             WHERE o.payment_status = 'pending'
-                             ORDER BY o.created_at DESC"
-                        );
-                        foreach ($pending_orders as $po): 
-                            $name = trim($po->name_first . ' ' . $po->name_last);
-                        ?>
-                        <option value="<?php echo intval($po->id); ?>" data-amount="<?php echo esc_attr($po->total); ?>">
-                            <?php echo esc_html($po->order_number); ?> - $<?php echo number_format($po->total, 2); ?> 
-                            <?php if ($name): ?>(<?php echo esc_html($name); ?>)<?php endif; ?>
-                        </option>
-                        <?php endforeach; ?>
-                    </select>
-                    <p class="description"><?php _e('Only pending orders are shown.', 'art-in-heaven'); ?></p>
-                </td>
-            </tr>
-        </table>
-        
-        <p class="submit">
-            <button type="button" class="button button-primary" id="aih-confirm-match"><?php _e('Match & Mark Paid', 'art-in-heaven'); ?></button>
+        <div class="aih-modal-header">
+            <h2><?php _e('Match Transaction to Order', 'art-in-heaven'); ?></h2>
+            <button type="button" class="aih-modal-close">&times;</button>
+        </div>
+        <div class="aih-modal-body">
+            <p id="aih-match-info"></p>
+            <input type="hidden" id="aih-match-txn-id" value="">
+            <table class="form-table">
+                <tr>
+                    <th><label for="aih-match-order"><?php _e('Select Order', 'art-in-heaven'); ?></label></th>
+                    <td>
+                        <select id="aih-match-order" class="regular-text" style="width: 100%;">
+                            <option value=""><?php _e('— Select an order —', 'art-in-heaven'); ?></option>
+                            <?php
+                            // Get pending orders for matching
+                            $pending_orders = $wpdb->get_results(
+                                "SELECT o.*, COALESCE(bd.name_first, '') as name_first, COALESCE(bd.name_last, '') as name_last
+                                 FROM {$orders_table} o
+                                 LEFT JOIN {$bidders_table} bd ON o.bidder_id = bd.confirmation_code
+                                 WHERE o.payment_status = 'pending'
+                                 ORDER BY o.created_at DESC"
+                            );
+                            foreach ($pending_orders as $po):
+                                $name = trim($po->name_first . ' ' . $po->name_last);
+                            ?>
+                            <option value="<?php echo intval($po->id); ?>" data-amount="<?php echo esc_attr($po->total); ?>">
+                                <?php echo esc_html($po->order_number); ?> - $<?php echo number_format($po->total, 2); ?>
+                                <?php if ($name): ?>(<?php echo esc_html($name); ?>)<?php endif; ?>
+                            </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <p class="description"><?php _e('Only pending orders are shown.', 'art-in-heaven'); ?></p>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div class="aih-modal-footer">
             <button type="button" class="button aih-modal-cancel"><?php _e('Cancel', 'art-in-heaven'); ?></button>
-        </p>
+            <button type="button" class="button button-primary" id="aih-confirm-match"><?php _e('Match & Mark Paid', 'art-in-heaven'); ?></button>
+        </div>
     </div>
 </div>
 
 <!-- Mark Payment Modal -->
 <div id="aih-payment-modal" class="aih-modal" style="display:none;">
     <div class="aih-modal-content">
-        <span class="aih-modal-close">&times;</span>
-        <h2 id="aih-modal-title"><?php _e('Mark Payment', 'art-in-heaven'); ?></h2>
-        
+        <div class="aih-modal-header">
+            <h2 id="aih-modal-title"><?php _e('Mark Payment', 'art-in-heaven'); ?></h2>
+            <button type="button" class="aih-modal-close">&times;</button>
+        </div>
         <form method="post" id="aih-payment-form">
             <?php wp_nonce_field('aih_update_payment', 'aih_payment_nonce'); ?>
             <input type="hidden" name="aih_update_payment" value="1">
             <input type="hidden" name="art_piece_id" id="aih-art-piece-id" value="">
-            
-            <table class="form-table">
-                <tr>
-                    <th><label for="payment_status"><?php _e('Payment Status', 'art-in-heaven'); ?></label></th>
-                    <td>
-                        <select name="payment_status" id="payment_status" required>
-                            <option value="pending"><?php _e('Pending', 'art-in-heaven'); ?></option>
-                            <option value="paid"><?php _e('Paid', 'art-in-heaven'); ?></option>
-                            <option value="refunded"><?php _e('Refunded', 'art-in-heaven'); ?></option>
-                        </select>
-                    </td>
-                </tr>
-                <tr>
-                    <th><label for="payment_method"><?php _e('Payment Method', 'art-in-heaven'); ?></label></th>
-                    <td>
-                        <select name="payment_method" id="payment_method" required>
-                            <option value="cash"><?php _e('Cash', 'art-in-heaven'); ?></option>
-                            <option value="check"><?php _e('Check', 'art-in-heaven'); ?></option>
-                            <option value="card"><?php _e('Credit Card', 'art-in-heaven'); ?></option>
-                            <option value="pushpay"><?php _e('Pushpay', 'art-in-heaven'); ?></option>
-                            <option value="other"><?php _e('Other', 'art-in-heaven'); ?></option>
-                        </select>
-                    </td>
-                </tr>
-                <tr>
-                    <th><label for="payment_reference"><?php _e('Reference #', 'art-in-heaven'); ?></label></th>
-                    <td>
-                        <input type="text" name="payment_reference" id="payment_reference" class="regular-text" placeholder="<?php esc_attr_e('Check number, transaction ID, etc.', 'art-in-heaven'); ?>">
-                    </td>
-                </tr>
-                <tr>
-                    <th><label for="payment_notes"><?php _e('Notes', 'art-in-heaven'); ?></label></th>
-                    <td>
-                        <textarea name="payment_notes" id="payment_notes" rows="3" class="large-text"></textarea>
-                    </td>
-                </tr>
-            </table>
-            
-            <p class="submit">
-                <button type="submit" class="button button-primary"><?php _e('Save Payment', 'art-in-heaven'); ?></button>
+            <div class="aih-modal-body">
+                <table class="form-table">
+                    <tr>
+                        <th><label for="payment_status"><?php _e('Payment Status', 'art-in-heaven'); ?></label></th>
+                        <td>
+                            <select name="payment_status" id="payment_status" required>
+                                <option value="pending"><?php _e('Pending', 'art-in-heaven'); ?></option>
+                                <option value="paid"><?php _e('Paid', 'art-in-heaven'); ?></option>
+                                <option value="refunded"><?php _e('Refunded', 'art-in-heaven'); ?></option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label for="payment_method"><?php _e('Payment Method', 'art-in-heaven'); ?></label></th>
+                        <td>
+                            <select name="payment_method" id="payment_method" required>
+                                <option value="cash"><?php _e('Cash', 'art-in-heaven'); ?></option>
+                                <option value="check"><?php _e('Check', 'art-in-heaven'); ?></option>
+                                <option value="card"><?php _e('Credit Card', 'art-in-heaven'); ?></option>
+                                <option value="pushpay"><?php _e('Pushpay', 'art-in-heaven'); ?></option>
+                                <option value="other"><?php _e('Other', 'art-in-heaven'); ?></option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label for="payment_reference"><?php _e('Reference #', 'art-in-heaven'); ?></label></th>
+                        <td>
+                            <input type="text" name="payment_reference" id="payment_reference" class="regular-text" placeholder="<?php esc_attr_e('Check number, transaction ID, etc.', 'art-in-heaven'); ?>">
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label for="payment_notes"><?php _e('Notes', 'art-in-heaven'); ?></label></th>
+                        <td>
+                            <textarea name="payment_notes" id="payment_notes" rows="3" class="large-text"></textarea>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div class="aih-modal-footer">
                 <button type="button" class="button aih-modal-cancel"><?php _e('Cancel', 'art-in-heaven'); ?></button>
-            </p>
+                <button type="submit" class="button button-primary"><?php _e('Save Payment', 'art-in-heaven'); ?></button>
+            </div>
         </form>
     </div>
 </div>
@@ -579,97 +581,59 @@ $won_without_orders = $wpdb->get_results(
 <!-- Update Order Modal -->
 <div id="aih-order-modal" class="aih-modal" style="display:none;">
     <div class="aih-modal-content">
-        <span class="aih-modal-close">&times;</span>
-        <h2><?php _e('Update Order Payment', 'art-in-heaven'); ?></h2>
-        <p id="aih-order-modal-subtitle"></p>
-        
+        <div class="aih-modal-header">
+            <h2><?php _e('Update Order Payment', 'art-in-heaven'); ?></h2>
+            <button type="button" class="aih-modal-close">&times;</button>
+        </div>
         <form method="post" id="aih-order-form" action="">
             <input type="hidden" name="order_id" id="aih-order-id" value="">
-            
-            <table class="form-table">
-                <tr>
-                    <th><label for="order_payment_status"><?php _e('Payment Status', 'art-in-heaven'); ?></label></th>
-                    <td>
-                        <select name="status" id="order_payment_status" required>
-                            <option value="pending"><?php _e('Pending', 'art-in-heaven'); ?></option>
-                            <option value="paid"><?php _e('Paid', 'art-in-heaven'); ?></option>
-                            <option value="refunded"><?php _e('Refunded', 'art-in-heaven'); ?></option>
-                        </select>
-                    </td>
-                </tr>
-                <tr>
-                    <th><label for="order_payment_method"><?php _e('Payment Method', 'art-in-heaven'); ?></label></th>
-                    <td>
-                        <select name="method" id="order_payment_method" required>
-                            <option value="cash"><?php _e('Cash', 'art-in-heaven'); ?></option>
-                            <option value="check"><?php _e('Check', 'art-in-heaven'); ?></option>
-                            <option value="card"><?php _e('Credit Card', 'art-in-heaven'); ?></option>
-                            <option value="pushpay"><?php _e('Pushpay', 'art-in-heaven'); ?></option>
-                            <option value="other"><?php _e('Other', 'art-in-heaven'); ?></option>
-                        </select>
-                    </td>
-                </tr>
-                <tr>
-                    <th><label for="order_payment_reference"><?php _e('Reference #', 'art-in-heaven'); ?></label></th>
-                    <td>
-                        <input type="text" name="reference" id="order_payment_reference" class="regular-text">
-                    </td>
-                </tr>
-                <tr>
-                    <th><label for="order_payment_notes"><?php _e('Notes', 'art-in-heaven'); ?></label></th>
-                    <td>
-                        <textarea name="notes" id="order_payment_notes" rows="3" class="large-text"></textarea>
-                    </td>
-                </tr>
-            </table>
-            
-            <p class="submit">
-                <button type="button" class="button button-primary" id="aih-save-order-btn"><?php _e('Save', 'art-in-heaven'); ?></button>
+            <div class="aih-modal-body">
+                <p id="aih-order-modal-subtitle"></p>
+                <table class="form-table">
+                    <tr>
+                        <th><label for="order_payment_status"><?php _e('Payment Status', 'art-in-heaven'); ?></label></th>
+                        <td>
+                            <select name="status" id="order_payment_status" required>
+                                <option value="pending"><?php _e('Pending', 'art-in-heaven'); ?></option>
+                                <option value="paid"><?php _e('Paid', 'art-in-heaven'); ?></option>
+                                <option value="refunded"><?php _e('Refunded', 'art-in-heaven'); ?></option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label for="order_payment_method"><?php _e('Payment Method', 'art-in-heaven'); ?></label></th>
+                        <td>
+                            <select name="method" id="order_payment_method" required>
+                                <option value="cash"><?php _e('Cash', 'art-in-heaven'); ?></option>
+                                <option value="check"><?php _e('Check', 'art-in-heaven'); ?></option>
+                                <option value="card"><?php _e('Credit Card', 'art-in-heaven'); ?></option>
+                                <option value="pushpay"><?php _e('Pushpay', 'art-in-heaven'); ?></option>
+                                <option value="other"><?php _e('Other', 'art-in-heaven'); ?></option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label for="order_payment_reference"><?php _e('Reference #', 'art-in-heaven'); ?></label></th>
+                        <td>
+                            <input type="text" name="reference" id="order_payment_reference" class="regular-text">
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label for="order_payment_notes"><?php _e('Notes', 'art-in-heaven'); ?></label></th>
+                        <td>
+                            <textarea name="notes" id="order_payment_notes" rows="3" class="large-text"></textarea>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div class="aih-modal-footer">
                 <button type="button" class="button aih-modal-cancel"><?php _e('Cancel', 'art-in-heaven'); ?></button>
-            </p>
+                <button type="button" class="button button-primary" id="aih-save-order-btn"><?php _e('Save', 'art-in-heaven'); ?></button>
+            </div>
         </form>
     </div>
 </div>
 
-<style>
-.aih-modal {
-    position: fixed;
-    z-index: 100000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0,0,0,0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.aih-modal-content {
-    background: #fff;
-    padding: 20px 30px;
-    border-radius: 8px;
-    max-width: 500px;
-    width: 90%;
-    max-height: 80vh;
-    overflow-y: auto;
-    position: relative;
-}
-.aih-modal-close {
-    position: absolute;
-    top: 10px;
-    right: 15px;
-    font-size: 28px;
-    cursor: pointer;
-    color: #666;
-}
-.aih-modal-close:hover {
-    color: #000;
-}
-.aih-modal h2 {
-    margin-top: 0;
-    padding-right: 30px;
-}
-</style>
 
 <script>
 jQuery(document).ready(function($) {
