@@ -21,7 +21,7 @@ $bidders_table = AIH_Database::get_table('bidders');
 $bids_exist = $wpdb->get_var("SELECT COUNT(*) FROM {$bids_table}");
 
 // Search parameter
-$search = isset($_GET['search']) ? strtoupper(sanitize_text_field($_GET['search'])) : '';
+$search = isset($_GET['search']) ? sanitize_text_field($_GET['search']) : '';
 
 // Pagination
 $per_page = 50;
@@ -30,23 +30,32 @@ $offset = ($current_page - 1) * $per_page;
 
 // Build base query - simplified without joins first
 if (!empty($search)) {
+    $search_like = '%' . $wpdb->esc_like($search) . '%';
     $total_bids = $wpdb->get_var($wpdb->prepare(
-        "SELECT COUNT(*) FROM {$bids_table} WHERE bidder_id LIKE %s",
-        '%' . $wpdb->esc_like($search) . '%'
+        "SELECT COUNT(*) FROM {$bids_table} b
+         LEFT JOIN {$bidders_table} bi ON b.bidder_id = bi.confirmation_code
+         WHERE b.bidder_id LIKE %s
+            OR bi.name_first LIKE %s
+            OR bi.name_last LIKE %s
+            OR CONCAT(bi.name_first, ' ', bi.name_last) LIKE %s",
+        $search_like, $search_like, $search_like, $search_like
     ));
-    
+
     $bids = $wpdb->get_results($wpdb->prepare(
-        "SELECT b.*, 
+        "SELECT b.*,
                 b.bidder_id as confirmation_code,
                 bi.name_first, bi.name_last, bi.email_primary,
                 a.art_id, a.title, a.artist
-         FROM {$bids_table} b 
-         LEFT JOIN {$bidders_table} bi ON b.bidder_id = bi.confirmation_code 
-         LEFT JOIN {$art_table} a ON b.art_piece_id = a.id 
+         FROM {$bids_table} b
+         LEFT JOIN {$bidders_table} bi ON b.bidder_id = bi.confirmation_code
+         LEFT JOIN {$art_table} a ON b.art_piece_id = a.id
          WHERE b.bidder_id LIKE %s
+            OR bi.name_first LIKE %s
+            OR bi.name_last LIKE %s
+            OR CONCAT(bi.name_first, ' ', bi.name_last) LIKE %s
          ORDER BY b.bid_time DESC
          LIMIT %d OFFSET %d",
-        '%' . $wpdb->esc_like($search) . '%',
+        $search_like, $search_like, $search_like, $search_like,
         (int) $per_page,
         (int) $offset
     ));
@@ -115,20 +124,19 @@ $total_bid_value = $wpdb->get_var("SELECT SUM(bid_amount) FROM {$bids_table}");
     </div>
     
     <!-- Search Bar -->
-    <div class="aih-toolbar">
+    <div class="aih-toolbar aih-toolbar--minimal">
         <form method="get" class="aih-search-form">
             <input type="hidden" name="page" value="art-in-heaven-bids">
-            <input type="search" name="search" value="<?php echo esc_attr($search); ?>" 
-                   placeholder="<?php esc_attr_e('Enter confirmation code to filter...', 'art-in-heaven'); ?>" 
-                   class="aih-search-input" style="text-transform: uppercase;">
-            <button type="submit" class="button"><?php _e('Filter', 'art-in-heaven'); ?></button>
+            <input type="search" name="search" value="<?php echo esc_attr($search); ?>"
+                   placeholder="<?php esc_attr_e('Search by name or confirmation code...', 'art-in-heaven'); ?>">
+            <button type="submit" class="button"><?php _e('Search', 'art-in-heaven'); ?></button>
             <?php if (!empty($search)): ?>
                 <a href="<?php echo admin_url('admin.php?page=art-in-heaven-bids'); ?>" class="button"><?php _e('Show All', 'art-in-heaven'); ?></a>
             <?php endif; ?>
         </form>
         <div class="aih-toolbar-info">
             <?php if (!empty($search)): ?>
-                <?php printf(__('Showing %d bids for bidder "%s"', 'art-in-heaven'), $total_bids, esc_html($search)); ?>
+                <?php printf(__('Showing %d bids matching "%s"', 'art-in-heaven'), $total_bids, esc_html($search)); ?>
             <?php else: ?>
                 <?php printf(__('Showing all bids (%d total)', 'art-in-heaven'), $total_bids); ?>
             <?php endif; ?>
@@ -211,18 +219,15 @@ $total_bid_value = $wpdb->get_var("SELECT SUM(bid_amount) FROM {$bids_table}");
             if (!empty($search)) {
                 $base_url .= '&search=' . urlencode($search);
             }
-            
-            if ($current_page > 1): ?>
-                <a href="<?php echo $base_url . '&paged=' . ($current_page - 1); ?>" class="button">&laquo; <?php _e('Previous', 'art-in-heaven'); ?></a>
-            <?php endif; ?>
-            
+            ?>
+            <?php $at_first = $current_page <= 1; $at_last = $current_page >= $total_pages; ?>
+            <a href="<?php echo esc_url($base_url . '&paged=1'); ?>" class="button aih-page-btn<?php echo $at_first ? ' disabled' : ''; ?>"<?php echo $at_first ? ' aria-disabled="true" tabindex="-1"' : ''; ?>>&laquo;</a>
+            <a href="<?php echo esc_url($base_url . '&paged=' . max(1, $current_page - 1)); ?>" class="button aih-page-btn<?php echo $at_first ? ' disabled' : ''; ?>"<?php echo $at_first ? ' aria-disabled="true" tabindex="-1"' : ''; ?>>&lsaquo;</a>
             <span class="aih-page-info">
                 <?php printf(__('Page %d of %d', 'art-in-heaven'), $current_page, $total_pages); ?>
             </span>
-            
-            <?php if ($current_page < $total_pages): ?>
-                <a href="<?php echo $base_url . '&paged=' . ($current_page + 1); ?>" class="button"><?php _e('Next', 'art-in-heaven'); ?> &raquo;</a>
-            <?php endif; ?>
+            <a href="<?php echo esc_url($base_url . '&paged=' . min($total_pages, $current_page + 1)); ?>" class="button aih-page-btn<?php echo $at_last ? ' disabled' : ''; ?>"<?php echo $at_last ? ' aria-disabled="true" tabindex="-1"' : ''; ?>>&rsaquo;</a>
+            <a href="<?php echo esc_url($base_url . '&paged=' . $total_pages); ?>" class="button aih-page-btn<?php echo $at_last ? ' disabled' : ''; ?>"<?php echo $at_last ? ' aria-disabled="true" tabindex="-1"' : ''; ?>>&raquo;</a>
         </div>
     <?php endif; ?>
 </div>
@@ -233,52 +238,6 @@ $total_bid_value = $wpdb->get_var("SELECT SUM(bid_amount) FROM {$bids_table}");
     gap: 20px;
     margin-bottom: 20px;
     flex-wrap: wrap;
-}
-
-.aih-stat-card {
-    background: #fff;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    min-width: 150px;
-    text-align: center;
-}
-
-.aih-stat-number {
-    font-size: 28px;
-    font-weight: 700;
-    color: #1c1c1c;
-}
-
-.aih-stat-label {
-    font-size: 13px;
-    color: #8a8a8a;
-    margin-top: 5px;
-}
-
-.aih-toolbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-
-.aih-search-form {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-}
-
-.aih-search-input {
-    min-width: 200px;
-    padding: 8px 12px;
-    font-family: inherit;
-    font-size: 14px;
-    border: 1px solid #e5e7eb;
-    border-radius: 4px;
-    background: #fff;
 }
 
 .aih-toolbar-info {
@@ -350,25 +309,6 @@ $total_bid_value = $wpdb->get_var("SELECT SUM(bid_amount) FROM {$bids_table}");
     font-size: 16px;
 }
 
-.aih-status-badge {
-    display: inline-block;
-    padding: 4px 10px;
-    border-radius: 12px;
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-}
-
-.aih-status-badge.winning {
-    background: #d1fae5;
-    color: #065f46;
-}
-
-.aih-status-badge.outbid {
-    background: #fef3c7;
-    color: #92400e;
-}
-
 .aih-delete-bid {
     color: #a63d40 !important;
 }
@@ -391,19 +331,6 @@ $total_bid_value = $wpdb->get_var("SELECT SUM(bid_amount) FROM {$bids_table}");
     color: #8a8a8a;
 }
 
-.aih-pagination {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 15px;
-    margin-top: 20px;
-    padding: 15px;
-}
-
-.aih-page-info {
-    color: #8a8a8a;
-}
-
 @media (max-width: 782px) {
     .aih-stats-row {
         flex-direction: column;
@@ -416,15 +343,6 @@ $total_bid_value = $wpdb->get_var("SELECT SUM(bid_amount) FROM {$bids_table}");
     .aih-toolbar {
         flex-direction: column;
         align-items: stretch;
-    }
-    
-    .aih-search-form {
-        flex-wrap: wrap;
-    }
-    
-    .aih-search-input {
-        min-width: 100%;
-        width: 100%;
     }
     
     .aih-bids-table .column-time,

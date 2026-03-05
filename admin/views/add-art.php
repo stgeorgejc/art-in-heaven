@@ -148,6 +148,36 @@ $status_options = AIH_Status::get_status_options();
                         <textarea id="description" name="description" rows="4"
                                   placeholder="<?php esc_attr_e('Add a descriptive sentence about this piece...', 'art-in-heaven'); ?>"><?php echo esc_textarea(aih_get_prop($art_piece, 'description', '')); ?></textarea>
                     </div>
+
+                    <div class="aih-form-row">
+                        <label for="art_id"><?php _e('Art ID', 'art-in-heaven'); ?> <span class="required">*</span></label>
+                        <input type="text" id="art_id" name="art_id" required
+                               placeholder="<?php esc_attr_e('e.g., AIH-001', 'art-in-heaven'); ?>"
+                               value="<?php echo esc_attr(aih_get_prop($art_piece, 'art_id', '')); ?>"
+                               style="font-family: monospace; text-transform: uppercase;">
+                        <p class="description">
+                            <?php _e('Required. Use a consistent format like AIH-001, AIH-002, etc.', 'art-in-heaven'); ?>
+                        </p>
+                    </div>
+
+                    <div class="aih-form-row">
+                        <label for="tier"><?php _e('Tier / Category', 'art-in-heaven'); ?> <span class="required">*</span></label>
+                        <select id="tier" name="tier" required>
+                            <option value=""><?php _e('— Select Tier —', 'art-in-heaven'); ?></option>
+                            <?php
+                            $tiers = array('1', '2', '3', '4');
+                            $current_tier = aih_get_prop($art_piece, 'tier', '');
+                            foreach ($tiers as $tier):
+                            ?>
+                            <option value="<?php echo esc_attr($tier); ?>" <?php selected($current_tier, $tier); ?>>
+                                <?php printf(__('Tier %s', 'art-in-heaven'), $tier); ?>
+                            </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <p class="description">
+                            <?php _e('Required. Categorize art pieces by tier (1-4).', 'art-in-heaven'); ?>
+                        </p>
+                    </div>
                 </div>
                 
                 <div class="aih-form-section">
@@ -304,42 +334,6 @@ $status_options = AIH_Status::get_status_options();
                         <!-- Hidden field for legacy single image support -->
                         <input type="hidden" id="image_id" name="image_id" 
                                value="<?php echo esc_attr(aih_get_prop($art_piece, 'image_id', '')); ?>">
-                    </div>
-                </div>
-                
-                <div class="aih-form-section">
-                    <h2><?php _e('Art ID', 'art-in-heaven'); ?></h2>
-                    <div class="aih-form-row">
-                        <label for="art_id"><?php _e('Art ID', 'art-in-heaven'); ?> <span class="required">*</span></label>
-                        <input type="text" id="art_id" name="art_id" required
-                               placeholder="<?php esc_attr_e('e.g., AIH-001', 'art-in-heaven'); ?>"
-                               value="<?php echo esc_attr(aih_get_prop($art_piece, 'art_id', '')); ?>"
-                               style="font-family: monospace; text-transform: uppercase;">
-                        <p class="description">
-                            <?php _e('Required. Use a consistent format like AIH-001, AIH-002, etc.', 'art-in-heaven'); ?>
-                        </p>
-                    </div>
-                </div>
-                
-                <div class="aih-form-section">
-                    <h2><?php _e('Tier / Category', 'art-in-heaven'); ?></h2>
-                    <div class="aih-form-row">
-                        <label for="tier"><?php _e('Tier', 'art-in-heaven'); ?> <span class="required">*</span></label>
-                        <select id="tier" name="tier" required>
-                            <option value=""><?php _e('— Select Tier —', 'art-in-heaven'); ?></option>
-                            <?php
-                            $tiers = array('1', '2', '3', '4');
-                            $current_tier = aih_get_prop($art_piece, 'tier', '');
-                            foreach ($tiers as $tier):
-                            ?>
-                            <option value="<?php echo esc_attr($tier); ?>" <?php selected($current_tier, $tier); ?>>
-                                <?php printf(__('Tier %s', 'art-in-heaven'), $tier); ?>
-                            </option>
-                            <?php endforeach; ?>
-                        </select>
-                        <p class="description">
-                            <?php _e('Required. Categorize art pieces by tier (1-4).', 'art-in-heaven'); ?>
-                        </p>
                     </div>
                 </div>
                 

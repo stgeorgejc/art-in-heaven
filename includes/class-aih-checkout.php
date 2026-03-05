@@ -464,7 +464,7 @@ class AIH_Checkout {
     public function get_all_orders($args = array()) {
         global $wpdb;
 
-        $defaults = array('status' => '', 'bidder_id' => '', 'orderby' => 'created_at', 'order' => 'DESC', 'limit' => 0, 'offset' => 0);
+        $defaults = array('status' => '', 'bidder_id' => '', 'search' => '', 'orderby' => 'created_at', 'order' => 'DESC', 'limit' => 0, 'offset' => 0);
         $args = wp_parse_args($args, $defaults);
 
         $orders_table = AIH_Database::get_table('orders');
@@ -483,6 +483,13 @@ class AIH_Checkout {
         $where = "1=1";
         if (!empty($args['status'])) $where .= $wpdb->prepare(" AND o.payment_status = %s", $args['status']);
         if (!empty($args['bidder_id'])) $where .= $wpdb->prepare(" AND o.bidder_id = %s", $args['bidder_id']);
+        if (!empty($args['search'])) {
+            $like = '%' . $wpdb->esc_like($args['search']) . '%';
+            $where .= $wpdb->prepare(
+                " AND (o.order_number LIKE %s OR o.bidder_id LIKE %s OR COALESCE(bd.name_first, rg.name_first, '') LIKE %s OR COALESCE(bd.name_last, rg.name_last, '') LIKE %s OR CONCAT(COALESCE(bd.name_first, rg.name_first, ''), ' ', COALESCE(bd.name_last, rg.name_last, '')) LIKE %s OR COALESCE(bd.email_primary, rg.email_primary, '') LIKE %s)",
+                $like, $like, $like, $like, $like, $like
+            );
+        }
 
         $limit = intval($args['limit']);
         $offset = intval($args['offset']);
@@ -517,26 +524,33 @@ class AIH_Checkout {
     public function count_orders($args = array()) {
         global $wpdb;
 
-        $defaults = array('status' => '', 'bidder_id' => '');
+        $defaults = array('status' => '', 'bidder_id' => '', 'search' => '');
         $args = wp_parse_args($args, $defaults);
 
         $orders_table = AIH_Database::get_table('orders');
+        $bidders_table = AIH_Database::get_table('bidders');
+        $registrants_table = AIH_Database::get_table('registrants');
 
         $where = "1=1";
-        $where_values = array();
         if (!empty($args['status'])) {
-            $where .= " AND payment_status = %s";
-            $where_values[] = $args['status'];
+            $where .= $wpdb->prepare(" AND o.payment_status = %s", $args['status']);
         }
         if (!empty($args['bidder_id'])) {
-            $where .= " AND bidder_id = %s";
-            $where_values[] = $args['bidder_id'];
+            $where .= $wpdb->prepare(" AND o.bidder_id = %s", $args['bidder_id']);
+        }
+        if (!empty($args['search'])) {
+            $like = '%' . $wpdb->esc_like($args['search']) . '%';
+            $where .= $wpdb->prepare(
+                " AND (o.order_number LIKE %s OR o.bidder_id LIKE %s OR COALESCE(bd.name_first, rg.name_first, '') LIKE %s OR COALESCE(bd.name_last, rg.name_last, '') LIKE %s OR CONCAT(COALESCE(bd.name_first, rg.name_first, ''), ' ', COALESCE(bd.name_last, rg.name_last, '')) LIKE %s OR COALESCE(bd.email_primary, rg.email_primary, '') LIKE %s)",
+                $like, $like, $like, $like, $like, $like
+            );
         }
 
-        $query = "SELECT COUNT(*) FROM $orders_table WHERE $where";
-        if (!empty($where_values)) {
-            return (int) $wpdb->get_var($wpdb->prepare($query, $where_values));
-        }
+        $query = "SELECT COUNT(*) FROM $orders_table o
+                  LEFT JOIN $bidders_table bd ON o.bidder_id = bd.confirmation_code
+                  LEFT JOIN $registrants_table rg ON o.bidder_id = rg.confirmation_code
+                  WHERE $where";
+
         return (int) $wpdb->get_var($query);
     }
     

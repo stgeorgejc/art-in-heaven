@@ -53,6 +53,10 @@ switch ($current_tab) {
         $filter_args = array(); // All
 }
 
+$search = isset($_GET['search']) ? sanitize_text_field($_GET['search']) : '';
+if (!empty($search)) {
+    $filter_args['search'] = $search;
+}
 $art_pieces = $art_model->get_all_with_stats($filter_args);
 ?>
 <div class="wrap aih-admin-wrap">
@@ -88,7 +92,15 @@ $art_pieces = $art_model->get_all_with_stats($filter_args);
     <div class="aih-toolbar">
         <div class="aih-toolbar-row">
             <label class="aih-select-all-label"><input type="checkbox" id="aih-select-all"> <?php _e('All', 'art-in-heaven'); ?></label>
-            <input type="text" id="aih-search-table" placeholder="<?php _e('Search...', 'art-in-heaven'); ?>">
+            <form method="get" class="aih-search-form">
+                <input type="hidden" name="page" value="art-in-heaven-art">
+                <input type="hidden" name="tab" value="<?php echo esc_attr($current_tab); ?>">
+                <input type="search" name="search" value="<?php echo esc_attr($search); ?>" placeholder="<?php esc_attr_e('Search by title, artist, or ID...', 'art-in-heaven'); ?>">
+                <button type="submit" class="button"><?php _e('Search', 'art-in-heaven'); ?></button>
+                <?php if (!empty($search)): ?>
+                    <a href="<?php echo admin_url('admin.php?page=art-in-heaven-art&tab=' . urlencode($current_tab)); ?>" class="button"><?php _e('Show All', 'art-in-heaven'); ?></a>
+                <?php endif; ?>
+            </form>
             <select id="aih-filter-artist-admin">
                 <option value=""><?php _e('All Artists', 'art-in-heaven'); ?></option>
                 <?php
@@ -707,25 +719,19 @@ jQuery(document).ready(function($) {
         return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
     
-    // ========== SEARCH/FILTER ==========
-    
+    // ========== CLIENT-SIDE FILTER (artist/tier dropdowns) ==========
+
     function applyFilters() {
-        var search = $('#aih-search-table').val().toLowerCase().trim();
         var artist = $('#aih-filter-artist-admin').val().toLowerCase();
         var tier = $('#aih-filter-tier-admin').val();
         var visibleCount = 0;
 
         $tbody.find('tr[data-id]').each(function() {
             var $row = $(this);
-            var title = ($row.attr('data-title') || '').toLowerCase();
             var rowArtist = ($row.attr('data-artist') || '').toLowerCase();
-            var artid = ($row.attr('data-artid') || '').toLowerCase();
             var rowTier = $row.attr('data-tier') || '';
             var show = true;
 
-            if (search && title.indexOf(search) === -1 && rowArtist.indexOf(search) === -1 && artid.indexOf(search) === -1) {
-                show = false;
-            }
             if (artist && rowArtist !== artist) {
                 show = false;
             }
@@ -744,7 +750,6 @@ jQuery(document).ready(function($) {
         $('#aih-visible-count').text(visibleCount);
     }
 
-    $('#aih-search-table').on('input keyup', applyFilters);
     $('#aih-filter-artist-admin, #aih-filter-tier-admin').on('change', applyFilters);
     
     // ========== SORTING ==========
