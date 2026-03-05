@@ -917,6 +917,64 @@
     })();
 
     // =============================================
+    // AUCTION ENDED HELPER (for SSE)
+    // =============================================
+    /**
+     * Mark an auction as ended in the DOM (called by SSE auction_ended event).
+     * Applies the same transitions as the countdown timer hitting zero.
+     */
+    window.aihMarkAuctionEnded = function(artPieceId) {
+        // Gallery cards
+        var $card = $('.aih-card[data-id="' + artPieceId + '"]');
+        if ($card.length && !$card.hasClass('ended') && !$card.hasClass('won') && !$card.hasClass('paid')) {
+            var wasWinning = $card.hasClass('winning');
+            var newStatus = wasWinning ? 'won' : 'ended';
+            var newText = wasWinning ? 'Won' : 'Ended';
+
+            $card.removeClass('winning').addClass(newStatus);
+            $card.find('[data-seconds]').attr('data-seconds', '0');
+            $card.find('.aih-time-remaining .aih-time-value').text('Ended');
+            $card.find('.aih-time-remaining').addClass('ended');
+
+            // Update badge (mirror gallery countdown behavior)
+            var $badge = $card.find('.aih-badge');
+            if ($badge.length) {
+                $badge.attr('class', 'aih-badge aih-badge-' + newStatus).text(newText);
+            } else {
+                $card.find('.aih-card-image').append('<div class="aih-badge aih-badge-' + newStatus + '">' + newText + '</div>');
+            }
+
+            // Disable bid form and hide footer
+            $card.find('.aih-bid-input').prop('disabled', true).attr('placeholder', 'Ended');
+            $card.find('.aih-bid-btn').prop('disabled', true).text('Ended');
+            $card.find('.aih-card-footer').hide();
+        }
+
+        // Single-item page
+        var $wrapper = $('#aih-single-wrapper');
+        if ($wrapper.length && parseInt($wrapper.attr('data-piece-id'), 10) === parseInt(artPieceId, 10)) {
+            var $timer = $('.aih-time-remaining-single');
+            if ($timer.length && !$timer.hasClass('ended')) {
+                $timer.find('.aih-time-value').text('Ended');
+                $timer.addClass('ended');
+                $('#bid-amount').prop('disabled', true).attr('placeholder', 'Ended');
+                $('#place-bid').prop('disabled', true).text('Ended');
+
+                var $badge = $('.aih-badge-single');
+                if ($badge.length) {
+                    if ($badge.text().trim() === 'Winning') {
+                        $badge.attr('class', 'aih-badge aih-badge-won aih-badge-single').text('Won');
+                    } else {
+                        $badge.attr('class', 'aih-badge aih-badge-ended aih-badge-single').text('Ended');
+                    }
+                } else {
+                    $('.aih-single-image').append('<span class="aih-badge aih-badge-ended aih-badge-single">Ended</span>');
+                }
+            }
+        }
+    };
+
+    // =============================================
     // CONNECTION STATUS DOT
     // =============================================
     (function initConnectionStatus() {
