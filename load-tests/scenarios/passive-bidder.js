@@ -9,7 +9,7 @@
 import { sleep } from 'k6';
 import { loginBidder } from '../lib/auth.js';
 import * as api from '../lib/endpoints.js';
-import { SEARCH_TERMS } from '../config/base.js';
+import { SEARCH_TERMS, PUSH_ENABLED } from '../config/base.js';
 import { TEST_CODES } from '../config/test-data.js';
 import {
   thinkTime, randomItem, randomItems, randomIntBetween,
@@ -71,14 +71,18 @@ export default function passiveBidderScenario() {
     thinkTime(3, 8);
   }
 
-  // 5. Poll status 3-5 times (simulating staying on the page)
-  const pollCount = randomIntBetween(3, 5);
+  // 5. Poll status (simulating staying on the page)
+  // With push disabled: aggressive polling via check_outbid (10-30s intervals)
+  // With push enabled: lighter polling (30-60s), push handles outbid alerts
+  const pollCount = PUSH_ENABLED ? randomIntBetween(2, 3) : randomIntBetween(3, 5);
   const pollIds = artIds.slice(0, Math.min(50, artIds.length));
 
   for (let i = 0; i < pollCount; i++) {
     api.pollStatus(ajaxUrl, frontendNonce, pollIds);
-    api.checkOutbid(ajaxUrl, frontendNonce);
-    sleep(randomIntBetween(10, 30));
+    if (!PUSH_ENABLED) {
+      api.checkOutbid(ajaxUrl, frontendNonce);
+    }
+    sleep(PUSH_ENABLED ? randomIntBetween(30, 60) : randomIntBetween(10, 30));
   }
 
   thinkTime(5, 10);

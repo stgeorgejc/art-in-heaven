@@ -8,7 +8,7 @@
 import { sleep } from 'k6';
 import { loginBidder } from '../lib/auth.js';
 import * as api from '../lib/endpoints.js';
-import { SEARCH_TERMS } from '../config/base.js';
+import { SEARCH_TERMS, PUSH_ENABLED } from '../config/base.js';
 import { TEST_CODES } from '../config/test-data.js';
 import {
   thinkTime, randomItem, randomItems, randomIntBetween, randomBidAmount,
@@ -69,14 +69,18 @@ export default function activeBidderScenario() {
     thinkTime(3, 8);
   }
 
-  // 4. Aggressive polling (5-15s intervals, simulating watching the auction)
-  const pollCount = randomIntBetween(3, 5);
+  // 4. Polling (watching the auction for status changes)
+  // With push disabled: aggressive polling + check_outbid (5-15s)
+  // With push enabled: lighter polling (15-30s), push handles outbid alerts
+  const pollCount = PUSH_ENABLED ? randomIntBetween(2, 4) : randomIntBetween(3, 5);
   const pollIds = artIds.slice(0, Math.min(50, artIds.length));
 
   for (let i = 0; i < pollCount; i++) {
     api.pollStatus(ajaxUrl, frontendNonce, pollIds);
-    api.checkOutbid(ajaxUrl, frontendNonce);
-    sleep(randomIntBetween(5, 15));
+    if (!PUSH_ENABLED) {
+      api.checkOutbid(ajaxUrl, frontendNonce);
+    }
+    sleep(PUSH_ENABLED ? randomIntBetween(15, 30) : randomIntBetween(5, 15));
   }
 
   // 5. Occasional search (30% chance)

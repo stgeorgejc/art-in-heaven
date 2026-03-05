@@ -4,11 +4,18 @@
  * Override at runtime:
  *   k6 run -e BASE_URL=https://staging.example.com load-tests/tests/smoke.js
  *   k6 run -e GALLERY_PATH=/gallery/ load-tests/tests/smoke.js
+ *   k6 run -e PUSH_ENABLED=true load-tests/tests/smoke.js
  */
 
 export const BASE_URL = __ENV.BASE_URL || 'https://aihgallery.org';
 export const GALLERY_PATH = __ENV.GALLERY_PATH || '/live/';
 export const AJAX_URL = `${BASE_URL}/wp-admin/admin-ajax.php`;
+
+// Push notification toggle — mirrors the aih_push_enabled admin setting.
+// When false (default), scenarios poll check_outbid aggressively (worst-case
+// server load). When true, polling intervals are longer since real clients
+// receive server-sent push notifications for outbid events.
+export const PUSH_ENABLED = __ENV.PUSH_ENABLED === 'true';
 
 // ---------------------------------------------------------------------------
 // Test tier definitions (VU counts and durations)
