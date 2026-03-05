@@ -48,15 +48,14 @@ class AIH_Push {
         'updates.push.services.mozilla.com',
         'push.services.mozilla.com',
         '.notify.windows.com',
-        '.push.apple.com',
         'web.push.apple.com',
     );
 
     /**
-     * Validate that a push subscription endpoint belongs to a known push service.
+     * Validate that a push subscription endpoint uses HTTPS and belongs to a known push service.
      *
      * @param string $endpoint The push subscription endpoint URL.
-     * @return bool True if the endpoint host matches a known push service.
+     * @return bool True if the endpoint is HTTPS and its host matches an allowed push service pattern; false otherwise.
      */
     public static function is_valid_push_endpoint($endpoint) {
         if (empty($endpoint)) {
@@ -65,8 +64,12 @@ class AIH_Push {
 
         $parsed = wp_parse_url($endpoint);
 
+        if (!is_array($parsed)) {
+            return false;
+        }
+
         // Must be HTTPS
-        if (empty($parsed['scheme']) || $parsed['scheme'] !== 'https') {
+        if (empty($parsed['scheme']) || strtolower($parsed['scheme']) !== 'https') {
             return false;
         }
 
