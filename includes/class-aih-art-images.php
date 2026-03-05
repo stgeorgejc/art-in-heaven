@@ -8,7 +8,8 @@ if (!defined('ABSPATH')) {
 }
 
 class AIH_Art_Images {
-    
+
+    /** @var string */
     private $table;
     
     public function __construct() {
@@ -17,6 +18,13 @@ class AIH_Art_Images {
     
     /**
      * Add image to art piece
+     *
+     * @param int    $art_piece_id
+     * @param int    $image_id
+     * @param string $image_url
+     * @param string $watermarked_url
+     * @param bool   $is_primary
+     * @return int|false Insert ID on success, false on failure.
      */
     public function add_image($art_piece_id, $image_id, $image_url, $watermarked_url = '', $is_primary = false) {
         global $wpdb;
@@ -71,6 +79,9 @@ class AIH_Art_Images {
     
     /**
      * Remove image from art piece
+     *
+     * @param int $image_record_id
+     * @return bool True on success, false on failure.
      */
     public function remove_image($image_record_id) {
         global $wpdb;
@@ -189,6 +200,9 @@ class AIH_Art_Images {
     
     /**
      * Set image as primary
+     *
+     * @param int $image_record_id
+     * @return bool True on success, false if image not found.
      */
     public function set_primary($image_record_id) {
         global $wpdb;
@@ -229,6 +243,9 @@ class AIH_Art_Images {
     
     /**
      * Sync primary image to art piece's main image fields
+     *
+     * @param int $art_piece_id
+     * @return void
      */
     public function sync_primary_to_art_piece($art_piece_id) {
         global $wpdb;
@@ -266,6 +283,9 @@ class AIH_Art_Images {
     
     /**
      * Get all images for an art piece
+     *
+     * @param int $art_piece_id
+     * @return array<int, object>
      */
     public function get_images($art_piece_id) {
         global $wpdb;
@@ -278,6 +298,9 @@ class AIH_Art_Images {
     
     /**
      * Get primary image for an art piece
+     *
+     * @param int $art_piece_id
+     * @return object|null
      */
     public function get_primary_image($art_piece_id) {
         global $wpdb;
@@ -290,6 +313,9 @@ class AIH_Art_Images {
     
     /**
      * Get image count for an art piece
+     *
+     * @param int $art_piece_id
+     * @return int
      */
     public function get_image_count($art_piece_id) {
         global $wpdb;
@@ -302,6 +328,9 @@ class AIH_Art_Images {
     
     /**
      * Update sort order
+     *
+     * @param array<int, int> $image_ids
+     * @return true
      */
     public function update_order($image_ids) {
         global $wpdb;
@@ -321,6 +350,8 @@ class AIH_Art_Images {
     
     /**
      * Migrate existing single images to new table
+     *
+     * @return int Number of migrated images.
      */
     public function migrate_existing_images() {
         global $wpdb;

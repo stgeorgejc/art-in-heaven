@@ -86,6 +86,11 @@ class AIH_API_Router {
     /** API prefix in URL path */
     const API_PREFIX = 'api';
 
+    /**
+     * Get the singleton instance.
+     *
+     * @return self
+     */
     public static function get_instance() {
         if (null === self::$instance) {
             self::$instance = new self();
@@ -101,6 +106,8 @@ class AIH_API_Router {
 
     /**
      * Register rewrite rules for /api/{action}
+     *
+     * @return void
      */
     public function register_rewrite_rules() {
         add_rewrite_rule(
@@ -112,6 +119,9 @@ class AIH_API_Router {
 
     /**
      * Register the custom query var
+     *
+     * @param array<int, string> $vars Existing query vars.
+     * @return array<int, string>
      */
     public function register_query_vars($vars) {
         $vars[] = 'aih_api_action';
@@ -120,6 +130,8 @@ class AIH_API_Router {
 
     /**
      * Intercept API requests before template loading
+     *
+     * @return void
      */
     public function handle_api_request() {
         $action = get_query_var('aih_api_action');
@@ -192,6 +204,8 @@ class AIH_API_Router {
 
     /**
      * Validate Origin header matches site URL
+     *
+     * @return void
      */
     private function validate_origin() {
         $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
@@ -211,6 +225,8 @@ class AIH_API_Router {
 
     /**
      * Validate Content-Type header
+     *
+     * @return void
      */
     private function validate_content_type() {
         $content_type = $_SERVER['CONTENT_TYPE'] ?? $_SERVER['HTTP_CONTENT_TYPE'] ?? '';
@@ -241,6 +257,8 @@ class AIH_API_Router {
 
     /**
      * Remove WordPress-identifying response headers
+     *
+     * @return void
      */
     private function strip_wp_headers() {
         header_remove('X-Powered-By');
@@ -261,6 +279,10 @@ class AIH_API_Router {
 
     /**
      * Send a JSON error and exit
+     *
+     * @param string $message Error message.
+     * @param int    $status  HTTP status code.
+     * @return void
      */
     private function send_error($message, $status = 400) {
         $this->strip_wp_headers();

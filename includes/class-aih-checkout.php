@@ -9,8 +9,12 @@ if (!defined('ABSPATH')) {
 
 class AIH_Checkout {
     
+    /** @var self|null */
     private static $instance = null;
-    
+
+    /**
+     * @return self
+     */
     public static function get_instance() {
         if (null === self::$instance) {
             self::$instance = new self();
@@ -18,6 +22,9 @@ class AIH_Checkout {
         return self::$instance;
     }
     
+    /**
+     * @return array{merchant_key: string, base_url: string, fund: string}
+     */
     public function get_pushpay_settings() {
         return array(
             'merchant_key' => get_option('aih_pushpay_merchant_key', ''),
@@ -26,12 +33,20 @@ class AIH_Checkout {
         );
     }
     
+    /**
+     * @param object $order Order object.
+     * @return string
+     */
     public function get_pushpay_payment_url($order) {
         // Use the new Pushpay API class
         $pushpay = AIH_Pushpay_API::get_instance();
         return $pushpay->get_payment_url($order);
     }
     
+    /**
+     * @param int|string $bidder_id Bidder confirmation code.
+     * @return list<object>
+     */
     public function get_won_items($bidder_id) {
         global $wpdb;
         
@@ -64,6 +79,9 @@ class AIH_Checkout {
      * concurrent tabs or in-flight PushPay payments.
      *
      * Callers must verify the bidder is authorized before invoking this method.
+     *
+     * @param int|string $bidder_id Bidder confirmation code.
+     * @return int Number of cancelled orders.
      */
     public function cancel_pending_orders($bidder_id) {
         // Verify the caller's session matches the bidder being cancelled.
@@ -89,7 +107,10 @@ class AIH_Checkout {
     }
 
     /**
-     * Get payment status for all art pieces a bidder has won (keyed by art_piece_id)
+     * Get payment status for all art pieces a bidder has won (keyed by art_piece_id).
+     *
+     * @param int|string $bidder_id Bidder confirmation code.
+     * @return array<int|string, string>
      */
     public function get_bidder_payment_statuses($bidder_id) {
         global $wpdb;
@@ -117,6 +138,10 @@ class AIH_Checkout {
         return $map;
     }
 
+    /**
+     * @param array<int, object> $items Items with winning_amount property.
+     * @return array{subtotal: float, tax: float, tax_rate: float, total: float, item_count: int}
+     */
     public function calculate_totals($items) {
         $subtotal = 0;
         foreach ($items as $item) {
@@ -135,6 +160,11 @@ class AIH_Checkout {
         );
     }
     
+    /**
+     * @param int|string    $bidder_id     Bidder confirmation code.
+     * @param array<int, int> $art_piece_ids Art piece IDs to include in the order.
+     * @return array{success: bool, message?: string, order_id?: int, order_number?: string, totals?: array<string, mixed>, pushpay_url?: string, idempotent?: bool}
+     */
     public function create_order($bidder_id, $art_piece_ids = array()) {
         global $wpdb;
 
@@ -257,6 +287,10 @@ class AIH_Checkout {
         }
     }
     
+    /**
+     * @param int $order_id Order ID.
+     * @return object|null
+     */
     public function get_order($order_id) {
         global $wpdb;
         
@@ -292,6 +326,10 @@ class AIH_Checkout {
         return $order;
     }
     
+    /**
+     * @param string $order_number Order number (e.g. AIH-XXXXXXXX).
+     * @return object|null
+     */
     public function get_order_by_number($order_number) {
         global $wpdb;
         $orders_table = AIH_Database::get_table('orders');
@@ -299,6 +337,14 @@ class AIH_Checkout {
         return $order_id ? $this->get_order($order_id) : null;
     }
     
+    /**
+     * @param int    $order_id  Order ID.
+     * @param string $status    Payment status.
+     * @param string $method    Payment method.
+     * @param string $reference Payment reference.
+     * @param string $notes     Admin notes.
+     * @return int|false Number of rows updated or false on error.
+     */
     public function update_payment_status($order_id, $status, $method = '', $reference = '', $notes = '') {
         global $wpdb;
         $orders_table = AIH_Database::get_table('orders');
@@ -461,6 +507,10 @@ class AIH_Checkout {
         );
     }
 
+    /**
+     * @param array<string, mixed> $args Query arguments.
+     * @return list<object>
+     */
     public function get_all_orders($args = array()) {
         global $wpdb;
 
@@ -521,6 +571,10 @@ class AIH_Checkout {
         return $wpdb->get_results($sql);
     }
 
+    /**
+     * @param array<string, mixed> $args Query arguments.
+     * @return int
+     */
     public function count_orders($args = array()) {
         global $wpdb;
 
@@ -554,10 +608,17 @@ class AIH_Checkout {
         return (int) $wpdb->get_var($query);
     }
     
+    /**
+     * @param int|string $bidder_id Bidder confirmation code.
+     * @return list<object>
+     */
     public function get_bidder_orders($bidder_id) {
         return $this->get_all_orders(array('bidder_id' => $bidder_id));
     }
     
+    /**
+     * @return object|null
+     */
     public function get_payment_stats() {
         // Check cache first
         if (class_exists('AIH_Cache')) {
@@ -588,6 +649,10 @@ class AIH_Checkout {
         return $stats;
     }
     
+    /**
+     * @param int $order_id Order ID.
+     * @return int|false Number of rows deleted or false on error.
+     */
     public function delete_order($order_id) {
         global $wpdb;
         $orders_table = AIH_Database::get_table('orders');

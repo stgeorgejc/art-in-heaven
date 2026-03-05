@@ -8,9 +8,13 @@ if (!defined('ABSPATH')) {
 }
 
 class AIH_Shortcodes {
-    
+
+    /** @var self|null */
     private static $instance = null;
-    
+
+    /**
+     * @return self
+     */
     public static function get_instance() {
         if (null === self::$instance) {
             self::$instance = new self();
@@ -42,6 +46,8 @@ class AIH_Shortcodes {
      * Register rewrite rule for clean art piece URLs
      *
      * Maps {gallery-slug}/art/{id} to the gallery page with aih_art_id query var.
+     *
+     * @return void
      */
     public function register_art_rewrite_rules() {
         $gallery_page_id = get_option('aih_gallery_page', '');
@@ -75,6 +81,9 @@ class AIH_Shortcodes {
 
     /**
      * Register custom query variable for clean art URLs
+     *
+     * @param array<int, string> $vars
+     * @return array<int, string>
      */
     public function register_art_query_vars($vars) {
         $vars[] = 'aih_art_id';
@@ -83,6 +92,8 @@ class AIH_Shortcodes {
 
     /**
      * 301 redirect legacy ?art_id= URLs to clean /art/{art_id}/ URLs
+     *
+     * @return void
      */
     public function redirect_legacy_art_urls() {
         if (isset($_GET['art_id']) && !empty($_GET['art_id'])) {
@@ -103,6 +114,8 @@ class AIH_Shortcodes {
 
     /**
      * Flush rewrite rules when gallery page option changes
+     *
+     * @return void
      */
     public function flush_art_rewrite_rules() {
         $this->register_art_rewrite_rules();
@@ -111,6 +124,8 @@ class AIH_Shortcodes {
 
     /**
      * Check if login is required and redirect
+     *
+     * @return void
      */
     public function check_login_required() {
         $auth = AIH_Auth::get_instance();
@@ -141,6 +156,9 @@ class AIH_Shortcodes {
     
     /**
      * Login page shortcode
+     *
+     * @param array<string, mixed>|string $atts
+     * @return string
      */
     public function login_shortcode($atts) {
         $auth = AIH_Auth::get_instance();
@@ -164,6 +182,10 @@ class AIH_Shortcodes {
         return ob_get_clean();
     }
     
+    /**
+     * @param array<string, mixed>|string $atts
+     * @return string
+     */
     public function gallery_shortcode($atts) {
         $atts = shortcode_atts(array('columns' => 3, 'per_page' => -1), $atts);
         
@@ -199,6 +221,10 @@ class AIH_Shortcodes {
         return ob_get_clean();
     }
     
+    /**
+     * @param array<string, mixed>|string $atts
+     * @return string
+     */
     public function item_shortcode($atts) {
         $atts = shortcode_atts(array('id' => 0), $atts);
         if (!$atts['id']) return '<p>' . __('Please specify an art piece ID.', 'art-in-heaven') . '</p>';
@@ -212,24 +238,40 @@ class AIH_Shortcodes {
         return ob_get_clean();
     }
     
+    /**
+     * @param array<string, mixed>|string $atts
+     * @return string
+     */
     public function my_bids_shortcode($atts) {
         ob_start();
         include AIH_PLUGIN_DIR . 'templates/my-bids.php';
         return ob_get_clean();
     }
     
+    /**
+     * @param array<string, mixed>|string $atts
+     * @return string
+     */
     public function checkout_shortcode($atts) {
         ob_start();
         include AIH_PLUGIN_DIR . 'templates/checkout.php';
         return ob_get_clean();
     }
     
+    /**
+     * @param array<string, mixed>|string $atts
+     * @return string
+     */
     public function winners_shortcode($atts) {
         ob_start();
         include AIH_PLUGIN_DIR . 'templates/winners.php';
         return ob_get_clean();
     }
 
+    /**
+     * @param array<string, mixed>|string $atts
+     * @return string
+     */
     public function my_wins_shortcode($atts) {
         ob_start();
         include AIH_PLUGIN_DIR . 'templates/my-wins.php';
