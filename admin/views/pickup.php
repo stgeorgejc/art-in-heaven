@@ -40,7 +40,7 @@ $picked_up_count = $wpdb->get_var(
      WHERE o.payment_status = 'paid' AND o.pickup_status = 'picked_up'"
 );
 
-// Build search clause
+// Build search clause — safe to interpolate, built entirely via $wpdb->prepare()
 $search_where = '';
 if (!empty($search)) {
     $like = '%' . $wpdb->esc_like($search) . '%';

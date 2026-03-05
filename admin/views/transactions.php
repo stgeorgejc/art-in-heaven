@@ -314,13 +314,14 @@ $matchable_orders = $wpdb->get_results(
         if ($search) $base_url .= '&s=' . urlencode($search);
         if ($orderby) $base_url .= '&orderby=' . urlencode($orderby) . '&order=' . urlencode($order);
         ?>
-        <a href="<?php echo esc_url($base_url . '&paged=1'); ?>" class="button aih-page-btn<?php echo $current_page <= 1 ? ' disabled' : ''; ?>">&laquo;</a>
-        <a href="<?php echo esc_url($base_url . '&paged=' . max(1, $current_page - 1)); ?>" class="button aih-page-btn<?php echo $current_page <= 1 ? ' disabled' : ''; ?>">&lsaquo;</a>
+        <?php $at_first = $current_page <= 1; $at_last = $current_page >= $total_pages; ?>
+        <a href="<?php echo esc_url($base_url . '&paged=1'); ?>" class="button aih-page-btn<?php echo $at_first ? ' disabled' : ''; ?>"<?php echo $at_first ? ' aria-disabled="true" tabindex="-1"' : ''; ?>>&laquo;</a>
+        <a href="<?php echo esc_url($base_url . '&paged=' . max(1, $current_page - 1)); ?>" class="button aih-page-btn<?php echo $at_first ? ' disabled' : ''; ?>"<?php echo $at_first ? ' aria-disabled="true" tabindex="-1"' : ''; ?>>&lsaquo;</a>
         <span class="aih-page-info">
             <?php printf(__('Page %d of %d (%s items)', 'art-in-heaven'), $current_page, $total_pages, number_format($total_items)); ?>
         </span>
-        <a href="<?php echo esc_url($base_url . '&paged=' . min($total_pages, $current_page + 1)); ?>" class="button aih-page-btn<?php echo $current_page >= $total_pages ? ' disabled' : ''; ?>">&rsaquo;</a>
-        <a href="<?php echo esc_url($base_url . '&paged=' . $total_pages); ?>" class="button aih-page-btn<?php echo $current_page >= $total_pages ? ' disabled' : ''; ?>">&raquo;</a>
+        <a href="<?php echo esc_url($base_url . '&paged=' . min($total_pages, $current_page + 1)); ?>" class="button aih-page-btn<?php echo $at_last ? ' disabled' : ''; ?>"<?php echo $at_last ? ' aria-disabled="true" tabindex="-1"' : ''; ?>>&rsaquo;</a>
+        <a href="<?php echo esc_url($base_url . '&paged=' . $total_pages); ?>" class="button aih-page-btn<?php echo $at_last ? ' disabled' : ''; ?>"<?php echo $at_last ? ' aria-disabled="true" tabindex="-1"' : ''; ?>>&raquo;</a>
     </div>
     <?php endif; ?>
 

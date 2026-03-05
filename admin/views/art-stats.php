@@ -64,6 +64,7 @@ $favorites_count = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $fa
 $search = isset($_GET['search']) ? sanitize_text_field($_GET['search']) : '';
 
 // Get all bids for this piece - including unsuccessful bids
+// $bid_search_where is safe to interpolate — built entirely via $wpdb->prepare() above
 $bid_search_where = '';
 if (!empty($search)) {
     $like = '%' . $wpdb->esc_like($search) . '%';

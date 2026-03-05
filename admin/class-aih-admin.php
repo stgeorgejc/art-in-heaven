@@ -64,16 +64,6 @@ class AIH_Admin {
                 array($this, 'render_dashboard')
             );
         }
-        
-        // Art Pieces - accessible to art managers
-        add_submenu_page(
-            $default_slug,
-            __('Art Pieces', 'art-in-heaven'),
-            __('Art Pieces', 'art-in-heaven'),
-            AIH_Roles::CAP_MANAGE_ART,
-            'art-in-heaven-art',
-            array($this, 'render_art_pieces')
-        );
 
         // Add New Art - accessible to art managers
         add_submenu_page(
@@ -84,6 +74,28 @@ class AIH_Admin {
             'art-in-heaven-add',
             array($this, 'render_add_art')
         );
+
+        // Art Pieces - accessible to art managers
+        add_submenu_page(
+            $default_slug,
+            __('Art Pieces', 'art-in-heaven'),
+            __('Art Pieces', 'art-in-heaven'),
+            AIH_Roles::CAP_MANAGE_ART,
+            'art-in-heaven-art',
+            array($this, 'render_art_pieces')
+        );
+
+        // Bidders - requires bidder management access (super admin only)
+        if (AIH_Roles::can_manage_bidders()) {
+            add_submenu_page(
+                $default_slug,
+                __('Bidders', 'art-in-heaven'),
+                __('Bidders', 'art-in-heaven'),
+                AIH_Roles::CAP_MANAGE_BIDDERS,
+                'art-in-heaven-bidders',
+                array($this, 'render_bidders')
+            );
+        }
 
         // Bids - requires view bids access
         if (AIH_Roles::can_view_bids()) {
@@ -97,27 +109,20 @@ class AIH_Admin {
             );
         }
 
-        // Orders - requires financial access (super admin only)
+        // Engagement Stats - requires reports access (super admin only)
+        if (AIH_Roles::can_view_reports()) {
+            add_submenu_page(
+                $default_slug,
+                __('Engagement Stats', 'art-in-heaven'),
+                __('Engagement Stats', 'art-in-heaven'),
+                AIH_Roles::CAP_VIEW_REPORTS,
+                'art-in-heaven-stats',
+                array($this, 'render_stats')
+            );
+        }
+
+        // Winners, Orders - requires financial access (super admin only)
         if (AIH_Roles::can_view_financial()) {
-            add_submenu_page(
-                $default_slug,
-                __('Orders & Payments', 'art-in-heaven'),
-                __('Orders', 'art-in-heaven'),
-                AIH_Roles::CAP_VIEW_FINANCIAL,
-                'art-in-heaven-orders',
-                array($this, 'render_orders')
-            );
-
-            add_submenu_page(
-                $default_slug,
-                __('Payments', 'art-in-heaven'),
-                __('Payments', 'art-in-heaven'),
-                AIH_Roles::CAP_VIEW_FINANCIAL,
-                'art-in-heaven-payments',
-                array($this, 'render_payments')
-            );
-
-            // Winners & Sales - requires financial access
             add_submenu_page(
                 $default_slug,
                 __('Winners & Sales', 'art-in-heaven'),
@@ -125,6 +130,15 @@ class AIH_Admin {
                 AIH_Roles::CAP_VIEW_FINANCIAL,
                 'art-in-heaven-winners',
                 array($this, 'render_winners')
+            );
+
+            add_submenu_page(
+                $default_slug,
+                __('Orders & Payments', 'art-in-heaven'),
+                __('Orders & Payments', 'art-in-heaven'),
+                AIH_Roles::CAP_VIEW_FINANCIAL,
+                'art-in-heaven-orders',
+                array($this, 'render_orders')
             );
         }
 
@@ -140,15 +154,24 @@ class AIH_Admin {
             );
         }
 
-        // Bidders - requires bidder management access (super admin only)
-        if (AIH_Roles::can_manage_bidders()) {
+        // Transactions & Integrations - requires settings access (super admin only)
+        if (AIH_Roles::can_manage_settings()) {
             add_submenu_page(
                 $default_slug,
-                __('Bidders', 'art-in-heaven'),
-                __('Bidders', 'art-in-heaven'),
-                AIH_Roles::CAP_MANAGE_BIDDERS,
-                'art-in-heaven-bidders',
-                array($this, 'render_bidders')
+                __('Transactions', 'art-in-heaven'),
+                __('Transactions', 'art-in-heaven'),
+                AIH_Roles::CAP_MANAGE_SETTINGS,
+                'art-in-heaven-transactions',
+                array($this, 'render_transactions')
+            );
+
+            add_submenu_page(
+                $default_slug,
+                __('Integrations', 'art-in-heaven'),
+                __('Integrations', 'art-in-heaven'),
+                AIH_Roles::CAP_MANAGE_SETTINGS,
+                'art-in-heaven-integrations',
+                array($this, 'render_integrations')
             );
         }
 
@@ -161,15 +184,6 @@ class AIH_Admin {
                 AIH_Roles::CAP_VIEW_REPORTS,
                 'art-in-heaven-reports',
                 array($this, 'render_reports')
-            );
-
-            add_submenu_page(
-                $default_slug,
-                __('Engagement Stats', 'art-in-heaven'),
-                __('Engagement Stats', 'art-in-heaven'),
-                AIH_Roles::CAP_VIEW_REPORTS,
-                'art-in-heaven-stats',
-                array($this, 'render_stats')
             );
         }
 
@@ -185,28 +199,7 @@ class AIH_Admin {
             );
         }
 
-        // Integrations - requires settings access (super admin only)
-        if (AIH_Roles::can_manage_settings()) {
-            add_submenu_page(
-                $default_slug,
-                __('Integrations', 'art-in-heaven'),
-                __('Integrations', 'art-in-heaven'),
-                AIH_Roles::CAP_MANAGE_SETTINGS,
-                'art-in-heaven-integrations',
-                array($this, 'render_integrations')
-            );
-
-            add_submenu_page(
-                $default_slug,
-                __('Transactions', 'art-in-heaven'),
-                __('Transactions', 'art-in-heaven'),
-                AIH_Roles::CAP_MANAGE_SETTINGS,
-                'art-in-heaven-transactions',
-                array($this, 'render_transactions')
-            );
-        }
-
-        // Settings - requires settings access (super admin only)
+        // Settings & Log Viewer - requires settings access (super admin only)
         if (AIH_Roles::can_manage_settings()) {
             add_submenu_page(
                 $default_slug,
@@ -539,13 +532,36 @@ class AIH_Admin {
         if (!AIH_Roles::can_view_financial()) {
             wp_die(__('You do not have permission to access this page.', 'art-in-heaven'));
         }
+        // Handle manual payment status updates (Mark Payment on won items without orders)
+        $payment_message = null;
+        $payment_message_type = null;
+        if (isset($_POST['aih_update_payment'], $_POST['aih_payment_nonce']) && wp_verify_nonce(wp_unslash($_POST['aih_payment_nonce']), 'aih_update_payment')) {
+            $result = AIH_Checkout::get_instance()->mark_manual_payment(
+                intval($_POST['art_piece_id']),
+                sanitize_text_field(wp_unslash($_POST['payment_status'])),
+                sanitize_text_field(wp_unslash($_POST['payment_method'])),
+                sanitize_text_field(wp_unslash($_POST['payment_reference'])),
+                sanitize_textarea_field(wp_unslash($_POST['payment_notes']))
+            );
+            $payment_message = $result['message'];
+            $payment_message_type = $result['success'] ? 'success' : 'error';
+        }
+
         $checkout = AIH_Checkout::get_instance();
         $status_filter = isset($_GET['status']) ? sanitize_text_field($_GET['status']) : '';
         $search = isset($_GET['search']) ? sanitize_text_field($_GET['search']) : '';
-        $orders = $checkout->get_all_orders(array('status' => $status_filter, 'search' => $search));
-        $payment_stats = $checkout->get_payment_stats();
         $single_order = isset($_GET['order_id']) ? $checkout->get_order(intval($_GET['order_id'])) : null;
-        
+
+        // Pagination
+        $per_page = 50;
+        $current_page = isset($_GET['paged']) ? max(1, intval($_GET['paged'])) : 1;
+        $offset = ($current_page - 1) * $per_page;
+
+        $orders = $checkout->get_all_orders(array('status' => $status_filter, 'search' => $search, 'limit' => $per_page, 'offset' => $offset));
+        $total_orders_filtered = $checkout->count_orders(array('status' => $status_filter, 'search' => $search));
+        $total_pages = ceil($total_orders_filtered / $per_page);
+        $payment_stats = $checkout->get_payment_stats();
+
         // Ensure payment_stats has all required properties
         if (!$payment_stats) {
             $payment_stats = new stdClass();
@@ -555,12 +571,36 @@ class AIH_Admin {
         $payment_stats->pending_orders = isset($payment_stats->pending_orders) ? $payment_stats->pending_orders : 0;
         $payment_stats->total_collected = isset($payment_stats->total_collected) ? $payment_stats->total_collected : 0;
         $payment_stats->total_pending = isset($payment_stats->total_pending) ? $payment_stats->total_pending : 0;
-        
+
         // Ensure orders is an array
         if (!$orders) {
             $orders = array();
         }
-        
+
+        // Won items without orders
+        global $wpdb;
+        $bids_table = AIH_Database::get_table('bids');
+        $art_table = AIH_Database::get_table('art_pieces');
+        $order_items_table = AIH_Database::get_table('order_items');
+        $bidders_table = AIH_Database::get_table('bidders');
+
+        $won_without_orders = $wpdb->get_results($wpdb->prepare(
+            "SELECT a.*, b.bid_amount as winning_amount, b.bidder_id,
+                    COALESCE(bd.name_first, '') as winner_first,
+                    COALESCE(bd.name_last, '') as winner_last
+             FROM $bids_table b
+             JOIN $art_table a ON b.art_piece_id = a.id
+             LEFT JOIN $order_items_table oi ON oi.art_piece_id = a.id
+             LEFT JOIN $bidders_table bd ON b.bidder_id = bd.confirmation_code
+             WHERE b.is_winning = 1
+             AND (a.auction_end < %s OR a.status = 'ended')
+             AND oi.id IS NULL
+             ORDER BY a.auction_end DESC
+             LIMIT 1000",
+            current_time('mysql')
+        ));
+        $payment_stats->items_needing_orders = count($won_without_orders);
+
         include AIH_PLUGIN_DIR . 'admin/views/orders.php';
     }
     
@@ -576,13 +616,6 @@ class AIH_Admin {
             wp_die(__('You do not have permission to access this page.', 'art-in-heaven'));
         }
         include AIH_PLUGIN_DIR . 'admin/views/pickup.php';
-    }
-
-    public function render_payments() {
-        if (!AIH_Roles::can_view_financial()) {
-            wp_die(__('You do not have permission to access this page.', 'art-in-heaven'));
-        }
-        include AIH_PLUGIN_DIR . 'admin/views/payments.php';
     }
 
     public function render_bidders() {
