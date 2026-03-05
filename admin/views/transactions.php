@@ -120,7 +120,7 @@ $matchable_orders = $wpdb->get_results(
             <?php if ($last_sync): ?>
             <span class="aih-last-sync">
                 <?php printf(__('Last sync: %s (%d transactions)', 'art-in-heaven'),
-                    date_i18n(get_option('date_format') . ' ' . get_option('time_format'), strtotime($last_sync)),
+                    AIH_Status::format_db_date($last_sync, get_option('date_format') . ' ' . get_option('time_format')),
                     $last_sync_count
                 ); ?>
             </span>
@@ -241,8 +241,8 @@ $matchable_orders = $wpdb->get_results(
                     <td><?php echo intval($txn->id); ?></td>
                     <td>
                         <?php if ($txn->payment_date): ?>
-                            <?php echo date_i18n('M j, Y', strtotime($txn->payment_date)); ?><br>
-                            <small class="aih-time"><?php echo date_i18n('g:i a', strtotime($txn->payment_date)); ?></small>
+                            <?php echo AIH_Status::format_db_date($txn->payment_date, 'M j, Y'); ?><br>
+                            <small class="aih-time"><?php echo AIH_Status::format_db_date($txn->payment_date, 'g:i a'); ?></small>
                         <?php else: ?>
                             —
                         <?php endif; ?>
@@ -356,7 +356,7 @@ $matchable_orders = $wpdb->get_results(
                 <option value=""><?php _e('Select an order...', 'art-in-heaven'); ?></option>
                 <?php foreach ($matchable_orders as $mo): ?>
                 <option value="<?php echo intval($mo->id); ?>" data-amount="<?php echo esc_attr($mo->total); ?>">
-                    <?php echo esc_html($mo->order_number); ?> - $<?php echo number_format($mo->total, 2); ?> - <?php echo esc_html(ucfirst($mo->payment_status)); ?> (<?php echo date_i18n('M j', strtotime($mo->created_at)); ?>)
+                    <?php echo esc_html($mo->order_number); ?> - $<?php echo number_format($mo->total, 2); ?> - <?php echo esc_html(ucfirst($mo->payment_status)); ?> (<?php echo AIH_Status::format_db_date($mo->created_at, 'M j'); ?>)
                 </option>
                 <?php endforeach; ?>
             </select>

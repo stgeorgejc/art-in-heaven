@@ -60,7 +60,7 @@ $payment_statuses = $checkout->get_bidder_payment_statuses($bidder_id);
             <?php foreach ($my_bids as $bid):
                 $is_winning = ($bid->is_winning == 1);
                 $bid_status = isset($bid->computed_status) ? $bid->computed_status : (isset($bid->auction_status) ? $bid->auction_status : 'active');
-                $is_ended = $bid_status === 'ended' || (!empty($bid->auction_end) && strtotime($bid->auction_end) && strtotime($bid->auction_end) <= current_time('timestamp'));
+                $is_ended = $bid_status === 'ended' || (!empty($bid->auction_end) && $bid->auction_end <= current_time('mysql'));
                 $images = $art_images->get_images($bid->art_piece_id);
                 $bid_title = isset($bid->title) ? $bid->title : (isset($bid->art_title) ? $bid->art_title : '');
                 $image_url = !empty($images) ? $images[0]->watermarked_url : (isset($bid->watermarked_url) ? $bid->watermarked_url : (isset($bid->image_url) ? $bid->image_url : ''));
@@ -157,7 +157,7 @@ $payment_statuses = $checkout->get_bidder_payment_statuses($bidder_id);
                     </div>
                     <div class="aih-order-details">
                         <p><?php echo intval($order->item_count); ?> <?php echo $order->item_count != 1 ? __('items', 'art-in-heaven') : __('item', 'art-in-heaven'); ?> &bull; $<?php echo number_format($order->total); ?></p>
-                        <p class="aih-order-date"><?php echo esc_html(wp_date('M j, Y', strtotime($order->created_at))); ?></p>
+                        <p class="aih-order-date"><?php echo esc_html(AIH_Status::format_db_date($order->created_at, 'M j, Y')); ?></p>
                     </div>
                     <div class="aih-order-view-link">
                         <span><?php _e('View Details', 'art-in-heaven'); ?> &rarr;</span>

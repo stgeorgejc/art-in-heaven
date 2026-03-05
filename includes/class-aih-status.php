@@ -124,8 +124,26 @@ class AIH_Status {
     }
     
     /**
+     * Format a raw database datetime string for display.
+     *
+     * Avoids the strtotime() timezone trap — DB values are stored as local time,
+     * but strtotime() treats them as UTC, causing offset errors with wp_date/date_i18n.
+     *
+     * @param mixed  $db_value Raw datetime string from the database
+     * @param string $format   PHP date format
+     * @return string Formatted date or em-dash if empty/invalid
+     */
+    public static function format_db_date($db_value, $format = 'M j, Y g:i A') {
+        if (empty($db_value)) {
+            return '—';
+        }
+        $dt = self::parse_date($db_value);
+        return $dt ? $dt->format($format) : '—';
+    }
+
+    /**
      * Check if a status value is valid
-     * 
+     *
      * @param string $status
      * @return bool
      */
@@ -450,9 +468,10 @@ class AIH_Status {
             ));
         }
 
-        // If requesting draft, respect it
-        if ($requested_status === self::STATUS_DRAFT) {
-            if (defined('WP_DEBUG') && WP_DEBUG) { error_log('AIH_Status: Returning DRAFT (requested)'); }
+        // If requesting draft and times didn't change, respect it (manual draft override)
+        // But if times changed, let the time-based logic below decide the correct status
+        if ($requested_status === self::STATUS_DRAFT && !$times_changed) {
+            if (defined('WP_DEBUG') && WP_DEBUG) { error_log('AIH_Status: Returning DRAFT (requested, times unchanged)'); }
             return self::STATUS_DRAFT;
         }
 

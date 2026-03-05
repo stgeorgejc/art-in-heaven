@@ -305,7 +305,9 @@ if (!isset($art_pieces)) { $art_pieces = array(); }
                             <?php
                             if ($piece->last_bid_time) {
                                 echo '<span class="aih-time-ago">';
-                                echo human_time_diff(strtotime($piece->last_bid_time), time());
+                                $bid_dt = new DateTime($piece->last_bid_time, wp_timezone());
+                                $now_dt = new DateTime('now', wp_timezone());
+                                echo human_time_diff($bid_dt->getTimestamp(), $now_dt->getTimestamp());
                                 echo ' ' . __('ago', 'art-in-heaven');
                                 echo '</span>';
                             } else {

@@ -280,7 +280,7 @@ class AIH_Ajax {
             $bids = (new AIH_Bid())->get_bidder_bids_for_art_piece($art_id, $bidder_id);
             $data['user_bids'] = array();
             foreach ($bids as $b) {
-                $data['user_bids'][] = array('amount' => number_format($b->bid_amount, 2), 'time' => date_i18n('M j, g:i a', strtotime($b->bid_time)), 'is_winning' => (bool)$b->is_winning);
+                $data['user_bids'][] = array('amount' => number_format($b->bid_amount, 2), 'time' => AIH_Status::format_db_date($b->bid_time, 'M j, g:i a'), 'is_winning' => (bool)$b->is_winning);
             }
             $data['is_favorite'] = (new AIH_Favorites())->is_favorite($bidder_id, $art_id);
         }
@@ -418,7 +418,7 @@ class AIH_Ajax {
 
         wp_send_json_success(array(
             'order_number' => $order->order_number,
-            'created_at' => date_i18n('M j, Y g:i a', strtotime($order->created_at)),
+            'created_at' => AIH_Status::format_db_date($order->created_at, 'M j, Y g:i a'),
             'payment_status' => $order->payment_status,
             'payment_method' => $order->payment_method ?? '',
             'payment_reference' => $order->payment_reference ?? '',
@@ -488,7 +488,7 @@ class AIH_Ajax {
                 'image_url' => $p->image_url,
                 'winning_bid' => floatval($p->winning_bid),
                 'order_number' => $p->order_number,
-                'order_date' => date_i18n('M j, Y', strtotime($p->order_date)),
+                'order_date' => AIH_Status::format_db_date($p->order_date, 'M j, Y'),
                 'pickup_status' => $p->pickup_status
             );
         }
@@ -508,8 +508,8 @@ class AIH_Ajax {
         // Get default times from settings
         $event_date = get_option('aih_event_date', '');
         $event_end_date = get_option('aih_event_end_date', '');
-        $default_start = $event_date ? wp_date('Y-m-d H:i:s', strtotime($event_date)) : current_time('mysql');
-        $default_end = $event_end_date ? wp_date('Y-m-d H:i:s', strtotime($event_end_date)) : '';
+        $default_start = $event_date ?: current_time('mysql');
+        $default_end = $event_end_date ?: '';
         
         // Art ID is required for new pieces
         $record_id = intval($_POST['id'] ?? 0);
@@ -855,7 +855,9 @@ class AIH_Ajax {
                 break;
             case 'auction_start':
             case 'auction_end':
-                $display_value = date_i18n(get_option('date_format') . ' ' . get_option('time_format'), strtotime($value));
+                // DB stores local times — format directly without timezone conversion
+                $dt = new DateTime($value, wp_timezone());
+                $display_value = $dt->format('M j, g:ia');
                 break;
         }
 
@@ -927,7 +929,7 @@ class AIH_Ajax {
         
         global $wpdb;
         $table = AIH_Database::get_table('art_pieces');
-        $updated = $wpdb->query($wpdb->prepare("UPDATE $table SET auction_start = %s WHERE status = 'active'", wp_date('Y-m-d H:i:s', strtotime($event_date))));
+        $updated = $wpdb->query($wpdb->prepare("UPDATE $table SET auction_start = %s WHERE status = 'active'", $event_date));
         if ($updated === false) {
             wp_send_json_error(array('message' => __('Database error applying event date.', 'art-in-heaven')));
         }
@@ -2117,7 +2119,7 @@ class AIH_Ajax {
         
         $html .= '<div class="aih-txn-detail"><label>' . __('Amount', 'art-in-heaven') . '</label><div class="value"><strong style="font-size: 18px; color: #4a7c59;">$' . number_format($txn->amount, 2) . '</strong> ' . esc_html($txn->currency) . '</div></div>';
         
-        $html .= '<div class="aih-txn-detail"><label>' . __('Payment Date', 'art-in-heaven') . '</label><div class="value">' . ($txn->payment_date ? date_i18n(get_option('date_format') . ' ' . get_option('time_format'), strtotime($txn->payment_date)) : '—') . '</div></div>';
+        $html .= '<div class="aih-txn-detail"><label>' . __('Payment Date', 'art-in-heaven') . '</label><div class="value">' . ($txn->payment_date ? AIH_Status::format_db_date($txn->payment_date, get_option('date_format') . ' ' . get_option('time_format')) : '—') . '</div></div>';
         
         $html .= '<div class="aih-txn-detail"><label>' . __('Payer Name', 'art-in-heaven') . '</label><div class="value">' . esc_html($txn->payer_name ?: '—') . '</div></div>';
         
@@ -2131,7 +2133,7 @@ class AIH_Ajax {
             $html .= '<div class="aih-txn-detail"><label>' . __('Matched Order', 'art-in-heaven') . '</label><div class="value"><a href="' . admin_url('admin.php?page=art-in-heaven-orders&search=' . urlencode($txn->order_number)) . '" style="color: #b8956b; font-weight: 600;">' . esc_html($txn->order_number) . '</a></div></div>';
         }
         
-        $html .= '<div class="aih-txn-detail"><label>' . __('Synced At', 'art-in-heaven') . '</label><div class="value">' . ($txn->synced_at ? date_i18n(get_option('date_format') . ' ' . get_option('time_format'), strtotime($txn->synced_at)) : '—') . '</div></div>';
+        $html .= '<div class="aih-txn-detail"><label>' . __('Synced At', 'art-in-heaven') . '</label><div class="value">' . ($txn->synced_at ? AIH_Status::format_db_date($txn->synced_at, get_option('date_format') . ' ' . get_option('time_format')) : '—') . '</div></div>';
         
         $html .= '</div>';
         

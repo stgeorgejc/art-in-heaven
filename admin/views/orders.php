@@ -80,7 +80,7 @@ if (!defined('ABSPATH')) {
                     <p><strong><?php _e('Name:', 'art-in-heaven'); ?></strong><br><?php echo esc_html(trim(($single_order->name_first ?? '') . ' ' . ($single_order->name_last ?? '')) ?: 'N/A'); ?></p>
                     <p><strong><?php _e('Email:', 'art-in-heaven'); ?></strong><br><?php echo esc_html($single_order->email ?: $single_order->bidder_id); ?></p>
                     <p><strong><?php _e('Phone:', 'art-in-heaven'); ?></strong><br><?php echo esc_html($single_order->phone ?: 'N/A'); ?></p>
-                    <p><strong><?php _e('Order Date:', 'art-in-heaven'); ?></strong><br><?php echo date_i18n(get_option('date_format') . ' ' . get_option('time_format'), strtotime($single_order->created_at)); ?></p>
+                    <p><strong><?php _e('Order Date:', 'art-in-heaven'); ?></strong><br><?php echo AIH_Status::format_db_date($single_order->created_at, get_option('date_format') . ' ' . get_option('time_format')); ?></p>
                 </div>
 
                 <div class="aih-form-section">
@@ -122,7 +122,7 @@ if (!defined('ABSPATH')) {
 
                         <?php if ($single_order->payment_date): ?>
                         <p><strong><?php _e('Payment Date:', 'art-in-heaven'); ?></strong><br>
-                        <?php echo date_i18n(get_option('date_format') . ' ' . get_option('time_format'), strtotime($single_order->payment_date)); ?></p>
+                        <?php echo AIH_Status::format_db_date($single_order->payment_date, get_option('date_format') . ' ' . get_option('time_format')); ?></p>
                         <?php endif; ?>
 
                         <button type="submit" class="button button-primary"><?php _e('Update Payment', 'art-in-heaven'); ?></button>
@@ -153,7 +153,7 @@ if (!defined('ABSPATH')) {
                                 </span>
                                 <?php if ($pickup_date): ?>
                                     <p style="margin-top: 10px; color: #8a8a8a; font-size: 13px;">
-                                        <?php echo date_i18n(get_option('date_format') . ' ' . get_option('time_format'), strtotime($pickup_date)); ?>
+                                        <?php echo AIH_Status::format_db_date($pickup_date, get_option('date_format') . ' ' . get_option('time_format')); ?>
                                     </p>
                                 <?php endif; ?>
                                 <?php if ($pickup_by): ?>
@@ -375,7 +375,7 @@ if (!defined('ABSPATH')) {
                         data-bidder="<?php echo esc_attr(strtolower($order->bidder_id . ' ' . ($order->name_first ?? '') . ' ' . ($order->name_last ?? ''))); ?>"
                         data-items="<?php echo esc_attr($order->item_count); ?>"
                         data-total="<?php echo esc_attr($order->total); ?>"
-                        data-date="<?php echo esc_attr(strtotime($order->created_at)); ?>">
+                        data-date="<?php echo esc_attr($order->created_at); ?>">
                         <td data-label="<?php esc_attr_e('Order #', 'art-in-heaven'); ?>"><strong><a href="?page=art-in-heaven-orders&order_id=<?php echo $order->id; ?>"><?php echo esc_html($order->order_number); ?></a></strong></td>
                         <td data-label="<?php esc_attr_e('Bidder', 'art-in-heaven'); ?>">
                             <?php
@@ -401,7 +401,7 @@ if (!defined('ABSPATH')) {
                                 <span class="aih-badge aih-badge-info" style="margin-left: 5px;"><?php _e('Picked Up', 'art-in-heaven'); ?></span>
                             <?php endif; ?>
                         </td>
-                        <td data-label="<?php esc_attr_e('Date', 'art-in-heaven'); ?>"><?php echo date_i18n(get_option('date_format'), strtotime($order->created_at)); ?></td>
+                        <td data-label="<?php esc_attr_e('Date', 'art-in-heaven'); ?>"><?php echo AIH_Status::format_db_date($order->created_at, get_option('date_format')); ?></td>
                         <td class="aih-col-actions" data-label="">
                             <a href="?page=art-in-heaven-orders&order_id=<?php echo intval($order->id); ?>" class="button button-small"><?php _e('View', 'art-in-heaven'); ?></a>
                             <button type="button" class="button button-small aih-delete-order" data-id="<?php echo intval($order->id); ?>"><?php _e('Delete', 'art-in-heaven'); ?></button>
