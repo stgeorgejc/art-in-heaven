@@ -28,18 +28,15 @@ class PushToggleTest extends TestCase
         // Reset AIH_Push singleton
         $ref = new \ReflectionClass(AIH_Push::class);
         $prop = $ref->getProperty('instance');
-        $prop->setAccessible(true);
         $prop->setValue(null, null);
 
         // Reset VAPID key cache
         $vapid = $ref->getProperty('cached_vapid_keys');
-        $vapid->setAccessible(true);
         $vapid->setValue(null, null);
 
         // Reset AIH_Database cached year
         $dbRef = new \ReflectionClass(AIH_Database::class);
         $year = $dbRef->getProperty('cached_year');
-        $year->setAccessible(true);
         $year->setValue(null, null);
 
         // Mock wpdb
