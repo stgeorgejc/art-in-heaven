@@ -927,10 +927,27 @@
         // Gallery cards
         var $card = $('.aih-card[data-id="' + artPieceId + '"]');
         if ($card.length && !$card.hasClass('ended') && !$card.hasClass('won') && !$card.hasClass('paid')) {
-            $card.addClass('ended');
+            var wasWinning = $card.hasClass('winning');
+            var newStatus = wasWinning ? 'won' : 'ended';
+            var newText = wasWinning ? 'Won' : 'Ended';
+
+            $card.removeClass('winning').addClass(newStatus);
             $card.find('[data-seconds]').attr('data-seconds', '0');
             $card.find('.aih-time-remaining .aih-time-value').text('Ended');
             $card.find('.aih-time-remaining').addClass('ended');
+
+            // Update badge (mirror gallery countdown behavior)
+            var $badge = $card.find('.aih-badge');
+            if ($badge.length) {
+                $badge.attr('class', 'aih-badge aih-badge-' + newStatus).text(newText);
+            } else {
+                $card.find('.aih-card-image').append('<div class="aih-badge aih-badge-' + newStatus + '">' + newText + '</div>');
+            }
+
+            // Disable bid form and hide footer
+            $card.find('.aih-bid-input').prop('disabled', true).attr('placeholder', 'Ended');
+            $card.find('.aih-bid-btn').prop('disabled', true).text('Ended');
+            $card.find('.aih-card-footer').hide();
         }
 
         // Single-item page
