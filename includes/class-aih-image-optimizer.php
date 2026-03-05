@@ -31,6 +31,7 @@ class AIH_Image_Optimizer {
 
     /**
      * Check if any image processing library supports at least one modern format
+     * @return mixed
      */
     public static function is_available() {
         return !empty(self::supported_formats());
@@ -38,6 +39,7 @@ class AIH_Image_Optimizer {
 
     /**
      * Check which formats are supported across Imagick, GD, and CLI binaries
+     * @return mixed
      */
     public static function supported_formats() {
         $formats = array();
@@ -62,6 +64,7 @@ class AIH_Image_Optimizer {
 
     /**
      * Check which formats Imagick supports natively
+     * @return mixed
      */
     private static function imagick_formats() {
         if (!extension_loaded('imagick') || !class_exists('Imagick')) {
@@ -76,6 +79,7 @@ class AIH_Image_Optimizer {
 
     /**
      * Check which formats GD supports natively
+     * @return mixed
      */
     private static function gd_formats() {
         if (!extension_loaded('gd')) {
@@ -138,6 +142,7 @@ class AIH_Image_Optimizer {
 
     /**
      * Get the responsive variants directory path
+     * @return mixed
      */
     public static function get_responsive_dir() {
         $upload_dir = wp_upload_dir();
@@ -146,6 +151,7 @@ class AIH_Image_Optimizer {
 
     /**
      * Get the responsive variants directory URL
+     * @return mixed
      */
     public static function get_responsive_url() {
         $upload_dir = wp_upload_dir();
@@ -280,6 +286,8 @@ class AIH_Image_Optimizer {
 
     /**
      * Load an image into a GD resource
+     * @param mixed $path
+     * @return mixed
      */
     private static function gd_load_image($path) {
         $info = @getimagesize($path);
@@ -296,6 +304,13 @@ class AIH_Image_Optimizer {
 
     /**
      * Generate a single variant using GD
+     * @param mixed $source
+     * @param mixed $source_width
+     * @param mixed $target_width
+     * @param mixed $format
+     * @param mixed $quality
+     * @param mixed $output_file
+     * @return mixed
      */
     private static function gd_generate_variant($source, $source_width, $target_width, $format, $quality, $output_file) {
         $source_height = imagesy($source);
@@ -331,6 +346,14 @@ class AIH_Image_Optimizer {
 
     /**
      * Generate a single variant using a CLI binary (cwebp or ffmpeg)
+     * @param mixed $source_path
+     * @param mixed $source_width
+     * @param int $target_width
+     * @param mixed $format
+     * @param int $quality
+     * @param mixed $output_file
+     * @param mixed $cli_bin
+     * @return mixed
      */
     private static function cli_generate_variant($source_path, $source_width, $target_width, $format, $quality, $output_file, $cli_bin) {
         $src = escapeshellarg($source_path);
@@ -408,6 +431,7 @@ class AIH_Image_Optimizer {
      * Delete all responsive variants for a watermarked image
      *
      * @param string $watermarked_url URL to the watermarked image
+     * @return void
      */
     public static function cleanup_variants($watermarked_url) {
         if (empty($watermarked_url) || strpos($watermarked_url, '/watermarked/') === false) {

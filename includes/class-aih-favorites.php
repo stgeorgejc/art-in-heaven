@@ -17,6 +17,9 @@ class AIH_Favorites {
     
     /**
      * Add to favorites
+     * @param mixed $bidder_id
+     * @param mixed $art_piece_id
+     * @return mixed
      */
     public function add($bidder_id, $art_piece_id) {
         global $wpdb;
@@ -41,6 +44,9 @@ class AIH_Favorites {
     
     /**
      * Remove from favorites
+     * @param mixed $bidder_id
+     * @param mixed $art_piece_id
+     * @return mixed
      */
     public function remove($bidder_id, $art_piece_id) {
         global $wpdb;
@@ -57,6 +63,9 @@ class AIH_Favorites {
     
     /**
      * Toggle favorite
+     * @param mixed $bidder_id
+     * @param mixed $art_piece_id
+     * @return array
      */
     public function toggle($bidder_id, $art_piece_id) {
         // Debounce: prevent rapid duplicate toggles with a 2-second transient lock
@@ -88,6 +97,9 @@ class AIH_Favorites {
     
     /**
      * Check if art piece is favorite
+     * @param mixed $bidder_id
+     * @param mixed $art_piece_id
+     * @return mixed
      */
     public function is_favorite($bidder_id, $art_piece_id) {
         global $wpdb;
@@ -103,6 +115,8 @@ class AIH_Favorites {
     
     /**
      * Get all favorites for bidder
+     * @param mixed $bidder_id
+     * @return mixed
      */
     public function get_bidder_favorites($bidder_id) {
         global $wpdb;
@@ -121,6 +135,8 @@ class AIH_Favorites {
     
     /**
      * Get favorite art piece IDs for bidder
+     * @param mixed $bidder_id
+     * @return mixed
      */
     public function get_bidder_favorite_ids($bidder_id) {
         global $wpdb;
@@ -133,6 +149,8 @@ class AIH_Favorites {
     
     /**
      * Get favorite count for art piece
+     * @param mixed $art_piece_id
+     * @return mixed
      */
     public function get_favorite_count($art_piece_id) {
         global $wpdb;

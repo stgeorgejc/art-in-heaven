@@ -412,6 +412,7 @@ class AIH_Cache {
      * Invalidate bidder cache
      *
      * @param string $identifier Email or confirmation code
+     * @return void
      */
     public static function invalidate_bidder($identifier) {
         self::delete('bidder_' . md5($identifier), 'bidders');

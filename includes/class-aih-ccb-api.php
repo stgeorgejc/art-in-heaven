@@ -51,6 +51,9 @@ class AIH_CCB_API {
         'individual_name',
     );
     
+    /**
+     * @return self
+     */
     public static function get_instance() {
         if (null === self::$instance) {
             self::$instance = new self();
@@ -64,6 +67,7 @@ class AIH_CCB_API {
     
     /**
      * Load API settings from WordPress options
+     * @return void
      */
     private function load_settings() {
         $this->base_url = get_option('aih_api_base_url', '');
@@ -77,6 +81,7 @@ class AIH_CCB_API {
     
     /**
      * Reload settings (useful after saving new options)
+     * @return mixed
      */
     public function reload_settings() {
         $this->load_settings();
@@ -85,6 +90,7 @@ class AIH_CCB_API {
     
     /**
      * Check if API is configured
+     * @return mixed
      */
     public function is_configured() {
         return !empty($this->base_url) && !empty($this->form_id);
@@ -92,6 +98,7 @@ class AIH_CCB_API {
     
     /**
      * Get current configuration status
+     * @return array
      */
     public function get_config_status() {
         return array(
@@ -108,6 +115,7 @@ class AIH_CCB_API {
      * 
      * @param string $ccb_field   The field name in CCB XML
      * @param string $local_field The column name in your database
+     * @return mixed
      */
     public function add_field_mapping($ccb_field, $local_field) {
         $this->field_map[$ccb_field] = $local_field;
@@ -118,6 +126,7 @@ class AIH_CCB_API {
      * Set multiple field mappings at once
      * 
      * @param array $mappings Array of ccb_field => local_field
+     * @return mixed
      */
     public function set_field_mappings($mappings) {
         $this->field_map = array_merge($this->field_map, $mappings);
@@ -126,6 +135,7 @@ class AIH_CCB_API {
     
     /**
      * Get all field mappings
+     * @return mixed
      */
     public function get_field_mappings() {
         return $this->field_map;
@@ -376,6 +386,8 @@ class AIH_CCB_API {
     
     /**
      * Helper: Create success response
+     * @param mixed $data
+     * @return array
      */
     private function success($data) {
         return array('success' => true, 'data' => $data, 'error' => null);
@@ -383,6 +395,8 @@ class AIH_CCB_API {
     
     /**
      * Helper: Create error response
+     * @param mixed $message
+     * @return array
      */
     private function error($message) {
         return array('success' => false, 'data' => null, 'error' => $message);

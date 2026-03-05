@@ -35,6 +35,9 @@ class AIH_Mercure {
     /** Cached publisher JWT to avoid regenerating per request */
     private $publisher_jwt = null;
 
+    /**
+     * @return self
+     */
     public static function get_instance() {
         if (null === self::$instance) {
             self::$instance = new self();
@@ -313,6 +316,7 @@ class AIH_Mercure {
      * @param int    $art_piece_id
      * @param string $new_bidder_id
      * @param float  $amount
+     * @return void
      */
     public function on_bid_placed($bid_id, $art_piece_id, $new_bidder_id, $amount) {
         global $wpdb;

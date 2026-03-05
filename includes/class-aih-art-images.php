@@ -17,6 +17,12 @@ class AIH_Art_Images {
     
     /**
      * Add image to art piece
+     * @param mixed $art_piece_id
+     * @param mixed $image_id
+     * @param mixed $image_url
+     * @param mixed $watermarked_url
+     * @param mixed $is_primary
+     * @return mixed
      */
     public function add_image($art_piece_id, $image_id, $image_url, $watermarked_url = '', $is_primary = false) {
         global $wpdb;
@@ -71,6 +77,8 @@ class AIH_Art_Images {
     
     /**
      * Remove image from art piece
+     * @param mixed $image_record_id
+     * @return bool
      */
     public function remove_image($image_record_id) {
         global $wpdb;
@@ -189,6 +197,8 @@ class AIH_Art_Images {
     
     /**
      * Set image as primary
+     * @param mixed $image_record_id
+     * @return bool
      */
     public function set_primary($image_record_id) {
         global $wpdb;
@@ -229,6 +239,8 @@ class AIH_Art_Images {
     
     /**
      * Sync primary image to art piece's main image fields
+     * @param mixed $art_piece_id
+     * @return void
      */
     public function sync_primary_to_art_piece($art_piece_id) {
         global $wpdb;
@@ -266,6 +278,8 @@ class AIH_Art_Images {
     
     /**
      * Get all images for an art piece
+     * @param mixed $art_piece_id
+     * @return mixed
      */
     public function get_images($art_piece_id) {
         global $wpdb;
@@ -278,6 +292,8 @@ class AIH_Art_Images {
     
     /**
      * Get primary image for an art piece
+     * @param mixed $art_piece_id
+     * @return mixed
      */
     public function get_primary_image($art_piece_id) {
         global $wpdb;
@@ -290,6 +306,8 @@ class AIH_Art_Images {
     
     /**
      * Get image count for an art piece
+     * @param mixed $art_piece_id
+     * @return int
      */
     public function get_image_count($art_piece_id) {
         global $wpdb;
@@ -302,6 +320,8 @@ class AIH_Art_Images {
     
     /**
      * Update sort order
+     * @param mixed $image_ids
+     * @return bool
      */
     public function update_order($image_ids) {
         global $wpdb;
@@ -321,6 +341,7 @@ class AIH_Art_Images {
     
     /**
      * Migrate existing single images to new table
+     * @return mixed
      */
     public function migrate_existing_images() {
         global $wpdb;

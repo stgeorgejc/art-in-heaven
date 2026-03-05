@@ -11,6 +11,9 @@ class AIH_Checkout {
     
     private static $instance = null;
     
+    /**
+     * @return self
+     */
     public static function get_instance() {
         if (null === self::$instance) {
             self::$instance = new self();
@@ -18,6 +21,9 @@ class AIH_Checkout {
         return self::$instance;
     }
     
+    /**
+     * @return array
+     */
     public function get_pushpay_settings() {
         return array(
             'merchant_key' => get_option('aih_pushpay_merchant_key', ''),
@@ -26,12 +32,20 @@ class AIH_Checkout {
         );
     }
     
+    /**
+     * @param mixed $order
+     * @return mixed
+     */
     public function get_pushpay_payment_url($order) {
         // Use the new Pushpay API class
         $pushpay = AIH_Pushpay_API::get_instance();
         return $pushpay->get_payment_url($order);
     }
     
+    /**
+     * @param mixed $bidder_id
+     * @return mixed
+     */
     public function get_won_items($bidder_id) {
         global $wpdb;
         
@@ -64,6 +78,8 @@ class AIH_Checkout {
      * concurrent tabs or in-flight PushPay payments.
      *
      * Callers must verify the bidder is authorized before invoking this method.
+     * @param mixed $bidder_id
+     * @return mixed
      */
     public function cancel_pending_orders($bidder_id) {
         // Verify the caller's session matches the bidder being cancelled.
@@ -90,6 +106,8 @@ class AIH_Checkout {
 
     /**
      * Get payment status for all art pieces a bidder has won (keyed by art_piece_id)
+     * @param mixed $bidder_id
+     * @return mixed
      */
     public function get_bidder_payment_statuses($bidder_id) {
         global $wpdb;
@@ -117,6 +135,10 @@ class AIH_Checkout {
         return $map;
     }
 
+    /**
+     * @param mixed $items
+     * @return array
+     */
     public function calculate_totals($items) {
         $subtotal = 0;
         foreach ($items as $item) {
@@ -135,6 +157,11 @@ class AIH_Checkout {
         );
     }
     
+    /**
+     * @param mixed $bidder_id
+     * @param mixed $art_piece_ids
+     * @return mixed
+     */
     public function create_order($bidder_id, $art_piece_ids = array()) {
         global $wpdb;
 
@@ -257,6 +284,10 @@ class AIH_Checkout {
         }
     }
     
+    /**
+     * @param mixed $order_id
+     * @return mixed
+     */
     public function get_order($order_id) {
         global $wpdb;
         
@@ -292,6 +323,10 @@ class AIH_Checkout {
         return $order;
     }
     
+    /**
+     * @param mixed $order_number
+     * @return mixed
+     */
     public function get_order_by_number($order_number) {
         global $wpdb;
         $orders_table = AIH_Database::get_table('orders');
@@ -299,6 +334,14 @@ class AIH_Checkout {
         return $order_id ? $this->get_order($order_id) : null;
     }
     
+    /**
+     * @param mixed $order_id
+     * @param mixed $status
+     * @param mixed $method
+     * @param mixed $reference
+     * @param mixed $notes
+     * @return mixed
+     */
     public function update_payment_status($order_id, $status, $method = '', $reference = '', $notes = '') {
         global $wpdb;
         $orders_table = AIH_Database::get_table('orders');
@@ -461,6 +504,10 @@ class AIH_Checkout {
         );
     }
 
+    /**
+     * @param array $args
+     * @return mixed
+     */
     public function get_all_orders($args = array()) {
         global $wpdb;
 
@@ -521,6 +568,10 @@ class AIH_Checkout {
         return $wpdb->get_results($sql);
     }
 
+    /**
+     * @param array $args
+     * @return int
+     */
     public function count_orders($args = array()) {
         global $wpdb;
 
@@ -554,10 +605,17 @@ class AIH_Checkout {
         return (int) $wpdb->get_var($query);
     }
     
+    /**
+     * @param mixed $bidder_id
+     * @return mixed
+     */
     public function get_bidder_orders($bidder_id) {
         return $this->get_all_orders(array('bidder_id' => $bidder_id));
     }
     
+    /**
+     * @return mixed
+     */
     public function get_payment_stats() {
         // Check cache first
         if (class_exists('AIH_Cache')) {
@@ -588,6 +646,10 @@ class AIH_Checkout {
         return $stats;
     }
     
+    /**
+     * @param mixed $order_id
+     * @return mixed
+     */
     public function delete_order($order_id) {
         global $wpdb;
         $orders_table = AIH_Database::get_table('orders');

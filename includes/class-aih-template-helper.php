@@ -179,6 +179,7 @@ class AIH_Template_Helper {
      * @param int|null $bidder_id Optional bidder ID for personalized data
      * @param bool $full Whether to include full details
      * @param bool $include_time_string Whether to include formatted time string
+     * @param array $batch_data
      * @return array Formatted art piece data
      */
     public static function format_art_piece($piece, $bidder_id = null, $full = false, $include_time_string = false, $batch_data = null) {
@@ -340,6 +341,7 @@ class AIH_Template_Helper {
 
     /**
      * Clear page URL cache
+     * @return void
      */
     public static function clear_cache() {
         self::$page_cache = array();

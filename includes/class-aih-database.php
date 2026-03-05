@@ -50,6 +50,7 @@ class AIH_Database {
 
     /**
      * Clear the cached auction year (call after updating the option)
+     * @return void
      */
     public static function clear_year_cache() {
         self::$cached_year = null;
@@ -57,6 +58,7 @@ class AIH_Database {
     
     /**
      * Plugin activation - create database tables
+     * @return void
      */
     public static function activate() {
         self::create_tables();
@@ -66,6 +68,7 @@ class AIH_Database {
      * Create all tables for current year
      * 
      * @param int|null $year Optional year override
+     * @return void
      */
     public static function create_tables($year = null) {
         global $wpdb;
@@ -408,6 +411,7 @@ class AIH_Database {
      * Migrate bids table - add bid_status column if not exists
      * 
      * @param int|null $year
+     * @return void
      */
     public static function migrate_bids_table($year = null) {
         global $wpdb;
@@ -448,6 +452,7 @@ class AIH_Database {
      * Migrate art pieces table - add show_end_time column if not exists
      * 
      * @param int|null $year
+     * @return void
      */
     public static function migrate_art_pieces_table($year = null) {
         global $wpdb;
@@ -485,6 +490,7 @@ class AIH_Database {
      * Clean up old columns from bidders table
      * 
      * @param int|null $year
+     * @return void
      */
     public static function cleanup_bidders_table($year = null) {
         global $wpdb;
@@ -542,6 +548,7 @@ class AIH_Database {
      * the JOIN/WHERE predicates so MySQL can use it as a covering index.
      *
      * @param int|null $year
+     * @return void
      */
     public static function add_bids_composite_index($year = null) {
         global $wpdb;
@@ -601,6 +608,7 @@ class AIH_Database {
      * version after each successful migration.
      *
      * @param int|null $year
+     * @return void
      */
     public static function run_pending_migrations($year = null) {
         if (!$year) {
@@ -628,6 +636,7 @@ class AIH_Database {
      * re-running on a database that already has the constraints is safe.
      *
      * @param int|null $year
+     * @return void
      */
     public static function add_foreign_keys($year = null) {
         global $wpdb;
@@ -698,6 +707,7 @@ class AIH_Database {
 
     /**
      * Plugin deactivation
+     * @return void
      */
     public static function deactivate() {
         // Clear transients

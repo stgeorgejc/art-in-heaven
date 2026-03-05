@@ -22,6 +22,9 @@ class AIH_Pushpay_API {
     private $access_token = null;
     private $token_expiry = null;
     
+    /**
+     * @return self
+     */
     public static function get_instance() {
         if (null === self::$instance) {
             self::$instance = new self();
@@ -34,6 +37,7 @@ class AIH_Pushpay_API {
 
     /**
      * Get API settings (cached per request to avoid repeated get_option calls)
+     * @return mixed
      */
     public function get_settings() {
         if (self::$cached_settings !== null) {
@@ -77,6 +81,7 @@ class AIH_Pushpay_API {
     
     /**
      * Check if API is configured
+     * @return mixed
      */
     public function is_configured() {
         $settings = $this->get_settings();
@@ -85,6 +90,7 @@ class AIH_Pushpay_API {
     
     /**
      * Get API base URL based on mode
+     * @return mixed
      */
     private function get_api_url() {
         $settings = $this->get_settings();
@@ -93,6 +99,7 @@ class AIH_Pushpay_API {
     
     /**
      * Get Auth URL based on mode
+     * @return mixed
      */
     private function get_auth_url() {
         $settings = $this->get_settings();
@@ -101,6 +108,8 @@ class AIH_Pushpay_API {
     
     /**
      * Get OAuth access token
+     * @param mixed $force_refresh
+     * @return mixed
      */
     public function get_access_token($force_refresh = false) {
         // Check cached token
@@ -154,6 +163,10 @@ class AIH_Pushpay_API {
     
     /**
      * Make API request
+     * @param mixed $endpoint
+     * @param mixed $method
+     * @param mixed $data
+     * @return mixed
      */
     public function api_request($endpoint, $method = 'GET', $data = null) {
         $token = $this->get_access_token();
@@ -224,6 +237,7 @@ class AIH_Pushpay_API {
     
     /**
      * Test API connection
+     * @return array
      */
     public function test_connection() {
         if (!$this->is_configured()) {
@@ -254,6 +268,8 @@ class AIH_Pushpay_API {
     
     /**
      * Get payments/transactions from Pushpay
+     * @param array $params
+     * @return mixed
      */
     public function get_payments($params = array()) {
         $settings = $this->get_settings();
@@ -296,6 +312,8 @@ class AIH_Pushpay_API {
     
     /**
      * Get a specific payment by ID
+     * @param mixed $payment_id
+     * @return mixed
      */
     public function get_payment($payment_id) {
         $settings = $this->get_settings();
@@ -309,6 +327,8 @@ class AIH_Pushpay_API {
     
     /**
      * Search payments by reference (order number)
+     * @param mixed $reference
+     * @return mixed
      */
     public function search_by_reference($reference) {
         $settings = $this->get_settings();
@@ -327,6 +347,7 @@ class AIH_Pushpay_API {
     
     /**
      * Get fund/listing information
+     * @return mixed
      */
     public function get_funds() {
         $settings = $this->get_settings();
@@ -340,6 +361,8 @@ class AIH_Pushpay_API {
     
     /**
      * Sync payments from Pushpay to local database
+     * @param mixed $days_back
+     * @return mixed
      */
     public function sync_payments($days_back = 30) {
         global $wpdb;
@@ -556,6 +579,8 @@ class AIH_Pushpay_API {
     
     /**
      * Get all synced transactions
+     * @param array $args
+     * @return mixed
      */
     public function get_synced_transactions($args = array()) {
         global $wpdb;
@@ -605,6 +630,9 @@ class AIH_Pushpay_API {
     
     /**
      * Manually match a transaction to an order
+     * @param mixed $transaction_id
+     * @param mixed $order_id
+     * @return mixed
      */
     public function match_transaction_to_order($transaction_id, $order_id) {
         global $wpdb;
@@ -667,6 +695,7 @@ class AIH_Pushpay_API {
     /**
      * Discover organization and merchant keys using client credentials.
      * Authenticates with the API and fetches available organizations and merchants.
+     * @return array
      */
     public function discover_keys() {
         $token = $this->get_access_token(true);
@@ -748,6 +777,8 @@ class AIH_Pushpay_API {
 
     /**
      * Generate payment URL with pre-filled data
+     * @param mixed $order
+     * @return mixed
      */
     public function get_payment_url($order) {
         $settings = $this->get_settings();
@@ -789,6 +820,8 @@ class AIH_Pushpay_API {
 
     /**
      * Look up a payment by token (returned in redirect URL after successful payment)
+     * @param mixed $payment_token
+     * @return mixed
      */
     public function get_payment_by_token($payment_token) {
         $settings = $this->get_settings();
@@ -801,6 +834,8 @@ class AIH_Pushpay_API {
 
     /**
      * Schedule auto sync cron job for Pushpay transactions
+     * @param mixed $interval
+     * @return void
      */
     public static function schedule_auto_sync($interval = null) {
         wp_clear_scheduled_hook('aih_auto_sync_pushpay');
@@ -814,6 +849,7 @@ class AIH_Pushpay_API {
 
     /**
      * Unschedule auto sync cron job
+     * @return void
      */
     public static function unschedule_auto_sync() {
         wp_clear_scheduled_hook('aih_auto_sync_pushpay');
@@ -821,6 +857,8 @@ class AIH_Pushpay_API {
 
     /**
      * Reschedule auto sync with new interval
+     * @param mixed $interval
+     * @return void
      */
     public static function reschedule_auto_sync($interval) {
         // Check both saved option and current POST (option may not be saved yet during settings save)
@@ -835,6 +873,7 @@ class AIH_Pushpay_API {
 
     /**
      * Run auto sync (called by cron)
+     * @return void
      */
     public static function run_auto_sync() {
         $pushpay = self::get_instance();

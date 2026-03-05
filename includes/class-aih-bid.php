@@ -149,6 +149,8 @@ class AIH_Bid {
     
     /**
      * Get highest bid amount for an art piece (only valid bids)
+     * @param mixed $art_piece_id
+     * @return mixed
      */
     public function get_highest_bid_amount($art_piece_id) {
         global $wpdb;
@@ -161,6 +163,9 @@ class AIH_Bid {
     
     /**
      * Get all bids for an art piece (includes bidder info, only valid bids)
+     * @param mixed $art_piece_id
+     * @param mixed $limit
+     * @return mixed
      */
     public function get_bids_for_art_piece($art_piece_id, $limit = null) {
         global $wpdb;
@@ -187,6 +192,10 @@ class AIH_Bid {
     
     /**
      * Get bids by bidder for a specific art piece
+     * @param mixed $art_piece_id
+     * @param mixed $bidder_id
+     * @param mixed $successful_only
+     * @return mixed
      */
     public function get_bidder_bids_for_art_piece($art_piece_id, $bidder_id, $successful_only = false) {
         global $wpdb;
@@ -221,6 +230,9 @@ class AIH_Bid {
     
     /**
      * Get only successful (winning) bids for display - excludes "too low" bids
+     * @param mixed $art_piece_id
+     * @param mixed $bidder_id
+     * @return mixed
      */
     public function get_successful_bids_for_art_piece($art_piece_id, $bidder_id) {
         global $wpdb;
@@ -238,6 +250,8 @@ class AIH_Bid {
     /**
      * Get all bids by bidder (confirmation_code)
      * Returns only the bidder's highest bid per art piece to avoid duplicates
+     * @param mixed $bidder_id
+     * @return mixed
      */
     public function get_bidder_bids($bidder_id) {
         global $wpdb;
@@ -271,6 +285,9 @@ class AIH_Bid {
     
     /**
      * Check if a bidder has placed any valid bid on an art piece
+     * @param mixed $art_piece_id
+     * @param mixed $bidder_id
+     * @return mixed
      */
     public function has_bidder_bid($art_piece_id, $bidder_id) {
         global $wpdb;
@@ -288,6 +305,9 @@ class AIH_Bid {
 
     /**
      * Check if bidder is winning an art piece
+     * @param mixed $art_piece_id
+     * @param mixed $bidder_id
+     * @return mixed
      */
     public function is_bidder_winning($art_piece_id, $bidder_id) {
         global $wpdb;
@@ -304,6 +324,8 @@ class AIH_Bid {
     
     /**
      * Get winning bid for an art piece
+     * @param mixed $art_piece_id
+     * @return mixed
      */
     public function get_winning_bid($art_piece_id) {
         global $wpdb;
@@ -325,6 +347,8 @@ class AIH_Bid {
     
     /**
      * Get bid count for art piece (only valid bids)
+     * @param mixed $art_piece_id
+     * @return int
      */
     public function get_bid_count($art_piece_id) {
         global $wpdb;
@@ -337,6 +361,8 @@ class AIH_Bid {
     
     /**
      * Get unique bidder count for art piece (only valid bids)
+     * @param mixed $art_piece_id
+     * @return int
      */
     public function get_unique_bidder_count($art_piece_id) {
         global $wpdb;
@@ -349,6 +375,8 @@ class AIH_Bid {
     
     /**
      * Delete bid
+     * @param mixed $bid_id
+     * @return mixed
      */
     public function delete($bid_id) {
         global $wpdb;
@@ -413,6 +441,7 @@ class AIH_Bid {
 
     /**
      * Get all winning bids (for winners report)
+     * @return mixed
      */
     public function get_all_winning_bids() {
         global $wpdb;
@@ -537,6 +566,7 @@ class AIH_Bid {
     /**
      * Get bid statistics
      * Consolidated into a single query with conditional aggregation + caching
+     * @return mixed
      */
     public function get_stats() {
         global $wpdb;

@@ -14,6 +14,7 @@ class AIH_Watermark {
     
     /**
      * Check if GD library is available
+     * @return bool
      */
     public function is_available() {
         return extension_loaded('gd') && function_exists('imagecreatetruecolor');
@@ -21,6 +22,7 @@ class AIH_Watermark {
     
     /**
      * Get watermark text - uses logo text + current year
+     * @return string
      */
     private function get_watermark_text() {
         $custom_text = get_option('aih_watermark_text', '');
@@ -33,6 +35,7 @@ class AIH_Watermark {
     
     /**
      * Get the TTF font file path, downloading if necessary
+     * @return string|false
      */
     private function get_font_file() {
         $font_dir = AIH_PLUGIN_DIR . 'assets/fonts/';
@@ -99,6 +102,9 @@ class AIH_Watermark {
 
     /**
      * Apply watermark to an image
+     * @param mixed $image_path
+     * @param mixed $output_path
+     * @return mixed
      */
     public function apply_watermark($image_path, $output_path = null) {
         // Check if GD is available
@@ -220,6 +226,10 @@ class AIH_Watermark {
     
     /**
      * Add diagonal watermarks across the image
+     * @param mixed $image
+     * @param mixed $width
+     * @param mixed $height
+     * @return void
      */
     private function add_diagonal_watermarks($image, $width, $height) {
         // Get watermark overlay image if set
@@ -280,6 +290,11 @@ class AIH_Watermark {
     
     /**
      * Add watermark using built-in GD fonts (no TTF required)
+     * @param mixed $image
+     * @param mixed $width
+     * @param mixed $height
+     * @param string $text
+     * @return void
      */
     private function add_builtin_font_watermark($image, $width, $height, $text) {
         $font = 5; // Largest built-in font
@@ -316,6 +331,11 @@ class AIH_Watermark {
     
     /**
      * Apply an overlay image pattern across the entire image
+     * @param mixed $image
+     * @param mixed $overlay_path
+     * @param mixed $width
+     * @param mixed $height
+     * @return void
      */
     private function apply_overlay_pattern($image, $overlay_path, $width, $height) {
         $overlay_info = @getimagesize($overlay_path);
@@ -425,6 +445,11 @@ class AIH_Watermark {
     
     /**
      * Apply opacity to an image by adjusting alpha values of each pixel
+     * @param mixed $image
+     * @param mixed $width
+     * @param mixed $height
+     * @param mixed $opacity_percent
+     * @return void
      */
     private function apply_opacity_to_image($image, $width, $height, $opacity_percent) {
         // Disable alpha blending to directly set pixel values
@@ -461,6 +486,12 @@ class AIH_Watermark {
     
     /**
      * Add prominent center watermark
+     * @param mixed $image
+     * @param mixed $width
+     * @param mixed $height
+     * @param string $text
+     * @param mixed $font_file
+     * @return void
      */
     private function add_center_watermark($image, $width, $height, $text, $font_file = null) {
         $center_x = $width / 2;
@@ -511,6 +542,8 @@ class AIH_Watermark {
     
     /**
      * Process uploaded image and create watermarked version
+     * @param mixed $attachment_id
+     * @return mixed
      */
     public function process_upload($attachment_id) {
         if (!$this->is_available()) {
@@ -569,6 +602,8 @@ class AIH_Watermark {
     
     /**
      * Get watermarked URL for an attachment
+     * @param mixed $attachment_id
+     * @return mixed
      */
     public function get_watermarked_url($attachment_id) {
         $upload_dir = wp_upload_dir();
@@ -587,6 +622,8 @@ class AIH_Watermark {
     
     /**
      * Delete watermarked version
+     * @param mixed $attachment_id
+     * @return mixed
      */
     public function delete_watermarked($attachment_id) {
         $file_path = get_attached_file($attachment_id);

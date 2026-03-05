@@ -39,6 +39,8 @@ class AIH_Art_Piece {
     /**
      * Get all art pieces with optional filtering
      * FIXED: Now properly checks both auction_start AND auction_end
+     * @param array $args
+     * @return mixed
      */
     public function get_all($args = array()) {
         global $wpdb;
@@ -244,6 +246,8 @@ class AIH_Art_Piece {
     
     /**
      * Get count for filtered results
+     * @param array $args
+     * @return int
      */
     public function get_count($args = array()) {
         global $wpdb;
@@ -288,6 +292,10 @@ class AIH_Art_Piece {
         return (int) $wpdb->get_var($query);
     }
     
+    /**
+     * @param mixed $id
+     * @return mixed
+     */
     public function get($id) {
         global $wpdb;
 
@@ -318,6 +326,10 @@ class AIH_Art_Piece {
         return $result;
     }
     
+    /**
+     * @param mixed $art_id
+     * @return mixed
+     */
     public function get_by_art_id($art_id) {
         global $wpdb;
         $now = current_time('mysql');
@@ -341,6 +353,10 @@ class AIH_Art_Piece {
         ));
     }
     
+    /**
+     * @param array $data
+     * @return mixed
+     */
     public function create($data) {
         global $wpdb;
         
@@ -435,6 +451,11 @@ class AIH_Art_Piece {
         return $result ? $wpdb->insert_id : false;
     }
     
+    /**
+     * @param mixed $id
+     * @param array $data
+     * @return mixed
+     */
     public function update($id, $data) {
         global $wpdb;
 
@@ -570,6 +591,10 @@ class AIH_Art_Piece {
         return $result;
     }
     
+    /**
+     * @param mixed $id
+     * @return mixed
+     */
     public function delete($id) {
         global $wpdb;
 
@@ -630,6 +655,11 @@ class AIH_Art_Piece {
         }
     }
     
+    /**
+     * @param mixed $ids
+     * @param mixed $new_end_time
+     * @return mixed
+     */
     public function bulk_update_end_times($ids, $new_end_time) {
         global $wpdb;
         if (empty($ids)) return false;
@@ -668,6 +698,11 @@ class AIH_Art_Piece {
         return $result;
     }
     
+    /**
+     * @param mixed $ids
+     * @param mixed $new_start_time
+     * @return mixed
+     */
     public function bulk_update_start_times($ids, $new_start_time) {
         global $wpdb;
         if (empty($ids)) return false;
@@ -692,6 +727,8 @@ class AIH_Art_Piece {
     /**
      * Check if auction has ended
      * FIXED: Now properly checks auction_end time, not start time
+     * @param mixed $id
+     * @return mixed
      */
     public function is_auction_ended($id) {
         $piece = $this->get($id);
@@ -701,6 +738,8 @@ class AIH_Art_Piece {
     
     /**
      * Check if auction is currently active (started and not ended)
+     * @param mixed $id
+     * @return mixed
      */
     public function is_auction_active($id) {
         $piece = $this->get($id);
@@ -710,6 +749,8 @@ class AIH_Art_Piece {
     
     /**
      * Get all art pieces with stats - FIXED to include ALL statuses
+     * @param array $args
+     * @return mixed
      */
     public function get_all_with_stats($args = array()) {
         global $wpdb;

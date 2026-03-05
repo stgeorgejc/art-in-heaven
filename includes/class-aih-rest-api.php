@@ -22,6 +22,7 @@ class AIH_REST_API {
     
     /**
      * Register REST routes
+     * @return void
      */
     public function register_routes() {
         // Art pieces
@@ -176,6 +177,7 @@ class AIH_REST_API {
     
     /**
      * Get art collection arguments
+     * @return array
      */
     private function get_art_collection_args() {
         return array(
@@ -219,6 +221,7 @@ class AIH_REST_API {
     
     /**
      * Check if bidder is logged in
+     * @return mixed
      */
     public function check_bidder_permission() {
         $auth = AIH_Auth::get_instance();
@@ -227,6 +230,7 @@ class AIH_REST_API {
     
     /**
      * Check if user has admin permissions
+     * @return mixed
      */
     public function check_admin_permission() {
         return current_user_can('manage_options') || AIH_Roles::can_manage_auction();
@@ -234,6 +238,8 @@ class AIH_REST_API {
     
     /**
      * GET /art - Get art pieces
+     * @param mixed $request
+     * @return mixed
      */
     public function get_art_pieces($request) {
         // Rate limiting for public gallery endpoint
@@ -291,6 +297,8 @@ class AIH_REST_API {
     
     /**
      * GET /art/{id} - Get single art piece
+     * @param mixed $request
+     * @return mixed
      */
     public function get_art_piece($request) {
         $id = $request->get_param('id');
@@ -329,6 +337,8 @@ class AIH_REST_API {
     
     /**
      * POST /bids - Create a bid
+     * @param mixed $request
+     * @return mixed
      */
     public function create_bid($request) {
         $art_piece_id = $request->get_param('art_piece_id');
@@ -367,6 +377,8 @@ class AIH_REST_API {
     
     /**
      * GET /art/{id}/bids - Get bids for an art piece
+     * @param mixed $request
+     * @return mixed
      */
     public function get_art_bids($request) {
         $id = $request->get_param('id');
@@ -390,6 +402,8 @@ class AIH_REST_API {
     
     /**
      * GET /favorites - Get user's favorites
+     * @param mixed $request
+     * @return mixed
      */
     public function get_favorites($request) {
         $auth = AIH_Auth::get_instance();
@@ -408,6 +422,8 @@ class AIH_REST_API {
     
     /**
      * POST /favorites - Toggle favorite
+     * @param mixed $request
+     * @return mixed
      */
     public function toggle_favorite($request) {
         $art_piece_id = $request->get_param('art_piece_id');
@@ -423,6 +439,8 @@ class AIH_REST_API {
     
     /**
      * POST /auth/verify - Verify confirmation code
+     * @param mixed $request
+     * @return mixed
      */
     public function verify_code($request) {
         $code = $request->get_param('code');
@@ -456,6 +474,8 @@ class AIH_REST_API {
     
     /**
      * GET /auth/status - Get auth status
+     * @param mixed $request
+     * @return mixed
      */
     public function get_auth_status($request) {
         $auth = AIH_Auth::get_instance();
@@ -473,6 +493,8 @@ class AIH_REST_API {
     
     /**
      * POST /auth/logout - Logout
+     * @param mixed $request
+     * @return mixed
      */
     public function logout($request) {
         $auth = AIH_Auth::get_instance();
@@ -486,6 +508,8 @@ class AIH_REST_API {
     
     /**
      * GET /checkout/won-items - Get won items
+     * @param mixed $request
+     * @return mixed
      */
     public function get_won_items($request) {
         $auth = AIH_Auth::get_instance();
@@ -499,6 +523,8 @@ class AIH_REST_API {
     
     /**
      * POST /checkout/create-order - Create order
+     * @param mixed $request
+     * @return mixed
      */
     public function create_order($request) {
         $item_ids = $request->get_param('item_ids');
@@ -518,6 +544,8 @@ class AIH_REST_API {
     
     /**
      * GET /stats - Get auction stats (admin)
+     * @param mixed $request
+     * @return mixed
      */
     public function get_stats($request) {
         return rest_ensure_response(AIH_Export::get_auction_stats());
@@ -526,6 +554,11 @@ class AIH_REST_API {
     /**
      * Format art piece for API response
      * Uses consolidated AIH_Template_Helper::format_art_piece()
+     * @param mixed $piece
+     * @param mixed $bidder_id
+     * @param mixed $full
+     * @param mixed $batch_data
+     * @return mixed
      */
     private function format_art_piece($piece, $bidder_id = null, $full = false, $batch_data = null) {
         return AIH_Template_Helper::format_art_piece($piece, $bidder_id, $full, false, $batch_data);

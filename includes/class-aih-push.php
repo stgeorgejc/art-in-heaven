@@ -232,6 +232,11 @@ class AIH_Push {
     /**
      * Record outbid event for polling fallback (runs synchronously).
      * Called directly from aih_bid_placed hook so the event is available immediately.
+     * @param mixed $bid_id
+     * @param mixed $art_piece_id
+     * @param mixed $new_bidder_id
+     * @param mixed $amount
+     * @return void
      */
     public function handle_outbid_event($bid_id, $art_piece_id, $new_bidder_id, $amount) {
         global $wpdb;
@@ -296,6 +301,7 @@ class AIH_Push {
      *
      * @param string $bidder_id The bidder to notify.
      * @param array  $payload   Notification payload (type, title, body, art_piece_id, url, tag).
+     * @return void
      */
     public function send_push($bidder_id, array $payload) {
         $subscriptions = self::get_subscriptions($bidder_id);
@@ -356,6 +362,12 @@ class AIH_Push {
     // an outbid event can be lost if two events are recorded simultaneously.
     // SSE/push notifications are the primary channels; this is a polling fallback.
     // For production with 1000+ users, an external object cache (Redis) is recommended.
+    /**
+     * @param mixed $bidder_id
+     * @param mixed $art_piece_id
+     * @param mixed $title
+     * @return void
+     */
     public static function record_outbid_event($bidder_id, $art_piece_id, $title) {
         $key    = 'aih_outbid_' . $bidder_id;
         $events = get_transient($key);
@@ -383,6 +395,10 @@ class AIH_Push {
     // an outbid event written between get_transient() and delete_transient() will be lost.
     // SSE/push notifications are the primary channels; this is a polling fallback.
     // For production with 1000+ users, an external object cache (Redis) is recommended.
+    /**
+     * @param mixed $bidder_id
+     * @return mixed
+     */
     public static function consume_outbid_events($bidder_id) {
         $key    = 'aih_outbid_' . $bidder_id;
         $events = get_transient($key);
@@ -404,6 +420,7 @@ class AIH_Push {
      * @param string $bidder_id     The winning bidder
      * @param int    $art_piece_id  The art piece that was won
      * @param string $title         Art piece title
+     * @return void
      */
     public function handle_winner_event($bidder_id, $art_piece_id, $title) {
         // Record event for polling fallback
@@ -435,6 +452,7 @@ class AIH_Push {
      * @param string $bidder_id
      * @param int    $art_piece_id
      * @param string $title
+     * @return void
      */
     public static function record_winner_event($bidder_id, $art_piece_id, $title) {
         $key    = 'aih_won_' . $bidder_id;
@@ -488,6 +506,7 @@ class AIH_Push {
      *
      * @param string $bidder_id
      * @param int    $art_piece_id
+     * @return void
      */
     public static function mark_winner_notified($bidder_id, $art_piece_id) {
         set_transient('aih_won_notified_' . $bidder_id . '_' . $art_piece_id, 1, DAY_IN_SECONDS);

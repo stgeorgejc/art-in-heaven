@@ -249,6 +249,7 @@ class AIH_Security {
      * 
      * @param string $action The action name
      * @param string $key    The POST/GET key containing the nonce
+     * @return void
      */
     public static function check_ajax_referer($action = 'aih_nonce', $key = 'nonce') {
         if (!self::verify_ajax_nonce($action, $key)) {
@@ -274,6 +275,7 @@ class AIH_Security {
      * 
      * @param string $capability The capability to check
      * @param string $message    Custom error message
+     * @return void
      */
     public static function require_capability($capability, $message = null) {
         if (!self::can($capability)) {
@@ -430,6 +432,7 @@ class AIH_Security {
      * 
      * @param string $event   Event type
      * @param array  $context Additional context
+     * @return void
      */
     public static function log_event($event, $context = array()) {
         if (!defined('WP_DEBUG') || !WP_DEBUG) {
@@ -610,6 +613,7 @@ class AIH_Security {
     
     /**
      * Prevent caching for sensitive pages
+     * @return void
      */
     public static function prevent_caching() {
         if (!defined('DONOTCACHEPAGE')) {
