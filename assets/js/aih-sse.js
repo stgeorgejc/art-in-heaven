@@ -162,6 +162,9 @@
                 case 'winner':
                     this.handleWinner(data);
                     break;
+                case 'auction_ended':
+                    this.handleAuctionEnded(data);
+                    break;
             }
         },
 
@@ -188,6 +191,18 @@
          */
         handleWinner: function(data) {
             this.showAlertFromSSE('winner', data);
+        },
+
+        /**
+         * Handle auction ended event (public topic)
+         */
+        handleAuctionEnded: function(data) {
+            if (typeof window.aihMarkAuctionEnded === 'function') {
+                window.aihMarkAuctionEnded(data.art_piece_id);
+            }
+            if (typeof window.aihPollStatus === 'function') {
+                window.aihPollStatus();
+            }
         },
 
         /**

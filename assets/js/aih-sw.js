@@ -44,7 +44,7 @@ self.addEventListener('push', function(event) {
                     data: {
                         type: data.type || 'outbid',
                         art_piece_id: data.art_piece_id || null,
-                        title: data.title || '',
+                        item_title: data.item_title || data.title || '',
                         body: data.body || '',
                         url: data.url || '/'
                     }
