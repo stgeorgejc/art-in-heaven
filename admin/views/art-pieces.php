@@ -1020,8 +1020,8 @@ jQuery(document).ready(function($) {
     // Download template
     $('#aih-download-template').on('click', function() {
         var bom = '\uFEFF';
-        var headers = 'art_id,title,artist,medium,dimensions,description,starting_bid,tier';
-        var example = 'ART-001,Sunset Over Mountains,Jane Doe,Oil on Canvas,24 x 36 in,A vibrant sunset landscape,150.00,2';
+        var headers = 'art_id,title,artist,medium,dimensions,description,starting_bid,tier,image_url';
+        var example = 'ART-001,Sunset Over Mountains,Jane Doe,Oil on Canvas,24 x 36 in,A vibrant sunset landscape,150.00,2,https://example.com/sunset.jpg';
         var csv = bom + headers + '\n' + example + '\n';
         var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         var url = URL.createObjectURL(blob);
