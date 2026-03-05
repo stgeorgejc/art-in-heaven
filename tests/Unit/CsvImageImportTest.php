@@ -138,6 +138,13 @@ class CsvImageImportTest extends TestCase
         $this->assertSame($url, $result);
     }
 
+    public function testBoxShareLink(): void
+    {
+        $url = 'https://app.box.com/s/abc123def';
+        $result = $this->preprocessMethod->invoke($this->ajax, $url);
+        $this->assertSame('https://app.box.com/shared/static/abc123def.jpg', $result);
+    }
+
     public function testDirectUrlPassesThrough(): void
     {
         $url = 'https://example.com/photos/sunset.jpg';

@@ -1471,7 +1471,7 @@ class AIH_Ajax {
         }
 
         // OneDrive: convert share link to API download
-        // Format: https://1drv.ms/{code} or https://onedrive.live.com/...?id={ID}
+        // Format: https://1drv.ms/{code} or https://onedrive.live.com/...?resid={ID}
         if (preg_match('#1drv\.ms/(.+)#', $url, $matches)) {
             $encoded = rtrim(base64_encode($url), '=');
             $encoded = str_replace('/', '_', str_replace('+', '-', $encoded));
@@ -1512,10 +1512,10 @@ class AIH_Ajax {
      *
      * @param int    $art_piece_id The art piece database ID.
      * @param string $image_url    The public image URL.
-     * @param bool   $is_new       Whether this is a newly created piece (sets image as primary).
+     * @param bool   $is_primary   Whether the imported image should be set as the primary image for the piece.
      * @return true|string True on success, or a warning message string on failure.
      */
-    private function import_image_from_url($art_piece_id, $image_url, $is_new = true) {
+    private function import_image_from_url($art_piece_id, $image_url, $is_primary = true) {
         if (!filter_var($image_url, FILTER_VALIDATE_URL)) {
             return __('(image skipped: invalid URL)', 'art-in-heaven');
         }
@@ -1541,9 +1541,14 @@ class AIH_Ajax {
         $mime = wp_check_filetype_and_ext($tmp, basename(wp_parse_url($image_url, PHP_URL_PATH)));
         if (empty($mime['type']) || strpos($mime['type'], 'image/') !== 0) {
             // Fallback: check with finfo directly
-            $finfo_mime = function_exists('finfo_file')
-                ? finfo_file(finfo_open(FILEINFO_MIME_TYPE), $tmp)
-                : '';
+            $finfo_mime = '';
+            if (function_exists('finfo_open') && function_exists('finfo_file')) {
+                $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                if ($finfo) {
+                    $finfo_mime = finfo_file($finfo, $tmp);
+                    finfo_close($finfo);
+                }
+            }
             if (empty($finfo_mime) || strpos($finfo_mime, 'image/') !== 0) {
                 @unlink($tmp);
                 return __('(image skipped: URL does not point to an image)', 'art-in-heaven');
@@ -1588,7 +1593,12 @@ class AIH_Ajax {
 
         // Attach to art piece
         $images_handler = new AIH_Art_Images();
-        $images_handler->add_image($art_piece_id, $attachment_id, $original_url, $watermarked_url, $is_new);
+        $add_result = $images_handler->add_image($art_piece_id, $attachment_id, $original_url, $watermarked_url, $is_primary);
+
+        if (!$add_result) {
+            wp_delete_attachment($attachment_id, true);
+            return __('(image failed to attach)', 'art-in-heaven');
+        }
 
         return true;
     }

@@ -8,7 +8,7 @@ The CSV import template supports an `image_url` column that automatically downlo
 2. For multiple images, separate URLs with a pipe `|` character
 3. During import, the plugin downloads each image
 4. Images are watermarked and optimized (AVIF/WebP variants)
-5. The first image becomes the primary image; additional images are attached in order
+5. For newly created pieces, the first image becomes the primary image and additional images are attached in order. When updating existing pieces, the current primary image is preserved and imported images are added as additional images.
 6. If any download fails, the art piece is still created — only that image is skipped
 
 ## Supported URL Sources
