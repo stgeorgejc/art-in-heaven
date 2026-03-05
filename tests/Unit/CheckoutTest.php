@@ -37,7 +37,6 @@ class CheckoutTest extends TestCase
         // Reset AIH_Auth singleton
         $ref3 = new \ReflectionClass(AIH_Auth::class);
         $prop3 = $ref3->getProperty('instance');
-        $prop3->setAccessible(true);
         $prop3->setValue(null, null);
 
         // Mock $wpdb
@@ -155,7 +154,6 @@ class CheckoutTest extends TestCase
         $auth = AIH_Auth::get_instance();
         $ref = new \ReflectionClass($auth);
         $prop = $ref->getProperty('session_data');
-        $prop->setAccessible(true);
         $prop->setValue($auth, ['confirmation_code' => $confirmationCode]);
     }
 
