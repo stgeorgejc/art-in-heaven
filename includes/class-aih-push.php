@@ -342,9 +342,8 @@ class AIH_Push {
      * @param string $bidder_id     The winning bidder
      * @param int    $art_piece_id  The art piece that was won
      * @param string $title         Art piece title
-     * @param string $catalog_art_id  Catalog art ID for URL generation
      */
-    public function handle_winner_event($bidder_id, $art_piece_id, $title, $catalog_art_id = '') {
+    public function handle_winner_event($bidder_id, $art_piece_id, $title) {
         // Record event for polling fallback
         self::record_winner_event($bidder_id, $art_piece_id, $title);
 

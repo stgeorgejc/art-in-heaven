@@ -66,36 +66,17 @@ class SendPushTest extends TestCase
             'tag'          => 'outbid-100',
         ];
 
-        // Should not throw or call WebPush at all
+        // When there are no subscriptions, send_push should return before encoding the payload.
+        Functions\expect('wp_json_encode')->never();
+
         AIH_Push::get_instance()->send_push('bidder-42', $payload);
 
-        // If we get here without error, the early return worked
-        $this->assertTrue(true);
+        // Verify payload was not mutated (icon not appended) since we returned early
+        $this->assertArrayNotHasKey('icon', $payload);
     }
 
     /**
-     * send_push appends the icon to the payload.
-     */
-    public function testSendPushAppendsIcon(): void
-    {
-        // Use reflection to test that icon is set before encoding
-        $ref = new \ReflectionClass(AIH_Push::class);
-        $method = $ref->getMethod('send_push');
-
-        // We can verify the icon logic by checking the payload is encoded with icon
-        // Since we can't easily mock WebPush, we test through the no-subscriptions path
-        // and verify the method signature accepts (string, array)
-        $this->assertTrue($method->isPublic());
-
-        $params = $method->getParameters();
-        $this->assertCount(2, $params);
-        $this->assertSame('bidder_id', $params[0]->getName());
-        $this->assertSame('payload', $params[1]->getName());
-        $this->assertSame('array', $params[1]->getType()->getName());
-    }
-
-    /**
-     * send_push signature is (string $bidder_id, array $payload) — not the old 4-param version.
+     * send_push has unified (bidder_id, payload) signature and send_winner_push is removed.
      */
     public function testSendPushHasUnifiedSignature(): void
     {
@@ -104,8 +85,14 @@ class SendPushTest extends TestCase
         $this->assertTrue($ref->hasMethod('send_push'));
         $this->assertFalse($ref->hasMethod('send_winner_push'), 'send_winner_push should be removed');
 
-        $params = $ref->getMethod('send_push')->getParameters();
+        $method = $ref->getMethod('send_push');
+        $this->assertTrue($method->isPublic());
+
+        $params = $method->getParameters();
         $this->assertCount(2, $params, 'send_push should accept exactly 2 parameters');
+        $this->assertSame('bidder_id', $params[0]->getName());
+        $this->assertSame('payload', $params[1]->getName());
+        $this->assertSame('array', $params[1]->getType()->getName());
     }
 
     // ========== HELPERS ==========

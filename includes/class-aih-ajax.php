@@ -2513,7 +2513,7 @@ class AIH_Ajax {
                     $title = $row ? $row->title : 'Art Piece #' . $id;
                     $catalog_art_id = $row ? $row->catalog_art_id : '';
                     AIH_Push::mark_winner_notified($bidder_id, $id);
-                    $push->handle_winner_event($bidder_id, $id, $title, $catalog_art_id);
+                    $push->handle_winner_event($bidder_id, $id, $title);
 
                     // Publish winner event via Mercure SSE
                     if (class_exists('AIH_Mercure') && AIH_Mercure::is_enabled()) {
