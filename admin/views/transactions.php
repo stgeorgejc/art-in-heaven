@@ -306,23 +306,22 @@ $matchable_orders = $wpdb->get_results(
 
     <!-- Pagination -->
     <?php if ($total_pages > 1): ?>
-    <div class="tablenav bottom">
-        <div class="tablenav-pages">
-            <span class="displaying-num"><?php printf(_n('%s item', '%s items', $total_items, 'art-in-heaven'), number_format($total_items)); ?></span>
-            <span class="pagination-links">
-                <?php
-                $page_links = paginate_links(array(
-                    'base' => add_query_arg('paged', '%#%'),
-                    'format' => '',
-                    'prev_text' => '&laquo;',
-                    'next_text' => '&raquo;',
-                    'total' => $total_pages,
-                    'current' => $current_page
-                ));
-                echo wp_kses_post($page_links);
-                ?>
-            </span>
-        </div>
+    <div class="aih-pagination">
+        <?php
+        $base_url = admin_url('admin.php?page=art-in-heaven-transactions');
+        if ($filter_status) $base_url .= '&status=' . urlencode($filter_status);
+        if ($filter_matched) $base_url .= '&matched=' . urlencode($filter_matched);
+        if ($search) $base_url .= '&s=' . urlencode($search);
+        if ($orderby) $base_url .= '&orderby=' . urlencode($orderby) . '&order=' . urlencode($order);
+        ?>
+        <?php $at_first = $current_page <= 1; $at_last = $current_page >= $total_pages; ?>
+        <a href="<?php echo esc_url($base_url . '&paged=1'); ?>" class="button aih-page-btn<?php echo $at_first ? ' disabled' : ''; ?>"<?php echo $at_first ? ' aria-disabled="true" tabindex="-1"' : ''; ?>>&laquo;</a>
+        <a href="<?php echo esc_url($base_url . '&paged=' . max(1, $current_page - 1)); ?>" class="button aih-page-btn<?php echo $at_first ? ' disabled' : ''; ?>"<?php echo $at_first ? ' aria-disabled="true" tabindex="-1"' : ''; ?>>&lsaquo;</a>
+        <span class="aih-page-info">
+            <?php printf(__('Page %d of %d (%s items)', 'art-in-heaven'), $current_page, $total_pages, number_format($total_items)); ?>
+        </span>
+        <a href="<?php echo esc_url($base_url . '&paged=' . min($total_pages, $current_page + 1)); ?>" class="button aih-page-btn<?php echo $at_last ? ' disabled' : ''; ?>"<?php echo $at_last ? ' aria-disabled="true" tabindex="-1"' : ''; ?>>&rsaquo;</a>
+        <a href="<?php echo esc_url($base_url . '&paged=' . $total_pages); ?>" class="button aih-page-btn<?php echo $at_last ? ' disabled' : ''; ?>"<?php echo $at_last ? ' aria-disabled="true" tabindex="-1"' : ''; ?>>&raquo;</a>
     </div>
     <?php endif; ?>
 
@@ -331,7 +330,7 @@ $matchable_orders = $wpdb->get_results(
 
 <!-- Transaction Details Modal -->
 <div id="aih-transaction-modal" class="aih-modal" style="display:none;">
-    <div class="aih-modal-content aih-modal-lg">
+    <div class="aih-modal-content aih-modal-content--lg">
         <div class="aih-modal-header">
             <h2><?php _e('Transaction Details', 'art-in-heaven'); ?></h2>
             <button type="button" class="aih-modal-close">&times;</button>
@@ -380,18 +379,15 @@ $matchable_orders = $wpdb->get_results(
 .aih-mode-badge.production { background: #d1fae5; color: #065f46; }
 .aih-last-sync { color: #8a8a8a; font-size: 13px; }
 .aih-sync-actions { display: flex; gap: 10px; }
-.aih-sync-actions .dashicons { margin-right: 5px; line-height: 1.4; }
+.aih-sync-actions .dashicons { font-size: 16px; width: 16px; height: 16px; line-height: 1; vertical-align: middle; }
 
 .aih-stats-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px; }
-.aih-stat-card { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); text-align: center; }
-.aih-stat-card.success { border-left: 4px solid #10b981; }
-.aih-stat-card.warning { border-left: 4px solid #f59e0b; }
-.aih-stat-number { font-size: 28px; font-weight: 700; color: #1c1c1c; margin-bottom: 5px; }
-.aih-stat-label { font-size: 13px; color: #8a8a8a; }
+.aih-stat-card.success { border-left-color: #10b981; }
+.aih-stat-card.warning { border-left-color: #f59e0b; }
 
 .aih-filters-bar { background: #fff; padding: 15px 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 20px; }
 .aih-filters-bar form { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
-.aih-filters-bar select, .aih-filters-bar input[type="search"] { padding: 6px 12px; border: 1px solid #d1d5db; border-radius: 4px; }
+.aih-filters-bar select, .aih-filters-bar input[type="search"] { height: var(--aih-touch-target); padding: 0 12px; border: 1px solid #d1d5db; border-radius: 4px; box-sizing: border-box; }
 .aih-filters-bar input[type="search"] { min-width: 200px; }
 
 .aih-transactions-table th.sortable { cursor: pointer; }
@@ -403,26 +399,12 @@ $matchable_orders = $wpdb->get_results(
 .aih-transactions-table .aih-pushpay-id { font-size: 11px; background: #f3f4f6; padding: 2px 6px; border-radius: 3px; }
 .aih-transactions-table .aih-time { color: #8a8a8a; }
 .aih-transactions-table .aih-amount { color: #4a7c59; font-size: 15px; }
-.aih-transactions-table .aih-status-badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
-.aih-status-badge.success { background: #d1fae5; color: #065f46; }
-.aih-status-badge.processing { background: #dbeafe; color: #1e40af; }
-.aih-status-badge.failed { background: #fee2e2; color: #991b1b; }
 .aih-transactions-table .aih-order-link { font-weight: 600; color: #b8956b; text-decoration: none; }
 .aih-transactions-table .aih-order-link:hover { text-decoration: underline; }
 .aih-matched-badge { color: #10b981; margin-left: 5px; }
 .aih-unmatched { color: #9ca3af; }
 .aih-row-actions { display: flex; gap: 5px; }
 .aih-row-actions .dashicons { font-size: 16px; width: 16px; height: 16px; line-height: 1.3; }
-
-/* Modal */
-.aih-modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 100000; display: flex; align-items: center; justify-content: center; }
-.aih-modal-content { background: #fff; border-radius: 12px; max-width: 500px; width: 90%; max-height: 90vh; overflow: auto; }
-.aih-modal-lg { max-width: 700px; }
-.aih-modal-header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-bottom: 1px solid #e5e7eb; }
-.aih-modal-header h2 { margin: 0; font-size: 18px; }
-.aih-modal-close { background: none; border: none; font-size: 24px; cursor: pointer; color: #8a8a8a; line-height: 1; }
-.aih-modal-body { padding: 20px; }
-.aih-modal-footer { padding: 15px 20px; border-top: 1px solid #e5e7eb; display: flex; justify-content: flex-end; gap: 10px; }
 
 /* Transaction details */
 .aih-txn-detail { margin-bottom: 15px; }
@@ -440,15 +422,14 @@ jQuery(document).ready(function($) {
     // Sync transactions
     $('#aih-sync-transactions').on('click', function() {
         var $btn = $(this);
-        var $icon = $btn.prop('disabled', true).find('.dashicons');
-        $icon.addClass('aih-spin');
+        var originalHtml = $btn.html();
+        $btn.prop('disabled', true).html('<span class="dashicons dashicons-update"></span> <?php echo esc_js(__('Syncing...', 'art-in-heaven')); ?>');
 
         $.post(ajaxurl, {
             action: 'aih_sync_pushpay_transactions',
             nonce: aihAdmin.nonce
         }, function(response) {
-            $icon.removeClass('aih-spin');
-            $btn.prop('disabled', false);
+            $btn.prop('disabled', false).html(originalHtml);
             if (response.success) {
                 alert(response.data.message);
                 location.reload();
@@ -456,8 +437,7 @@ jQuery(document).ready(function($) {
                 alert('Error: ' + (response.data ? response.data.message : 'Sync failed'));
             }
         }).fail(function() {
-            $icon.removeClass('aih-spin');
-            $btn.prop('disabled', false);
+            $btn.prop('disabled', false).html(originalHtml);
             alert('Request failed');
         });
     });
@@ -572,8 +552,4 @@ jQuery(document).ready(function($) {
     });
 });
 
-// Spin animation
-var style = document.createElement('style');
-style.textContent = '@keyframes aih-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } } .aih-spin { animation: aih-spin 1s linear infinite; }';
-document.head.appendChild(style);
 </script>

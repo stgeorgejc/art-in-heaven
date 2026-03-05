@@ -107,10 +107,10 @@ $is_sandbox = get_option('aih_pushpay_sandbox', 0);
                 <tr>
                     <th scope="row"><?php _e('Auto Sync', 'art-in-heaven'); ?></th>
                     <td>
-                        <label>
-                            <input type="checkbox" name="aih_auto_sync_enabled" value="1" <?php checked(get_option('aih_auto_sync_enabled', false)); ?>>
-                            <?php _e('Enable automatic sync of registrants from API', 'art-in-heaven'); ?>
-                        </label>
+                        <select name="aih_auto_sync_enabled">
+                            <option value="0" <?php selected(get_option('aih_auto_sync_enabled', 0), 0); ?>><?php _e('Off', 'art-in-heaven'); ?></option>
+                            <option value="1" <?php selected(get_option('aih_auto_sync_enabled', 0), 1); ?>><?php _e('On', 'art-in-heaven'); ?></option>
+                        </select>
                         <p class="description"><?php _e('Automatically sync new registrants at the selected interval.', 'art-in-heaven'); ?></p>
                     </td>
                 </tr>
@@ -347,10 +347,10 @@ $is_sandbox = get_option('aih_pushpay_sandbox', 0);
                 <tr>
                     <th scope="row"><?php _e('Auto Sync', 'art-in-heaven'); ?></th>
                     <td>
-                        <label>
-                            <input type="checkbox" name="aih_pushpay_auto_sync_enabled" value="1" <?php checked(get_option('aih_pushpay_auto_sync_enabled', false)); ?>>
-                            <?php _e('Enable automatic sync of transactions from Pushpay', 'art-in-heaven'); ?>
-                        </label>
+                        <select name="aih_pushpay_auto_sync_enabled">
+                            <option value="0" <?php selected(get_option('aih_pushpay_auto_sync_enabled', 0), 0); ?>><?php _e('Off', 'art-in-heaven'); ?></option>
+                            <option value="1" <?php selected(get_option('aih_pushpay_auto_sync_enabled', 0), 1); ?>><?php _e('On', 'art-in-heaven'); ?></option>
+                        </select>
                         <p class="description"><?php _e('Automatically sync payment transactions at the selected interval.', 'art-in-heaven'); ?></p>
                     </td>
                 </tr>
@@ -400,14 +400,14 @@ $is_sandbox = get_option('aih_pushpay_sandbox', 0);
             </h2>
             <p class="description"><?php _e('Enable Server-Sent Events for instant bid updates and outbid notifications. Requires a Mercure hub running on the server. When disabled, the plugin falls back to polling.', 'art-in-heaven'); ?></p>
 
-            <?php $mercure_enabled = get_option('aih_mercure_enabled', false); ?>
+            <?php $mercure_enabled = get_option('aih_mercure_enabled', 0); ?>
 
             <table class="form-table">
                 <tr>
                     <th scope="row"><?php _e('Enable Mercure', 'art-in-heaven'); ?></th>
                     <td>
                         <label>
-                            <input type="checkbox" name="aih_mercure_enabled" value="1" <?php checked($mercure_enabled); ?>>
+                            <input type="checkbox" name="aih_mercure_enabled" value="1" <?php checked($mercure_enabled, 1); ?>>
                             <?php _e('Enable real-time updates via Server-Sent Events', 'art-in-heaven'); ?>
                         </label>
                         <p class="description"><?php _e('Only enable this after the Mercure hub is running and configured.', 'art-in-heaven'); ?></p>
@@ -452,6 +452,28 @@ $is_sandbox = get_option('aih_pushpay_sandbox', 0);
                 </ol>
                 <p style="margin-top: 10px;"><?php _e('When Mercure is disabled or unreachable, the plugin automatically falls back to polling.', 'art-in-heaven'); ?></p>
             </div>
+        </div>
+
+        <!-- Web Push Notifications Section -->
+        <div class="aih-settings-section">
+            <h2>
+                <span class="dashicons dashicons-bell" style="margin-right: 8px;"></span>
+                <?php esc_html_e('Web Push Notifications', 'art-in-heaven'); ?>
+            </h2>
+            <p class="description"><?php esc_html_e('Send native browser push notifications when a bidder is outbid. When disabled, bidders still receive outbid alerts via polling (or instantly via Mercure SSE if enabled above).', 'art-in-heaven'); ?></p>
+
+            <table class="form-table">
+                <tr>
+                    <th scope="row"><?php esc_html_e('Enable Web Push', 'art-in-heaven'); ?></th>
+                    <td>
+                        <label>
+                            <input type="checkbox" name="aih_push_enabled" value="1" <?php checked(get_option('aih_push_enabled', 1), 1); ?>>
+                            <?php esc_html_e('Enable outbid notifications via Web Push (VAPID)', 'art-in-heaven'); ?>
+                        </label>
+                        <p class="description"><?php esc_html_e('When disabled, browser push notifications are turned off but the notification bell remains accessible for viewing alerts. Polling and SSE channels remain active.', 'art-in-heaven'); ?></p>
+                    </td>
+                </tr>
+            </table>
         </div>
 
         <?php submit_button(__('Save Integration Settings', 'art-in-heaven')); ?>

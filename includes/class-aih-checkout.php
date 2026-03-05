@@ -39,21 +39,55 @@ class AIH_Checkout {
         $art_table = AIH_Database::get_table('art_pieces');
         $order_items_table = AIH_Database::get_table('order_items');
         
+        $orders_table = AIH_Database::get_table('orders');
+
         return $wpdb->get_results($wpdb->prepare(
             "SELECT a.*, a.id as art_piece_id, b.bid_amount as winning_amount, b.bid_amount as winning_bid, b.bid_time
              FROM $bids_table b
              JOIN $art_table a ON b.art_piece_id = a.id
              LEFT JOIN $order_items_table oi ON oi.art_piece_id = a.id
+             LEFT JOIN $orders_table o ON oi.order_id = o.id
              WHERE b.bidder_id = %s
              AND b.is_winning = 1
              AND (a.auction_end < %s OR a.status = 'ended')
-             AND oi.id IS NULL
+             AND (oi.id IS NULL OR o.payment_status IN ('cancelled'))
              ORDER BY a.auction_end DESC",
             $bidder_id,
             current_time('mysql')
         ));
     }
-    
+
+    /**
+     * Cancel stale pending orders for a bidder so items return to checkout.
+     *
+     * Only cancels orders older than 10 minutes to avoid racing with
+     * concurrent tabs or in-flight PushPay payments.
+     *
+     * Callers must verify the bidder is authorized before invoking this method.
+     */
+    public function cancel_pending_orders($bidder_id) {
+        // Verify the caller's session matches the bidder being cancelled.
+        $current_bidder = AIH_Auth::get_instance()->get_current_bidder_id();
+        if (empty($current_bidder) || $current_bidder !== $bidder_id) {
+            return 0;
+        }
+
+        global $wpdb;
+        $orders_table = AIH_Database::get_table('orders');
+
+        $pending_ids = $wpdb->get_col($wpdb->prepare(
+            "SELECT id FROM $orders_table WHERE bidder_id = %s AND payment_status = 'pending' AND created_at < %s",
+            $bidder_id,
+            date('Y-m-d H:i:s', current_time('timestamp') - 10 * MINUTE_IN_SECONDS)
+        ));
+
+        foreach ($pending_ids as $order_id) {
+            $this->update_payment_status((int) $order_id, 'cancelled', '', '', 'Auto-cancelled: bidder returned to checkout');
+        }
+
+        return count($pending_ids);
+    }
+
     /**
      * Get payment status for all art pieces a bidder has won (keyed by art_piece_id)
      */
@@ -270,7 +304,7 @@ class AIH_Checkout {
         $orders_table = AIH_Database::get_table('orders');
 
         // Validate status against allowlist
-        $allowed_statuses = array('pending', 'paid', 'refunded', 'failed');
+        $allowed_statuses = array('pending', 'paid', 'refunded', 'failed', 'cancelled');
         if (!in_array($status, $allowed_statuses, true)) {
             return false;
         }
@@ -291,10 +325,146 @@ class AIH_Checkout {
         return $result;
     }
     
+    /**
+     * Mark a manual payment for a won art piece from the admin panel.
+     *
+     * If an order already exists for the art piece, updates its payment status.
+     * Otherwise, finds the winning bid, creates a new order, and sets payment fields.
+     *
+     * @param int    $art_piece_id  The art piece ID.
+     * @param string $status        Payment status (pending|paid|refunded).
+     * @param string $method        Payment method.
+     * @param string $reference     Payment reference.
+     * @param string $notes         Admin notes.
+     * @return array{success: bool, message: string}
+     */
+    public function mark_manual_payment( $art_piece_id, $status, $method = '', $reference = '', $notes = '' ) {
+        global $wpdb;
+
+        $allowed_statuses = array( 'pending', 'paid', 'refunded' );
+        if ( ! in_array( $status, $allowed_statuses, true ) ) {
+            return array(
+                'success' => false,
+                'message' => __( 'Invalid payment status.', 'art-in-heaven' ),
+            );
+        }
+
+        $allowed_methods = array( 'pushpay', 'cash', 'check', 'card', 'other', '' );
+        if ( ! in_array( $method, $allowed_methods, true ) ) {
+            return array(
+                'success' => false,
+                'message' => __( 'Invalid payment method.', 'art-in-heaven' ),
+            );
+        }
+
+        $orders_table      = AIH_Database::get_table( 'orders' );
+        $order_items_table = AIH_Database::get_table( 'order_items' );
+        $bids_table        = AIH_Database::get_table( 'bids' );
+        $art_table         = AIH_Database::get_table( 'art_pieces' );
+
+        // Step 1: Check for an existing order for this art piece.
+        $existing_order = $wpdb->get_row( $wpdb->prepare(
+            "SELECT o.* FROM $orders_table o
+             JOIN $order_items_table oi ON o.id = oi.order_id
+             WHERE oi.art_piece_id = %d",
+            $art_piece_id
+        ) );
+
+        if ( $existing_order ) {
+            $updated = $this->update_payment_status(
+                (int) $existing_order->id,
+                $status,
+                $method,
+                $reference,
+                $notes
+            );
+            if ( $updated === false ) {
+                return array(
+                    'success' => false,
+                    'message' => __( 'Failed to update payment status.', 'art-in-heaven' ),
+                );
+            }
+            return array(
+                'success' => true,
+                'message' => __( 'Payment status updated.', 'art-in-heaven' ),
+            );
+        }
+
+        // Step 2: No order exists — find the winning bid.
+        $winning_bid = $wpdb->get_row( $wpdb->prepare(
+            "SELECT b.*, a.title FROM $bids_table b
+             JOIN $art_table a ON b.art_piece_id = a.id
+             WHERE b.art_piece_id = %d AND b.is_winning = 1",
+            $art_piece_id
+        ) );
+
+        if ( ! $winning_bid ) {
+            return array(
+                'success' => false,
+                'message' => __( 'No winning bid found for this art piece.', 'art-in-heaven' ),
+            );
+        }
+
+        // Step 3: Create a new order.
+        do {
+            $order_number = 'AIH-' . strtoupper( wp_generate_password( 8, false ) );
+            $exists       = $wpdb->get_var( $wpdb->prepare(
+                "SELECT 1 FROM $orders_table WHERE order_number = %s",
+                $order_number
+            ) );
+        } while ( $exists );
+
+        $totals = $this->calculate_totals( array( (object) array( 'winning_amount' => $winning_bid->bid_amount ) ) );
+
+        $wpdb->insert( $orders_table, array(
+            'order_number'    => $order_number,
+            'bidder_id'       => $winning_bid->bidder_id,
+            'subtotal'        => $totals['subtotal'],
+            'tax'             => $totals['tax'],
+            'total'           => $totals['total'],
+            'payment_status'  => $status,
+            'payment_method'  => $method,
+            'payment_reference' => $reference,
+            'notes'           => $notes,
+            'payment_date'    => $status === 'paid' ? current_time( 'mysql' ) : null,
+            'created_at'      => current_time( 'mysql' ),
+        ) );
+
+        $order_id = $wpdb->insert_id;
+        if ( ! $order_id ) {
+            return array(
+                'success' => false,
+                'message' => __( 'Failed to create order.', 'art-in-heaven' ),
+            );
+        }
+
+        $item_inserted = $wpdb->insert( $order_items_table, array(
+            'order_id'     => $order_id,
+            'art_piece_id' => $art_piece_id,
+            'winning_bid'  => $winning_bid->bid_amount,
+        ) );
+        if ( $item_inserted === false ) {
+            return array(
+                'success' => false,
+                'message' => __( 'Order created but failed to add item.', 'art-in-heaven' ),
+            );
+        }
+
+        // Invalidate payment stats cache.
+        if ( class_exists( 'AIH_Cache' ) ) {
+            AIH_Cache::delete( 'payment_stats' );
+        }
+
+        return array(
+            'success' => true,
+            'message' => __( 'Order created and payment status set.', 'art-in-heaven' ),
+        );
+    }
+
     public function get_all_orders($args = array()) {
         global $wpdb;
 
-        $defaults = array('status' => '', 'bidder_id' => '', 'orderby' => 'created_at', 'order' => 'DESC');
+        $defaults = array('status' => '', 'bidder_id' => '', 'search' => '', 'orderby' => 'created_at', 'order' => 'DESC', 'limit' => 0, 'offset' => 0);
         $args = wp_parse_args($args, $defaults);
 
         $orders_table = AIH_Database::get_table('orders');
@@ -313,11 +483,20 @@ class AIH_Checkout {
         $where = "1=1";
         if (!empty($args['status'])) $where .= $wpdb->prepare(" AND o.payment_status = %s", $args['status']);
         if (!empty($args['bidder_id'])) $where .= $wpdb->prepare(" AND o.bidder_id = %s", $args['bidder_id']);
+        if (!empty($args['search'])) {
+            $like = '%' . $wpdb->esc_like($args['search']) . '%';
+            $where .= $wpdb->prepare(
+                " AND (o.order_number LIKE %s OR o.bidder_id LIKE %s OR COALESCE(bd.name_first, rg.name_first, '') LIKE %s OR COALESCE(bd.name_last, rg.name_last, '') LIKE %s OR CONCAT(COALESCE(bd.name_first, rg.name_first, ''), ' ', COALESCE(bd.name_last, rg.name_last, '')) LIKE %s OR COALESCE(bd.email_primary, rg.email_primary, '') LIKE %s)",
+                $like, $like, $like, $like, $like, $like
+            );
+        }
+
+        $limit = intval($args['limit']);
+        $offset = intval($args['offset']);
 
         // Use derived table for item_count instead of correlated subquery
         // Join both bidders and registrants tables, prefer bidders data but fall back to registrants
-        return $wpdb->get_results(
-            "SELECT o.*,
+        $sql = "SELECT o.*,
                     COALESCE(bd.name_first, rg.name_first) as name_first,
                     COALESCE(bd.name_last, rg.name_last) as name_last,
                     COALESCE(bd.phone_mobile, rg.phone_mobile) as phone,
@@ -333,8 +512,46 @@ class AIH_Checkout {
                  GROUP BY oi.order_id
              ) oic ON o.id = oic.order_id
              WHERE $where
-             ORDER BY o.{$args['orderby']} {$args['order']}"
-        );
+             ORDER BY o.{$args['orderby']} {$args['order']}";
+
+        if ($limit > 0) {
+            $sql = $wpdb->prepare($sql . " LIMIT %d OFFSET %d", $limit, $offset);
+        }
+
+        return $wpdb->get_results($sql);
+    }
+
+    public function count_orders($args = array()) {
+        global $wpdb;
+
+        $defaults = array('status' => '', 'bidder_id' => '', 'search' => '');
+        $args = wp_parse_args($args, $defaults);
+
+        $orders_table = AIH_Database::get_table('orders');
+        $bidders_table = AIH_Database::get_table('bidders');
+        $registrants_table = AIH_Database::get_table('registrants');
+
+        $where = "1=1";
+        if (!empty($args['status'])) {
+            $where .= $wpdb->prepare(" AND o.payment_status = %s", $args['status']);
+        }
+        if (!empty($args['bidder_id'])) {
+            $where .= $wpdb->prepare(" AND o.bidder_id = %s", $args['bidder_id']);
+        }
+        if (!empty($args['search'])) {
+            $like = '%' . $wpdb->esc_like($args['search']) . '%';
+            $where .= $wpdb->prepare(
+                " AND (o.order_number LIKE %s OR o.bidder_id LIKE %s OR COALESCE(bd.name_first, rg.name_first, '') LIKE %s OR COALESCE(bd.name_last, rg.name_last, '') LIKE %s OR CONCAT(COALESCE(bd.name_first, rg.name_first, ''), ' ', COALESCE(bd.name_last, rg.name_last, '')) LIKE %s OR COALESCE(bd.email_primary, rg.email_primary, '') LIKE %s)",
+                $like, $like, $like, $like, $like, $like
+            );
+        }
+
+        $query = "SELECT COUNT(*) FROM $orders_table o
+                  LEFT JOIN $bidders_table bd ON o.bidder_id = bd.confirmation_code
+                  LEFT JOIN $registrants_table rg ON o.bidder_id = rg.confirmation_code
+                  WHERE $where";
+
+        return (int) $wpdb->get_var($query);
     }
     
     public function get_bidder_orders($bidder_id) {

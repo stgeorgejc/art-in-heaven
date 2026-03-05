@@ -265,7 +265,7 @@ class AIH_Pushpay_API {
         $defaults = array(
             'page' => 0,
             'pageSize' => 100,
-            'from' => null, // ISO 8601 date
+            'from' => null, // UTC datetime (e.g. 2026-03-01T00:00:00Z)
             'to' => null,
             'status' => null, // Success, Failed, Processing, etc.
             'fund' => null
@@ -351,8 +351,8 @@ class AIH_Pushpay_API {
 
         // Use event start date if set, otherwise fetch all transactions
         $event_date = get_option('aih_event_date', '');
-        $from = !empty($event_date) ? date('c', strtotime($event_date)) : null;
-        $to = date('c');
+        $from = !empty($event_date) ? gmdate('Y-m-d\TH:i:s\Z', strtotime($event_date)) : null;
+        $to = gmdate('Y-m-d\TH:i:s\Z');
 
         // Clean up orphaned order references (orders that were deleted)
         $wpdb->query(
@@ -824,7 +824,7 @@ class AIH_Pushpay_API {
      */
     public static function reschedule_auto_sync($interval) {
         // Check both saved option and current POST (option may not be saved yet during settings save)
-        $enabled = get_option('aih_pushpay_auto_sync_enabled', false);
+        $enabled = get_option('aih_pushpay_auto_sync_enabled', 0);
         if (!$enabled && isset($_POST['aih_pushpay_auto_sync_enabled'])) {
             $enabled = (bool) sanitize_text_field(wp_unslash($_POST['aih_pushpay_auto_sync_enabled']));
         }

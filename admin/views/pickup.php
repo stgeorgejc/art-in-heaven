@@ -22,8 +22,9 @@ $art_table = AIH_Database::get_table('art_pieces');
 $bidders_table = AIH_Database::get_table('bidders');
 $registrants_table = AIH_Database::get_table('registrants');
 
-// Handle tab
+// Handle tab and search
 $current_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'ready';
+$search = isset($_GET['search']) ? sanitize_text_field($_GET['search']) : '';
 
 // Get counts for tabs - only count orders with at least one item (art piece exists)
 $ready_count = $wpdb->get_var(
@@ -39,6 +40,16 @@ $picked_up_count = $wpdb->get_var(
      WHERE o.payment_status = 'paid' AND o.pickup_status = 'picked_up'"
 );
 
+// Build search clause — safe to interpolate, built entirely via $wpdb->prepare()
+$search_where = '';
+if (!empty($search)) {
+    $like = '%' . $wpdb->esc_like($search) . '%';
+    $search_where = $wpdb->prepare(
+        " AND (o.order_number LIKE %s OR o.bidder_id LIKE %s OR COALESCE(b.name_first, rg.name_first, '') LIKE %s OR COALESCE(b.name_last, rg.name_last, '') LIKE %s OR CONCAT(COALESCE(b.name_first, rg.name_first, ''), ' ', COALESCE(b.name_last, rg.name_last, '')) LIKE %s OR COALESCE(b.email_primary, rg.email_primary, '') LIKE %s)",
+        $like, $like, $like, $like, $like, $like
+    );
+}
+
 // Get orders based on tab - only orders with at least one item
 if ($current_tab === 'picked_up') {
     $orders = $wpdb->get_results(
@@ -53,7 +64,7 @@ if ($current_tab === 'picked_up') {
          LEFT JOIN {$registrants_table} rg ON o.bidder_id = rg.confirmation_code
          INNER JOIN {$order_items_table} oi ON o.id = oi.order_id
          INNER JOIN {$art_table} a ON oi.art_piece_id = a.id
-         WHERE o.payment_status = 'paid' AND o.pickup_status = 'picked_up'
+         WHERE o.payment_status = 'paid' AND o.pickup_status = 'picked_up'{$search_where}
          ORDER BY o.pickup_date DESC"
     );
 } else {
@@ -69,7 +80,7 @@ if ($current_tab === 'picked_up') {
          LEFT JOIN {$registrants_table} rg ON o.bidder_id = rg.confirmation_code
          INNER JOIN {$order_items_table} oi ON o.id = oi.order_id
          INNER JOIN {$art_table} a ON oi.art_piece_id = a.id
-         WHERE o.payment_status = 'paid' AND (o.pickup_status IS NULL OR o.pickup_status = 'pending' OR o.pickup_status = '')
+         WHERE o.payment_status = 'paid' AND (o.pickup_status IS NULL OR o.pickup_status = 'pending' OR o.pickup_status = ''){$search_where}
          ORDER BY o.payment_date ASC"
     );
 }
@@ -104,22 +115,22 @@ if (!empty($order_ids)) {
 
     <!-- Stats Cards -->
     <div class="aih-stats-grid" style="margin: 20px 0;">
-        <div class="aih-stat-card">
+        <div class="aih-stat-card aih-stat-card--horizontal">
             <div class="aih-stat-icon" style="background: #fef3c7; color: #d97706;">
                 <span class="dashicons dashicons-clock"></span>
             </div>
             <div class="aih-stat-content">
                 <div class="aih-stat-number"><?php echo intval($ready_count); ?></div>
-                <div class="aih-stat-label"><?php _e('Ready for Pickup', 'art-in-heaven'); ?></div>
+                <div class="aih-stat-label aih-stat-label--plain"><?php _e('Ready for Pickup', 'art-in-heaven'); ?></div>
             </div>
         </div>
-        <div class="aih-stat-card">
+        <div class="aih-stat-card aih-stat-card--horizontal">
             <div class="aih-stat-icon" style="background: #d1fae5; color: #4a7c59;">
                 <span class="dashicons dashicons-yes-alt"></span>
             </div>
             <div class="aih-stat-content">
                 <div class="aih-stat-number"><?php echo intval($picked_up_count); ?></div>
-                <div class="aih-stat-label"><?php _e('Picked Up', 'art-in-heaven'); ?></div>
+                <div class="aih-stat-label aih-stat-label--plain"><?php _e('Picked Up', 'art-in-heaven'); ?></div>
             </div>
         </div>
     </div>
@@ -140,9 +151,22 @@ if (!empty($order_ids)) {
 
     <!-- Search Bar -->
     <div class="aih-pickup-search-bar">
-        <span class="dashicons dashicons-search"></span>
-        <input type="text" id="aih-pickup-search" placeholder="<?php esc_attr_e('Search by name, email, order #, or art piece...', 'art-in-heaven'); ?>">
-        <span class="aih-pickup-search-count"><span id="aih-visible-count"><?php echo count($orders); ?></span> <?php _e('orders', 'art-in-heaven'); ?></span>
+        <form method="get" class="aih-search-form" style="flex: 1;">
+            <input type="hidden" name="page" value="art-in-heaven-pickup">
+            <input type="hidden" name="tab" value="<?php echo esc_attr($current_tab); ?>">
+            <input type="search" name="search" id="aih-pickup-search" value="<?php echo esc_attr($search); ?>" placeholder="<?php esc_attr_e('Search by name, email, or order #...', 'art-in-heaven'); ?>">
+            <button type="submit" class="button"><?php _e('Search', 'art-in-heaven'); ?></button>
+            <?php if (!empty($search)): ?>
+                <a href="<?php echo admin_url('admin.php?page=art-in-heaven-pickup&tab=' . urlencode($current_tab)); ?>" class="button"><?php _e('Show All', 'art-in-heaven'); ?></a>
+            <?php endif; ?>
+        </form>
+        <span class="aih-pickup-search-count">
+            <?php if (!empty($search)): ?>
+                <?php printf(__('%d matching "%s"', 'art-in-heaven'), count($orders), esc_html($search)); ?>
+            <?php else: ?>
+                <?php echo count($orders); ?> <?php _e('orders', 'art-in-heaven'); ?>
+            <?php endif; ?>
+        </span>
     </div>
 
     <div class="aih-panel" style="margin-top: 0; border-top: none; border-radius: 0 0 8px 8px;">
@@ -271,7 +295,7 @@ if (!empty($order_ids)) {
 
 <!-- Pickup Modal -->
 <div id="aih-pickup-modal" class="aih-modal" style="display: none;">
-    <div class="aih-modal-content">
+    <div class="aih-modal-content aih-modal-content--sm">
         <div class="aih-modal-header">
             <h3><?php _e('Mark as Picked Up', 'art-in-heaven'); ?></h3>
             <button type="button" class="aih-modal-close">&times;</button>
@@ -301,58 +325,6 @@ if (!empty($order_ids)) {
 </div>
 
 <style>
-/* Stats Grid */
-.aih-stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 15px;
-    max-width: 500px;
-}
-
-.aih-stat-card {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    background: #fff;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-
-.aih-stat-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 48px;
-    height: 48px;
-    border-radius: 10px;
-    flex-shrink: 0;
-}
-
-.aih-stat-icon .dashicons {
-    font-size: 24px;
-    width: 24px;
-    height: 24px;
-    line-height: 1;
-}
-
-.aih-stat-content {
-    flex: 1;
-}
-
-.aih-stat-number {
-    font-size: 28px;
-    font-weight: 700;
-    color: #111827;
-    line-height: 1.2;
-}
-
-.aih-stat-label {
-    font-size: 13px;
-    color: #8a8a8a;
-    margin-top: 2px;
-}
-
 /* Empty State */
 .aih-empty-state {
     text-align: center;
@@ -626,129 +598,6 @@ if (!empty($order_ids)) {
     margin-right: 5px;
 }
 
-/* Modal Styles */
-.aih-modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.5);
-    z-index: 100000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.aih-modal-content {
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-    max-width: 450px;
-    width: 90%;
-    max-height: 90vh;
-    overflow: auto;
-}
-
-.aih-modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 20px;
-    border-bottom: 1px solid #e5e7eb;
-}
-
-.aih-modal-header h3 {
-    margin: 0;
-    font-size: 18px;
-    color: #111827;
-}
-
-.aih-modal-close {
-    background: none;
-    border: none;
-    font-size: 24px;
-    color: #8a8a8a;
-    cursor: pointer;
-    padding: 0;
-    line-height: 1;
-}
-
-.aih-modal-close:hover {
-    color: #111827;
-}
-
-.aih-modal-body {
-    padding: 20px;
-}
-
-.aih-modal-order-info {
-    background: #f9fafb;
-    padding: 12px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-    font-size: 14px;
-    color: #1c1c1c;
-}
-
-.aih-form-row {
-    margin-bottom: 15px;
-}
-
-.aih-form-row label {
-    display: block;
-    margin-bottom: 6px;
-    font-weight: 500;
-    color: #1c1c1c;
-}
-
-.aih-form-row label .required {
-    color: #a63d40;
-}
-
-.aih-form-row label .optional {
-    color: #9ca3af;
-    font-weight: normal;
-}
-
-.aih-form-row input[type="text"],
-.aih-form-row textarea {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    font-size: 14px;
-}
-
-.aih-form-row input[type="text"]:focus,
-.aih-form-row textarea:focus {
-    outline: none;
-    border-color: #b8956b;
-    box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.1);
-}
-
-.aih-modal-footer {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    padding: 15px 20px;
-    border-top: 1px solid #e5e7eb;
-    background: #f9fafb;
-    border-radius: 0 0 12px 12px;
-}
-
-.aih-modal-footer .button {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.aih-modal-footer .dashicons {
-    font-size: 16px;
-    width: 16px;
-    height: 16px;
-}
-
 /* Search Bar */
 .aih-pickup-search-bar {
     display: flex;
@@ -758,23 +607,6 @@ if (!empty($order_ids)) {
     padding: 12px 20px;
     border: 1px solid #e5e7eb;
     border-top: none;
-}
-
-.aih-pickup-search-bar > .dashicons {
-    color: #9ca3af;
-    font-size: 18px;
-    width: 18px;
-    height: 18px;
-    flex-shrink: 0;
-}
-
-.aih-pickup-search-bar input {
-    flex: 1;
-    border: none;
-    outline: none;
-    font-size: 14px;
-    padding: 4px 0;
-    background: transparent;
 }
 
 .aih-pickup-search-count {
@@ -819,27 +651,6 @@ if (!empty($order_ids)) {
 
 <script>
 jQuery(document).ready(function($) {
-    // Search filtering
-    var $cards = $('.aih-pickup-card');
-    var $searchInput = $('#aih-pickup-search');
-
-    $searchInput.on('input', function() {
-        var search = this.value.toLowerCase().trim();
-        var visibleCount = 0;
-
-        $cards.each(function() {
-            var searchData = this.getAttribute('data-search') || '';
-            if (!search || searchData.indexOf(search) !== -1) {
-                this.style.display = '';
-                visibleCount++;
-            } else {
-                this.style.display = 'none';
-            }
-        });
-
-        document.getElementById('aih-visible-count').textContent = visibleCount;
-    });
-
     var $modal = $('#aih-pickup-modal');
     var currentOrderId = null;
 

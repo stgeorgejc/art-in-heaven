@@ -714,16 +714,23 @@ class AIH_Art_Piece {
     public function get_all_with_stats($args = array()) {
         global $wpdb;
         
-        $defaults = array('status' => '', 'has_bids' => null, 'has_favorites' => null);
+        $defaults = array('status' => '', 'has_bids' => null, 'has_favorites' => null, 'search' => '');
         $args = wp_parse_args($args, $defaults);
-        
+
         $bids_table = AIH_Database::get_table('bids');
         $favorites_table = AIH_Database::get_table('favorites');
         $orders_table = AIH_Database::get_table('orders');
         $order_items_table = AIH_Database::get_table('order_items');
         $now = current_time('mysql');
-        
+
         $where = "1=1";
+        if (!empty($args['search'])) {
+            $like = '%' . $wpdb->esc_like($args['search']) . '%';
+            $where .= $wpdb->prepare(
+                " AND (a.title LIKE %s OR a.artist LIKE %s OR a.art_id LIKE %s)",
+                $like, $like, $like
+            );
+        }
         if (!empty($args['status'])) {
             if ($args['status'] === 'active') {
                 $where .= $wpdb->prepare(" AND (a.status = 'active' AND a.auction_start <= %s AND a.auction_end > %s)", $now, $now);

@@ -335,12 +335,12 @@ class Art_In_Heaven {
         wp_clear_scheduled_hook('aih_five_minute_check');
         
         // Schedule auto-sync for registrants (if enabled)
-        if (get_option('aih_auto_sync_enabled', false)) {
+        if (get_option('aih_auto_sync_enabled', 0)) {
             AIH_Auth::schedule_auto_sync();
         }
 
         // Schedule auto-sync for Pushpay transactions (if enabled)
-        if (get_option('aih_pushpay_auto_sync_enabled', false)) {
+        if (get_option('aih_pushpay_auto_sync_enabled', 0)) {
             AIH_Pushpay_API::schedule_auto_sync();
         }
 
@@ -595,7 +595,8 @@ class Art_In_Heaven {
         }
         
         $auth = AIH_Auth::get_instance();
-        $vapid = AIH_Push::get_vapid_keys();
+        $push_enabled = (bool) get_option('aih_push_enabled', 1);
+        $vapid = $push_enabled ? AIH_Push::get_vapid_keys() : array('publicKey' => '');
 
         $localize_data = array(
             'ajaxurl'        => admin_url('admin-ajax.php'),
@@ -606,6 +607,7 @@ class Art_In_Heaven {
             'restNonce'      => wp_create_nonce('wp_rest'),
             'isLoggedIn'     => $auth->is_logged_in(),
             'bidderId'       => $auth->get_current_bidder_id(),
+            'pushEnabled'    => $push_enabled,
             'vapidPublicKey' => $vapid['publicKey'],
             'swUrl'          => home_url('/?aih-sw=1'),
             'checkoutUrl'    => AIH_Template_Helper::get_checkout_url(),
@@ -641,6 +643,9 @@ class Art_In_Heaven {
                 'bidPlaced'      => __('Your bid has been placed!', 'art-in-heaven'),
                 'connectionError'=> __('Connection error. Please try again.', 'art-in-heaven'),
                 'networkError'   => __('Network error. Please try again.', 'art-in-heaven'),
+                'redirecting'    => __('Redirecting...', 'art-in-heaven'),
+                'payNow'         => __('Pay Now', 'art-in-heaven'),
+                'paymentLinkError' => __('Could not generate payment link.', 'art-in-heaven'),
         );
 
         wp_localize_script('aih-frontend', 'aihAjax', $localize_data);
