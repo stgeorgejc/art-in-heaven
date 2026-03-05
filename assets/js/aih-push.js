@@ -145,9 +145,10 @@ window.addEventListener('beforeinstallprompt', function(e) {
                 if (self.shownEvents[dedupeKey]) return;
                 self.shownEvents[dedupeKey] = true;
 
-                if (payload.type === 'outbid' && typeof window.showOutbidAlert === 'function') {
-                    var title = payload.title || 'an item';
-                    window.showOutbidAlert(payload.art_piece_id, title, payload.url);
+                if (typeof window.showAlert === 'function') {
+                    var alertType = payload.type || 'outbid';
+                    var alertTitle = payload.item_title || payload.title || 'an item';
+                    window.showAlert(alertType, payload.art_piece_id, alertTitle, payload.url);
                 }
 
                 // Trigger status poll for fresh badge/state data
@@ -623,15 +624,20 @@ window.addEventListener('beforeinstallprompt', function(e) {
                     for (var i = 0; i < response.data.length; i++) {
                         var evt = response.data[i];
                         // Dedup: skip events already shown this session
-                        var eventKey = evt.art_piece_id + '_' + evt.time;
+                        var evtType = evt.type || 'outbid';
+                        var eventKey = evtType + '_' + evt.art_piece_id + '_' + evt.time;
                         if (self.shownEvents[eventKey]) continue;
                         self.shownEvents[eventKey] = true;
-                        // Show persistent alert card (falls back to toast)
-                        console.log('[AIH] Outbid via POLLING:', evt.title, '(art #' + evt.art_piece_id + ')');
-                        if (typeof window.showOutbidAlert === 'function') {
-                            window.showOutbidAlert(evt.art_piece_id, evt.title);
+
+                        console.log('[AIH] ' + evtType + ' via POLLING:', evt.title, '(art #' + evt.art_piece_id + ')');
+                        if (typeof window.showAlert === 'function') {
+                            window.showAlert(evtType, evt.art_piece_id, evt.title);
                         } else if (typeof window.showToast === 'function') {
-                            window.showToast('You\'ve been outbid on "' + evt.title + '"!', 'error');
+                            if (evtType === 'winner') {
+                                window.showToast('You won "' + evt.title + '"! Head to checkout.', 'success');
+                            } else {
+                                window.showToast('You\'ve been outbid on "' + evt.title + '"!', 'error');
+                            }
                         }
                     }
                     // Trigger immediate status poll to update badges
