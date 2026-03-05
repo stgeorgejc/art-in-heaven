@@ -229,8 +229,8 @@ class AIH_Push {
      *
      * @param int    $bid_id
      * @param int    $art_piece_id
-     * @param int    $new_bidder_id  The bidder who just placed the bid
-     * @param string $amount         The new bid amount
+     * @param string $new_bidder_id  The bidder who just placed the bid
+     * @param float  $amount         The new bid amount
      * @return void
      */
     public function handle_outbid_event($bid_id, $art_piece_id, $new_bidder_id, $amount) {
