@@ -82,11 +82,10 @@ class PushpayDateFormatTest extends TestCase
         // Capture the params passed to get_payments
         $capturedParams = null;
 
-        $pushpay = $this->getMockBuilder(AIH_Pushpay_API::class)
-            ->onlyMethods(['get_payments'])
-            ->getMock();
+        $pushpay = $this->createPartialMock(AIH_Pushpay_API::class, ['get_payments']);
 
-        $pushpay->method('get_payments')
+        $pushpay->expects($this->once())
+            ->method('get_payments')
             ->willReturnCallback(function ($params) use (&$capturedParams) {
                 $capturedParams = $params;
                 // Return empty result to stop pagination
@@ -140,11 +139,10 @@ class PushpayDateFormatTest extends TestCase
 
         $capturedParams = null;
 
-        $pushpay = $this->getMockBuilder(AIH_Pushpay_API::class)
-            ->onlyMethods(['get_payments'])
-            ->getMock();
+        $pushpay = $this->createPartialMock(AIH_Pushpay_API::class, ['get_payments']);
 
-        $pushpay->method('get_payments')
+        $pushpay->expects($this->once())
+            ->method('get_payments')
             ->willReturnCallback(function ($params) use (&$capturedParams) {
                 $capturedParams = $params;
                 return ['items' => [], 'page' => 0, 'totalPages' => 1];
