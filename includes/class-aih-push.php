@@ -214,13 +214,15 @@ class AIH_Push {
         self::record_outbid_event($outbid_bidder, $art_piece_id, $title);
 
         // Defer push notification sending to after HTTP response
-        $push_data = compact('outbid_bidder', 'art_piece_id', 'catalog_art_id', 'title');
-        add_action('shutdown', function() use ($push_data) {
-            if (function_exists('fastcgi_finish_request')) {
-                fastcgi_finish_request();
-            }
-            AIH_Push::get_instance()->send_push($push_data['outbid_bidder'], $push_data['art_piece_id'], $push_data['catalog_art_id'], $push_data['title']);
-        });
+        if (get_option('aih_push_enabled', 1)) {
+            $push_data = compact('outbid_bidder', 'art_piece_id', 'catalog_art_id', 'title');
+            add_action('shutdown', function() use ($push_data) {
+                if (function_exists('fastcgi_finish_request')) {
+                    fastcgi_finish_request();
+                }
+                AIH_Push::get_instance()->send_push($push_data['outbid_bidder'], $push_data['art_piece_id'], $push_data['catalog_art_id'], $push_data['title']);
+            });
+        }
     }
 
     /**
