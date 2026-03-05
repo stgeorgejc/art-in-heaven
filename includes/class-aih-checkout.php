@@ -136,7 +136,7 @@ class AIH_Checkout {
     }
 
     /**
-     * @param mixed $items
+     * @param array $items
      * @return array
      */
     public function calculate_totals($items) {

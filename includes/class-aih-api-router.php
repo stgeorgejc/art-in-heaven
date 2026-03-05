@@ -271,8 +271,8 @@ class AIH_API_Router {
 
     /**
      * Send a JSON error and exit
-     * @param mixed $message
-     * @param mixed $status
+     * @param string $message
+     * @param int $status
      * @return never
      */
     private function send_error($message, $status = 400) {

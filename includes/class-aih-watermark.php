@@ -102,9 +102,9 @@ class AIH_Watermark {
 
     /**
      * Apply watermark to an image
-     * @param mixed $image_path
-     * @param mixed $output_path
-     * @return mixed
+     * @param string $image_path
+     * @param string|null $output_path
+     * @return string|false
      */
     public function apply_watermark($image_path, $output_path = null) {
         // Check if GD is available
@@ -226,9 +226,9 @@ class AIH_Watermark {
     
     /**
      * Add diagonal watermarks across the image
-     * @param mixed $image
-     * @param mixed $width
-     * @param mixed $height
+     * @param \GdImage|resource $image
+     * @param int $width
+     * @param int $height
      * @return void
      */
     private function add_diagonal_watermarks($image, $width, $height) {
