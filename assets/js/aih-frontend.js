@@ -770,41 +770,71 @@
     window.AIHNotificationStore = AIHNotificationStore;
 
     // =============================================
-    // PERSISTENT OUTBID ALERTS (Layer 2)
+    // PERSISTENT ALERT CARDS (Layer 2)
+    // Unified handler for outbid and winner alerts
     // =============================================
-    (function initOutbidAlerts() {
+    (function initAlerts() {
         var MAX_VISIBLE = 3;
-        var EXPIRY_MS = 5 * 60 * 1000; // 5 minutes
         var alertCount = 0;
+
+        // Alert type configurations
+        var ALERT_TYPES = {
+            outbid: {
+                cssClass: 'aih-alert-outbid',
+                expiryMs: 5 * 60 * 1000, // 5 minutes
+                icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+                message: function(title) { return 'You\'ve been outbid on "' + title + '"!'; },
+                actionLabel: 'View',
+                getUrl: function(artPieceId, url) {
+                    if (url) return url;
+                    return aihAjax.artUrlBase ? aihAjax.artUrlBase + artPieceId + '/' : '';
+                },
+                persist: true // Add to notification store
+            },
+            winner: {
+                cssClass: 'aih-alert-winner',
+                expiryMs: 30 * 1000, // 30 seconds
+                icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>',
+                message: function(title) { return 'You won "' + title + '"! Head to checkout to complete your purchase.'; },
+                actionLabel: 'Checkout',
+                getUrl: function(artPieceId, url) {
+                    return url || aihAjax.checkoutUrl || '';
+                },
+                persist: false
+            }
+        };
 
         // Inject alert container below header
         var $container = $('<div id="aih-alert-container" class="aih-alert-container"></div>');
         $('.aih-header').first().after($container);
 
         /**
-         * Show a persistent outbid alert card.
-         * Same art_piece_id replaces previous alert for that piece.
+         * Show a persistent alert card.
          *
+         * @param {string} type - Alert type: 'outbid' or 'winner'
          * @param {number|string} artPieceId
          * @param {string} title - Art piece title
-         * @param {string} [url] - Optional link to the piece
+         * @param {string} [url] - Optional link override
          */
-        function showOutbidAlert(artPieceId, title, url) {
-            // Persist to notification store
-            var viewUrl = url || '';
-            if (!viewUrl && aihAjax.artUrlBase) {
-                viewUrl = aihAjax.artUrlBase + artPieceId + '/';
-            }
-            AIHNotificationStore.add(artPieceId, title, viewUrl);
-            updateBellBadge();
+        function showAlert(type, artPieceId, title, url) {
+            var config = ALERT_TYPES[type];
+            if (!config) return;
 
-            var $existing = $container.find('.aih-alert-card[data-art-id="' + artPieceId + '"]');
+            var actionUrl = config.getUrl(artPieceId, url);
+            var safeTitle = $('<span>').text(title).html();
+
+            // Persist outbid alerts to notification store
+            if (config.persist) {
+                AIHNotificationStore.add(artPieceId, title, actionUrl);
+                updateBellBadge();
+            }
+
+            // Check for existing alert for this piece + type
+            var $existing = $container.find('.aih-alert-card.' + config.cssClass + '[data-art-id="' + artPieceId + '"]');
             if ($existing.length) {
-                // Replace: update text, reset expiry timer
-                $existing.find('.aih-alert-text').text('You\'ve been outbid on "' + title + '"!');
+                $existing.find('.aih-alert-text').text(config.message(title));
                 clearTimeout($existing.data('expiryTimer'));
-                setExpiry($existing);
-                // Flash to draw attention
+                setExpiry($existing, config.expiryMs);
                 $existing.removeClass('aih-alert-flash');
                 setTimeout(function() { $existing.addClass('aih-alert-flash'); }, 10);
                 return;
@@ -813,17 +843,14 @@
             // Collapse oldest if at max
             var $cards = $container.find('.aih-alert-card');
             if ($cards.length >= MAX_VISIBLE) {
-                var $oldest = $cards.first();
-                removeAlert($oldest);
+                removeAlert($cards.first());
             }
 
             var $alert = $(
-                '<div class="aih-alert-card" data-art-id="' + artPieceId + '">' +
-                    '<div class="aih-alert-icon">' +
-                        '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' +
-                    '</div>' +
-                    '<span class="aih-alert-text">You\'ve been outbid on "' + $('<span>').text(title).html() + '"!</span>' +
-                    (viewUrl ? '<a href="' + viewUrl + '" class="aih-alert-view">View</a>' : '') +
+                '<div class="aih-alert-card ' + config.cssClass + '" data-art-id="' + artPieceId + '">' +
+                    '<div class="aih-alert-icon">' + config.icon + '</div>' +
+                    '<span class="aih-alert-text">' + config.message(safeTitle) + '</span>' +
+                    (actionUrl ? '<a href="' + actionUrl + '" class="aih-alert-view">' + config.actionLabel + '</a>' : '') +
                     '<button type="button" class="aih-alert-dismiss" aria-label="Dismiss">&times;</button>' +
                 '</div>'
             );
@@ -832,20 +859,19 @@
                 removeAlert($alert);
             });
 
-            setExpiry($alert);
+            setExpiry($alert, config.expiryMs);
             $container.append($alert);
 
-            // Animate in
             setTimeout(function() { $alert.addClass('aih-alert-show'); }, 10);
 
             alertCount++;
             updateBellBadge();
         }
 
-        function setExpiry($alert) {
+        function setExpiry($alert, expiryMs) {
             var timer = setTimeout(function() {
                 removeAlert($alert);
-            }, EXPIRY_MS);
+            }, expiryMs);
             $alert.data('expiryTimer', timer);
         }
 
@@ -854,15 +880,11 @@
             $alert.removeClass('aih-alert-show');
             setTimeout(function() {
                 $alert.remove();
-                // Don't decrement below 0
                 if (alertCount > 0) alertCount--;
                 updateBellBadge();
             }, 300);
         }
 
-        /**
-         * Update bell button badge with unread notification count from store
-         */
         function updateBellBadge() {
             var $btn = $('#aih-notify-btn');
             if (!$btn.length) return;
@@ -884,8 +906,14 @@
         // Restore badge on page load from persisted store
         updateBellBadge();
 
-        // Expose globally
-        window.showOutbidAlert = showOutbidAlert;
+        // Expose globally — backward-compatible wrappers + generic showAlert
+        window.showAlert = showAlert;
+        window.showOutbidAlert = function(artPieceId, title, url) {
+            showAlert('outbid', artPieceId, title, url);
+        };
+        window.showWinAlert = function(artPieceId, title, url) {
+            showAlert('winner', artPieceId, title, url);
+        };
     })();
 
     // =============================================

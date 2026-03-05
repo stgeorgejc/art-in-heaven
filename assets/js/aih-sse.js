@@ -159,6 +159,9 @@
                 case 'outbid':
                     this.handleOutbid(data);
                     break;
+                case 'winner':
+                    this.handleWinner(data);
+                    break;
             }
         },
 
@@ -177,13 +180,30 @@
          * Handle outbid notification (private topic)
          */
         handleOutbid: function(data) {
+            this.showAlertFromSSE('outbid', data);
+        },
+
+        /**
+         * Handle winner notification (private topic)
+         */
+        handleWinner: function(data) {
+            this.showAlertFromSSE('winner', data);
+        },
+
+        /**
+         * Show an alert from an SSE event and trigger status poll
+         */
+        showAlertFromSSE: function(type, data) {
             var title = data.title || 'an item';
-            if (typeof window.showOutbidAlert === 'function') {
-                window.showOutbidAlert(data.art_piece_id, title);
+            if (typeof window.showAlert === 'function') {
+                window.showAlert(type, data.art_piece_id, title);
             } else if (typeof window.showToast === 'function') {
-                window.showToast('You\'ve been outbid on "' + title + '"!', 'error');
+                if (type === 'winner') {
+                    window.showToast('You won "' + title + '"! Head to checkout.', 'success');
+                } else {
+                    window.showToast('You\'ve been outbid on "' + title + '"!', 'error');
+                }
             }
-            // Trigger immediate status poll to update badges
             if (typeof window.aihPollStatus === 'function') {
                 window.aihPollStatus();
             }

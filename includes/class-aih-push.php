@@ -1,10 +1,10 @@
 <?php
 /**
- * Web Push Notifications for outbid alerts
+ * Web Push Notifications for outbid and winner alerts
  *
  * Manages VAPID keys, push subscriptions, and sending notifications
- * when a bidder is outbid. Falls back to transient-based polling for
- * browsers that don't support push or deny permission.
+ * when a bidder is outbid or wins an auction. Falls back to transient-based
+ * polling for browsers that don't support push or deny permission.
  *
  * @package ArtInHeaven
  * @since   0.9.6
@@ -330,5 +330,154 @@ class AIH_Push {
 
         delete_transient($key);
         return $events;
+    }
+
+    // ========== WINNER NOTIFICATIONS ==========
+
+    /**
+     * Notify the winning bidder when an auction ends.
+     * Called from poll_status() when it detects a newly ended auction with a winner.
+     *
+     * @param string $bidder_id     The winning bidder
+     * @param int    $art_piece_id  The art piece that was won
+     * @param string $title         Art piece title
+     * @param string $catalog_art_id  Catalog art ID for URL generation
+     */
+    public function handle_winner_event($bidder_id, $art_piece_id, $title, $catalog_art_id = '') {
+        // Record event for polling fallback
+        self::record_winner_event($bidder_id, $art_piece_id, $title);
+
+        // Send push notification
+        if (get_option('aih_push_enabled', 1)) {
+            $push_data = compact('bidder_id', 'art_piece_id', 'catalog_art_id', 'title');
+            add_action('shutdown', function() use ($push_data) {
+                if (function_exists('fastcgi_finish_request')) {
+                    fastcgi_finish_request();
+                }
+                AIH_Push::get_instance()->send_winner_push(
+                    $push_data['bidder_id'],
+                    $push_data['art_piece_id'],
+                    $push_data['catalog_art_id'],
+                    $push_data['title']
+                );
+            });
+        }
+    }
+
+    /**
+     * Send push notification to auction winner.
+     */
+    public function send_winner_push($bidder_id, $art_piece_id, $catalog_art_id, $title) {
+        $subscriptions = self::get_subscriptions($bidder_id);
+        if (empty($subscriptions)) {
+            return;
+        }
+
+        $vapid = self::get_vapid_keys();
+        $checkout_url = AIH_Template_Helper::get_checkout_url();
+
+        $payload = wp_json_encode(array(
+            'type'         => 'winner',
+            'title'        => 'You won!',
+            'body'         => sprintf('Congratulations! You won "%s". Head to checkout to complete your purchase.', $title),
+            'art_piece_id' => $art_piece_id,
+            'url'          => $checkout_url,
+            'tag'          => 'winner-' . $art_piece_id,
+            'icon'         => AIH_PLUGIN_URL . 'assets/images/icon-192.png',
+        ));
+
+        try {
+            $auth = array(
+                'VAPID' => array(
+                    'subject'    => $vapid['subject'],
+                    'publicKey'  => $vapid['publicKey'],
+                    'privateKey' => $vapid['privateKey'],
+                ),
+            );
+
+            $webPush = new WebPush($auth);
+
+            foreach ($subscriptions as $sub) {
+                $subscription = Subscription::create(array(
+                    'endpoint'        => $sub->endpoint,
+                    'publicKey'       => $sub->p256dh,
+                    'authToken'       => $sub->auth_key,
+                    'contentEncoding' => 'aes128gcm',
+                ));
+                $webPush->queueNotification($subscription, $payload);
+            }
+
+            foreach ($webPush->flush() as $report) {
+                if ($report->isSubscriptionExpired()) {
+                    self::delete_subscription($report->getEndpoint());
+                }
+            }
+        } catch (\Exception $e) {
+            error_log('AIH Winner push notification error: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Record a winner event in a transient for polling fallback
+     *
+     * @param string $bidder_id
+     * @param int    $art_piece_id
+     * @param string $title
+     */
+    public static function record_winner_event($bidder_id, $art_piece_id, $title) {
+        $key    = 'aih_won_' . $bidder_id;
+        $events = get_transient($key);
+
+        if (!is_array($events)) {
+            $events = array();
+        }
+
+        $events[] = array(
+            'art_piece_id' => $art_piece_id,
+            'title'        => $title,
+            'time'         => time(),
+        );
+
+        set_transient($key, $events, 30 * MINUTE_IN_SECONDS);
+    }
+
+    /**
+     * Consume (return and delete) pending winner events for a bidder
+     *
+     * @param string $bidder_id
+     * @return array
+     */
+    public static function consume_winner_events($bidder_id) {
+        $key    = 'aih_won_' . $bidder_id;
+        $events = get_transient($key);
+
+        if (!is_array($events) || empty($events)) {
+            return array();
+        }
+
+        delete_transient($key);
+        return $events;
+    }
+
+    /**
+     * Check if a winner notification has already been sent for this bidder+art piece.
+     * Uses a transient flag with 24h TTL to prevent duplicate notifications.
+     *
+     * @param string $bidder_id
+     * @param int    $art_piece_id
+     * @return bool
+     */
+    public static function was_winner_notified($bidder_id, $art_piece_id) {
+        return (bool) get_transient('aih_won_notified_' . $bidder_id . '_' . $art_piece_id);
+    }
+
+    /**
+     * Mark a winner notification as sent.
+     *
+     * @param string $bidder_id
+     * @param int    $art_piece_id
+     */
+    public static function mark_winner_notified($bidder_id, $art_piece_id) {
+        set_transient('aih_won_notified_' . $bidder_id . '_' . $art_piece_id, 1, DAY_IN_SECONDS);
     }
 }

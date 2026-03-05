@@ -2406,10 +2406,19 @@ class AIH_Ajax {
             wp_send_json_error(array('message' => 'Not authenticated'));
         }
 
-        $bidder_id = $auth->get_current_bidder_id();
-        $events    = AIH_Push::consume_outbid_events($bidder_id);
+        $bidder_id      = $auth->get_current_bidder_id();
+        $outbid_events  = AIH_Push::consume_outbid_events($bidder_id);
+        $winner_events  = AIH_Push::consume_winner_events($bidder_id);
 
-        wp_send_json_success($events);
+        // Tag winner events with type so frontend can distinguish
+        foreach ($winner_events as &$evt) {
+            $evt['type'] = 'winner';
+        }
+        unset($evt);
+
+        $all_events = array_merge($outbid_events, $winner_events);
+
+        wp_send_json_success($all_events);
     }
 
     /**
@@ -2458,7 +2467,7 @@ class AIH_Ajax {
         $placeholders = implode(',', array_fill(0, count($ids), '%d'));
         $rows = $wpdb->get_results($wpdb->prepare(
             "SELECT
-                ap.id, ap.status, ap.auction_end,
+                ap.id, ap.status, ap.auction_end, ap.title, ap.art_id AS catalog_art_id,
                 MAX(b.bid_amount) AS highest,
                 MAX(COALESCE(b2.is_winning, 0)) AS is_winning,
                 CASE WHEN COUNT(b2.id) > 0 THEN 1 ELSE 0 END AS has_bid
@@ -2471,7 +2480,7 @@ class AIH_Ajax {
                 AND b2.bidder_id = %s
                 AND b2.bid_status = 'valid'
              WHERE ap.id IN ($placeholders)
-             GROUP BY ap.id, ap.status, ap.auction_end",
+             GROUP BY ap.id, ap.status, ap.auction_end, ap.title, ap.art_id",
             ...array_merge(array($bidder_id), $ids)
         ), OBJECT_K);
 
@@ -2493,6 +2502,34 @@ class AIH_Ajax {
                 'status'     => $status,
                 'has_bid'    => $row ? (bool) $row->has_bid : false,
             );
+        }
+
+        // Detect newly won auctions and trigger winner notifications
+        $push = AIH_Push::get_instance();
+        foreach ($items as $id => $item) {
+            if ($item['status'] === 'ended' && $item['is_winning']) {
+                if (!AIH_Push::was_winner_notified($bidder_id, $id)) {
+                    $row = isset($rows[$id]) ? $rows[$id] : null;
+                    $title = $row ? $row->title : 'Art Piece #' . $id;
+                    $catalog_art_id = $row ? $row->catalog_art_id : '';
+                    AIH_Push::mark_winner_notified($bidder_id, $id);
+                    $push->handle_winner_event($bidder_id, $id, $title, $catalog_art_id);
+
+                    // Publish winner event via Mercure SSE
+                    if (class_exists('AIH_Mercure') && AIH_Mercure::is_enabled()) {
+                        $prefix = AIH_Mercure::get_topic_prefix();
+                        AIH_Mercure::get_instance()->publish(
+                            $prefix . '/bidder/' . $bidder_id,
+                            array(
+                                'type'         => 'winner',
+                                'art_piece_id' => intval($id),
+                                'title'        => $title,
+                            ),
+                            true
+                        );
+                    }
+                }
+            }
         }
 
         $result = array(
