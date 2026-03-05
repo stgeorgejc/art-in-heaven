@@ -186,7 +186,7 @@ class WinnerNotificationTest extends TestCase
                 return true;
             });
 
-        AIH_Push::get_instance()->handle_winner_event('bidder-42', 100, 'Test Artwork', 'A-001');
+        AIH_Push::get_instance()->handle_winner_event('bidder-42', 100, 'Test Artwork');
 
         $this->assertStringStartsWith('aih_won_', $transientKey);
         $this->assertNotFalse(has_action('shutdown'));
@@ -204,7 +204,7 @@ class WinnerNotificationTest extends TestCase
             ->once()
             ->andReturn(true);
 
-        AIH_Push::get_instance()->handle_winner_event('bidder-42', 100, 'Test Artwork', 'A-001');
+        AIH_Push::get_instance()->handle_winner_event('bidder-42', 100, 'Test Artwork');
 
         $this->assertFalse(has_action('shutdown'));
     }

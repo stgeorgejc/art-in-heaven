@@ -277,33 +277,35 @@ class AIH_Push {
                 if (function_exists('fastcgi_finish_request')) {
                     fastcgi_finish_request();
                 }
-                AIH_Push::get_instance()->send_push($push_data['outbid_bidder'], $push_data['art_piece_id'], $push_data['catalog_art_id'], $push_data['title']);
+                $url = $push_data['catalog_art_id'] ? AIH_Template_Helper::get_art_url($push_data['catalog_art_id']) : '';
+                AIH_Push::get_instance()->send_push($push_data['outbid_bidder'], array(
+                    'type'         => 'outbid',
+                    'title'        => "You've been outbid!",
+                    'body'         => sprintf('Someone outbid you on "%s".', $push_data['title']),
+                    'art_piece_id' => $push_data['art_piece_id'],
+                    'url'          => $url,
+                    'tag'          => 'outbid-' . $push_data['art_piece_id'],
+                ));
             });
         }
     }
 
     /**
-     * Send push notification to outbid bidder (runs deferred in shutdown hook).
+     * Send a push notification to a bidder.
+     *
+     * @param string $bidder_id The bidder to notify.
+     * @param array  $payload   Notification payload (type, title, body, art_piece_id, url, tag).
      */
-    public function send_push($outbid_bidder, $art_piece_id, $catalog_art_id, $title) {
-        $subscriptions = self::get_subscriptions($outbid_bidder);
+    public function send_push($bidder_id, array $payload) {
+        $subscriptions = self::get_subscriptions($bidder_id);
         if (empty($subscriptions)) {
             return;
         }
 
+        $payload['icon'] = AIH_PLUGIN_URL . 'assets/images/icon-192.png';
+        $json_payload = wp_json_encode($payload);
+
         $vapid = self::get_vapid_keys();
-
-        $url = $catalog_art_id ? AIH_Template_Helper::get_art_url($catalog_art_id) : '';
-
-        $payload = wp_json_encode(array(
-            'type'         => 'outbid',
-            'title'        => "You've been outbid!",
-            'body'         => sprintf('Someone outbid you on "%s".', $title),
-            'art_piece_id' => $art_piece_id,
-            'url'          => $url,
-            'tag'          => 'outbid-' . $art_piece_id,
-            'icon'         => AIH_PLUGIN_URL . 'assets/images/icon-192.png',
-        ));
 
         try {
             $auth = array(
@@ -327,10 +329,9 @@ class AIH_Push {
                     'authToken'       => $sub->auth_key,
                     'contentEncoding' => 'aes128gcm',
                 ));
-                $webPush->queueNotification($subscription, $payload);
+                $webPush->queueNotification($subscription, $json_payload);
             }
 
-            // Flush and handle responses
             foreach ($webPush->flush() as $report) {
                 if ($report->isSubscriptionExpired()) {
                     self::delete_subscription($report->getEndpoint());
@@ -402,83 +403,27 @@ class AIH_Push {
      * @param string $bidder_id     The winning bidder
      * @param int    $art_piece_id  The art piece that was won
      * @param string $title         Art piece title
-     * @param string $catalog_art_id  Catalog art ID for URL generation
      */
-    public function handle_winner_event($bidder_id, $art_piece_id, $title, $catalog_art_id = '') {
+    public function handle_winner_event($bidder_id, $art_piece_id, $title) {
         // Record event for polling fallback
         self::record_winner_event($bidder_id, $art_piece_id, $title);
 
         // Send push notification
         if (get_option('aih_push_enabled', 1)) {
-            $push_data = compact('bidder_id', 'art_piece_id', 'catalog_art_id', 'title');
+            $push_data = compact('bidder_id', 'art_piece_id', 'title');
             add_action('shutdown', function() use ($push_data) {
                 if (function_exists('fastcgi_finish_request')) {
                     fastcgi_finish_request();
                 }
-                AIH_Push::get_instance()->send_winner_push(
-                    $push_data['bidder_id'],
-                    $push_data['art_piece_id'],
-                    $push_data['catalog_art_id'],
-                    $push_data['title']
-                );
-            });
-        }
-    }
-
-    /**
-     * Send push notification to auction winner.
-     */
-    public function send_winner_push($bidder_id, $art_piece_id, $catalog_art_id, $title) {
-        $subscriptions = self::get_subscriptions($bidder_id);
-        if (empty($subscriptions)) {
-            return;
-        }
-
-        $vapid = self::get_vapid_keys();
-        $checkout_url = AIH_Template_Helper::get_checkout_url();
-
-        $payload = wp_json_encode(array(
-            'type'         => 'winner',
-            'title'        => 'You won!',
-            'body'         => sprintf('Congratulations! You won "%s". Head to checkout to complete your purchase.', $title),
-            'art_piece_id' => $art_piece_id,
-            'url'          => $checkout_url,
-            'tag'          => 'winner-' . $art_piece_id,
-            'icon'         => AIH_PLUGIN_URL . 'assets/images/icon-192.png',
-        ));
-
-        try {
-            $auth = array(
-                'VAPID' => array(
-                    'subject'    => $vapid['subject'],
-                    'publicKey'  => $vapid['publicKey'],
-                    'privateKey' => $vapid['privateKey'],
-                ),
-            );
-
-            $webPush = new WebPush($auth);
-
-            foreach ($subscriptions as $sub) {
-                if (!self::is_valid_push_endpoint($sub->endpoint)) {
-                    self::delete_subscription($sub->endpoint);
-                    continue;
-                }
-                $subscription = Subscription::create(array(
-                    'endpoint'        => $sub->endpoint,
-                    'publicKey'       => $sub->p256dh,
-                    'authToken'       => $sub->auth_key,
-                    'contentEncoding' => 'aes128gcm',
+                AIH_Push::get_instance()->send_push($push_data['bidder_id'], array(
+                    'type'         => 'winner',
+                    'title'        => 'You won!',
+                    'body'         => sprintf('Congratulations! You won "%s". Head to checkout to complete your purchase.', $push_data['title']),
+                    'art_piece_id' => $push_data['art_piece_id'],
+                    'url'          => AIH_Template_Helper::get_checkout_url(),
+                    'tag'          => 'winner-' . $push_data['art_piece_id'],
                 ));
-                $webPush->queueNotification($subscription, $payload);
-            }
-
-            foreach ($webPush->flush() as $report) {
-                if ($report->isSubscriptionExpired()) {
-                    self::delete_subscription($report->getEndpoint());
-                }
-            }
-        } catch (\Exception $e) {
-            error_log('AIH Winner push notification error: ' . $e->getMessage());
+            });
         }
     }
 
