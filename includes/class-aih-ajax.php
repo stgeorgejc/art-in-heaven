@@ -2340,6 +2340,10 @@ class AIH_Ajax {
             wp_send_json_error(array('message' => 'Missing subscription data'));
         }
 
+        if (!AIH_Push::is_valid_push_endpoint($endpoint)) {
+            wp_send_json_error(array('message' => 'Invalid push endpoint'));
+        }
+
         $result = AIH_Push::save_subscription($bidder_id, $endpoint, $p256dh, $auth_key);
         if ($result) {
             wp_send_json_success();
