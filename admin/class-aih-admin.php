@@ -368,7 +368,6 @@ class AIH_Admin {
         ));
         
         // Pushpay settings - Production (in aih_integrations group)
-        register_setting('aih_integrations', 'aih_pushpay_base_url', array('sanitize_callback' => 'esc_url_raw'));
         register_setting('aih_integrations', 'aih_pushpay_merchant_key', array('sanitize_callback' => 'sanitize_text_field'));
         register_setting('aih_integrations', 'aih_pushpay_merchant_handle', array('sanitize_callback' => 'sanitize_text_field'));
         register_setting('aih_integrations', 'aih_pushpay_fund', array('sanitize_callback' => 'sanitize_text_field'));

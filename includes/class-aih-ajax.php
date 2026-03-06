@@ -1800,10 +1800,11 @@ class AIH_Ajax {
                 $truncate_result = $wpdb->query("TRUNCATE TABLE $table");
                 if ($truncate_result === false) {
                     error_log('[AIH] clear_tables error on ' . $key . ': ' . $wpdb->last_error);
-                    /* translators: %s: database table name */
+                    /* translators: %s: logical database table key (e.g. "art_pieces") */
                     $cleared[] = sprintf(__('%s (error)', 'art-in-heaven'), $key);
                 } else {
-                    $cleared[] = "$key ($count rows)";
+                    /* translators: 1: logical database table key (e.g. "art_pieces"), 2: number of rows deleted */
+                    $cleared[] = sprintf(_n('%1$s (%2$d row)', '%1$s (%2$d rows)', $count, 'art-in-heaven'), $key, $count);
                 }
             }
         }

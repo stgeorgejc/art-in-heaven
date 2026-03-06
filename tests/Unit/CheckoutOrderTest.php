@@ -347,7 +347,6 @@ class CheckoutOrderTest extends TestCase
                     'aih_tax_rate' => 0,
                     'aih_pushpay_merchant_handle' => 'test-merchant',
                     'aih_pushpay_merchant_key' => 'test-key',
-                    'aih_pushpay_base_url' => 'https://pushpay.com/pay/',
                     'aih_pushpay_fund' => 'art-in-heaven',
                 ];
                 return $options[$key] ?? $default;
