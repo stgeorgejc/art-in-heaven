@@ -60,7 +60,7 @@ $cart_count = count($checkout->get_won_items($bidder_id));
 ?>
 
 <div class="aih-page aih-mywins-page">
-<script>(function(){var p=document.currentScript.parentElement,t=localStorage.getItem('aih-theme');if(t==='dark')p.classList.add('dark-mode');else if(t==='light')p.classList.add('light-mode');})();</script>
+<script>(function(){var p=document.currentScript.parentElement,t=null;try{t=localStorage.getItem('aih-theme');}catch(e){}if(t==='dark')p.classList.add('dark-mode');else if(t==='light')p.classList.add('light-mode');else if(window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches)p.classList.add('dark-mode');})();</script>
     <?php $active_page = 'my-wins'; include AIH_PLUGIN_DIR . 'templates/partials/header.php'; ?>
 
     <main class="aih-main">
