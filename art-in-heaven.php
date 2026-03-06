@@ -279,7 +279,7 @@ class Art_In_Heaven {
                 }
             }
 
-            $headers['Content-Security-Policy'] = "script-src 'self' 'nonce-{$nonce}' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src {$connect_src};";
+            $headers['Content-Security-Policy'] = "script-src 'self' 'nonce-{$nonce}' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: https:; connect-src {$connect_src};";
         }
 
         return $headers;
@@ -852,7 +852,9 @@ class Art_In_Heaven {
         echo '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>' . "\n";
         // Load Google Fonts asynchronously to avoid render-blocking
         $fonts_url = 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap';
-        echo '<link rel="stylesheet" href="' . esc_url($fonts_url) . '" media="print" onload="this.media=\'all\'">' . "\n";
+        $nonce = AIH_Security::get_csp_nonce();
+        echo '<link id="aih-google-fonts" rel="stylesheet" href="' . esc_url($fonts_url) . '" media="print">' . "\n";
+        echo '<script nonce="' . esc_attr($nonce) . '">document.getElementById("aih-google-fonts").onload=function(){this.media="all"};</script>' . "\n";
         echo '<noscript><link rel="stylesheet" href="' . esc_url($fonts_url) . '"></noscript>' . "\n";
     }
 

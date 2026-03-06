@@ -135,39 +135,31 @@ class AIH_Assets {
             return $tag;
         }
 
-        // Swap media="all" to print with onload restore
-        $async_tag = str_replace(
-            "media='all'",
-            "media='print' onload=\"this.media='all'\"",
-            $tag
-        );
+        // Swap media="all" to print — the onload swap is handled by a nonced inline script
+        $async_tag = str_replace("media='all'", "media='print' id='aih-elegant-theme-css'", $tag);
 
         // WordPress may use double quotes instead
         if ($async_tag === $tag) {
-            $async_tag = str_replace(
-                'media="all"',
-                'media="print" onload="this.media=\'all\'"',
-                $tag
-            );
+            $async_tag = str_replace('media="all"', 'media="print" id="aih-elegant-theme-css"', $tag);
         }
 
         // If neither replacement matched, return original tag unchanged
-        // to avoid duplicating a render-blocking <link> inside <noscript>.
         if ($async_tag === $tag) {
             return $tag;
         }
 
+        // Nonced inline script to swap media on load (CSP-compliant)
+        $nonce = \AIH_Security::get_csp_nonce();
+        $onload_script = '<script nonce="' . esc_attr($nonce) . '">document.getElementById("aih-elegant-theme-css").onload=function(){this.media="all"};</script>';
+
         // noscript fallback for users without JS
         $noscript = str_replace(
-            array(
-                "media='print' onload=\"this.media='all'\"",
-                'media="print" onload="this.media=\'all\'"',
-            ),
+            array("media='print' id='aih-elegant-theme-css'", 'media="print" id="aih-elegant-theme-css"'),
             array("media='all'", 'media="all"'),
             $async_tag
         );
 
-        return $async_tag . '<noscript>' . $noscript . '</noscript>';
+        return $async_tag . $onload_script . '<noscript>' . $noscript . '</noscript>';
     }
 
     /**
