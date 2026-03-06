@@ -305,7 +305,7 @@ if (!defined('ABSPATH')) {
                 <input type="search" name="search" value="<?php echo esc_attr($search); ?>" placeholder="<?php esc_attr_e('Search by order #, email, or name...', 'art-in-heaven'); ?>">
                 <button type="submit" class="button"><?php _e('Search', 'art-in-heaven'); ?></button>
                 <?php if (!empty($search)): ?>
-                    <a href="<?php echo admin_url('admin.php?page=art-in-heaven-orders' . ($status_filter ? '&tab=' . urlencode($status_filter) : '')); ?>" class="button"><?php _e('Show All', 'art-in-heaven'); ?></a>
+                    <a href="<?php echo esc_url(admin_url('admin.php?page=art-in-heaven-orders' . ($status_filter ? '&tab=' . urlencode($status_filter) : ''))); ?>" class="button"><?php _e('Show All', 'art-in-heaven'); ?></a>
                 <?php endif; ?>
             </form>
             <span class="aih-filter-count">
