@@ -40,7 +40,7 @@ if (typeof aihAjax === 'undefined') {
 </script>
 
 <div class="aih-page">
-<script nonce="<?php echo esc_attr(AIH_Security::get_csp_nonce()); ?>">(function(){var t=localStorage.getItem('aih-theme');if(t==='dark'){document.currentScript.parentElement.classList.add('dark-mode');}})();</script>
+<script nonce="<?php echo esc_attr(AIH_Security::get_csp_nonce()); ?>">(function(){var p=document.currentScript.parentElement,t=null;try{t=localStorage.getItem('aih-theme');}catch(e){}if(t==='dark')p.classList.add('dark-mode');else if(t==='light')p.classList.add('light-mode');else if(window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches)p.classList.add('dark-mode');})();</script>
     <header class="aih-header">
         <div class="aih-header-inner">
             <a href="<?php echo esc_url($gallery_url); ?>" class="aih-logo">Art in Heaven</a>

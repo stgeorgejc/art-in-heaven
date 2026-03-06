@@ -630,9 +630,9 @@
 
         function setTheme(dark) {
             if (dark) {
-                $page.addClass('dark-mode');
+                $page.addClass('dark-mode').removeClass('light-mode');
             } else {
-                $page.removeClass('dark-mode');
+                $page.removeClass('dark-mode').addClass('light-mode');
             }
         }
 

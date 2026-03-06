@@ -33,7 +33,7 @@ $art_images = new AIH_Art_Images();
 ?>
 
 <div class="aih-page aih-winners-page">
-<script nonce="<?php echo esc_attr(AIH_Security::get_csp_nonce()); ?>">(function(){var t=localStorage.getItem('aih-theme');if(t==='dark'){document.currentScript.parentElement.classList.add('dark-mode');}})();</script>
+<script nonce="<?php echo esc_attr(AIH_Security::get_csp_nonce()); ?>">(function(){var p=document.currentScript.parentElement,t=null;try{t=localStorage.getItem('aih-theme');}catch(e){}if(t==='dark')p.classList.add('dark-mode');else if(t==='light')p.classList.add('light-mode');else if(window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches)p.classList.add('dark-mode');})();</script>
     <?php $active_page = 'winners'; $cart_count = 0; include AIH_PLUGIN_DIR . 'templates/partials/header.php'; ?>
 
     <main class="aih-main">

@@ -6378,6 +6378,32 @@ html.aih-lightbox-open body {
     }
 }
 
+/* Auto dark mode for users who haven't set an explicit preference */
+@media (prefers-color-scheme: dark) {
+    .aih-page:not(.light-mode) {
+        --color-bg: #121212;
+        --color-bg-alt: #1a1a1a;
+        --color-surface: #1e1e1e;
+        --color-primary: #e8e6e3;
+        --color-secondary: #b5b3b0;
+        --color-muted: #8a8a8a;
+        --color-border: #2a2a2a;
+        --color-accent: #d4a574;
+        --color-accent-dark: #b8956b;
+        --color-success: #5fa870;
+        --color-error: #d86c6f;
+        --color-winning: #4a9c60;
+        --shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
+        --shadow-md: 0 4px 20px rgba(0,0,0,0.5);
+        --shadow-lg: 0 10px 40px rgba(0,0,0,0.6);
+        --color-scrollbar-track: #2a2a2a;
+        --color-scrollbar-thumb: #555;
+        --color-scrollbar-hover: #777;
+        --color-success-bg: rgba(95, 168, 112, 0.15);
+        --color-error-bg: rgba(216, 108, 111, 0.15);
+    }
+}
+
 /* Respect users with motion sensitivity */
 @media (prefers-reduced-motion: reduce) {
     .aih-page *,
