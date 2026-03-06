@@ -43,10 +43,18 @@ class AIH_Template_Helper {
      * @return string The page URL or home_url() as fallback
      */
     public static function get_page_url($shortcode, $option_name = '') {
-        // Check cache first
+        // Check in-memory cache first (avoids repeated lookups within a request)
         $cache_key = $shortcode . '_' . $option_name;
         if (isset(self::$page_cache[$cache_key])) {
             return self::$page_cache[$cache_key];
+        }
+
+        // Check transient cache (avoids DB query across requests)
+        $transient_key = 'aih_page_' . md5($cache_key);
+        $cached_url = get_transient($transient_key);
+        if ($cached_url !== false) {
+            self::$page_cache[$cache_key] = $cached_url;
+            return $cached_url;
         }
 
         global $wpdb;
@@ -75,6 +83,7 @@ class AIH_Template_Helper {
         // Cache the result (get_permalink can return false)
         $url = $url ?: home_url();
         self::$page_cache[$cache_key] = $url;
+        set_transient($transient_key, $url, HOUR_IN_SECONDS);
 
         return $url;
     }
@@ -342,11 +351,29 @@ class AIH_Template_Helper {
     }
 
     /**
-     * Clear page URL cache
+     * Clear page URL caches (in-memory and transients)
+     *
+     * Hooked to save_post_page so transients are invalidated when pages are updated.
      *
      * @return void
      */
     public static function clear_cache() {
         self::$page_cache = array();
+
+        // Delete all page URL transients
+        global $wpdb;
+        if ($wpdb) {
+            $prefix = $wpdb->esc_like('_transient_aih_page_') . '%';
+            $timeout_prefix = $wpdb->esc_like('_transient_timeout_aih_page_') . '%';
+            $wpdb->query(
+                $wpdb->prepare(
+                    "DELETE FROM {$wpdb->options}
+                     WHERE option_name LIKE %s
+                     OR option_name LIKE %s",
+                    $prefix,
+                    $timeout_prefix
+                )
+            );
+        }
     }
 }
