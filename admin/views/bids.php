@@ -87,7 +87,10 @@ $unique_bidders = $wpdb->get_var("SELECT COUNT(DISTINCT bidder_id) FROM {$bids_t
 $total_bid_value = $wpdb->get_var("SELECT SUM(bid_amount) FROM {$bids_table}");
 ?>
 <div class="wrap aih-admin-wrap">
-    <h1><?php _e('Bids Management', 'art-in-heaven'); ?></h1>
+    <h1>
+        <?php _e('Bids Management', 'art-in-heaven'); ?>
+        <a href="<?php echo esc_url(admin_url('admin.php?page=art-in-heaven-analytics&tab=overview')); ?>" class="page-title-action"><?php _e('View Analytics', 'art-in-heaven'); ?></a>
+    </h1>
     
     <?php if (isset($_GET['debug']) && current_user_can('manage_options')): ?>
     <div class="notice notice-info">

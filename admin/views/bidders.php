@@ -72,7 +72,10 @@ if ($current_tab === 'not_logged_in') {
 }
 ?>
 <div class="wrap aih-admin-wrap">
-    <h1><?php _e('Registrants', 'art-in-heaven'); ?></h1>
+    <h1>
+        <?php _e('Registrants', 'art-in-heaven'); ?>
+        <a href="<?php echo esc_url(admin_url('admin.php?page=art-in-heaven-analytics&tab=bidders')); ?>" class="page-title-action"><?php _e('View Analytics', 'art-in-heaven'); ?></a>
+    </h1>
 
     <!-- Sync Status & Actions -->
     <div class="aih-bidders-toolbar">
