@@ -845,7 +845,7 @@ class AIH_Pushpay_API {
     public function get_payment_url($order) {
         $settings = $this->get_settings();
 
-        if (empty($settings['merchant_handle'])) {
+        if (empty($settings['merchant_handle']) || empty($settings['merchant_key'])) {
             return '';
         }
 

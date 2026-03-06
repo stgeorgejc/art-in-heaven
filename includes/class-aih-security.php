@@ -28,7 +28,30 @@ class AIH_Security {
      * Default rate limit (requests per minute)
      */
     const DEFAULT_RATE_LIMIT = 60;
-    
+
+    /** @var string|null Per-request CSP nonce (base64, 128-bit) */
+    private static $csp_nonce = null;
+
+    /**
+     * Get or generate the per-request CSP nonce.
+     *
+     * The same nonce is reused for every inline <script> on the page
+     * and referenced in the Content-Security-Policy header.
+     *
+     * @return string Base64-encoded nonce value
+     */
+    public static function get_csp_nonce() {
+        if (self::$csp_nonce === null) {
+            try {
+                self::$csp_nonce = base64_encode(random_bytes(16));
+            } catch (\Exception $e) {
+                // Fallback if random_bytes() fails (e.g. insufficient entropy)
+                self::$csp_nonce = base64_encode(wp_generate_password(16, false));
+            }
+        }
+        return self::$csp_nonce;
+    }
+
     /**
      * Sanitize and validate input based on type
      * 

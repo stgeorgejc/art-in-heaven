@@ -221,6 +221,12 @@ class Art_In_Heaven {
 
         // Adaptive HTTP security headers (priority 99 — run late so other plugins set theirs first)
         add_filter('wp_headers', array($this, 'add_security_headers'), 99);
+
+        // Add CSP nonce to enqueued script tags
+        add_filter('script_loader_tag', array($this, 'add_csp_nonce_to_script'), 10, 2);
+
+        // Add CSP nonce to WP-generated inline scripts (e.g. wp_localize_script output)
+        add_filter('wp_inline_script_attributes', array($this, 'add_csp_nonce_to_inline_script'), 10, 1);
     }
     
     /**
@@ -253,8 +259,69 @@ class Art_In_Heaven {
         if (!isset($headers['Permissions-Policy'])) {
             $headers['Permissions-Policy'] = 'camera=(), microphone=(), geolocation=()';
         }
+        if (!isset($headers['Content-Security-Policy'])) {
+            $nonce = AIH_Security::get_csp_nonce();
+            $connect_src = "'self' https://sandbox.pushpay.io https://pushpay.com";
+
+            // Append Mercure hub origin to connect-src if configured
+            if (class_exists('AIH_Mercure') && AIH_Mercure::is_enabled()) {
+                $mercure_url = AIH_Mercure::get_public_hub_url();
+                $parsed      = wp_parse_url($mercure_url);
+                if (!empty($parsed['scheme']) && !empty($parsed['host'])) {
+                    $mercure_origin = $parsed['scheme'] . '://' . $parsed['host'];
+                    if (!empty($parsed['port'])) {
+                        $mercure_origin .= ':' . $parsed['port'];
+                    }
+                    $connect_src .= ' ' . $mercure_origin;
+                }
+            }
+
+            $headers['Content-Security-Policy'] = "script-src 'self' 'nonce-{$nonce}' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src {$connect_src};";
+        }
 
         return $headers;
+    }
+
+    /**
+     * Add CSP nonce attribute to enqueued script tags.
+     *
+     * @param string $tag    The <script> tag HTML.
+     * @param string $handle The script handle.
+     * @return string Modified tag with nonce attribute.
+     */
+    public function add_csp_nonce_to_script($tag, $handle) {
+        if (is_admin()) {
+            return $tag;
+        }
+
+        $nonce = AIH_Security::get_csp_nonce();
+        // Avoid double-adding if nonce already present
+        if (strpos($tag, 'nonce=') !== false) {
+            return $tag;
+        }
+
+        return str_replace('<script ', '<script nonce="' . esc_attr($nonce) . '" ', $tag);
+    }
+
+    /**
+     * Add CSP nonce attribute to WP-generated inline scripts.
+     *
+     * Covers inline <script> tags produced by wp_localize_script(),
+     * wp_add_inline_script(), etc. that are not handled by script_loader_tag.
+     *
+     * @param array<string, string> $attributes Existing script attributes.
+     * @return array<string, string> Attributes with nonce added.
+     */
+    public function add_csp_nonce_to_inline_script($attributes) {
+        if (is_admin()) {
+            return $attributes;
+        }
+
+        if (!isset($attributes['nonce'])) {
+            $attributes['nonce'] = AIH_Security::get_csp_nonce();
+        }
+
+        return $attributes;
     }
 
     /**
