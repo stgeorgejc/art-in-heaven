@@ -678,7 +678,8 @@ class Art_In_Heaven {
 
         // Append viewport-fit=cover to the existing viewport meta for notched devices.
         // Preserves any existing directives; creates the tag if none exists.
-        echo "<script>(function(){var m=document.querySelector('meta[name=viewport]');if(m){var c=m.getAttribute('content')||'';if(c.indexOf('viewport-fit')===-1){m.setAttribute('content',c+',viewport-fit=cover');}}else{m=document.createElement('meta');m.name='viewport';m.content='width=device-width,initial-scale=1,viewport-fit=cover';document.head.appendChild(m);}})();</script>\n";
+        $nonce = AIH_Security::get_csp_nonce();
+        echo '<script nonce="' . esc_attr($nonce) . '">' . "(function(){var m=document.querySelector('meta[name=viewport]');if(m){var c=m.getAttribute('content')||'';if(c.indexOf('viewport-fit')===-1){m.setAttribute('content',c+',viewport-fit=cover');}}else{m=document.createElement('meta');m.name='viewport';m.content='width=device-width,initial-scale=1,viewport-fit=cover';document.head.appendChild(m);}})();</script>\n";
         echo '<link rel="manifest" href="' . $manifest . '">' . "\n";
         echo '<meta name="mobile-web-app-capable" content="yes">' . "\n";
         echo '<meta name="apple-mobile-web-app-capable" content="yes">' . "\n";
