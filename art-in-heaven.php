@@ -87,6 +87,38 @@ class Art_In_Heaven {
         );
         echo '<div class="notice notice-error"><p>' . esc_html($message) . '</p></div>';
     }
+
+    /**
+     * Show admin notice when DISABLE_WP_CRON is not set.
+     *
+     * Pushpay sync uses sleep() to throttle API requests, which blocks a
+     * PHP-FPM worker for the duration. Without DISABLE_WP_CRON, WordPress
+     * runs cron on page loads, meaning a visitor request can trigger sync
+     * and block a worker for 20+ seconds under high load.
+     *
+     * @return void
+     */
+    public function wp_cron_notice() {
+        if (defined('DISABLE_WP_CRON') && DISABLE_WP_CRON) {
+            return;
+        }
+        if (!get_option('aih_pushpay_auto_sync_enabled', 0)) {
+            return;
+        }
+        if (!current_user_can('manage_options')) {
+            return;
+        }
+
+        echo '<div class="notice notice-warning is-dismissible"><p>';
+        echo '<strong>' . esc_html__('Art in Heaven:', 'art-in-heaven') . '</strong> ';
+        /* translators: 1: Example wp-config.php constant definition for DISABLE_WP_CRON. */
+        $message = sprintf(
+            esc_html__('Pushpay auto-sync is enabled but DISABLE_WP_CRON is not set. WordPress cron tasks run on page loads, which can block visitor requests during sync. Add %1$s to wp-config.php and configure a system cron job instead.', 'art-in-heaven'),
+            '<code>define(\'DISABLE_WP_CRON\', true);</code>'
+        );
+        echo wp_kses_post($message);
+        echo '</p></div>';
+    }
     
     /**
      * Load dependencies
@@ -154,6 +186,9 @@ class Art_In_Heaven {
         add_action('wp_ajax_nopriv_aih_mercure_cookie', array($this, 'ajax_mercure_cookie'));
         add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_assets'));
         
+        // Admin notices
+        add_action('admin_notices', array($this, 'wp_cron_notice'));
+
         // Privacy/GDPR
         add_action('admin_init', array($this, 'add_privacy_policy_content'));
         add_filter('wp_privacy_personal_data_exporters', array($this, 'register_data_exporter'));

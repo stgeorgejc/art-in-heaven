@@ -275,7 +275,8 @@ $matchable_orders = $wpdb->get_results(
                         <a href="<?php echo admin_url('admin.php?page=art-in-heaven-orders&search=' . urlencode($txn->order_number)); ?>" class="aih-order-link">
                             <?php echo esc_html($txn->order_number); ?>
                         </a>
-                        <span class="aih-matched-badge">✓</span>
+                        <span class="aih-matched-badge" aria-hidden="true">✓</span>
+                        <span class="screen-reader-text"><?php esc_html_e('Matched', 'art-in-heaven'); ?></span>
                         <?php else: ?>
                         <span class="aih-unmatched">—</span>
                         <?php endif; ?>
@@ -438,7 +439,7 @@ jQuery(document).ready(function($) {
             }
         }).fail(function() {
             $btn.prop('disabled', false).html(originalHtml);
-            alert('Request failed');
+            alert('<?php echo esc_js(__('Sync request failed. Check your network connection and PushPay API settings.', 'art-in-heaven')); ?>');
         });
     });
 
@@ -459,7 +460,7 @@ jQuery(document).ready(function($) {
             }
         }).fail(function() {
             $btn.prop('disabled', false);
-            alert('Request failed');
+            alert('<?php echo esc_js(__('Connection test failed. Check your network connection and API credentials.', 'art-in-heaven')); ?>');
         });
     });
 
