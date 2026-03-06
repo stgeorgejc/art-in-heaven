@@ -1123,6 +1123,8 @@ class Art_In_Heaven {
                 'cancel'  => __('Cancel', 'art-in-heaven'),
                 'confirm' => __('Confirm', 'art-in-heaven'),
                 'delete'  => __('Delete', 'art-in-heaven'),
+                'close'   => __('Close', 'art-in-heaven'),
+                'alert'   => __('Alert', 'art-in-heaven'),
             )
         ));
         wp_enqueue_script('aih-admin', $this->get_asset_url('assets/js/aih-admin.js'), array('jquery', 'jquery-ui-datepicker', 'jquery-ui-sortable', 'aih-admin-modal'), AIH_VERSION, true);

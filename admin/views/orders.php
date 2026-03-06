@@ -667,8 +667,9 @@ jQuery(document).ready(function($) {
         var pickupNotes = $('#pickup-notes').val().trim();
 
         if (!pickupBy) {
-            aihModal.alert('<?php echo esc_js(__("Please enter your name", "art-in-heaven")); ?>');
-            $('#pickup-by').focus();
+            aihModal.alert('<?php echo esc_js(__("Please enter your name", "art-in-heaven")); ?>').then(function() {
+                $('#pickup-by').focus();
+            });
             return;
         }
 

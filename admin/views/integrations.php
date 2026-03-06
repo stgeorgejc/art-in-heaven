@@ -791,8 +791,9 @@ jQuery(document).ready(function($) {
 
         if (hasCredentials && $('#aih_pushpay_fund').val().trim() === '') {
             e.preventDefault();
-            aihModal.alert('<?php echo esc_js(__('Fund/Category is required when Pushpay payment processing is configured.', 'art-in-heaven')); ?>');
-            $('#aih_pushpay_fund').focus();
+            aihModal.alert('<?php echo esc_js(__('Fund/Category is required when Pushpay payment processing is configured.', 'art-in-heaven')); ?>').then(function() {
+                $('#aih_pushpay_fund').focus();
+            });
             return false;
         }
     });
