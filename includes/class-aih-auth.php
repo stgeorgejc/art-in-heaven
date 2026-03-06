@@ -414,7 +414,8 @@ class AIH_Auth {
         if ($row && !empty($row->api_data)) {
             $decrypted = AIH_Security::decrypt($row->api_data);
             if ($decrypted === '') {
-                error_log(sprintf('[AIH] Decryption failed for registrant api_data (id: %d)', $row->id));
+                $code_hash = hash('sha256', (string) $row->confirmation_code);
+                error_log(sprintf('[AIH] Decryption failed for registrant api_data (code_hash: %s)', $code_hash));
             }
             $row->api_data = $decrypted;
         }
@@ -572,7 +573,8 @@ class AIH_Auth {
             if (!empty($bidder->api_data)) {
                 $decrypted = AIH_Security::decrypt($bidder->api_data);
                 if ($decrypted === '') {
-                    error_log(sprintf('[AIH] Decryption failed for bidder api_data (id: %d)', $bidder->id));
+                    $code_hash = hash('sha256', (string) $bidder->confirmation_code);
+                    error_log(sprintf('[AIH] Decryption failed for bidder api_data (confirmation_code_hash: %s)', $code_hash));
                 }
                 $bidder->api_data = $decrypted;
             }
