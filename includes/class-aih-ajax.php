@@ -17,8 +17,10 @@ if (!defined('ABSPATH')) {
 
 class AIH_Ajax {
     
+    /** @var self|null */
     private static $instance = null;
-    
+
+    /** @return self */
     public static function get_instance() {
         if (null === self::$instance) {
             self::$instance = new self();
@@ -120,13 +122,20 @@ class AIH_Ajax {
         add_action('wp_ajax_aih_check_outbid', array($this, 'check_outbid'));
         add_action('wp_ajax_nopriv_aih_check_outbid', array($this, 'check_outbid'));
 
+        // Push notification metrics
+        add_action('wp_ajax_aih_push_permission', array($this, 'push_permission'));
+        add_action('wp_ajax_nopriv_aih_push_permission', array($this, 'push_permission'));
+        add_action('wp_ajax_aih_push_clicked', array($this, 'push_clicked'));
+        add_action('wp_ajax_nopriv_aih_push_clicked', array($this, 'push_clicked'));
+
         // Status polling
         add_action('wp_ajax_aih_poll_status', array($this, 'poll_status'));
         add_action('wp_ajax_nopriv_aih_poll_status', array($this, 'poll_status'));
     }
     
     // ========== AUTH ==========
-    
+
+    /** @return void */
     public function verify_confirmation_code() {
         check_ajax_referer('aih_public_nonce', 'nonce');
 
@@ -179,6 +188,7 @@ class AIH_Ajax {
         $bidder = $auth->get_current_bidder();
         $safe_bidder = null;
         if ($bidder) {
+            /** @var stdClass $bidder */
             $safe_bidder = array(
                 'confirmation_code' => $bidder->confirmation_code,
                 'name_first'        => $bidder->name_first ?? '',
@@ -189,7 +199,8 @@ class AIH_Ajax {
     }
     
     // ========== BIDDING ==========
-    
+
+    /** @return void */
     public function place_bid() {
         check_ajax_referer('aih_frontend_nonce', 'nonce');
         $auth = AIH_Auth::get_instance();
@@ -208,20 +219,25 @@ class AIH_Ajax {
         $bid_amount = floor($bid_amount);
         if ($bid_amount < 1) wp_send_json_error(array('message' => __('Bid must be at least $1.', 'art-in-heaven')));
         
-        $result = (new AIH_Bid())->place_bid($art_piece_id, $auth->get_current_bidder_id(), $bid_amount);
+        $result = (new AIH_Bid())->place_bid($art_piece_id, $auth->get_current_bidder_id() ?? '', $bid_amount);
         if ($result['success']) {
-            $auth->mark_registrant_has_bid($auth->get_current_bidder_id());
+            $auth->mark_registrant_has_bid($auth->get_current_bidder_id() ?? '');
+            $bid_source = isset($_POST['bid_source']) ? sanitize_text_field($_POST['bid_source']) : 'organic';
+            if (!in_array($bid_source, array('organic', 'push'), true)) {
+                $bid_source = 'organic';
+            }
             AIH_Database::log_audit('bid_placed', array(
                 'object_type' => 'bid',
                 'object_id'   => $result['bid_id'] ?? 0,
                 'bidder_id'   => $auth->get_current_bidder_id(),
-                'details'     => array('art_piece_id' => $art_piece_id, 'amount' => $bid_amount),
+                'details'     => array('art_piece_id' => $art_piece_id, 'amount' => $bid_amount, 'bid_source' => $bid_source),
             ));
             wp_send_json_success($result);
         }
         wp_send_json_error($result);
     }
     
+    /** @return void */
     public function toggle_favorite() {
         check_ajax_referer('aih_frontend_nonce', 'nonce');
         $auth = AIH_Auth::get_instance();
@@ -230,7 +246,7 @@ class AIH_Ajax {
         $art_piece_id = intval($_POST['art_piece_id'] ?? 0);
         if (!$art_piece_id) wp_send_json_error(array('message' => __('Invalid.', 'art-in-heaven')));
         
-        wp_send_json_success((new AIH_Favorites())->toggle($auth->get_current_bidder_id(), $art_piece_id));
+        wp_send_json_success((new AIH_Favorites())->toggle($auth->get_current_bidder_id() ?? '', $art_piece_id));
     }
     
     // ========== GALLERY ==========
@@ -249,6 +265,7 @@ class AIH_Ajax {
         // Batch-fetch winning IDs to avoid N+1 queries
         $batch_data = null;
         if ($bidder_id && !empty($pieces)) {
+            /** @var stdClass[] $pieces */
             $piece_ids = array_map(function($p) { return intval($p->id); }, $pieces);
             $bid_model = new AIH_Bid();
             $batch_data = array('winning_ids' => $bid_model->get_winning_ids_batch($piece_ids, $bidder_id));
@@ -279,8 +296,9 @@ class AIH_Ajax {
         if ($bidder_id) {
             $bids = (new AIH_Bid())->get_bidder_bids_for_art_piece($art_id, $bidder_id);
             $data['user_bids'] = array();
+            /** @var stdClass $b */
             foreach ($bids as $b) {
-                $data['user_bids'][] = array('amount' => number_format($b->bid_amount, 2), 'time' => date_i18n('M j, g:i a', strtotime($b->bid_time)), 'is_winning' => (bool)$b->is_winning);
+                $data['user_bids'][] = array('amount' => number_format($b->bid_amount, 2), 'time' => AIH_Status::format_db_date($b->bid_time, 'M j, g:i a'), 'is_winning' => (bool)$b->is_winning);
             }
             $data['is_favorite'] = (new AIH_Favorites())->is_favorite($bidder_id, $art_id);
         }
@@ -304,6 +322,7 @@ class AIH_Ajax {
         // Batch-fetch winning IDs to avoid N+1 queries
         $batch_data = null;
         if ($bidder_id && !empty($results)) {
+            /** @var stdClass[] $results */
             $piece_ids = array_map(function($p) { return intval($p->id); }, $results);
             $bid_model = new AIH_Bid();
             $batch_data = array('winning_ids' => $bid_model->get_winning_ids_batch($piece_ids, $bidder_id));
@@ -327,14 +346,16 @@ class AIH_Ajax {
         if (!$auth->is_logged_in()) wp_send_json_error(array('login_required' => true));
         
         $checkout = AIH_Checkout::get_instance();
-        $items = $checkout->get_won_items($auth->get_current_bidder_id());
+        $items = $checkout->get_won_items($auth->get_current_bidder_id() ?? '');
         $data = array();
+        /** @var stdClass $item */
         foreach ($items as $item) {
             $data[] = array('id' => $item->id, 'art_id' => $item->art_id, 'title' => $item->title, 'artist' => $item->artist, 'image_url' => $item->watermarked_url ?: $item->image_url, 'winning_amount' => number_format($item->winning_amount, 2));
         }
         wp_send_json_success(array('items' => $data, 'totals' => $checkout->calculate_totals($items)));
     }
     
+    /** @return void */
     public function create_order() {
         check_ajax_referer('aih_frontend_nonce', 'nonce');
         $auth = AIH_Auth::get_instance();
@@ -349,7 +370,7 @@ class AIH_Ajax {
         if (empty($art_piece_ids)) {
             wp_send_json_error(array('message' => __('Please select at least one item to pay for.', 'art-in-heaven')));
         }
-        $result = AIH_Checkout::get_instance()->create_order($auth->get_current_bidder_id(), $art_piece_ids);
+        $result = AIH_Checkout::get_instance()->create_order($auth->get_current_bidder_id() ?? '', $art_piece_ids);
         if ($result['success']) {
             AIH_Database::log_audit('order_created', array(
                 'object_type' => 'order',
@@ -362,6 +383,7 @@ class AIH_Ajax {
         wp_send_json_error($result);
     }
     
+    /** @return void */
     public function get_pushpay_link() {
         check_ajax_referer('aih_frontend_nonce', 'nonce');
         $auth = AIH_Auth::get_instance();
@@ -373,6 +395,7 @@ class AIH_Ajax {
 
         // Verify this order belongs to the current bidder
         $current_bidder = $auth->get_current_bidder_id();
+        /** @var stdClass $order */
         if ($order->bidder_id != $current_bidder) {
             wp_send_json_error(array('message' => __('Order does not belong to this account.', 'art-in-heaven')));
         }
@@ -382,6 +405,8 @@ class AIH_Ajax {
 
     /**
      * Get order details for frontend display
+     *
+     * @return void
      */
     public function get_order_details() {
         check_ajax_referer('aih_frontend_nonce', 'nonce');
@@ -398,6 +423,7 @@ class AIH_Ajax {
 
         // Verify this order belongs to the current bidder
         $current_bidder = $auth->get_current_bidder_id();
+        /** @var stdClass $order */
         if ($order->bidder_id != $current_bidder) {
             wp_send_json_error(array('message' => __('Order does not belong to this account.', 'art-in-heaven')));
         }
@@ -418,7 +444,7 @@ class AIH_Ajax {
 
         wp_send_json_success(array(
             'order_number' => $order->order_number,
-            'created_at' => date_i18n('M j, Y g:i a', strtotime($order->created_at)),
+            'created_at' => AIH_Status::format_db_date($order->created_at, 'M j, Y g:i a'),
             'payment_status' => $order->payment_status,
             'payment_method' => $order->payment_method ?? '',
             'payment_reference' => $order->payment_reference ?? '',
@@ -432,6 +458,8 @@ class AIH_Ajax {
 
     /**
      * Get all purchased items for My Wins page
+     *
+     * @return void
      */
     public function get_my_purchases() {
         check_ajax_referer('aih_frontend_nonce', 'nonce');
@@ -488,7 +516,7 @@ class AIH_Ajax {
                 'image_url' => $p->image_url,
                 'winning_bid' => floatval($p->winning_bid),
                 'order_number' => $p->order_number,
-                'order_date' => date_i18n('M j, Y', strtotime($p->order_date)),
+                'order_date' => AIH_Status::format_db_date($p->order_date, 'M j, Y'),
                 'pickup_status' => $p->pickup_status
             );
         }
@@ -497,7 +525,8 @@ class AIH_Ajax {
     }
 
     // ========== ADMIN ==========
-    
+
+    /** @return void */
     public function admin_save_art() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
         if (!AIH_Roles::can_manage_art()) wp_send_json_error(array('message' => __('Permission denied.', 'art-in-heaven')));
@@ -508,8 +537,8 @@ class AIH_Ajax {
         // Get default times from settings
         $event_date = get_option('aih_event_date', '');
         $event_end_date = get_option('aih_event_end_date', '');
-        $default_start = $event_date ? wp_date('Y-m-d H:i:s', strtotime($event_date)) : current_time('mysql');
-        $default_end = $event_end_date ? wp_date('Y-m-d H:i:s', strtotime($event_end_date)) : '';
+        $default_start = $event_date ?: current_time('mysql');
+        $default_end = $event_end_date ?: '';
         
         // Art ID is required for new pieces
         $record_id = intval($_POST['id'] ?? 0);
@@ -563,7 +592,7 @@ class AIH_Ajax {
         $sanitize_with_quotes = function($str) {
             $str = stripslashes($str); // Remove WordPress magic quotes
             $str = wp_strip_all_tags($str); // Remove HTML tags
-            $str = preg_replace('/[\r\n\t]+/', ' ', $str); // Replace newlines/tabs with space
+            $str = preg_replace('/[\r\n\t]+/', ' ', $str) ?? $str; // Replace newlines/tabs with space
             $str = trim($str);
             return $str;
         };
@@ -624,6 +653,7 @@ class AIH_Ajax {
             // Check if changing art_id to one that already exists (excluding this record)
             if (!empty($custom_art_id)) {
                 $existing = $art_model->get_by_art_id($custom_art_id);
+                /** @var stdClass|null $existing */
                 if ($existing && (int)$existing->id !== $record_id) {
                     wp_send_json_error(array('message' => sprintf(__('Art ID "%s" is already in use by another piece.', 'art-in-heaven'), $custom_art_id)));
                 }
@@ -641,6 +671,7 @@ class AIH_Ajax {
             }
 
             $piece = $art_model->get($record_id);
+            /** @var stdClass $piece */
             AIH_Database::log_audit('art_updated', array(
                 'object_type' => 'art_piece',
                 'object_id'   => $record_id,
@@ -672,13 +703,14 @@ class AIH_Ajax {
                 $images_handler->add_image(
                     $new_id,
                     $image_id,
-                    wp_get_attachment_url($image_id),
-                    $data['watermarked_url'] ?? wp_get_attachment_url($image_id),
+                    wp_get_attachment_url($image_id) ?: '',
+                    (string) ($data['watermarked_url'] ?? (wp_get_attachment_url($image_id) ?: '')),
                     true // is_primary
                 );
             }
             
             $piece = $art_model->get($new_id);
+            /** @var stdClass $piece */
             AIH_Database::log_audit('art_created', array(
                 'object_type' => 'art_piece',
                 'object_id'   => $new_id,
@@ -688,6 +720,7 @@ class AIH_Ajax {
         }
     }
     
+    /** @return void */
     public function admin_delete_art() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
         if (!AIH_Roles::can_manage_art()) wp_send_json_error(array('message' => __('Permission denied.', 'art-in-heaven')));
@@ -701,6 +734,7 @@ class AIH_Ajax {
         wp_send_json_success(array('message' => __('Deleted.', 'art-in-heaven')));
     }
     
+    /** @return void */
     public function admin_bulk_update_times() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
         if (!AIH_Roles::can_manage_art()) wp_send_json_error(array('message' => __('Permission denied.', 'art-in-heaven')));
@@ -711,6 +745,7 @@ class AIH_Ajax {
         wp_send_json_success(array('message' => count($ids) . ' items updated.'));
     }
     
+    /** @return void */
     public function admin_bulk_update_start_times() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
         if (!AIH_Roles::can_manage_art()) wp_send_json_error(array('message' => __('Permission denied.', 'art-in-heaven')));
@@ -721,6 +756,7 @@ class AIH_Ajax {
         wp_send_json_success(array('message' => count($ids) . ' items updated.'));
     }
     
+    /** @return void */
     public function admin_bulk_show_end_time() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
         if (!AIH_Roles::can_manage_art()) wp_send_json_error(array('message' => __('Permission denied.', 'art-in-heaven')));
@@ -745,6 +781,7 @@ class AIH_Ajax {
         wp_send_json_success(array('message' => sprintf(__('End times %s for %d items.', 'art-in-heaven'), $action, count($ids))));
     }
     
+    /** @return void */
     public function admin_toggle_end_time() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
         if (!AIH_Roles::can_manage_art()) wp_send_json_error(array('message' => __('Permission denied.', 'art-in-heaven')));
@@ -772,6 +809,8 @@ class AIH_Ajax {
     
     /**
      * Inline edit a single field for an art piece
+     *
+     * @return void
      */
     public function admin_inline_edit() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
@@ -851,11 +890,11 @@ class AIH_Ajax {
         $display_value = $value;
         switch ($field) {
             case 'starting_bid':
-                $display_value = '$' . number_format($value, 2);
+                $display_value = '$' . number_format((float) $value, 2);
                 break;
             case 'auction_start':
             case 'auction_end':
-                $display_value = date_i18n(get_option('date_format') . ' ' . get_option('time_format'), strtotime($value));
+                $display_value = AIH_Status::format_db_date($value, 'M j, g:ia');
                 break;
         }
 
@@ -867,6 +906,7 @@ class AIH_Ajax {
             $order_items_table = AIH_Database::get_table('order_items');
             $now = current_time('mysql');
 
+            /** @var object{status: string, auction_start: string|null, auction_end: string|null, total_bids: string, payment_status: string|null, pickup_status: string|null, computed_status: string}|null $piece */
             $piece = $wpdb->get_row($wpdb->prepare(
                 "SELECT a.status, a.auction_start, a.auction_end,
                         COUNT(DISTINCT b.id) as total_bids,
@@ -919,6 +959,7 @@ class AIH_Ajax {
         ));
     }
     
+    /** @return void */
     public function admin_apply_event_date() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
         if (!AIH_Roles::can_manage_art()) wp_send_json_error(array('message' => __('Permission denied.', 'art-in-heaven')));
@@ -927,13 +968,14 @@ class AIH_Ajax {
         
         global $wpdb;
         $table = AIH_Database::get_table('art_pieces');
-        $updated = $wpdb->query($wpdb->prepare("UPDATE $table SET auction_start = %s WHERE status = 'active'", wp_date('Y-m-d H:i:s', strtotime($event_date))));
+        $updated = $wpdb->query($wpdb->prepare("UPDATE $table SET auction_start = %s WHERE status = 'active'", $event_date));
         if ($updated === false) {
             wp_send_json_error(array('message' => __('Database error applying event date.', 'art-in-heaven')));
         }
         wp_send_json_success(array('message' => sprintf('%d art pieces updated.', $updated)));
     }
     
+    /** @return void */
     public function admin_process_watermark() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
         if (!AIH_Roles::can_manage_art()) wp_send_json_error(array('message' => __('Permission denied.', 'art-in-heaven')));
@@ -944,12 +986,14 @@ class AIH_Ajax {
         wp_send_json_error(array('message' => __('Failed.', 'art-in-heaven')));
     }
     
+    /** @return void */
     public function admin_get_stats() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
         if (!AIH_Roles::can_manage_art()) wp_send_json_error(array('message' => __('Permission denied.', 'art-in-heaven')));
         wp_send_json_success((new AIH_Art_Piece())->get_all_with_stats());
     }
-    
+
+    /** @return void */
     public function admin_update_payment() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
         if (!AIH_Roles::can_view_financial()) wp_send_json_error(array('message' => __('Permission denied.', 'art-in-heaven')));
@@ -971,6 +1015,7 @@ class AIH_Ajax {
         wp_send_json_success(array('message' => 'Updated.'));
     }
     
+    /** @return void */
     public function admin_delete_order() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
         if (!AIH_Roles::can_view_financial()) wp_send_json_error(array('message' => __('Permission denied.', 'art-in-heaven')));
@@ -986,6 +1031,8 @@ class AIH_Ajax {
     
     /**
      * Delete a bid (admin only)
+     *
+     * @return void
      */
     public function admin_delete_bid() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
@@ -1004,6 +1051,7 @@ class AIH_Ajax {
         $registrants_table = AIH_Database::get_table('registrants');
         
         // Get the bid first to check if it's a winning bid
+        /** @var object{id: int, bidder_id: int, art_piece_id: int, bid_amount: string, is_winning: int, bid_status: string}|null $bid */
         $bid = $wpdb->get_row($wpdb->prepare(
             "SELECT * FROM {$bids_table} WHERE id = %d",
             $bid_id
@@ -1029,6 +1077,7 @@ class AIH_Ajax {
         
         // If this was the winning bid, set the next highest bid as winning
         if ($was_winning) {
+            /** @var object{id: int, bidder_id: int, art_piece_id: int, bid_amount: string, is_winning: int, bid_status: string}|null $next_highest */
             $next_highest = $wpdb->get_row($wpdb->prepare(
                 "SELECT * FROM {$bids_table} WHERE art_piece_id = %d AND bid_status = 'valid' ORDER BY bid_amount DESC LIMIT 1",
                 $art_piece_id
@@ -1087,6 +1136,8 @@ class AIH_Ajax {
     
     /**
      * Update pickup status for an order
+     *
+     * @return void
      */
     public function admin_update_pickup_status() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
@@ -1117,6 +1168,7 @@ class AIH_Ajax {
         $orders_table = AIH_Database::get_table('orders');
         
         // Check order exists and is paid
+        /** @var object{id: int, payment_status: string, pickup_status: string}|null $order */
         $order = $wpdb->get_row($wpdb->prepare(
             "SELECT * FROM {$orders_table} WHERE id = %d",
             $order_id
@@ -1172,6 +1224,7 @@ class AIH_Ajax {
         ));
     }
     
+    /** @return void */
     public function admin_test_api() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
         if (!AIH_Roles::can_manage_settings()) wp_send_json_error(array('message' => __('Permission denied.', 'art-in-heaven')));
@@ -1180,6 +1233,7 @@ class AIH_Ajax {
         wp_send_json_error($result);
     }
     
+    /** @return void */
     public function admin_create_tables() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
         if (!AIH_Roles::can_manage_auction()) wp_send_json_error(array('message' => __('Permission denied.', 'art-in-heaven')));
@@ -1188,6 +1242,7 @@ class AIH_Ajax {
         wp_send_json_success(array('message' => sprintf('Tables created for %d.', $year)));
     }
     
+    /** @return void */
     public function admin_export_data() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
         if (!AIH_Roles::can_view_reports()) wp_send_json_error(array('message' => __('Permission denied.', 'art-in-heaven')));
@@ -1213,6 +1268,7 @@ class AIH_Ajax {
         wp_send_json_success(array('data' => $data));
     }
 
+    /** @return void */
     public function admin_import_csv() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
         if (!AIH_Roles::can_manage_art()) {
@@ -1244,9 +1300,15 @@ class AIH_Ajax {
         // Read file contents, strip BOM, then delete temp file
         $contents = file_get_contents($file['tmp_name']);
         @unlink($file['tmp_name']);
-        $contents = preg_replace('/^\xEF\xBB\xBF/', '', $contents);
+        if ($contents === false) {
+            wp_send_json_error(array('message' => __('Failed to read CSV file.', 'art-in-heaven')));
+        }
+        $contents = preg_replace('/^\xEF\xBB\xBF/', '', $contents) ?: $contents;
 
         $lines = preg_split('/\r\n|\r|\n/', $contents);
+        if ($lines === false) {
+            wp_send_json_error(array('message' => __('Failed to parse CSV file.', 'art-in-heaven')));
+        }
         $lines = array_filter($lines, function($line) { return trim($line) !== ''; });
         $lines = array_values($lines);
 
@@ -1256,7 +1318,7 @@ class AIH_Ajax {
 
         // Parse header row
         $headers = str_getcsv($lines[0], ',', '"', '');
-        $headers = array_map(function($h) { return strtolower(trim($h)); }, $headers);
+        $headers = array_map(function($h) { return strtolower(trim($h ?? '')); }, $headers);
         $col_map = array_flip($headers);
 
         // Validate required headers
@@ -1352,6 +1414,7 @@ class AIH_Ajax {
             $is_new = false;
 
             if ($existing) {
+                /** @var stdClass $existing */
                 if ($update_existing) {
                     unset($data['art_id']); // Don't update art_id itself
                     $result = $art_model->update($existing->id, $data);
@@ -1410,7 +1473,7 @@ class AIH_Ajax {
             $image_url_raw = $get('image_url');
             if ($piece_id && $image_url_raw !== '') {
                 $image_urls = array_map('trim', explode('|', $image_url_raw));
-                $image_urls = array_filter($image_urls, 'strlen');
+                $image_urls = array_filter($image_urls, function ($v) { return $v !== ''; });
                 $img_ok = 0;
                 $img_warnings = array();
 
@@ -1445,6 +1508,9 @@ class AIH_Ajax {
 
     /**
      * Convert sharing URLs from popular services to direct download URLs.
+     *
+     * @param string $url The sharing URL to convert.
+     * @return string The direct download URL.
      */
     private function preprocess_image_url($url) {
         // Google Drive: drive.google.com/file/d/{ID}/view... → direct download
@@ -1538,7 +1604,8 @@ class AIH_Ajax {
         }
 
         // Verify it's actually an image
-        $mime = wp_check_filetype_and_ext($tmp, basename(wp_parse_url($image_url, PHP_URL_PATH)));
+        $parsed_path = wp_parse_url($image_url, PHP_URL_PATH);
+        $mime = wp_check_filetype_and_ext($tmp, basename($parsed_path ?: $image_url));
         if (empty($mime['type']) || strpos($mime['type'], 'image/') !== 0) {
             // Fallback: check with finfo directly
             $finfo_mime = '';
@@ -1558,7 +1625,7 @@ class AIH_Ajax {
             $ext = isset($ext_map[$finfo_mime]) ? $ext_map[$finfo_mime] : 'jpg';
             $filename = 'imported-' . $art_piece_id . '.' . $ext;
         } else {
-            $filename = basename(wp_parse_url($image_url, PHP_URL_PATH));
+            $filename = basename(wp_parse_url($image_url, PHP_URL_PATH) ?: $image_url);
             // Clean query strings from filename
             if (strpos($filename, '?') !== false) {
                 $filename = strtok($filename, '?');
@@ -1583,7 +1650,7 @@ class AIH_Ajax {
         }
 
         // Watermark using existing pipeline
-        $original_url = wp_get_attachment_url($attachment_id);
+        $original_url = wp_get_attachment_url($attachment_id) ?: '';
         $watermarked_url = $original_url;
         $watermark = new AIH_Watermark();
         $wm_result = $watermark->process_upload($attachment_id);
@@ -1603,6 +1670,7 @@ class AIH_Ajax {
         return true;
     }
 
+    /** @return void */
     public function admin_sync_bidders() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
         if (!AIH_Roles::can_manage_bidders()) wp_send_json_error(array('message' => __('Permission denied.', 'art-in-heaven')));
@@ -1616,10 +1684,11 @@ class AIH_Ajax {
         wp_send_json_error($result);
     }
     
+    /** @return void */
     public function admin_cleanup_tables() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
         if (!AIH_Roles::can_manage_auction()) wp_send_json_error(array('message' => __('Permission denied.', 'art-in-heaven')));
-        
+
         global $wpdb;
         $year = AIH_Database::get_auction_year();
         $table = $wpdb->prefix . $year . '_Bidders';
@@ -1687,6 +1756,8 @@ class AIH_Ajax {
     
     /**
      * Delete all data from all database tables
+     *
+     * @return void
      */
     public function admin_purge_data() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
@@ -1732,6 +1803,12 @@ class AIH_Ajax {
     /**
      * Format art piece for AJAX response
      * Uses consolidated AIH_Template_Helper::format_art_piece()
+     *
+     * @param object                    $piece
+     * @param string|null               $bidder_id
+     * @param bool                      $full
+     * @param array<string, mixed>|null $batch_data
+     * @return array<string, mixed>
      */
     private function format_art_piece($piece, $bidder_id = null, $full = false, $batch_data = null) {
         return AIH_Template_Helper::format_art_piece($piece, $bidder_id, $full, true, $batch_data);
@@ -1741,6 +1818,8 @@ class AIH_Ajax {
     
     /**
      * Add image to art piece
+     *
+     * @return void
      */
     public function admin_add_image() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
@@ -1802,6 +1881,8 @@ class AIH_Ajax {
     
     /**
      * Remove image from art piece
+     *
+     * @return void
      */
     public function admin_remove_image() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
@@ -1821,6 +1902,7 @@ class AIH_Ajax {
         // Get art_piece_id before removal for returning updated data
         global $wpdb;
         $images_table = AIH_Database::get_table('art_images');
+        /** @var object{art_piece_id: int}|null $image_record */
         $image_record = $wpdb->get_row($wpdb->prepare(
             "SELECT art_piece_id FROM {$images_table} WHERE id = %d",
             $image_record_id
@@ -1838,7 +1920,8 @@ class AIH_Ajax {
             // Get updated art piece data
             $art_model = new AIH_Art_Piece();
             $updated_art = $art_model->get($art_piece_id);
-            
+            /** @var stdClass|null $updated_art */
+
             wp_send_json_success(array(
                 'message' => 'Image removed successfully.',
                 'remaining_count' => count($remaining_images),
@@ -1856,6 +1939,8 @@ class AIH_Ajax {
     
     /**
      * Set image as primary
+     *
+     * @return void
      */
     public function admin_set_primary_image() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
@@ -1881,6 +1966,8 @@ class AIH_Ajax {
     
     /**
      * Reorder images
+     *
+     * @return void
      */
     public function admin_reorder_images() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
@@ -1906,6 +1993,8 @@ class AIH_Ajax {
     
     /**
      * Get images for art piece
+     *
+     * @return void
      */
     public function admin_get_images() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
@@ -1927,6 +2016,8 @@ class AIH_Ajax {
     
     /**
      * Set/clear the upload flag to disable intermediate image sizes
+     *
+     * @return void
      */
     public function set_upload_flag() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
@@ -1948,6 +2039,8 @@ class AIH_Ajax {
     
     /**
      * Test Pushpay API connection
+     *
+     * @return void
      */
     public function admin_test_pushpay() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
@@ -1968,6 +2061,8 @@ class AIH_Ajax {
     
     /**
      * Discover Pushpay organization and merchant keys
+     *
+     * @return void
      */
     public function admin_discover_pushpay_keys() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
@@ -2029,6 +2124,8 @@ class AIH_Ajax {
 
     /**
      * Sync Pushpay transactions
+     *
+     * @return void
      */
     public function admin_sync_pushpay() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
@@ -2052,6 +2149,8 @@ class AIH_Ajax {
     
     /**
      * Manually match a transaction to an order
+     *
+     * @return void
      */
     public function admin_match_transaction() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
@@ -2079,6 +2178,8 @@ class AIH_Ajax {
     
     /**
      * Get transaction details
+     *
+     * @return void
      */
     public function admin_get_transaction_details() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
@@ -2096,10 +2197,11 @@ class AIH_Ajax {
         $transactions_table = AIH_Database::get_table('pushpay_transactions');
         $orders_table = AIH_Database::get_table('orders');
         
+        /** @var object{id: int, pushpay_id: string, status: string, amount: string, currency: string, payment_date: string|null, payer_name: string|null, payer_email: string|null, fund: string|null, reference: string|null, order_number: string|null, bidder_id: int|null, synced_at: string|null, notes: string|null, raw_data: string|null, order_id: int|null}|null $txn */
         $txn = $wpdb->get_row($wpdb->prepare(
-            "SELECT t.*, o.order_number, o.bidder_id 
-             FROM {$transactions_table} t 
-             LEFT JOIN {$orders_table} o ON t.order_id = o.id 
+            "SELECT t.*, o.order_number, o.bidder_id
+             FROM {$transactions_table} t
+             LEFT JOIN {$orders_table} o ON t.order_id = o.id
              WHERE t.id = %d",
             $id
         ));
@@ -2115,9 +2217,9 @@ class AIH_Ajax {
         
         $html .= '<div class="aih-txn-detail"><label>' . __('Status', 'art-in-heaven') . '</label><div class="value"><span class="aih-status-badge ' . strtolower($txn->status) . '">' . esc_html($txn->status) . '</span></div></div>';
         
-        $html .= '<div class="aih-txn-detail"><label>' . __('Amount', 'art-in-heaven') . '</label><div class="value"><strong style="font-size: 18px; color: #4a7c59;">$' . number_format($txn->amount, 2) . '</strong> ' . esc_html($txn->currency) . '</div></div>';
+        $html .= '<div class="aih-txn-detail"><label>' . __('Amount', 'art-in-heaven') . '</label><div class="value"><strong style="font-size: 18px; color: #4a7c59;">$' . number_format((float) $txn->amount, 2) . '</strong> ' . esc_html($txn->currency) . '</div></div>';
         
-        $html .= '<div class="aih-txn-detail"><label>' . __('Payment Date', 'art-in-heaven') . '</label><div class="value">' . ($txn->payment_date ? date_i18n(get_option('date_format') . ' ' . get_option('time_format'), strtotime($txn->payment_date)) : '—') . '</div></div>';
+        $html .= '<div class="aih-txn-detail"><label>' . __('Payment Date', 'art-in-heaven') . '</label><div class="value">' . ($txn->payment_date ? AIH_Status::format_db_date($txn->payment_date, get_option('date_format') . ' ' . get_option('time_format')) : '—') . '</div></div>';
         
         $html .= '<div class="aih-txn-detail"><label>' . __('Payer Name', 'art-in-heaven') . '</label><div class="value">' . esc_html($txn->payer_name ?: '—') . '</div></div>';
         
@@ -2131,7 +2233,7 @@ class AIH_Ajax {
             $html .= '<div class="aih-txn-detail"><label>' . __('Matched Order', 'art-in-heaven') . '</label><div class="value"><a href="' . admin_url('admin.php?page=art-in-heaven-orders&search=' . urlencode($txn->order_number)) . '" style="color: #b8956b; font-weight: 600;">' . esc_html($txn->order_number) . '</a></div></div>';
         }
         
-        $html .= '<div class="aih-txn-detail"><label>' . __('Synced At', 'art-in-heaven') . '</label><div class="value">' . ($txn->synced_at ? date_i18n(get_option('date_format') . ' ' . get_option('time_format'), strtotime($txn->synced_at)) : '—') . '</div></div>';
+        $html .= '<div class="aih-txn-detail"><label>' . __('Synced At', 'art-in-heaven') . '</label><div class="value">' . ($txn->synced_at ? AIH_Status::format_db_date($txn->synced_at, get_option('date_format') . ' ' . get_option('time_format')) : '—') . '</div></div>';
         
         $html .= '</div>';
         
@@ -2145,7 +2247,7 @@ class AIH_Ajax {
             $raw = json_decode($txn->raw_data, true);
             $html .= '<div style="margin-top: 20px;">';
             $html .= '<details><summary style="cursor: pointer; font-weight: 600; margin-bottom: 10px;">' . __('Raw API Data', 'art-in-heaven') . '</summary>';
-            $html .= '<div class="aih-txn-raw">' . esc_html(json_encode($raw, JSON_PRETTY_PRINT)) . '</div>';
+            $html .= '<div class="aih-txn-raw">' . esc_html(wp_json_encode($raw, JSON_PRETTY_PRINT) ?: '{}') . '</div>';
             $html .= '</details></div>';
         }
         
@@ -2154,6 +2256,8 @@ class AIH_Ajax {
     
     /**
      * Regenerate all watermarks
+     *
+     * @return void
      */
     public function admin_regenerate_watermarks() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
@@ -2372,10 +2476,14 @@ class AIH_Ajax {
      * @return string|false  Absolute path to a readable log file, or false.
      */
     private function resolve_log_file() {
-        // 1. WP_DEBUG_LOG set to a custom path
-        if (defined('WP_DEBUG_LOG') && is_string(WP_DEBUG_LOG) && WP_DEBUG_LOG !== '' && WP_DEBUG_LOG !== '1') {
-            if (file_exists(WP_DEBUG_LOG) && is_readable(WP_DEBUG_LOG)) {
-                return WP_DEBUG_LOG;
+        // 1. WP_DEBUG_LOG set to a custom path (WP allows string values)
+        if (defined('WP_DEBUG_LOG')) {
+            /** @var bool|string $log_value */
+            $log_value = WP_DEBUG_LOG;
+            if (is_string($log_value) && $log_value !== '' && $log_value !== '1') {
+                if (file_exists($log_value) && is_readable($log_value)) {
+                    return $log_value;
+                }
             }
         }
 
@@ -2394,6 +2502,7 @@ class AIH_Ajax {
         return false;
     }
 
+    /** @return void */
     public function admin_get_logs() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
 
@@ -2436,7 +2545,7 @@ class AIH_Ajax {
         $lines  = min($lines, 1000);
         $filter = isset($_POST['filter']) ? sanitize_text_field($_POST['filter']) : 'aih';
 
-        $file_size = filesize($log_file);
+        $file_size = filesize($log_file) ?: 0;
         $size_label = size_format($file_size);
 
         // Read last N lines efficiently
@@ -2444,7 +2553,7 @@ class AIH_Ajax {
         $fp = fopen($log_file, 'r');
         if ($fp) {
             if ($file_size < 2 * 1024 * 1024) {
-                $content = fread($fp, $file_size);
+                $content = fread($fp, max(1, $file_size));
                 $all_lines = $content !== false && $content !== '' ? explode("\n", $content) : array();
             } else {
                 $chunk_size = 8192;
@@ -2491,6 +2600,7 @@ class AIH_Ajax {
         ));
     }
 
+    /** @return void */
     public function admin_clear_logs() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
 
@@ -2518,6 +2628,8 @@ class AIH_Ajax {
 
     /**
      * Save a push subscription for the current bidder
+     *
+     * @return void
      */
     public function push_subscribe() {
         check_ajax_referer('aih_frontend_nonce', 'nonce');
@@ -2540,7 +2652,7 @@ class AIH_Ajax {
             wp_send_json_error(array('message' => 'Invalid push endpoint'));
         }
 
-        $result = AIH_Push::save_subscription($bidder_id, $endpoint, $p256dh, $auth_key);
+        $result = AIH_Push::save_subscription($bidder_id ?? '', $endpoint, $p256dh, $auth_key);
         if ($result) {
             wp_send_json_success();
         } else {
@@ -2550,6 +2662,8 @@ class AIH_Ajax {
 
     /**
      * Remove a push subscription by endpoint
+     *
+     * @return void
      */
     public function push_unsubscribe() {
         check_ajax_referer('aih_frontend_nonce', 'nonce');
@@ -2567,6 +2681,8 @@ class AIH_Ajax {
      * Verify a push subscription endpoint exists server-side.
      * Used by the client to detect stale subscriptions after browser
      * data clear or server-side purge, then re-subscribe automatically.
+     *
+     * @return void
      */
     public function push_verify() {
         check_ajax_referer('aih_frontend_nonce', 'nonce');
@@ -2596,7 +2712,73 @@ class AIH_Ajax {
     }
 
     /**
+     * Log a push permission decision (granted or denied) for engagement metrics.
+     *
+     * @return void
+     */
+    public function push_permission(): void {
+        check_ajax_referer('aih_frontend_nonce', 'nonce');
+
+        $auth = AIH_Auth::get_instance();
+        if (!$auth->is_logged_in()) {
+            wp_send_json_error(array('message' => 'Not authenticated'));
+        }
+
+        $permission = isset($_POST['permission']) ? sanitize_text_field($_POST['permission']) : '';
+        $source     = isset($_POST['source']) ? sanitize_text_field($_POST['source']) : 'bell';
+        if (!in_array($source, array('bell', 'after_bid'), true)) {
+            $source = 'other';
+        }
+
+        if (!in_array($permission, array('granted', 'denied'), true)) {
+            wp_send_json_error(array('message' => 'Invalid permission value'));
+        }
+
+        $event_type = 'granted' === $permission ? 'push_permission_granted' : 'push_permission_denied';
+
+        AIH_Database::log_audit($event_type, array(
+            'bidder_id' => $auth->get_current_bidder_id(),
+            'details'   => array('source' => $source),
+        ));
+
+        wp_send_json_success();
+    }
+
+    /**
+     * Log a push notification click for engagement metrics.
+     *
+     * @return void
+     */
+    public function push_clicked(): void {
+        check_ajax_referer('aih_frontend_nonce', 'nonce');
+
+        $auth = AIH_Auth::get_instance();
+        if (!$auth->is_logged_in()) {
+            wp_send_json_error(array('message' => 'Not authenticated'));
+        }
+
+        $notification_type = isset($_POST['notification_type']) ? sanitize_text_field($_POST['notification_type']) : 'outbid';
+        if (!in_array($notification_type, array('outbid', 'winner'), true)) {
+            $notification_type = 'unknown';
+        }
+        $art_piece_id      = isset($_POST['art_piece_id']) ? intval($_POST['art_piece_id']) : 0;
+
+        AIH_Database::log_audit('push_clicked', array(
+            'bidder_id' => $auth->get_current_bidder_id(),
+            'object_id' => $art_piece_id,
+            'details'   => array(
+                'notification_type' => $notification_type,
+                'art_piece_id'      => $art_piece_id,
+            ),
+        ));
+
+        wp_send_json_success();
+    }
+
+    /**
      * Return and clear pending outbid and winner events for the current bidder (polling fallback)
+     *
+     * @return void
      */
     public function check_outbid() {
         check_ajax_referer('aih_frontend_nonce', 'nonce');
@@ -2607,8 +2789,8 @@ class AIH_Ajax {
         }
 
         $bidder_id      = $auth->get_current_bidder_id();
-        $outbid_events  = AIH_Push::consume_outbid_events($bidder_id);
-        $winner_events  = AIH_Push::consume_winner_events($bidder_id);
+        $outbid_events  = AIH_Push::consume_outbid_events($bidder_id ?? '');
+        $winner_events  = AIH_Push::consume_winner_events($bidder_id ?? '');
 
         // Tag winner events with type so frontend can distinguish
         foreach ($winner_events as &$evt) {
@@ -2628,6 +2810,8 @@ class AIH_Ajax {
      *
      * Results are cached per-bidder for 3 seconds to reduce DB load
      * when many users are polling simultaneously.
+     *
+     * @return void
      */
     public function poll_status() {
         check_ajax_referer('aih_frontend_nonce', 'nonce');
@@ -2637,7 +2821,7 @@ class AIH_Ajax {
             wp_send_json_error(array('message' => 'Not authenticated'));
         }
 
-        $bidder_id = $auth->get_current_bidder_id();
+        $bidder_id = $auth->get_current_bidder_id() ?? '';
 
         $ids = isset($_POST['art_piece_ids']) ? array_map('intval', (array) $_POST['art_piece_ids']) : array();
         $ids = array_filter($ids);

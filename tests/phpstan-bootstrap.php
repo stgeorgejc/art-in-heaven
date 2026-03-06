@@ -18,3 +18,8 @@ define('AIH_CACHE_EXPIRY', HOUR_IN_SECONDS);
 
 // Optional wp-config.php constant for test code bypass (may or may not exist at runtime)
 define('AIH_TEST_CODE_PREFIX', 'AIHTEST');
+
+// WordPress wp-config.php constant (always defined at runtime; may be provided by stubs)
+if (!defined('DB_NAME')) {
+    define('DB_NAME', 'wordpress');
+}

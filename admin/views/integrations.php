@@ -177,7 +177,7 @@ $is_sandbox = get_option('aih_pushpay_sandbox', 0);
                     </tr>
                     <tr>
                         <td><strong><?php _e('Last Sync:', 'art-in-heaven'); ?></strong></td>
-                        <td><?php echo $last_pp_sync ? date_i18n('M j, Y g:i a', strtotime($last_pp_sync)) : __('Never', 'art-in-heaven'); ?></td>
+                        <td><?php echo $last_pp_sync ? AIH_Status::format_db_date($last_pp_sync, 'M j, Y g:i a') : __('Never', 'art-in-heaven'); ?></td>
                     </tr>
                     <tr>
                         <td><strong><?php _e('Transactions Synced:', 'art-in-heaven'); ?></strong></td>

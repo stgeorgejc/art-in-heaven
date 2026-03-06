@@ -46,8 +46,8 @@ if ($computed_status === 'ended') {
     $is_ended = false;
 } else {
     // Fallback: calculate from status and dates
-    $is_ended = $art_piece->status === 'ended' || (!empty($art_piece->auction_end) && strtotime($art_piece->auction_end) && strtotime($art_piece->auction_end) <= current_time('timestamp'));
-    $is_upcoming = !$is_ended && !empty($art_piece->auction_start) && strtotime($art_piece->auction_start) && strtotime($art_piece->auction_start) > current_time('timestamp');
+    $is_ended = $art_piece->status === 'ended' || (!empty($art_piece->auction_end) && $art_piece->auction_end <= current_time('mysql'));
+    $is_upcoming = !$is_ended && !empty($art_piece->auction_start) && $art_piece->auction_start > current_time('mysql');
 }
 
 $images = $art_images->get_images($art_piece->id);
@@ -196,7 +196,7 @@ if (empty($image_urls) && $primary_image) {
                     <?php if ($is_upcoming): ?>
                     <div class="aih-bid-section">
                         <div class="aih-upcoming-notice">
-                            <?php printf(esc_html__('Bidding starts %s', 'art-in-heaven'), esc_html(wp_date('M j, Y \a\t g:i A', strtotime($art_piece->auction_start)))); ?>
+                            <?php printf(esc_html__('Bidding starts %s', 'art-in-heaven'), esc_html(AIH_Status::format_db_date($art_piece->auction_start, 'M j, Y \a\t g:i A'))); ?>
                         </div>
                     </div>
                     <?php elseif (!$is_ended): ?>
@@ -233,7 +233,7 @@ if (empty($image_urls) && $primary_image) {
                             <?php foreach ($my_bid_history as $bid): ?>
                             <div class="aih-bid-history-item <?php echo $bid->is_winning ? 'winning' : ''; ?>">
                                 <span class="aih-bid-history-amount">$<?php echo number_format($bid->bid_amount); ?></span>
-                                <span class="aih-bid-history-time"><?php echo esc_html(date_i18n('M j, g:i A', strtotime($bid->bid_time))); ?></span>
+                                <span class="aih-bid-history-time"><?php echo esc_html(AIH_Status::format_db_date($bid->bid_time, 'M j, g:i A')); ?></span>
                                 <?php if ($bid->is_winning): ?>
                                 <span class="aih-bid-history-status">&#10003; <?php _e('Winning', 'art-in-heaven'); ?></span>
                                 <?php endif; ?>

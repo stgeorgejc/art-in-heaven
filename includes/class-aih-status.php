@@ -21,6 +21,8 @@ class AIH_Status {
     
     /**
      * All valid statuses for validation
+     *
+     * @var array<int, string>
      */
     private static $valid_statuses = array(
         self::STATUS_ACTIVE,
@@ -73,7 +75,7 @@ class AIH_Status {
      * @return string
      */
     public static function get_now_string($format = 'Y-m-d H:i:s') {
-        return current_time($format);
+        return (string) current_time($format);
     }
     
     /**
@@ -124,8 +126,26 @@ class AIH_Status {
     }
     
     /**
+     * Format a raw database datetime string for display.
+     *
+     * Avoids the strtotime() timezone trap — DB values are stored as local time,
+     * but strtotime() treats them as UTC, causing offset errors with wp_date/date_i18n.
+     *
+     * @param mixed  $db_value Raw datetime string from the database
+     * @param string $format   PHP date format
+     * @return string Formatted date or em-dash if empty/invalid
+     */
+    public static function format_db_date($db_value, $format = 'M j, Y g:i A') {
+        if (empty($db_value)) {
+            return '—';
+        }
+        $dt = self::parse_date($db_value);
+        return $dt ? $dt->format($format) : '—';
+    }
+
+    /**
      * Check if a status value is valid
-     * 
+     *
      * @param string $status
      * @return bool
      */
@@ -147,7 +167,7 @@ class AIH_Status {
      * Validate an art piece object has required properties
      * 
      * @param object|null $art_piece
-     * @return array Array with 'valid' bool and 'errors' array
+     * @return array<string, mixed> Array with 'valid' bool and 'errors' array
      */
     public static function validate_art_piece($art_piece) {
         $errors = array();
@@ -181,16 +201,17 @@ class AIH_Status {
      * Check for data inconsistencies in an art piece
      * 
      * @param object $art_piece
-     * @return array Array of warning messages
+     * @return array<int, string> Array of warning messages
      */
     public static function check_data_inconsistencies($art_piece) {
+        /** @var stdClass $art_piece */
         $warnings = array();
-        
+
         $validation = self::validate_art_piece($art_piece);
         if (!$validation['valid']) {
             return $validation['errors'];
         }
-        
+
         $start = self::parse_date($art_piece->auction_start);
         $end = self::parse_date($art_piece->auction_end);
         $now = self::get_now();
@@ -238,7 +259,7 @@ class AIH_Status {
      * This returns what the status SHOULD be based on database status and times.
      * 
      * @param object $art_piece
-     * @return array {
+     * @return array<string, mixed> {
      *     @type string $status The computed status
      *     @type string $display_status Human-readable status with context
      *     @type string $reason Why this status was computed
@@ -247,6 +268,7 @@ class AIH_Status {
      * }
      */
     public static function compute_status($art_piece) {
+        /** @var stdClass $art_piece */
         $result = array(
             'status' => self::STATUS_DRAFT,
             'display_status' => 'Unknown',
@@ -450,9 +472,10 @@ class AIH_Status {
             ));
         }
 
-        // If requesting draft, respect it
-        if ($requested_status === self::STATUS_DRAFT) {
-            if (defined('WP_DEBUG') && WP_DEBUG) { error_log('AIH_Status: Returning DRAFT (requested)'); }
+        // If requesting draft and times didn't change, respect it (manual draft override)
+        // But if times changed, let the time-based logic below decide the correct status
+        if ($requested_status === self::STATUS_DRAFT && !$times_changed) {
+            if (defined('WP_DEBUG') && WP_DEBUG) { error_log('AIH_Status: Returning DRAFT (requested, times unchanged)'); }
             return self::STATUS_DRAFT;
         }
 
@@ -480,8 +503,8 @@ class AIH_Status {
     
     /**
      * Get all valid status options for a select dropdown
-     * 
-     * @return array
+     *
+     * @return array<string, string>
      */
     public static function get_status_options() {
         return array(

@@ -207,7 +207,7 @@ if ($current_tab === 'not_logged_in') {
                         // Use pre-fetched last login data instead of per-row query
                         $last_login = isset($last_logins_data[$person->confirmation_code]) ? $last_logins_data[$person->confirmation_code]->last_login : null;
                         if ($last_login): ?>
-                            <?php echo date_i18n('M j, g:i a', strtotime($last_login)); ?>
+                            <?php echo AIH_Status::format_db_date($last_login, 'M j, g:i a'); ?>
                         <?php else: ?>
                             <span style="color:#9ca3af;"><?php _e('Never', 'art-in-heaven'); ?></span>
                         <?php endif; ?>

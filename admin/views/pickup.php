@@ -245,12 +245,12 @@ if (!empty($order_ids)) {
                             <div class="aih-pickup-dates">
                                 <span title="<?php esc_attr_e('Payment Date', 'art-in-heaven'); ?>">
                                     <span class="dashicons dashicons-money-alt"></span>
-                                    <?php echo $order->payment_date ? date_i18n('M j, Y g:i a', strtotime($order->payment_date)) : '—'; ?>
+                                    <?php echo $order->payment_date ? AIH_Status::format_db_date($order->payment_date, 'M j, Y g:i a') : '—'; ?>
                                 </span>
                                 <?php if ($order->pickup_status === 'picked_up' && $order->pickup_date): ?>
                                     <span title="<?php esc_attr_e('Pickup Date', 'art-in-heaven'); ?>">
                                         <span class="dashicons dashicons-yes-alt"></span>
-                                        <?php echo date_i18n('M j, Y g:i a', strtotime($order->pickup_date)); ?>
+                                        <?php echo AIH_Status::format_db_date($order->pickup_date, 'M j, Y g:i a'); ?>
                                     </span>
                                 <?php endif; ?>
                             </div>

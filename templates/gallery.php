@@ -183,8 +183,8 @@ $bidder_bid_ids = $bid_model->get_bidder_bid_ids_batch($piece_ids, $bidder_id);
                     $is_ended = false;
                 } else {
                     // Fallback: calculate from status and dates
-                    $is_ended = $piece->status === 'ended' || (!empty($piece->auction_end) && strtotime($piece->auction_end) && strtotime($piece->auction_end) <= current_time('timestamp'));
-                    $is_upcoming = !$is_ended && !empty($piece->auction_start) && strtotime($piece->auction_start) && strtotime($piece->auction_start) > current_time('timestamp');
+                    $is_ended = $piece->status === 'ended' || (!empty($piece->auction_end) && $piece->auction_end <= current_time('mysql'));
+                    $is_upcoming = !$is_ended && !empty($piece->auction_start) && $piece->auction_start > current_time('mysql');
                 }
 
                 $status_class = '';
@@ -280,7 +280,7 @@ $bidder_bid_ids = $bid_model->get_bidder_bid_ids_batch($piece_ids, $bidder_id);
                 <?php if ($is_upcoming): ?>
                 <div class="aih-card-footer">
                     <div class="aih-upcoming-notice aih-upcoming-notice--card">
-                        <?php printf(esc_html__('Bidding starts %s', 'art-in-heaven'), esc_html(wp_date('M j, g:i A', strtotime($piece->auction_start)))); ?>
+                        <?php printf(esc_html__('Bidding starts %s', 'art-in-heaven'), esc_html(AIH_Status::format_db_date($piece->auction_start, 'M j, g:i A'))); ?>
                     </div>
                 </div>
                 <?php elseif (!$is_ended): ?>

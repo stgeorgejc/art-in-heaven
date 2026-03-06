@@ -116,7 +116,7 @@ $is_paid = $is_sold && $order_item->payment_status === 'paid';
 
 // Determine display status
 $computed = isset($piece->computed_status) ? $piece->computed_status : $piece->status;
-$auction_ended = strtotime($piece->auction_end) < time();
+$auction_ended = !empty($piece->auction_end) && $piece->auction_end <= current_time('mysql');
 
 // For ended auctions, show Sold/Not Sold based on whether there's a winning bid
 if ($computed === 'ended' || ($auction_ended && $piece->status !== 'draft')) {
@@ -183,9 +183,9 @@ if ($computed === 'ended' || ($auction_ended && $piece->status !== 'draft')) {
             <div class="aih-info-row">
                 <span class="aih-info-label"><?php _e('Auction Period:', 'art-in-heaven'); ?></span>
                 <span class="aih-info-value">
-                    <?php echo date_i18n('M j, Y g:i a', strtotime($piece->auction_start)); ?>
+                    <?php echo AIH_Status::format_db_date($piece->auction_start, 'M j, Y g:i a'); ?>
                     –
-                    <?php echo date_i18n('M j, Y g:i a', strtotime($piece->auction_end)); ?>
+                    <?php echo AIH_Status::format_db_date($piece->auction_end, 'M j, Y g:i a'); ?>
                 </span>
             </div>
         </div>
@@ -217,7 +217,7 @@ if ($computed === 'ended' || ($auction_ended && $piece->status !== 'draft')) {
             <div class="aih-stat-value">
                 <?php
                 if ($last_bid_time) {
-                    echo date_i18n('M j, g:i a', strtotime($last_bid_time));
+                    echo AIH_Status::format_db_date($last_bid_time, 'M j, g:i a');
                 } else {
                     _e('No bids yet', 'art-in-heaven');
                 }
@@ -276,7 +276,7 @@ if ($computed === 'ended' || ($auction_ended && $piece->status !== 'draft')) {
             $<?php echo number_format($winning_bid->bid_amount, 2); ?>
             &nbsp;&nbsp;|&nbsp;&nbsp;
             <strong><?php _e('Bid Time:', 'art-in-heaven'); ?></strong>
-            <?php echo date_i18n('M j, Y g:i a', strtotime($winning_bid->bid_time)); ?>
+            <?php echo AIH_Status::format_db_date($winning_bid->bid_time, 'M j, Y g:i a'); ?>
         </p>
 
         <?php if ($is_sold): ?>
@@ -347,7 +347,7 @@ if ($computed === 'ended' || ($auction_ended && $piece->status !== 'draft')) {
                         data-email="<?php echo esc_attr(strtolower($bid->email_primary)); ?>"
                         data-code="<?php echo esc_attr(strtolower($bid->confirmation_code ?: $bid->bidder_id)); ?>"
                         data-amount="<?php echo esc_attr($bid->bid_amount); ?>"
-                        data-time="<?php echo esc_attr(strtotime($bid->bid_time)); ?>">
+                        data-time="<?php echo esc_attr($bid->bid_time); ?>">
                         <td><?php echo $rank++; ?></td>
                         <td>
                             <?php echo esc_html($name ?: 'Unknown'); ?>
@@ -357,7 +357,7 @@ if ($computed === 'ended' || ($auction_ended && $piece->status !== 'draft')) {
                         </td>
                         <td><code><?php echo esc_html($bid->confirmation_code ?: $bid->bidder_id); ?></code></td>
                         <td><strong>$<?php echo number_format($bid->bid_amount, 2); ?></strong></td>
-                        <td><?php echo date_i18n('M j, Y g:i:s a', strtotime($bid->bid_time)); ?></td>
+                        <td><?php echo AIH_Status::format_db_date($bid->bid_time, 'M j, Y g:i:s a'); ?></td>
                         <td>
                             <?php if (!empty($bid->is_winning)): ?>
                                 <span class="aih-badge aih-badge-success"><?php _e('Winner', 'art-in-heaven'); ?></span>

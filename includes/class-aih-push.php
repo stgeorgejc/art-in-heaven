@@ -95,13 +95,13 @@ class AIH_Push {
 
     // ========== VAPID KEY MANAGEMENT ==========
 
-    /** @var array|null Cached VAPID keys for this request */
+    /** @var array<string, string>|null Cached VAPID keys for this request */
     private static $cached_vapid_keys = null;
 
     /**
      * Get VAPID keys, auto-generating on first call (cached per request)
      *
-     * @return array{publicKey: string, privateKey: string, subject: string}
+     * @return array<string, string>
      */
     public static function get_vapid_keys() {
         if (self::$cached_vapid_keys !== null) {
@@ -206,7 +206,7 @@ class AIH_Push {
      * Get all push subscriptions for a bidder
      *
      * @param string $bidder_id
-     * @return array
+     * @return array<int, object>
      */
     public static function get_subscriptions($bidder_id) {
         global $wpdb;
@@ -224,14 +224,14 @@ class AIH_Push {
      * Notify the outbid bidder when a new bid is placed.
      * Hooked to `aih_bid_placed` action.
      *
+     * Record outbid event for polling fallback (runs synchronously).
+     * Called directly from aih_bid_placed hook so the event is available immediately.
+     *
      * @param int    $bid_id
      * @param int    $art_piece_id
      * @param string $new_bidder_id  The bidder who just placed the bid
      * @param float  $amount         The new bid amount
-     */
-    /**
-     * Record outbid event for polling fallback (runs synchronously).
-     * Called directly from aih_bid_placed hook so the event is available immediately.
+     * @return void
      */
     public function handle_outbid_event($bid_id, $art_piece_id, $new_bidder_id, $amount) {
         global $wpdb;
@@ -256,6 +256,7 @@ class AIH_Push {
         }
 
         // Get art piece title and catalog art_id
+        /** @var object{title: string, art_id: string}|null $art_row */
         $art_row = $wpdb->get_row($wpdb->prepare(
             "SELECT title, art_id FROM `{$art_table}` WHERE id = %d",
             $art_piece_id
@@ -278,6 +279,9 @@ class AIH_Push {
                     fastcgi_finish_request();
                 }
                 $url = $push_data['catalog_art_id'] ? AIH_Template_Helper::get_art_url($push_data['catalog_art_id']) : '';
+                if ($url) {
+                    $url = add_query_arg('ref', 'push', $url);
+                }
                 AIH_Push::get_instance()->send_push($push_data['outbid_bidder'], array(
                     'type'         => 'outbid',
                     'title'        => "You've been outbid!",
@@ -294,8 +298,9 @@ class AIH_Push {
     /**
      * Send a push notification to a bidder.
      *
-     * @param string $bidder_id The bidder to notify.
-     * @param array  $payload   Notification payload (type, title, body, art_piece_id, url, tag).
+     * @param string                $bidder_id The bidder to notify.
+     * @param array<string, mixed> $payload   Notification payload (type, title, body, art_piece_id, url, tag).
+     * @return void
      */
     public function send_push($bidder_id, array $payload) {
         $subscriptions = self::get_subscriptions($bidder_id);
@@ -307,6 +312,8 @@ class AIH_Push {
         $json_payload = wp_json_encode($payload);
 
         $vapid = self::get_vapid_keys();
+        $notification_type = isset($payload['type']) ? $payload['type'] : 'unknown';
+        $art_piece_id      = isset($payload['art_piece_id']) ? $payload['art_piece_id'] : 0;
 
         try {
             $auth = array(
@@ -318,8 +325,10 @@ class AIH_Push {
             );
 
             $webPush = new WebPush($auth);
+            $queued = 0;
 
             foreach ($subscriptions as $sub) {
+                /** @var stdClass $sub */
                 if (!self::is_valid_push_endpoint($sub->endpoint)) {
                     self::delete_subscription($sub->endpoint);
                     continue;
@@ -330,12 +339,37 @@ class AIH_Push {
                     'authToken'       => $sub->auth_key,
                     'contentEncoding' => 'aes128gcm',
                 ));
-                $webPush->queueNotification($subscription, $json_payload);
+                $webPush->queueNotification($subscription, $json_payload ?: null);
+                AIH_Database::log_audit('push_sent', array(
+                    'bidder_id' => $bidder_id,
+                    'object_id' => $art_piece_id,
+                    'details'   => array(
+                        'notification_type' => $notification_type,
+                        'art_piece_id'      => $art_piece_id,
+                    ),
+                ));
             }
 
             foreach ($webPush->flush() as $report) {
                 if ($report->isSubscriptionExpired()) {
                     self::delete_subscription($report->getEndpoint());
+                    AIH_Database::log_audit('push_expired', array(
+                        'bidder_id' => $bidder_id,
+                        'object_id' => $art_piece_id,
+                        'details'   => array(
+                            'notification_type' => $notification_type,
+                            'art_piece_id'      => $art_piece_id,
+                        ),
+                    ));
+                } elseif ($report->isSuccess()) {
+                    AIH_Database::log_audit('push_delivered', array(
+                        'bidder_id' => $bidder_id,
+                        'object_id' => $art_piece_id,
+                        'details'   => array(
+                            'notification_type' => $notification_type,
+                            'art_piece_id'      => $art_piece_id,
+                        ),
+                    ));
                 }
             }
         } catch (\Exception $e) {
@@ -351,6 +385,7 @@ class AIH_Push {
      * @param string $bidder_id
      * @param int    $art_piece_id
      * @param string $title
+     * @return void
      */
     // Note: This read-modify-write pattern is non-atomic. Under high concurrency,
     // an outbid event can be lost if two events are recorded simultaneously.
@@ -377,7 +412,7 @@ class AIH_Push {
      * Consume (return and delete) pending outbid events for a bidder
      *
      * @param string $bidder_id
-     * @return array
+     * @return array<int, array<string, mixed>>
      */
     // Note: This read-then-delete pattern is non-atomic. Under high concurrency,
     // an outbid event written between get_transient() and delete_transient() will be lost.
@@ -404,6 +439,7 @@ class AIH_Push {
      * @param string $bidder_id     The winning bidder
      * @param int    $art_piece_id  The art piece that was won
      * @param string $title         Art piece title
+     * @return void
      */
     public function handle_winner_event($bidder_id, $art_piece_id, $title) {
         // Record event for polling fallback
@@ -416,13 +452,14 @@ class AIH_Push {
                 if (function_exists('fastcgi_finish_request')) {
                     fastcgi_finish_request();
                 }
+                $checkout_url = add_query_arg('ref', 'push', AIH_Template_Helper::get_checkout_url());
                 AIH_Push::get_instance()->send_push($push_data['bidder_id'], array(
                     'type'         => 'winner',
                     'title'        => 'You won!',
                     'body'         => sprintf('Congratulations! You won "%s". Head to checkout to complete your purchase.', $push_data['title']),
                     'item_title'   => $push_data['title'],
                     'art_piece_id' => $push_data['art_piece_id'],
-                    'url'          => AIH_Template_Helper::get_checkout_url(),
+                    'url'          => $checkout_url,
                     'tag'          => 'winner-' . $push_data['art_piece_id'],
                 ));
             });
@@ -435,6 +472,7 @@ class AIH_Push {
      * @param string $bidder_id
      * @param int    $art_piece_id
      * @param string $title
+     * @return void
      */
     public static function record_winner_event($bidder_id, $art_piece_id, $title) {
         $key    = 'aih_won_' . $bidder_id;
@@ -457,7 +495,7 @@ class AIH_Push {
      * Consume (return and delete) pending winner events for a bidder
      *
      * @param string $bidder_id
-     * @return array
+     * @return array<int, array<string, mixed>>
      */
     public static function consume_winner_events($bidder_id) {
         $key    = 'aih_won_' . $bidder_id;
@@ -488,6 +526,7 @@ class AIH_Push {
      *
      * @param string $bidder_id
      * @param int    $art_piece_id
+     * @return void
      */
     public static function mark_winner_notified($bidder_id, $art_piece_id) {
         set_transient('aih_won_notified_' . $bidder_id . '_' . $art_piece_id, 1, DAY_IN_SECONDS);

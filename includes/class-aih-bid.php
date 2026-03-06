@@ -12,6 +12,7 @@ if (!defined('ABSPATH')) {
 
 class AIH_Bid {
 
+    /** @var string */
     private $table;
 
     public function __construct() {
@@ -24,7 +25,7 @@ class AIH_Bid {
      * @param int    $art_piece_id Art piece ID
      * @param string $bidder_id    Bidder's confirmation code
      * @param float  $amount       Bid amount
-     * @return array Result with success, message, bid_id
+     * @return array{success: bool, message: string, bid_id?: int, current_bid?: float, bid_too_low?: bool, bid_too_high?: bool}
      */
     public function place_bid($art_piece_id, $bidder_id, $amount) {
         global $wpdb;
@@ -40,6 +41,7 @@ class AIH_Bid {
         try {
             // Lock the art piece row and get current highest bid atomically
             $status_sql = AIH_Status::get_status_sql('a', '%s');
+            /** @var object{id: string, starting_bid: string, auction_start: string|null, auction_end: string|null, status: string, computed_status: string, current_highest: string|null}|null $art_piece */
             $art_piece = $wpdb->get_row($wpdb->prepare(
                 "SELECT a.id, a.starting_bid, a.auction_start, a.auction_end, a.status,
                         ({$status_sql}) as computed_status,
@@ -149,6 +151,9 @@ class AIH_Bid {
     
     /**
      * Get highest bid amount for an art piece (only valid bids)
+     *
+     * @param int $art_piece_id Art piece ID.
+     * @return float
      */
     public function get_highest_bid_amount($art_piece_id) {
         global $wpdb;
@@ -161,6 +166,10 @@ class AIH_Bid {
     
     /**
      * Get all bids for an art piece (includes bidder info, only valid bids)
+     *
+     * @param int      $art_piece_id Art piece ID.
+     * @param int|null $limit        Maximum number of bids to return.
+     * @return array<int, object>
      */
     public function get_bids_for_art_piece($art_piece_id, $limit = null) {
         global $wpdb;
@@ -187,6 +196,11 @@ class AIH_Bid {
     
     /**
      * Get bids by bidder for a specific art piece
+     *
+     * @param int    $art_piece_id   Art piece ID.
+     * @param string $bidder_id      Bidder's confirmation code.
+     * @param bool   $successful_only Whether to return only successful bids.
+     * @return array<int, object>
      */
     public function get_bidder_bids_for_art_piece($art_piece_id, $bidder_id, $successful_only = false) {
         global $wpdb;
@@ -221,6 +235,10 @@ class AIH_Bid {
     
     /**
      * Get only successful (winning) bids for display - excludes "too low" bids
+     *
+     * @param int    $art_piece_id Art piece ID.
+     * @param string $bidder_id    Bidder's confirmation code.
+     * @return array<int, object>
      */
     public function get_successful_bids_for_art_piece($art_piece_id, $bidder_id) {
         global $wpdb;
@@ -238,6 +256,9 @@ class AIH_Bid {
     /**
      * Get all bids by bidder (confirmation_code)
      * Returns only the bidder's highest bid per art piece to avoid duplicates
+     *
+     * @param string $bidder_id Bidder's confirmation code.
+     * @return array<int, object>
      */
     public function get_bidder_bids($bidder_id) {
         global $wpdb;
@@ -271,6 +292,10 @@ class AIH_Bid {
     
     /**
      * Check if a bidder has placed any valid bid on an art piece
+     *
+     * @param int    $art_piece_id Art piece ID.
+     * @param string $bidder_id    Bidder's confirmation code.
+     * @return bool
      */
     public function has_bidder_bid($art_piece_id, $bidder_id) {
         global $wpdb;
@@ -288,6 +313,10 @@ class AIH_Bid {
 
     /**
      * Check if bidder is winning an art piece
+     *
+     * @param int|string $art_piece_id Art piece ID.
+     * @param int|string $bidder_id    Bidder's confirmation code.
+     * @return bool
      */
     public function is_bidder_winning($art_piece_id, $bidder_id) {
         global $wpdb;
@@ -304,6 +333,9 @@ class AIH_Bid {
     
     /**
      * Get winning bid for an art piece
+     *
+     * @param int $art_piece_id Art piece ID.
+     * @return object|null
      */
     public function get_winning_bid($art_piece_id) {
         global $wpdb;
@@ -325,6 +357,9 @@ class AIH_Bid {
     
     /**
      * Get bid count for art piece (only valid bids)
+     *
+     * @param int $art_piece_id Art piece ID.
+     * @return int
      */
     public function get_bid_count($art_piece_id) {
         global $wpdb;
@@ -337,6 +372,9 @@ class AIH_Bid {
     
     /**
      * Get unique bidder count for art piece (only valid bids)
+     *
+     * @param int $art_piece_id Art piece ID.
+     * @return int
      */
     public function get_unique_bidder_count($art_piece_id) {
         global $wpdb;
@@ -349,11 +387,15 @@ class AIH_Bid {
     
     /**
      * Delete bid
+     *
+     * @param int $bid_id Bid ID.
+     * @return int|false Number of rows deleted, or false on failure.
      */
     public function delete($bid_id) {
         global $wpdb;
 
         // Get bid info first
+        /** @var object{id: string, art_piece_id: string, bidder_id: string, bid_amount: string, is_winning: string, bid_status: string|null}|null $bid */
         $bid = $wpdb->get_row($wpdb->prepare(
             "SELECT * FROM {$this->table} WHERE id = %d",
             $bid_id
@@ -377,6 +419,7 @@ class AIH_Bid {
             // If this was the winning bid, update the winning status
             if ($bid->is_winning) {
                 // Find the next highest valid bid
+                /** @var object{id: string, bid_amount: string}|null $next_highest */
                 $next_highest = $wpdb->get_row($wpdb->prepare(
                     "SELECT * FROM {$this->table}
                      WHERE art_piece_id = %d AND bid_status = 'valid'
@@ -413,6 +456,8 @@ class AIH_Bid {
 
     /**
      * Get all winning bids (for winners report)
+     *
+     * @return array<int, object>
      */
     public function get_all_winning_bids() {
         global $wpdb;
@@ -461,8 +506,8 @@ class AIH_Bid {
     /**
      * Batch fetch highest bids for multiple art pieces.
      *
-     * @param array $piece_ids
-     * @return array Keyed by art_piece_id => highest bid amount
+     * @param array<int, int> $piece_ids Art piece IDs.
+     * @return array<int, float> Keyed by art_piece_id => highest bid amount.
      */
     public function get_highest_bids_batch($piece_ids) {
         global $wpdb;
@@ -487,9 +532,9 @@ class AIH_Bid {
     /**
      * Batch fetch art piece IDs where a bidder is currently winning.
      *
-     * @param array  $piece_ids
-     * @param string $bidder_id
-     * @return array Keyed by art_piece_id => true
+     * @param array<int, int> $piece_ids Art piece IDs.
+     * @param string          $bidder_id Bidder's confirmation code.
+     * @return array<int, true> Keyed by art_piece_id => true.
      */
     public function get_winning_ids_batch($piece_ids, $bidder_id) {
         global $wpdb;
@@ -512,9 +557,9 @@ class AIH_Bid {
     /**
      * Batch fetch art piece IDs where a bidder has placed any valid bid.
      *
-     * @param array  $piece_ids
-     * @param string $bidder_id
-     * @return array Keyed by art_piece_id => true
+     * @param array<int, int> $piece_ids Art piece IDs.
+     * @param string          $bidder_id Bidder's confirmation code.
+     * @return array<int, true> Keyed by art_piece_id => true.
      */
     public function get_bidder_bid_ids_batch($piece_ids, $bidder_id) {
         global $wpdb;
@@ -537,6 +582,8 @@ class AIH_Bid {
     /**
      * Get bid statistics
      * Consolidated into a single query with conditional aggregation + caching
+     *
+     * @return object
      */
     public function get_stats() {
         global $wpdb;
@@ -551,6 +598,7 @@ class AIH_Bid {
 
         // Single query with conditional aggregation (replaces 9 separate queries)
         // Using prepare() with literal placeholders for SQL safety consistency
+        /** @var object{total_bids: string, winning_bids: string, outbid_bids: string, rejected_bids: string, unique_bidders: string, unique_art_pieces: string, total_bid_value: string, highest_bid: string|null, average_bid: string|null}|null $row */
         $row = $wpdb->get_row($wpdb->prepare(
             "SELECT
                 COUNT(CASE WHEN bid_status = %s OR bid_status IS NULL THEN 1 END) AS total_bids,

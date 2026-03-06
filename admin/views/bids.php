@@ -166,14 +166,14 @@ $total_bid_value = $wpdb->get_var("SELECT SUM(bid_amount) FROM {$bids_table}");
                 <?php foreach ($bids as $bid): ?>
                     <tr data-bid-id="<?php echo $bid->id; ?>">
                         <td class="column-time">
-                            <span class="aih-bid-date"><?php echo date_i18n('M j, Y', strtotime($bid->bid_time)); ?></span>
+                            <span class="aih-bid-date"><?php echo AIH_Status::format_db_date($bid->bid_time, 'M j, Y'); ?></span>
                             <?php
                             $ms = '';
                             if (strpos($bid->bid_time, '.') !== false) {
                                 $ms = '.' . substr(explode('.', $bid->bid_time)[1], 0, 3);
                             }
                             ?>
-                            <span class="aih-bid-time"><?php echo date_i18n('g:i:s', strtotime($bid->bid_time)) . $ms . date_i18n(' A', strtotime($bid->bid_time)); ?></span>
+                            <span class="aih-bid-time"><?php echo AIH_Status::format_db_date($bid->bid_time, 'g:i:s') . $ms . AIH_Status::format_db_date($bid->bid_time, ' A'); ?></span>
                         </td>
                         <td class="column-bidder">
                             <strong><?php echo esc_html(trim($bid->name_first . ' ' . $bid->name_last) ?: 'Unknown'); ?></strong>

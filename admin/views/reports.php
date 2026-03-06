@@ -87,7 +87,9 @@ $last_bid_time = $last_bid ? $last_bid->bid_time : null;
         <div class="aih-stat-card aih-last-bid-card">
             <span class="aih-stat-number"><?php 
                 if ($last_bid_time) {
-                    $time_diff = time() - strtotime($last_bid_time);
+                    $bid_dt = new DateTime($last_bid_time, wp_timezone());
+                    $now_dt = new DateTime('now', wp_timezone());
+                    $time_diff = $now_dt->getTimestamp() - $bid_dt->getTimestamp();
                     if ($time_diff < 60) {
                         echo __('Just now', 'art-in-heaven');
                     } elseif ($time_diff < 3600) {
@@ -103,7 +105,7 @@ $last_bid_time = $last_bid ? $last_bid->bid_time : null;
             ?></span>
             <span class="aih-stat-label"><?php _e('Last Bid', 'art-in-heaven'); ?></span>
             <?php if ($last_bid_time): ?>
-            <span class="aih-stat-detail"><?php echo date_i18n('M j, g:i a', strtotime($last_bid_time)); ?></span>
+            <span class="aih-stat-detail"><?php echo AIH_Status::format_db_date($last_bid_time, 'M j, g:i a'); ?></span>
             <?php endif; ?>
         </div>
     </div>
