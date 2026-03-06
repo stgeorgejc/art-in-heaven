@@ -558,10 +558,11 @@ jQuery(document).ready(function($) {
             },
             success: function(response) {
                 if (response.success) {
-                    alert(response.data.message);
-                    location.reload();
+                    aihModal.alert(response.data.message).then(function() {
+                        location.reload();
+                    });
                 } else {
-                    alert(response.data.message);
+                    aihModal.alert(response.data.message);
                 }
             }
         });
@@ -590,8 +591,8 @@ jQuery(document).ready(function($) {
     });
 
     // Delete order
-    $('.aih-delete-order').on('click', function() {
-        if (!confirm(aihAdmin.strings.confirmDeleteOrder)) return;
+    $('.aih-delete-order').on('click', async function() {
+        if (!(await aihModal.confirm(aihAdmin.strings.confirmDeleteOrder, { variant: 'danger' }))) return;
 
         var $btn = $(this);
         var $row = $btn.closest('tr');
@@ -608,7 +609,7 @@ jQuery(document).ready(function($) {
                 if (response.success) {
                     $row.fadeOut(300, function() { $(this).remove(); });
                 } else {
-                    alert(response.data.message);
+                    aihModal.alert(response.data.message);
                 }
             }
         });
@@ -666,7 +667,7 @@ jQuery(document).ready(function($) {
         var pickupNotes = $('#pickup-notes').val().trim();
 
         if (!pickupBy) {
-            alert('<?php echo esc_js(__("Please enter your name", "art-in-heaven")); ?>');
+            aihModal.alert('<?php echo esc_js(__("Please enter your name", "art-in-heaven")); ?>');
             $('#pickup-by').focus();
             return;
         }
@@ -684,11 +685,11 @@ jQuery(document).ready(function($) {
             if (response.success) {
                 location.reload();
             } else {
-                alert(response.data ? response.data.message : '<?php echo esc_js(__("Error updating pickup status", "art-in-heaven")); ?>');
+                aihModal.alert(response.data ? response.data.message : '<?php echo esc_js(__("Error updating pickup status", "art-in-heaven")); ?>');
                 $btn.prop('disabled', false).html('<span class="dashicons dashicons-yes" style="margin-right: 5px;"></span> <?php echo esc_js(__("Confirm Pickup", "art-in-heaven")); ?>');
             }
         }).fail(function() {
-            alert('<?php echo esc_js(__("Request failed. Check your network connection and try again.", "art-in-heaven")); ?>');
+            aihModal.alert('<?php echo esc_js(__("Request failed. Check your network connection and try again.", "art-in-heaven")); ?>');
             $btn.prop('disabled', false).html('<span class="dashicons dashicons-yes" style="margin-right: 5px;"></span> <?php echo esc_js(__("Confirm Pickup", "art-in-heaven")); ?>');
         });
     });
@@ -702,11 +703,11 @@ jQuery(document).ready(function($) {
     });
 
     // Undo pickup
-    $('.aih-undo-pickup-btn').on('click', function() {
+    $('.aih-undo-pickup-btn').on('click', async function() {
         var $btn = $(this);
         var orderId = $btn.data('order-id');
 
-        if (!confirm('<?php echo esc_js(__("Undo pickup status for this order?", "art-in-heaven")); ?>')) {
+        if (!(await aihModal.confirm('<?php echo esc_js(__("Undo pickup status for this order?", "art-in-heaven")); ?>'))) {
             return;
         }
 
@@ -721,11 +722,11 @@ jQuery(document).ready(function($) {
             if (response.success) {
                 location.reload();
             } else {
-                alert(response.data ? response.data.message : '<?php echo esc_js(__("Error updating pickup status", "art-in-heaven")); ?>');
+                aihModal.alert(response.data ? response.data.message : '<?php echo esc_js(__("Error updating pickup status", "art-in-heaven")); ?>');
                 $btn.prop('disabled', false).html('<span class="dashicons dashicons-undo" style="margin-right: 5px;"></span> <?php echo esc_js(__("Undo Pickup", "art-in-heaven")); ?>');
             }
         }).fail(function() {
-            alert('<?php echo esc_js(__("Request failed. Check your network connection and try again.", "art-in-heaven")); ?>');
+            aihModal.alert('<?php echo esc_js(__("Request failed. Check your network connection and try again.", "art-in-heaven")); ?>');
             $btn.prop('disabled', false).html('<span class="dashicons dashicons-undo" style="margin-right: 5px;"></span> <?php echo esc_js(__("Undo Pickup", "art-in-heaven")); ?>');
         });
     });

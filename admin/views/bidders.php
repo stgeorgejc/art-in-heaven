@@ -245,8 +245,8 @@ if ($current_tab === 'not_logged_in') {
 
 <script>
 jQuery(document).ready(function($) {
-    $('#aih-sync-now').on('click', function() {
-        if (!confirm('<?php echo esc_js(__('Sync all registrants from the CCB API?', 'art-in-heaven')); ?>')) return;
+    $('#aih-sync-now').on('click', async function() {
+        if (!(await aihModal.confirm('<?php echo esc_js(__('Sync all registrants from the CCB API?', 'art-in-heaven')); ?>'))) return;
 
         var $btn = $(this).prop('disabled', true).html('<span class="dashicons dashicons-update spin"></span> <?php echo esc_js(__('Syncing...', 'art-in-heaven')); ?>');
         var $result = $('#aih-sync-result').html('<div class="notice notice-info"><p><?php echo esc_js(__('Fetching data from API...', 'art-in-heaven')); ?></p></div>');

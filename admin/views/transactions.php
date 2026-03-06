@@ -430,14 +430,13 @@ jQuery(document).ready(function($) {
         }, function(response) {
             $btn.prop('disabled', false).html(originalHtml);
             if (response.success) {
-                alert(response.data.message);
-                location.reload();
+                aihModal.alert(response.data.message).then(function() { location.reload(); });
             } else {
-                alert('Error: ' + (response.data ? response.data.message : 'Sync failed'));
+                aihModal.alert('Error: ' + (response.data ? response.data.message : 'Sync failed'));
             }
         }).fail(function() {
             $btn.prop('disabled', false).html(originalHtml);
-            alert('<?php echo esc_js(__('Sync request failed. Check your network connection and PushPay API settings.', 'art-in-heaven')); ?>');
+            aihModal.alert('<?php echo esc_js(__('Sync request failed. Check your network connection and PushPay API settings.', 'art-in-heaven')); ?>');
         });
     });
 
@@ -452,13 +451,13 @@ jQuery(document).ready(function($) {
         }, function(response) {
             $btn.prop('disabled', false);
             if (response.success) {
-                alert('✓ ' + response.data.message);
+                aihModal.alert('✓ ' + response.data.message);
             } else {
-                alert('✗ ' + (response.data ? response.data.message : 'Connection failed'));
+                aihModal.alert('✗ ' + (response.data ? response.data.message : 'Connection failed'));
             }
         }).fail(function() {
             $btn.prop('disabled', false);
-            alert('<?php echo esc_js(__('Connection test failed. Check your network connection and API credentials.', 'art-in-heaven')); ?>');
+            aihModal.alert('<?php echo esc_js(__('Connection test failed. Check your network connection and API credentials.', 'art-in-heaven')); ?>');
         });
     });
 
@@ -516,7 +515,7 @@ jQuery(document).ready(function($) {
         var orderId = $('#aih-match-order-select').val();
 
         if (!orderId) {
-            alert('<?php echo esc_js(__('Please select an order', 'art-in-heaven')); ?>');
+            aihModal.alert('<?php echo esc_js(__('Please select an order', 'art-in-heaven')); ?>');
             return;
         }
 
@@ -531,10 +530,9 @@ jQuery(document).ready(function($) {
         }, function(response) {
             $btn.prop('disabled', false).text('<?php echo esc_js(__('Match', 'art-in-heaven')); ?>');
             if (response.success) {
-                alert(response.data.message);
-                location.reload();
+                aihModal.alert(response.data.message).then(function() { location.reload(); });
             } else {
-                alert('Error: ' + (response.data ? response.data.message : 'Failed to match'));
+                aihModal.alert('Error: ' + (response.data ? response.data.message : 'Failed to match'));
             }
         });
     });

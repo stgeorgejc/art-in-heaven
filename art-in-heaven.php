@@ -1116,7 +1116,16 @@ class Art_In_Heaven {
         wp_enqueue_media();
         $css_ver = AIH_VERSION . '.' . filemtime($this->get_asset_path('assets/css/aih-admin.css'));
         wp_enqueue_style('aih-admin', $this->get_asset_url('assets/css/aih-admin.css'), array(), $css_ver);
-        wp_enqueue_script('aih-admin', $this->get_asset_url('assets/js/aih-admin.js'), array('jquery', 'jquery-ui-datepicker', 'jquery-ui-sortable'), AIH_VERSION, true);
+        wp_enqueue_script('aih-admin-modal', $this->get_asset_url('assets/js/aih-admin-modal.js'), array('jquery'), AIH_VERSION, true);
+        wp_localize_script('aih-admin-modal', 'aihModal', array(
+            'i18n' => array(
+                'ok'      => __('OK', 'art-in-heaven'),
+                'cancel'  => __('Cancel', 'art-in-heaven'),
+                'confirm' => __('Confirm', 'art-in-heaven'),
+                'delete'  => __('Delete', 'art-in-heaven'),
+            )
+        ));
+        wp_enqueue_script('aih-admin', $this->get_asset_url('assets/js/aih-admin.js'), array('jquery', 'jquery-ui-datepicker', 'jquery-ui-sortable', 'aih-admin-modal'), AIH_VERSION, true);
 
         // Chart.js for engagement stats page
         if (strpos($hook, 'art-in-heaven-stats') !== false) {

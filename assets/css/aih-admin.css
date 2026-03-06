@@ -1251,6 +1251,32 @@ button.aih-action-btn .dashicons {
     margin-top: var(--aih-space-lg);
 }
 
+/* Dialog utility (accessible alert/confirm replacement) */
+.aih-dialog .aih-dialog-message {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--aih-text);
+    white-space: pre-line;
+}
+
+.aih-dialog .aih-modal-footer {
+    gap: var(--aih-space-sm);
+}
+
+.aih-btn-danger {
+    background: var(--aih-error) !important;
+    border-color: var(--aih-error) !important;
+    color: #fff !important;
+}
+
+.aih-btn-danger:hover,
+.aih-btn-danger:focus {
+    background: #8b3234 !important;
+    border-color: #8b3234 !important;
+    color: #fff !important;
+}
+
 /* ============================================
    NOTICES
    ============================================ */
