@@ -439,6 +439,13 @@ class AIH_Pushpay_API {
                 if (defined('WP_DEBUG') && WP_DEBUG) error_log('Pushpay sync: ' . count($payments) . ' payments after fund filter.');
             }
 
+            // If all payments were filtered out for this page, skip batch processing
+            // so we don't build an empty IN () clause or call $wpdb->prepare() with no parameters.
+            if (empty($payments)) {
+                if (defined('WP_DEBUG') && WP_DEBUG) error_log('Pushpay sync: no payments remaining after fund filter; skipping batch prefetch for this page.');
+                continue;
+            }
+
             // --- Batch pre-fetch existing transactions (1 query instead of N) ---
             $payment_tokens = array_map(function($p) { return $p['paymentToken']; }, $payments);
             $token_placeholders = implode(',', array_fill(0, count($payment_tokens), '%s'));
@@ -458,6 +465,10 @@ class AIH_Pushpay_API {
                 if ($row->order_id !== null) {
                     $linked_order_ids[] = (int) $row->order_id;
                 }
+            }
+            // Remove duplicate order IDs to keep the IN query as small as possible.
+            if (!empty($linked_order_ids)) {
+                $linked_order_ids = array_values(array_unique($linked_order_ids, SORT_NUMERIC));
             }
             $linked_orders_map = array();
             if (!empty($linked_order_ids)) {
@@ -492,7 +503,7 @@ class AIH_Pushpay_API {
                 $on_placeholders = implode(',', array_fill(0, count($unique_order_numbers), '%s'));
                 /** @var list<object{id: string, order_number: string, payment_status: string, payment_reference: string}> $order_rows */
                 $order_rows = $wpdb->get_results($wpdb->prepare(
-                    "SELECT * FROM {$orders_table} WHERE order_number IN ($on_placeholders)",
+                    "SELECT id, order_number, payment_status, payment_reference FROM {$orders_table} WHERE order_number IN ($on_placeholders)",
                     ...$unique_order_numbers
                 ));
                 foreach ($order_rows as $row) {

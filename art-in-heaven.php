@@ -111,9 +111,12 @@ class Art_In_Heaven {
 
         echo '<div class="notice notice-warning is-dismissible"><p>';
         echo '<strong>' . esc_html__('Art in Heaven:', 'art-in-heaven') . '</strong> ';
-        echo esc_html__('Pushpay auto-sync is enabled but DISABLE_WP_CRON is not set. WordPress cron tasks run on page loads, which can block visitor requests during sync. Add', 'art-in-heaven');
-        echo ' <code>define(\'DISABLE_WP_CRON\', true);</code> ';
-        echo esc_html__('to wp-config.php and configure a system cron job instead.', 'art-in-heaven');
+        /* translators: 1: Example wp-config.php constant definition for DISABLE_WP_CRON. */
+        $message = sprintf(
+            esc_html__('Pushpay auto-sync is enabled but DISABLE_WP_CRON is not set. WordPress cron tasks run on page loads, which can block visitor requests during sync. Add %1$s to wp-config.php and configure a system cron job instead.', 'art-in-heaven'),
+            '<code>define(\'DISABLE_WP_CRON\', true);</code>'
+        );
+        echo wp_kses_post($message);
         echo '</p></div>';
     }
     
