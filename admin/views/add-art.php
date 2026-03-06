@@ -514,22 +514,22 @@ jQuery(document).ready(function($) {
                             $list.show();
                             $noImages.hide();
                         } else {
-                            alert(response.data.message || 'Error adding image');
+                            aihModal.alert(response.data.message || 'Error adding image');
                         }
                     },
                     error: function(xhr, status, error) {
                         uploadCount++;
-                        alert('Error: ' + error);
+                        aihModal.alert('Error: ' + error);
                     }
                 });
             });
         });
-        
+
         mediaUploader.open();
     });
     
     // Remove image (edit mode)
-    $(document).on('click', '.aih-remove-image', function(e) {
+    $(document).on('click', '.aih-remove-image', async function(e) {
         e.preventDefault();
         var $btn = $(this);
         var $item = $btn.closest('.aih-image-item');
@@ -538,11 +538,11 @@ jQuery(document).ready(function($) {
         console.log('AIH: Removing image record ID:', imageRecordId);
         
         if (!imageRecordId) {
-            alert('Error: No image ID found');
+            aihModal.alert('Error: No image ID found');
             return;
         }
         
-        if (!confirm('<?php echo esc_js(__('Remove this image?', 'art-in-heaven')); ?>')) {
+        if (!(await aihModal.confirm('<?php echo esc_js(__('Remove this image?', 'art-in-heaven')); ?>', { variant: 'danger' }))) {
             return;
         }
         
@@ -578,13 +578,13 @@ jQuery(document).ready(function($) {
                         }
                     });
                 } else {
-                    alert(response.data.message || 'Error removing image');
+                    aihModal.alert(response.data.message || 'Error removing image');
                     $btn.prop('disabled', false).text('×');
                 }
             },
             error: function(xhr, status, error) {
                 console.error('AIH: Remove image error:', error, xhr.responseText);
-                alert('Error: ' + error);
+                aihModal.alert('Error: ' + error);
                 $btn.prop('disabled', false).text('×');
             }
         });
@@ -712,19 +712,21 @@ jQuery(document).ready(function($) {
                     
                     // If this was a new piece, reload to show image uploader
                     if (!artPieceId && response.data.id) {
-                        alert(msg + '\n\n<?php echo esc_js(__('You can now add images.', 'art-in-heaven')); ?>');
-                        window.location.href = '<?php echo esc_url(admin_url('admin.php?page=art-in-heaven-art&action=edit&id=')); ?>' + response.data.id;
+                        aihModal.alert(msg + '\n\n<?php echo esc_js(__('You can now add images.', 'art-in-heaven')); ?>').then(function() {
+                            window.location.href = '<?php echo esc_url(admin_url('admin.php?page=art-in-heaven-art&action=edit&id=')); ?>' + response.data.id;
+                        });
                     } else {
-                        alert(msg);
-                        window.location.href = '<?php echo esc_url(admin_url('admin.php?page=art-in-heaven-art')); ?>';
+                        aihModal.alert(msg).then(function() {
+                            window.location.href = '<?php echo esc_url(admin_url('admin.php?page=art-in-heaven-art')); ?>';
+                        });
                     }
                 } else {
-                    alert(response.data.message || aihAdmin.strings.saveError || 'Error saving.');
+                    aihModal.alert(response.data.message || aihAdmin.strings.saveError || 'Error saving.');
                     $submitBtn.prop('disabled', false).text(originalText);
                 }
             },
             error: function(xhr, status, error) {
-                alert(aihAdmin.strings.saveError || 'Error saving: ' + error);
+                aihModal.alert(aihAdmin.strings.saveError || 'Error saving: ' + error);
                 $submitBtn.prop('disabled', false).text(originalText);
             }
         });

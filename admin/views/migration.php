@@ -123,8 +123,8 @@ rsort($years);
 
 <script>
 jQuery(document).ready(function($) {
-    $('#aih-migrate-btn').on('click', function() {
-        if (!confirm('<?php echo esc_js(__('This will copy data to the target year. Continue?', 'art-in-heaven')); ?>')) return;
+    $('#aih-migrate-btn').on('click', async function() {
+        if (!await aihModal.confirm('<?php echo esc_js(__('This will copy data to the target year. Continue?', 'art-in-heaven')); ?>')) return;
 
         var $btn = $(this).prop('disabled', true);
         var $result = $('#aih-migrate-result').text('Migrating...');
@@ -157,8 +157,8 @@ jQuery(document).ready(function($) {
         });
     });
 
-    $('.aih-switch-year').on('click', function() {
-        if (!confirm('<?php echo esc_js(__('Switch to this year? You will need to save settings.', 'art-in-heaven')); ?>')) return;
+    $('.aih-switch-year').on('click', async function() {
+        if (!await aihModal.confirm('<?php echo esc_js(__('Switch to this year? You will need to save settings.', 'art-in-heaven')); ?>')) return;
         var year = parseInt($(this).data('year'), 10);
         if (isNaN(year) || year < 2020 || year > 2099) return;
         window.location.href = '<?php echo esc_url(admin_url('admin.php?page=art-in-heaven-settings')); ?>&switch_year=' + year;

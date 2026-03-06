@@ -508,8 +508,8 @@ jQuery(document).ready(function($) {
     });
     
     // Sync Bidders from CCB
-    $('#aih-sync-bidders').on('click', function() {
-        if (!confirm('<?php echo esc_js(__('This will fetch all registrants from the CCB API and save them to the local database. Continue?', 'art-in-heaven')); ?>')) return;
+    $('#aih-sync-bidders').on('click', async function() {
+        if (!await aihModal.confirm('<?php echo esc_js(__('This will fetch all registrants from the CCB API and save them to the local database. Continue?', 'art-in-heaven')); ?>')) return;
         
         var $btn = $(this).prop('disabled', true).text('<?php echo esc_js(__('Syncing...', 'art-in-heaven')); ?>');
         var $result = $('#aih-api-test-result').html('<span style="color:#666;"><?php echo esc_js(__('Fetching registrants...', 'art-in-heaven')); ?></span>');
@@ -791,8 +791,9 @@ jQuery(document).ready(function($) {
 
         if (hasCredentials && $('#aih_pushpay_fund').val().trim() === '') {
             e.preventDefault();
-            alert('<?php echo esc_js(__('Fund/Category is required when Pushpay payment processing is configured.', 'art-in-heaven')); ?>');
-            $('#aih_pushpay_fund').focus();
+            aihModal.alert('<?php echo esc_js(__('Fund/Category is required when Pushpay payment processing is configured.', 'art-in-heaven')); ?>').then(function() {
+                $('#aih_pushpay_fund').focus();
+            });
             return false;
         }
     });

@@ -693,12 +693,12 @@ jQuery(document).ready(function($) {
                     $cell.css('background', '#d1fae5');
                     setTimeout(function() { $cell.css('background', ''); }, 500);
                 } else {
-                    alert(r.data ? r.data.message : 'Error saving');
+                    aihModal.alert(r.data ? r.data.message : 'Error saving');
                     $cell.find('.aih-edit-confirm').text('✓').prop('disabled', false);
                 }
             },
             error: function() {
-                alert('Request failed');
+                aihModal.alert('Request failed');
                 $cell.find('.aih-edit-confirm').text('✓').prop('disabled', false);
             }
         });
@@ -834,21 +834,20 @@ jQuery(document).ready(function($) {
         
         var ids = $('.aih-art-checkbox:checked').map(function() { return $(this).val(); }).get();
         var newTime = $('#aih-bulk-datetime').val();
-        if (!newTime) { alert('Select a date/time.'); return; }
-        
+        if (!newTime) { aihModal.alert('Select a date/time.'); return; }
+
         $btn.prop('disabled', true).text('<?php echo esc_js(__('Updating...', 'art-in-heaven')); ?>');
-        
+
         $.post(aihAdmin.ajaxurl, { action: 'aih_admin_bulk_update_times', nonce: aihAdmin.nonce, ids: ids, new_end_time: newTime.replace('T', ' ') + ':00' }, function(r) {
-            if (r.success) { 
+            if (r.success) {
                 $('#aih-bulk-time-modal').hide();
-                alert(r.data.message); 
-                location.reload(); 
-            } else { 
-                alert(r.data ? r.data.message : 'Error');
+                aihModal.alert(r.data.message).then(function() { location.reload(); });
+            } else {
+                aihModal.alert(r.data ? r.data.message : 'Error');
                 $btn.prop('disabled', false).text('<?php echo esc_js(__('Apply', 'art-in-heaven')); ?>');
             }
         }).fail(function() {
-            alert('Request failed');
+            aihModal.alert('Request failed');
             $btn.prop('disabled', false).text('<?php echo esc_js(__('Apply', 'art-in-heaven')); ?>');
         });
     });
@@ -859,42 +858,41 @@ jQuery(document).ready(function($) {
         
         var ids = $('.aih-art-checkbox:checked').map(function() { return $(this).val(); }).get();
         var newTime = $('#aih-bulk-start-datetime').val();
-        if (!newTime) { alert('Select a date/time.'); return; }
-        
+        if (!newTime) { aihModal.alert('Select a date/time.'); return; }
+
         $btn.prop('disabled', true).text('<?php echo esc_js(__('Updating...', 'art-in-heaven')); ?>');
-        
+
         $.post(aihAdmin.ajaxurl, { action: 'aih_admin_bulk_update_start_times', nonce: aihAdmin.nonce, ids: ids, new_start_time: newTime.replace('T', ' ') + ':00' }, function(r) {
-            if (r.success) { 
+            if (r.success) {
                 $('#aih-bulk-start-modal').hide();
-                alert(r.data.message); 
-                location.reload(); 
-            } else { 
-                alert(r.data ? r.data.message : 'Error');
+                aihModal.alert(r.data.message).then(function() { location.reload(); });
+            } else {
+                aihModal.alert(r.data ? r.data.message : 'Error');
                 $btn.prop('disabled', false).text('<?php echo esc_js(__('Apply', 'art-in-heaven')); ?>');
             }
         }).fail(function() {
-            alert('Request failed');
+            aihModal.alert('Request failed');
             $btn.prop('disabled', false).text('<?php echo esc_js(__('Apply', 'art-in-heaven')); ?>');
         });
     });
     
     // ========== BULK VISIBILITY ==========
     
-    $('#aih-bulk-show-end-btn').on('click', function() {
-        if (!confirm('<?php echo esc_js(__('Reveal end times for selected items?', 'art-in-heaven')); ?>')) return;
+    $('#aih-bulk-show-end-btn').on('click', async function() {
+        if (!(await aihModal.confirm('<?php echo esc_js(__('Reveal end times for selected items?', 'art-in-heaven')); ?>'))) return;
         var ids = $('.aih-art-checkbox:checked').map(function() { return $(this).val(); }).get();
         $.post(aihAdmin.ajaxurl, { action: 'aih_admin_bulk_show_end_time', nonce: aihAdmin.nonce, ids: ids, show: '1' }, function(r) {
-            if (r.success) { alert(r.data.message); location.reload(); }
-            else { alert(r.data ? r.data.message : 'Error'); }
+            if (r.success) { aihModal.alert(r.data.message).then(function() { location.reload(); }); }
+            else { aihModal.alert(r.data ? r.data.message : 'Error'); }
         });
     });
-    
-    $('#aih-bulk-hide-end-btn').on('click', function() {
-        if (!confirm('<?php echo esc_js(__('Hide end times for selected items?', 'art-in-heaven')); ?>')) return;
+
+    $('#aih-bulk-hide-end-btn').on('click', async function() {
+        if (!(await aihModal.confirm('<?php echo esc_js(__('Hide end times for selected items?', 'art-in-heaven')); ?>'))) return;
         var ids = $('.aih-art-checkbox:checked').map(function() { return $(this).val(); }).get();
         $.post(aihAdmin.ajaxurl, { action: 'aih_admin_bulk_show_end_time', nonce: aihAdmin.nonce, ids: ids, show: '0' }, function(r) {
-            if (r.success) { alert(r.data.message); location.reload(); }
-            else { alert(r.data ? r.data.message : 'Error'); }
+            if (r.success) { aihModal.alert(r.data.message).then(function() { location.reload(); }); }
+            else { aihModal.alert(r.data ? r.data.message : 'Error'); }
         });
     });
     
@@ -928,22 +926,22 @@ jQuery(document).ready(function($) {
                         $btn.closest('tr').find('.aih-vis-icon').remove();
                     }
                 } else {
-                    alert(r.data ? r.data.message : 'Error');
+                    aihModal.alert(r.data ? r.data.message : 'Error');
                 }
             },
             error: function() {
                 $btn.prop('disabled', false);
-                alert('Request failed');
+                aihModal.alert('Request failed');
             }
         });
     });
-    
+
     // ========== BULK DELETE ==========
 
-    $('#aih-bulk-delete-btn').on('click', function() {
+    $('#aih-bulk-delete-btn').on('click', async function() {
         var ids = $('.aih-art-checkbox:checked').map(function() { return $(this).val(); }).get();
         if (!ids.length) return;
-        if (!confirm('Delete ' + ids.length + ' selected art pieces? This cannot be undone.')) return;
+        if (!(await aihModal.confirm('Delete ' + ids.length + ' selected art pieces? This cannot be undone.', { variant: 'danger' }))) return;
         var $btn = $(this).prop('disabled', true).text('<?php echo esc_js(__('Deleting...', 'art-in-heaven')); ?>');
         var deleted = 0, failed = 0, total = ids.length;
         ids.forEach(function(id) {
@@ -951,8 +949,7 @@ jQuery(document).ready(function($) {
                 if (r.success) deleted++; else failed++;
             }).fail(function() { failed++; }).always(function() {
                 if (deleted + failed === total) {
-                    alert(deleted + ' deleted' + (failed ? ', ' + failed + ' failed' : ''));
-                    location.reload();
+                    aihModal.alert(deleted + ' deleted' + (failed ? ', ' + failed + ' failed' : '')).then(function() { location.reload(); });
                 }
             });
         });
@@ -960,12 +957,12 @@ jQuery(document).ready(function($) {
 
     // ========== DELETE ==========
 
-    $('.aih-delete-art').on('click', function() {
-        if (!confirm(aihAdmin.strings.confirmDelete)) return;
+    $('.aih-delete-art').on('click', async function() {
+        if (!(await aihModal.confirm(aihAdmin.strings.confirmDelete, { variant: 'danger' }))) return;
         var $row = $(this).closest('tr'), id = $(this).data('id');
         $.post(aihAdmin.ajaxurl, { action: 'aih_admin_delete_art', nonce: aihAdmin.nonce, id: id }, function(r) {
             if (r.success) { $row.fadeOut(300, function() { $(this).remove(); }); }
-            else { alert(r.data.message); }
+            else { aihModal.alert(r.data.message); }
         });
     });
 
@@ -1004,7 +1001,7 @@ jQuery(document).ready(function($) {
         var file = this.files[0];
         if (file) {
             if (file.size > 2 * 1024 * 1024) {
-                alert('<?php echo esc_js(__('File exceeds 2MB limit.', 'art-in-heaven')); ?>');
+                aihModal.alert('<?php echo esc_js(__('File exceeds 2MB limit.', 'art-in-heaven')); ?>');
                 $(this).val('');
                 $('#aih-import-submit').prop('disabled', true);
                 $('#aih-import-file-text').text('<?php echo esc_js(__('Choose CSV file (max 2MB)', 'art-in-heaven')); ?>');

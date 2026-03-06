@@ -344,16 +344,16 @@ jQuery(document).ready(function($) {
     var nonce = '<?php echo wp_create_nonce('aih_admin_nonce'); ?>';
     
     // Delete bid
-    $('.aih-delete-bid').on('click', function() {
+    $('.aih-delete-bid').on('click', async function() {
         var $btn = $(this);
         var bidId = $btn.data('bid-id');
         var bidder = $btn.data('bidder');
         var amount = $btn.data('amount');
-        
-        if (!confirm('<?php echo esc_js(__('Are you sure you want to delete this bid?', 'art-in-heaven')); ?>\n\n' + 
+
+        if (!(await aihModal.confirm('<?php echo esc_js(__('Are you sure you want to delete this bid?', 'art-in-heaven')); ?>\n\n' +
                      '<?php echo esc_js(__('Bidder:', 'art-in-heaven')); ?> ' + bidder + '\n' +
                      '<?php echo esc_js(__('Amount:', 'art-in-heaven')); ?> $' + amount + '\n\n' +
-                     '<?php echo esc_js(__('This action cannot be undone.', 'art-in-heaven')); ?>')) {
+                     '<?php echo esc_js(__('This action cannot be undone.', 'art-in-heaven')); ?>', { variant: 'danger' }))) {
             return;
         }
         
@@ -373,12 +373,12 @@ jQuery(document).ready(function($) {
                         $(this).remove();
                     });
                 } else {
-                    alert(response.data.message || '<?php echo esc_js(__('Error deleting bid.', 'art-in-heaven')); ?>');
+                    aihModal.alert(response.data.message || '<?php echo esc_js(__('Error deleting bid.', 'art-in-heaven')); ?>');
                     $btn.prop('disabled', false);
                 }
             },
             error: function() {
-                alert('<?php echo esc_js(__('Error deleting bid.', 'art-in-heaven')); ?>');
+                aihModal.alert('<?php echo esc_js(__('Error deleting bid.', 'art-in-heaven')); ?>');
                 $btn.prop('disabled', false);
             }
         });

@@ -113,8 +113,8 @@ jQuery(function($) {
         });
     }
 
-    function clearLogs() {
-        if (!confirm('<?php echo esc_js(__('Are you sure you want to clear the log file? This cannot be undone.', 'art-in-heaven')); ?>')) {
+    async function clearLogs() {
+        if (!await aihModal.confirm('<?php echo esc_js(__('Are you sure you want to clear the log file? This cannot be undone.', 'art-in-heaven')); ?>', { variant: 'danger' })) {
             return;
         }
         $.post(ajaxurl, {
