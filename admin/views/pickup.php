@@ -123,6 +123,7 @@ if (!empty($order_ids)) {
         'icon_bg'  => '#fef3c7',
         'icon_color' => '#d97706',
         'layout'   => 'horizontal',
+        'link'     => admin_url('admin.php?page=art-in-heaven-pickup&tab=ready'),
     ));
     AIH_Admin::render_stat_card(array(
         'value'    => (string) intval($picked_up_count),
@@ -131,6 +132,7 @@ if (!empty($order_ids)) {
         'icon_bg'  => '#d1fae5',
         'icon_color' => '#4a7c59',
         'layout'   => 'horizontal',
+        'link'     => admin_url('admin.php?page=art-in-heaven-pickup&tab=picked_up'),
     ));
     AIH_Admin::close_stat_grid();
     ?>

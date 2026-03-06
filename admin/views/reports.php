@@ -89,24 +89,29 @@ $last_bid_time = $last_bid ? $last_bid->bid_time : null;
     AIH_Admin::render_stat_card(array(
         'value' => number_format($stats->total_pieces),
         'label' => __('Total Art Pieces', 'art-in-heaven'),
+        'link'  => admin_url('admin.php?page=art-in-heaven-art&tab=all'),
     ));
     AIH_Admin::render_stat_card(array(
         'value' => number_format($stats->total_bids),
         'label' => __('Total Bids', 'art-in-heaven'),
+        'link'  => admin_url('admin.php?page=art-in-heaven-bids'),
     ));
     AIH_Admin::render_stat_card(array(
         'value' => number_format($stats->unique_bidders),
         'label' => __('Unique Bidders', 'art-in-heaven'),
+        'link'  => admin_url('admin.php?page=art-in-heaven-bidders&tab=logged_in_has_bids'),
     ));
     AIH_Admin::render_stat_card(array(
         'value' => '$' . number_format($bid_stats->total_bid_value ?: 0, 2),
         'label' => __('Total Winning Bid Value', 'art-in-heaven'),
+        'link'  => admin_url('admin.php?page=art-in-heaven-winners'),
     ));
     AIH_Admin::render_stat_card(array(
         'value'   => $last_bid_display,
         'label'   => __('Last Bid', 'art-in-heaven'),
         'detail'  => $last_bid_time ? AIH_Status::format_db_date($last_bid_time, 'M j, g:i a') : '',
         'variant' => 'last-bid',
+        'link'    => admin_url('admin.php?page=art-in-heaven-bids'),
     ));
     AIH_Admin::close_stat_grid();
     ?>

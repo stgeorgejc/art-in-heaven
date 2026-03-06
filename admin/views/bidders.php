@@ -98,6 +98,7 @@ if ($current_tab === 'not_logged_in') {
         'icon'       => 'dashicons-dismiss',
         'icon_color' => '#ef4444',
         'variant'    => 'danger',
+        'link'       => admin_url('admin.php?page=art-in-heaven-bidders&tab=not_logged_in'),
     ));
     AIH_Admin::render_stat_card(array(
         'value'      => number_format($logged_in_no_bids_count),
@@ -105,6 +106,7 @@ if ($current_tab === 'not_logged_in') {
         'icon'       => 'dashicons-clock',
         'icon_color' => '#f59e0b',
         'variant'    => 'warning',
+        'link'       => admin_url('admin.php?page=art-in-heaven-bidders&tab=logged_in_no_bids'),
     ));
     AIH_Admin::render_stat_card(array(
         'value'      => number_format($logged_in_has_bids_count),
@@ -112,6 +114,7 @@ if ($current_tab === 'not_logged_in') {
         'icon'       => 'dashicons-yes-alt',
         'icon_color' => '#10b981',
         'variant'    => 'success',
+        'link'       => admin_url('admin.php?page=art-in-heaven-bidders&tab=logged_in_has_bids'),
     ));
     AIH_Admin::render_stat_card(array(
         'value'      => number_format($all_registrants_count),
@@ -119,6 +122,7 @@ if ($current_tab === 'not_logged_in') {
         'icon'       => 'dashicons-groups',
         'icon_color' => '#6366f1',
         'variant'    => 'info',
+        'link'       => admin_url('admin.php?page=art-in-heaven-bidders&tab=all'),
     ));
     AIH_Admin::close_stat_grid();
     ?>

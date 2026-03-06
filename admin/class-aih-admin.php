@@ -959,7 +959,8 @@ class AIH_Admin {
      *     icon_color?: string,
      *     icon_bg?: string,
      *     variant?: string,
-     *     layout?: string
+     *     layout?: string,
+     *     link?: string
      * } $args Card configuration.
      * @return void
      */
@@ -975,6 +976,7 @@ class AIH_Admin {
             'icon_bg'    => '',
             'variant'    => '',
             'layout'     => 'vertical',
+            'link'       => '',
         );
         $args = wp_parse_args($args, $defaults);
 
@@ -1001,6 +1003,12 @@ class AIH_Admin {
         );
         if ($args['variant'] !== '' && isset($variant_map[$args['variant']])) {
             $classes[] = $variant_map[$args['variant']];
+        }
+
+        $has_link = (is_string($args['link']) && $args['link'] !== '');
+        if ($has_link) {
+            $classes[] = 'aih-stat-card--linked';
+            echo '<a href="' . esc_url($args['link']) . '" class="aih-stat-card-link">';
         }
 
         echo '<div class="' . esc_attr(implode(' ', $classes)) . '">';
@@ -1068,5 +1076,9 @@ class AIH_Admin {
         }
 
         echo '</div>'; // .aih-stat-card
+
+        if ($has_link) {
+            echo '</a>';
+        }
     }
 }
