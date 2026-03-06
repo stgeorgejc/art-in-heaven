@@ -23,7 +23,7 @@ class EngagementMetricsTest extends TestCase
         Monkey\setUp();
 
         Functions\stubs([
-            'sanitize_text_field' => function ($v) { return $v; },
+            'sanitize_text_field' => fn(string $v): string => $v,
         ]);
     }
 
@@ -40,28 +40,12 @@ class EngagementMetricsTest extends TestCase
      */
     public function testPushPermissionLogsGranted(): void
     {
-        $loggedEvent = null;
+        $result = $this->runPushPermissionLogic(true, 'granted', 'bell');
 
-        Functions\expect('check_ajax_referer')
-            ->once()
-            ->with('aih_frontend_nonce', 'nonce')
-            ->andReturn(true);
-
-        Functions\expect('wp_send_json_success')
-            ->once();
-
-        $this->runPushPermissionLogic(
-            true,
-            'granted',
-            'bell',
-            function ($event_type, $data) use (&$loggedEvent) {
-                $loggedEvent = ['event_type' => $event_type, 'data' => $data];
-            }
-        );
-
-        $this->assertNotNull($loggedEvent);
-        $this->assertSame('push_permission_granted', $loggedEvent['event_type']);
-        $this->assertSame('bell', $loggedEvent['data']['details']['source']);
+        $this->assertNotNull($result['audit']);
+        $this->assertSame('push_permission_granted', $result['audit']['event_type']);
+        $this->assertSame('bell', $result['audit']['data']['details']['source']);
+        $this->assertTrue($result['success']);
     }
 
     /**
@@ -69,27 +53,12 @@ class EngagementMetricsTest extends TestCase
      */
     public function testPushPermissionLogsDenied(): void
     {
-        $loggedEvent = null;
+        $result = $this->runPushPermissionLogic(true, 'denied', 'after_bid');
 
-        Functions\expect('check_ajax_referer')
-            ->once()
-            ->andReturn(true);
-
-        Functions\expect('wp_send_json_success')
-            ->once();
-
-        $this->runPushPermissionLogic(
-            true,
-            'denied',
-            'after_bid',
-            function ($event_type, $data) use (&$loggedEvent) {
-                $loggedEvent = ['event_type' => $event_type, 'data' => $data];
-            }
-        );
-
-        $this->assertNotNull($loggedEvent);
-        $this->assertSame('push_permission_denied', $loggedEvent['event_type']);
-        $this->assertSame('after_bid', $loggedEvent['data']['details']['source']);
+        $this->assertNotNull($result['audit']);
+        $this->assertSame('push_permission_denied', $result['audit']['event_type']);
+        $this->assertSame('after_bid', $result['audit']['data']['details']['source']);
+        $this->assertTrue($result['success']);
     }
 
     /**
@@ -97,26 +66,11 @@ class EngagementMetricsTest extends TestCase
      */
     public function testPushPermissionRejectsInvalidValue(): void
     {
-        $errorResponse = null;
+        $result = $this->runPushPermissionLogic(true, 'invalid_value', 'bell');
 
-        Functions\expect('check_ajax_referer')
-            ->once()
-            ->andReturn(true);
-
-        Functions\expect('wp_send_json_error')
-            ->once()
-            ->andReturnUsing(function ($data) use (&$errorResponse) {
-                $errorResponse = $data;
-            });
-
-        $this->runPushPermissionLogic(
-            true,
-            'invalid_value',
-            'bell',
-            function () { $this->fail('Should not log audit for invalid value'); }
-        );
-
-        $this->assertSame('Invalid permission value', $errorResponse['message']);
+        $this->assertNull($result['audit']);
+        $this->assertFalse($result['success']);
+        $this->assertSame('Invalid permission value', $result['error']);
     }
 
     /**
@@ -124,21 +78,11 @@ class EngagementMetricsTest extends TestCase
      */
     public function testPushPermissionRejectsUnauthenticated(): void
     {
-        $errorResponse = null;
+        $result = $this->runPushPermissionLogic(false, 'granted', 'bell');
 
-        Functions\expect('check_ajax_referer')
-            ->once()
-            ->andReturn(true);
-
-        Functions\expect('wp_send_json_error')
-            ->once()
-            ->andReturnUsing(function ($data) use (&$errorResponse) {
-                $errorResponse = $data;
-            });
-
-        $this->runPushPermissionLogic(false, 'granted', 'bell', function () {});
-
-        $this->assertSame('Not authenticated', $errorResponse['message']);
+        $this->assertNull($result['audit']);
+        $this->assertFalse($result['success']);
+        $this->assertSame('Not authenticated', $result['error']);
     }
 
     // ========== push_clicked handler ==========
@@ -148,28 +92,13 @@ class EngagementMetricsTest extends TestCase
      */
     public function testPushClickedLogsEvent(): void
     {
-        $loggedEvent = null;
+        $result = $this->runPushClickedLogic(true, 'outbid', 42);
 
-        Functions\expect('check_ajax_referer')
-            ->once()
-            ->andReturn(true);
-
-        Functions\expect('wp_send_json_success')
-            ->once();
-
-        $this->runPushClickedLogic(
-            true,
-            'outbid',
-            42,
-            function ($event_type, $data) use (&$loggedEvent) {
-                $loggedEvent = ['event_type' => $event_type, 'data' => $data];
-            }
-        );
-
-        $this->assertNotNull($loggedEvent);
-        $this->assertSame('push_clicked', $loggedEvent['event_type']);
-        $this->assertSame(42, $loggedEvent['data']['object_id']);
-        $this->assertSame('outbid', $loggedEvent['data']['details']['notification_type']);
+        $this->assertNotNull($result['audit']);
+        $this->assertSame('push_clicked', $result['audit']['event_type']);
+        $this->assertSame(42, $result['audit']['data']['object_id']);
+        $this->assertSame('outbid', $result['audit']['data']['details']['notification_type']);
+        $this->assertTrue($result['success']);
     }
 
     /**
@@ -177,26 +106,11 @@ class EngagementMetricsTest extends TestCase
      */
     public function testPushClickedLogsWinnerType(): void
     {
-        $loggedEvent = null;
+        $result = $this->runPushClickedLogic(true, 'winner', 99);
 
-        Functions\expect('check_ajax_referer')
-            ->once()
-            ->andReturn(true);
-
-        Functions\expect('wp_send_json_success')
-            ->once();
-
-        $this->runPushClickedLogic(
-            true,
-            'winner',
-            99,
-            function ($event_type, $data) use (&$loggedEvent) {
-                $loggedEvent = ['event_type' => $event_type, 'data' => $data];
-            }
-        );
-
-        $this->assertSame('winner', $loggedEvent['data']['details']['notification_type']);
-        $this->assertSame(99, $loggedEvent['data']['details']['art_piece_id']);
+        $this->assertNotNull($result['audit']);
+        $this->assertSame('winner', $result['audit']['data']['details']['notification_type']);
+        $this->assertSame(99, $result['audit']['data']['details']['art_piece_id']);
     }
 
     /**
@@ -204,21 +118,11 @@ class EngagementMetricsTest extends TestCase
      */
     public function testPushClickedRejectsUnauthenticated(): void
     {
-        $errorResponse = null;
+        $result = $this->runPushClickedLogic(false, 'outbid', 1);
 
-        Functions\expect('check_ajax_referer')
-            ->once()
-            ->andReturn(true);
-
-        Functions\expect('wp_send_json_error')
-            ->once()
-            ->andReturnUsing(function ($data) use (&$errorResponse) {
-                $errorResponse = $data;
-            });
-
-        $this->runPushClickedLogic(false, 'outbid', 1, function () {});
-
-        $this->assertSame('Not authenticated', $errorResponse['message']);
+        $this->assertNull($result['audit']);
+        $this->assertFalse($result['success']);
+        $this->assertSame('Not authenticated', $result['error']);
     }
 
     // ========== bid_source attribution ==========
@@ -228,9 +132,10 @@ class EngagementMetricsTest extends TestCase
      */
     public function testBidSourceDefaultsToOrganic(): void
     {
-        $_POST = [];
+        /** @var array<string, string> $post */
+        $post = [];
 
-        $source = isset($_POST['bid_source']) ? sanitize_text_field($_POST['bid_source']) : 'organic';
+        $source = \array_key_exists('bid_source', $post) ? sanitize_text_field($post['bid_source']) : 'organic';
 
         $this->assertSame('organic', $source);
     }
@@ -240,9 +145,10 @@ class EngagementMetricsTest extends TestCase
      */
     public function testBidSourceCapturedFromPost(): void
     {
-        $_POST = ['bid_source' => 'push'];
+        /** @var array<string, string> $post */
+        $post = ['bid_source' => 'push'];
 
-        $source = isset($_POST['bid_source']) ? sanitize_text_field($_POST['bid_source']) : 'organic';
+        $source = \array_key_exists('bid_source', $post) ? sanitize_text_field($post['bid_source']) : 'organic';
 
         $this->assertSame('push', $source);
     }
@@ -252,10 +158,11 @@ class EngagementMetricsTest extends TestCase
      */
     public function testBidSourceWhitelistsUnknownValues(): void
     {
-        $_POST = ['bid_source' => 'evil_value'];
+        /** @var array<string, string> $post */
+        $post = ['bid_source' => 'evil_value'];
 
-        $source = isset($_POST['bid_source']) ? sanitize_text_field($_POST['bid_source']) : 'organic';
-        if (!in_array($source, ['organic', 'push'], true)) {
+        $source = \array_key_exists('bid_source', $post) ? sanitize_text_field($post['bid_source']) : 'organic';
+        if (!\in_array($source, ['organic', 'push'], true)) {
             $source = 'organic';
         }
 
@@ -269,22 +176,10 @@ class EngagementMetricsTest extends TestCase
      */
     public function testPermissionSourceDefaultsToBell(): void
     {
-        $loggedEvent = null;
+        $result = $this->runPushPermissionLogic(true, 'granted', '');
 
-        Functions\expect('check_ajax_referer')->once()->andReturn(true);
-        Functions\expect('wp_send_json_success')->once();
-
-        // Pass empty string to simulate missing source
-        $this->runPushPermissionLogic(
-            true,
-            'granted',
-            '',
-            function ($event_type, $data) use (&$loggedEvent) {
-                $loggedEvent = $data;
-            }
-        );
-
-        $this->assertSame('bell', $loggedEvent['details']['source']);
+        $this->assertNotNull($result['audit']);
+        $this->assertSame('bell', $result['audit']['data']['details']['source']);
     }
 
     /**
@@ -292,21 +187,10 @@ class EngagementMetricsTest extends TestCase
      */
     public function testPermissionSourceWhitelistsUnknown(): void
     {
-        $loggedEvent = null;
+        $result = $this->runPushPermissionLogic(true, 'granted', 'malicious_source');
 
-        Functions\expect('check_ajax_referer')->once()->andReturn(true);
-        Functions\expect('wp_send_json_success')->once();
-
-        $this->runPushPermissionLogic(
-            true,
-            'granted',
-            'malicious_source',
-            function ($event_type, $data) use (&$loggedEvent) {
-                $loggedEvent = $data;
-            }
-        );
-
-        $this->assertSame('other', $loggedEvent['details']['source']);
+        $this->assertNotNull($result['audit']);
+        $this->assertSame('other', $result['audit']['data']['details']['source']);
     }
 
     /**
@@ -314,39 +198,29 @@ class EngagementMetricsTest extends TestCase
      */
     public function testPushClickedNormalizesUnknownNotificationType(): void
     {
-        $loggedEvent = null;
+        $result = $this->runPushClickedLogic(true, 'evil_type', 42);
 
-        Functions\expect('check_ajax_referer')->once()->andReturn(true);
-        Functions\expect('wp_send_json_success')->once();
-
-        $this->runPushClickedLogic(
-            true,
-            'evil_type',
-            42,
-            function ($event_type, $data) use (&$loggedEvent) {
-                $loggedEvent = $data;
-            }
-        );
-
-        $this->assertSame('unknown', $loggedEvent['details']['notification_type']);
+        $this->assertNotNull($result['audit']);
+        $this->assertSame('unknown', $result['audit']['data']['details']['notification_type']);
     }
 
     // ========== HELPERS ==========
 
     /**
-     * Replicate push_permission handler logic.
+     * Replicate push_permission handler validation and audit logic.
+     *
+     * Returns structured result instead of calling wp_send_json_* to avoid
+     * PHPStan deadCode.unreachable errors (WP stubs declare those as @return never).
+     *
+     * @return array{success: bool, error: string|null, audit: array{event_type: string, data: array<string, mixed>}|null}
      */
     private function runPushPermissionLogic(
         bool $isLoggedIn,
         string $permission,
-        string $source,
-        callable $auditLogger
-    ): void {
-        check_ajax_referer('aih_frontend_nonce', 'nonce');
-
+        string $source
+    ): array {
         if (!$isLoggedIn) {
-            wp_send_json_error(['message' => 'Not authenticated']);
-            return;
+            return ['success' => false, 'error' => 'Not authenticated', 'audit' => null];
         }
 
         $sanitizedPermission = sanitize_text_field($permission);
@@ -354,56 +228,62 @@ class EngagementMetricsTest extends TestCase
         if (empty($sanitizedSource)) {
             $sanitizedSource = 'bell';
         }
-        if (!in_array($sanitizedSource, ['bell', 'after_bid'], true)) {
+        if (!\in_array($sanitizedSource, ['bell', 'after_bid'], true)) {
             $sanitizedSource = 'other';
         }
 
-        if (!in_array($sanitizedPermission, ['granted', 'denied'], true)) {
-            wp_send_json_error(['message' => 'Invalid permission value']);
-            return;
+        if (!\in_array($sanitizedPermission, ['granted', 'denied'], true)) {
+            return ['success' => false, 'error' => 'Invalid permission value', 'audit' => null];
         }
 
         $event_type = 'granted' === $sanitizedPermission ? 'push_permission_granted' : 'push_permission_denied';
 
-        $auditLogger($event_type, [
-            'bidder_id' => 'test-bidder',
-            'details'   => ['source' => $sanitizedSource],
-        ]);
-
-        wp_send_json_success();
+        return [
+            'success' => true,
+            'error'   => null,
+            'audit'   => [
+                'event_type' => $event_type,
+                'data'       => [
+                    'bidder_id' => 'test-bidder',
+                    'details'   => ['source' => $sanitizedSource],
+                ],
+            ],
+        ];
     }
 
     /**
-     * Replicate push_clicked handler logic.
+     * Replicate push_clicked handler validation and audit logic.
+     *
+     * @return array{success: bool, error: string|null, audit: array{event_type: string, data: array<string, mixed>}|null}
      */
     private function runPushClickedLogic(
         bool $isLoggedIn,
         string $notificationType,
-        int $artPieceId,
-        callable $auditLogger
-    ): void {
-        check_ajax_referer('aih_frontend_nonce', 'nonce');
-
+        int $artPieceId
+    ): array {
         if (!$isLoggedIn) {
-            wp_send_json_error(['message' => 'Not authenticated']);
-            return;
+            return ['success' => false, 'error' => 'Not authenticated', 'audit' => null];
         }
 
         $sanitizedType = sanitize_text_field($notificationType);
-        if (!in_array($sanitizedType, ['outbid', 'winner'], true)) {
+        if (!\in_array($sanitizedType, ['outbid', 'winner'], true)) {
             $sanitizedType = 'unknown';
         }
-        $sanitizedId = $artPieceId;
 
-        $auditLogger('push_clicked', [
-            'bidder_id' => 'test-bidder',
-            'object_id' => $sanitizedId,
-            'details'   => [
-                'notification_type' => $sanitizedType,
-                'art_piece_id'      => $sanitizedId,
+        return [
+            'success' => true,
+            'error'   => null,
+            'audit'   => [
+                'event_type' => 'push_clicked',
+                'data'       => [
+                    'bidder_id' => 'test-bidder',
+                    'object_id' => $artPieceId,
+                    'details'   => [
+                        'notification_type' => $sanitizedType,
+                        'art_piece_id'      => $artPieceId,
+                    ],
+                ],
             ],
-        ]);
-
-        wp_send_json_success();
+        ];
     }
 }

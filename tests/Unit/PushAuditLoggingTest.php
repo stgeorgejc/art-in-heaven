@@ -11,6 +11,77 @@ use Brain\Monkey\Functions;
 use PHPUnit\Framework\TestCase;
 
 /**
+ * Typed mock for $wpdb used in push audit logging tests.
+ */
+class PushAuditMockWpdb
+{
+    public string $prefix = 'wp_';
+    public string $last_error = '';
+    public int $insert_id = 1;
+
+    /** @var array<int, array{table: string, data: mixed}> */
+    public array $inserts = [];
+
+    /** @var array<int, object> */
+    private array $subscriptions;
+
+    private ?string $getVarReturn = null;
+    private ?object $getRowReturn = null;
+
+    /**
+     * @param array<int, object> $subscriptions
+     */
+    public function __construct(array $subscriptions = [])
+    {
+        $this->subscriptions = $subscriptions;
+    }
+
+    public function setGetVarReturn(?string $value): void
+    {
+        $this->getVarReturn = $value;
+    }
+
+    public function setGetRowReturn(?object $value): void
+    {
+        $this->getRowReturn = $value;
+    }
+
+    public function prepare(string $query, mixed ...$args): string
+    {
+        return $query;
+    }
+
+    /**
+     * @return array<int, object>
+     */
+    public function get_results(?string $query = null, ?string $output = null): array
+    {
+        return $this->subscriptions;
+    }
+
+    public function get_var(?string $query = null): ?string
+    {
+        return $this->getVarReturn;
+    }
+
+    public function get_row(?string $query = null, ?string $output = null, int $y = 0): ?object
+    {
+        return $this->getRowReturn;
+    }
+
+    /**
+     * @param string              $table
+     * @param array<string, mixed> $data
+     * @param array<string>|null   $format
+     */
+    public function insert(string $table, array $data, ?array $format = null): int
+    {
+        $this->inserts[] = ['table' => $table, 'data' => $data];
+        return 1;
+    }
+}
+
+/**
  * Tests for push notification audit logging in send_push()
  * and ref=push URL parameter additions.
  */
@@ -34,8 +105,8 @@ class PushAuditLoggingTest extends TestCase
         $year->setValue(null, null);
 
         Functions\stubs([
-            'sanitize_text_field' => function ($v) { return $v; },
-            'wp_date'             => fn() => '2026',
+            'sanitize_text_field' => fn(string $v): string => $v,
+            'wp_date'             => fn(): string => '2026',
         ]);
     }
 
@@ -51,7 +122,7 @@ class PushAuditLoggingTest extends TestCase
      */
     public function testSendPushNoAuditWhenNoSubscriptions(): void
     {
-        $wpdb = $this->createWpdb([], []);
+        $wpdb = new PushAuditMockWpdb();
         $GLOBALS['wpdb'] = $wpdb;
 
         $this->stubGetOption();
@@ -72,7 +143,7 @@ class PushAuditLoggingTest extends TestCase
      */
     public function testOutbidNotificationUrlIncludesRefPush(): void
     {
-        $wpdb = $this->createWpdb([], []);
+        $wpdb = new PushAuditMockWpdb();
         $wpdb->setGetVarReturn('outbid-bidder');
         $wpdb->setGetRowReturn((object) [
             'title'  => 'Test Art',
@@ -89,7 +160,7 @@ class PushAuditLoggingTest extends TestCase
         // Track add_query_arg calls
         $addQueryArgCalls = [];
         Functions\expect('add_query_arg')
-            ->andReturnUsing(function ($key, $value, $url) use (&$addQueryArgCalls) {
+            ->andReturnUsing(function (string $key, string $value, string $url) use (&$addQueryArgCalls): string {
                 $addQueryArgCalls[] = ['key' => $key, 'value' => $value, 'url' => $url];
                 return $url . '?ref=push';
             });
@@ -97,17 +168,16 @@ class PushAuditLoggingTest extends TestCase
         // Capture the shutdown action
         $shutdownCallback = null;
         Functions\expect('add_action')
-            ->andReturnUsing(function ($hook, $callback) use (&$shutdownCallback) {
+            ->andReturnUsing(function (string $hook, callable $callback) use (&$shutdownCallback): bool {
                 if ($hook === 'shutdown') {
                     $shutdownCallback = $callback;
                 }
                 return true;
             });
 
-        AIH_Push::get_instance()->handle_outbid_event(1, 100, 'new-bidder', '500.00');
+        AIH_Push::get_instance()->handle_outbid_event(1, 100, 'new-bidder', 500.00);
 
         $this->assertNotNull($shutdownCallback, 'Shutdown hook was registered');
-        $this->assertIsCallable($shutdownCallback, 'Shutdown callback should be callable');
         // Note: Invoking $shutdownCallback() would require mocking AIH_Template_Helper,
         // WebPush, fastcgi_finish_request, etc. The add_query_arg call happens inside the
         // closure which is verified by the shutdown hook registration + the ref=push URL
@@ -119,7 +189,7 @@ class PushAuditLoggingTest extends TestCase
      */
     public function testWinnerNotificationUrlIncludesRefPush(): void
     {
-        $wpdb = $this->createWpdb([], []);
+        $wpdb = new PushAuditMockWpdb();
         $GLOBALS['wpdb'] = $wpdb;
 
         $this->stubGetOption(true);
@@ -130,14 +200,14 @@ class PushAuditLoggingTest extends TestCase
 
         $addQueryArgCalls = [];
         Functions\expect('add_query_arg')
-            ->andReturnUsing(function ($key, $value, $url) use (&$addQueryArgCalls) {
+            ->andReturnUsing(function (string $key, string $value, string $url) use (&$addQueryArgCalls): string {
                 $addQueryArgCalls[] = ['key' => $key, 'value' => $value, 'url' => $url];
                 return $url . '?ref=push';
             });
 
         $shutdownCallback = null;
         Functions\expect('add_action')
-            ->andReturnUsing(function ($hook, $callback) use (&$shutdownCallback) {
+            ->andReturnUsing(function (string $hook, callable $callback) use (&$shutdownCallback): bool {
                 if ($hook === 'shutdown') {
                     $shutdownCallback = $callback;
                 }
@@ -181,7 +251,7 @@ class PushAuditLoggingTest extends TestCase
     private function stubGetOption(bool $pushEnabled = true): void
     {
         Functions\stubs([
-            'get_option' => function ($key, $default = false) use ($pushEnabled) {
+            'get_option' => function (string $key, mixed $default = false) use ($pushEnabled): mixed {
                 $options = [
                     'aih_auction_year' => '2026',
                     'aih_push_enabled' => $pushEnabled ? 1 : 0,
@@ -189,62 +259,5 @@ class PushAuditLoggingTest extends TestCase
                 return $options[$key] ?? $default;
             },
         ]);
-    }
-
-    private function createWpdb(array $subscriptions = [], array $results = []): object
-    {
-        return new class($subscriptions, $results) {
-            public string $prefix = 'wp_';
-            public string $last_error = '';
-            public array $inserts = [];
-            private array $subscriptions;
-            private array $results;
-            private ?string $getVarReturn = null;
-            private ?object $getRowReturn = null;
-
-            public function __construct(array $subscriptions, array $results)
-            {
-                $this->subscriptions = $subscriptions;
-                $this->results = $results;
-            }
-
-            public function setGetVarReturn(?string $value): void
-            {
-                $this->getVarReturn = $value;
-            }
-
-            public function setGetRowReturn(?object $value): void
-            {
-                $this->getRowReturn = $value;
-            }
-
-            public function prepare(string $query, mixed ...$args): string
-            {
-                return $query;
-            }
-
-            public function get_results(?string $query = null, $output = null): array
-            {
-                return $this->subscriptions;
-            }
-
-            public function get_var(?string $query = null): ?string
-            {
-                return $this->getVarReturn;
-            }
-
-            public function get_row($query = null, $output = null, $y = 0): ?object
-            {
-                return $this->getRowReturn;
-            }
-
-            public function insert($table, $data, $format = null)
-            {
-                $this->inserts[] = ['table' => $table, 'data' => $data];
-                return 1;
-            }
-
-            public int $insert_id = 1;
-        };
     }
 }
