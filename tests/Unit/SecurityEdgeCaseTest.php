@@ -26,7 +26,7 @@ class SecurityEdgeCaseTest extends TestCase
             'is_admin' => false,
             'wp_doing_ajax' => false,
             'wp_doing_cron' => false,
-            'current_time' => fn() => '2026-01-15 10:00:00',
+            'current_time' => fn(string $type = 'mysql') => $type === 'timestamp' ? strtotime('2026-01-15 10:00:00') : '2026-01-15 10:00:00',
             'get_current_user_id' => fn() => 0,
             'wp_json_encode' => fn($v) => json_encode($v),
             '__' => fn($text) => $text,
@@ -121,10 +121,8 @@ class SecurityEdgeCaseTest extends TestCase
     public function testLogEventWritesToErrorLog(): void
     {
         // WP_DEBUG is true in test bootstrap
-        // We can't easily test error_log output, but we can verify it doesn't throw
-        AIH_Security::log_event('test_event', ['key' => 'value']);
+        Functions\expect('error_log')->once();
 
-        // If we get here without exception, the method works
-        $this->assertTrue(true);
+        AIH_Security::log_event('test_event', ['key' => 'value']);
     }
 }

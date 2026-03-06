@@ -88,7 +88,7 @@ class AuthSessionTest extends TestCase
                 return $options[$key] ?? $default;
             },
             'wp_date' => fn() => '2026',
-            'current_time' => fn() => '2026-01-15 10:00:00',
+            'current_time' => fn(string $type = 'mysql') => $type === 'timestamp' ? strtotime('2026-01-15 10:00:00') : '2026-01-15 10:00:00',
             'sanitize_text_field' => fn($v) => trim(strip_tags((string) $v)),
             'sanitize_key' => fn($v) => preg_replace('/[^a-z0-9_\-]/', '', strtolower((string) $v)),
             '__' => fn($text) => $text,

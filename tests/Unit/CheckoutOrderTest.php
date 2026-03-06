@@ -138,7 +138,7 @@ class CheckoutOrderTest extends TestCase
             'current_time' => fn($type = 'mysql') => $type === 'timestamp' ? strtotime('2026-01-15 10:00:00') : '2026-01-15 10:00:00',
             'sanitize_key' => fn($v) => preg_replace('/[^a-z0-9_\-]/', '', strtolower((string) $v)),
             '__' => fn($text) => $text,
-            'wp_generate_password' => fn() => 'ABCD1234',
+            'wp_generate_password' => fn(int $length = 12, bool $special_chars = true, bool $extra_special_chars = false) => 'ABCD1234',
             'wp_parse_args' => function ($args, $defaults) {
                 return array_merge($defaults, $args);
             },
@@ -165,7 +165,7 @@ class CheckoutOrderTest extends TestCase
 
     // ── get_won_items ──
 
-    public function testGetWonItemsReturnsWinningBidsNotOrdered(): void
+    public function testGetWonItemsReturnsWinningBidsWithoutExistingOrder(): void
     {
         $this->wpdb->get_results_queue[] = [
             (object) ['id' => 1, 'art_piece_id' => 1, 'winning_amount' => 100.00, 'title' => 'Piece A'],
