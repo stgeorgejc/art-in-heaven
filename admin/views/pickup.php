@@ -207,7 +207,7 @@ if (!empty($order_ids)) {
                             <div class="aih-pickup-order-info">
                                 <span class="aih-order-number"><?php echo esc_html($order->order_number); ?></span>
                                 <span class="aih-pickup-status <?php echo $order->pickup_status === 'picked_up' ? 'picked-up' : 'pending'; ?>">
-                                    <?php echo $order->pickup_status === 'picked_up' ? __('Picked Up', 'art-in-heaven') : __('Ready', 'art-in-heaven'); ?>
+                                    <?php echo $order->pickup_status === 'picked_up' ? __('Picked Up', 'art-in-heaven') : __('Ready for Pickup', 'art-in-heaven'); ?>
                                 </span>
                             </div>
                         </div>

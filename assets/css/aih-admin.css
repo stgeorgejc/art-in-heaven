@@ -925,6 +925,8 @@ button.aih-action-btn .dashicons {
 .aih-status-badge.winning { background: #d1fae5; color: #065f46; }
 .aih-status-badge.outbid { background: #fef3c7; color: #92400e; }
 .aih-status-badge.refunded { background: #f3f4f6; color: #8a8a8a; }
+.aih-status-badge.picked_up { background: #dbeafe; color: #1e40af; }
+.aih-status-badge.not_ordered { background: #fee2e2; color: #991b1b; }
 
 /* Simple badges */
 .aih-badge {
@@ -941,6 +943,8 @@ button.aih-action-btn .dashicons {
 .aih-badge-error { background: #fee2e2; color: #991b1b; }
 .aih-badge-info { background: #dbeafe; color: #1e40af; }
 .aih-badge-secondary { background: #f3f4f6; color: #1c1c1c; }
+.aih-badge-lg { font-size: 14px; padding: 8px 16px; }
+.aih-badge-lg .dashicons { margin-right: 5px; }
 
 /* Bid count badges */
 .aih-bid-count {
@@ -953,6 +957,85 @@ button.aih-action-btn .dashicons {
 
 .aih-bid-count.has-bids { background: #d1fae5; color: #065f46; }
 .aih-bid-count.no-bids { background: #f3f4f6; color: #8a8a8a; }
+
+/* Bidder status pills */
+.aih-status-pill {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+.aih-status-pill.has-bid { background: #d1fae5; color: #065f46; }
+.aih-status-pill.logged-in { background: #dbeafe; color: #1e40af; }
+.aih-status-pill.not-active { background: #f3f4f6; color: #8a8a8a; }
+
+/* Bid count badge (bidders table) */
+.aih-bid-badge {
+    display: inline-block;
+    padding: var(--aih-space-xs) var(--aih-space-sm);
+    font-size: var(--aih-font-xs);
+    font-weight: 600;
+    border-radius: var(--aih-radius-sm);
+    background: #d1fae5;
+    color: #065f46;
+}
+
+/* Current/active year badge (migration) */
+.aih-current-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    background: #d1fae5;
+    color: #065f46;
+}
+
+/* Mode badge (sandbox/production) */
+.aih-mode-badge {
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+}
+.aih-mode-badge.sandbox { background: #fef3c7; color: #92400e; }
+.aih-mode-badge.production { background: #d1fae5; color: #065f46; }
+
+/* Art info grid (art-stats) */
+.aih-art-info-grid {
+    display: grid;
+    gap: var(--aih-space-sm);
+}
+.aih-info-row {
+    display: flex;
+    gap: var(--aih-space-sm);
+    align-items: baseline;
+}
+.aih-info-label {
+    font-weight: 600;
+    color: var(--aih-text-muted);
+    min-width: 100px;
+}
+.aih-info-value {
+    color: var(--aih-text);
+}
+
+/* Confirmation code styling */
+.aih-confirmation-code {
+    background: #f3f4f6;
+    padding: 2px 6px;
+    border-radius: 3px;
+}
+
+/* Zero/muted count */
+.aih-muted-count {
+    color: #9ca3af;
+}
 
 /* Visibility badges */
 .aih-visibility-badge {

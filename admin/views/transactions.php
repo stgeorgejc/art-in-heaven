@@ -377,9 +377,6 @@ $matchable_orders = $wpdb->get_results(
 <style>
 .aih-transactions-header { display: flex; justify-content: space-between; align-items: center; margin: 20px 0; padding: 15px 20px; background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 .aih-sync-status { display: flex; align-items: center; gap: 15px; }
-.aih-mode-badge { padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: 600; }
-.aih-mode-badge.sandbox { background: #fef3c7; color: #92400e; }
-.aih-mode-badge.production { background: #d1fae5; color: #065f46; }
 .aih-last-sync { color: #8a8a8a; font-size: 13px; }
 .aih-sync-actions { display: flex; gap: 10px; }
 .aih-sync-actions .dashicons { font-size: 16px; width: 16px; height: 16px; line-height: 1; vertical-align: middle; }

@@ -196,12 +196,12 @@ if ($current_tab === 'not_logged_in') {
                     </td>
                     <td data-label="<?php esc_attr_e('Email', 'art-in-heaven'); ?>"><?php echo esc_html($person->email_primary ?: '—'); ?></td>
                     <td data-label="<?php esc_attr_e('Phone', 'art-in-heaven'); ?>"><?php echo esc_html($person->phone_mobile ?: '—'); ?></td>
-                    <td data-label="<?php esc_attr_e('Code', 'art-in-heaven'); ?>"><code style="background: #f3f4f6; padding: 2px 6px; border-radius: 3px;"><?php echo esc_html($person->confirmation_code ?: '—'); ?></code></td>
+                    <td data-label="<?php esc_attr_e('Code', 'art-in-heaven'); ?>"><code class="aih-confirmation-code"><?php echo esc_html($person->confirmation_code ?: '—'); ?></code></td>
                     <td data-label="<?php esc_attr_e('Bids', 'art-in-heaven'); ?>">
                         <?php if ($bid_count > 0): ?>
                             <span class="aih-bid-badge"><?php echo $bid_count; ?></span>
                         <?php else: ?>
-                            <span style="color: #9ca3af;">0</span>
+                            <span class="aih-muted-count">0</span>
                         <?php endif; ?>
                     </td>
                     <td data-label="<?php esc_attr_e('Status', 'art-in-heaven'); ?>">
