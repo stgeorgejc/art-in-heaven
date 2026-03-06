@@ -391,6 +391,25 @@ button.aih-action-btn .dashicons {
     box-shadow: var(--aih-shadow-md);
 }
 
+/* Clickable stat card links */
+.aih-stat-card-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+.aih-stat-card-link:hover,
+.aih-stat-card-link:focus {
+    text-decoration: none;
+    color: inherit;
+}
+.aih-stat-card-link:focus-visible .aih-stat-card {
+    outline: 2px solid var(--aih-accent);
+    outline-offset: 2px;
+}
+.aih-stat-card--linked {
+    cursor: pointer;
+}
+
 .aih-stat-card--horizontal {
     flex-direction: row;
     align-items: center;

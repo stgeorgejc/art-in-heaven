@@ -15,27 +15,32 @@ $can_view_bids = AIH_Roles::can_view_bids();
     AIH_Admin::render_stat_card(array(
         'value' => (string) $counts->total,
         'label' => __('Total Art Pieces', 'art-in-heaven'),
+        'link'  => admin_url('admin.php?page=art-in-heaven-art&tab=all'),
     ));
     AIH_Admin::render_stat_card(array(
         'value'   => (string) $counts->active,
         'label'   => __('Active Auctions', 'art-in-heaven'),
         'variant' => 'active',
+        'link'    => admin_url('admin.php?page=art-in-heaven-art&tab=active_bids'),
     ));
     AIH_Admin::render_stat_card(array(
         'value'    => (isset($counts->bid_rate_percent) ? $counts->bid_rate_percent : 0) . '%',
         'label'    => __('With Bids', 'art-in-heaven'),
         'sublabel' => sprintf(__('%d of %d pieces', 'art-in-heaven'), isset($counts->pieces_with_bids) ? $counts->pieces_with_bids : 0, isset($counts->total) ? $counts->total : 0),
         'variant'  => 'bids',
+        'link'     => admin_url('admin.php?page=art-in-heaven-art&tab=active_bids'),
     ));
     AIH_Admin::render_stat_card(array(
         'value'   => (string) $counts->active_no_bids,
         'label'   => __('No Bids Yet', 'art-in-heaven'),
         'variant' => 'nobids',
+        'link'    => admin_url('admin.php?page=art-in-heaven-art&tab=active_no_bids'),
     ));
     if ($can_view_bids) {
         AIH_Admin::render_stat_card(array(
             'value' => (string) $total_bids,
             'label' => __('Total Bids', 'art-in-heaven'),
+            'link'  => admin_url('admin.php?page=art-in-heaven-bids'),
         ));
     }
     if ($can_view_financial) {
@@ -43,6 +48,7 @@ $can_view_bids = AIH_Roles::can_view_bids();
             'value'   => '$' . number_format($payment_stats->total_collected ?: 0, 2),
             'label'   => __('Collected', 'art-in-heaven'),
             'variant' => 'money',
+            'link'    => admin_url('admin.php?page=art-in-heaven-orders&tab=paid'),
         ));
     }
     AIH_Admin::close_stat_grid();
