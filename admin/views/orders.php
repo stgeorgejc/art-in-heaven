@@ -214,12 +214,14 @@ if (!defined('ABSPATH')) {
                 'label' => __('Paid Orders', 'art-in-heaven'),
                 'icon'  => 'dashicons-yes-alt',
                 'variant' => 'success',
+                'link'  => admin_url('admin.php?page=art-in-heaven-orders&tab=paid'),
             )); ?>
             <?php AIH_Admin::render_stat_card(array(
                 'value' => (string) intval($payment_stats->pending_orders),
                 'label' => __('Pending Payment', 'art-in-heaven'),
                 'icon'  => 'dashicons-clock',
                 'variant' => 'warning',
+                'link'  => admin_url('admin.php?page=art-in-heaven-orders&tab=pending'),
             )); ?>
             <?php AIH_Admin::render_stat_card(array(
                 'value' => '$' . number_format($payment_stats->total_collected, 2),

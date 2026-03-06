@@ -113,14 +113,17 @@ $total_bid_value = $wpdb->get_var("SELECT SUM(bid_amount) FROM {$bids_table}");
     AIH_Admin::render_stat_card(array(
         'value' => number_format($winning_bid_count),
         'label' => __('Winning Bids', 'art-in-heaven'),
+        'link'  => admin_url('admin.php?page=art-in-heaven-winners'),
     ));
     AIH_Admin::render_stat_card(array(
         'value' => number_format($unique_bidders),
         'label' => __('Unique Bidders', 'art-in-heaven'),
+        'link'  => admin_url('admin.php?page=art-in-heaven-bidders&tab=has_bids'),
     ));
     AIH_Admin::render_stat_card(array(
         'value' => '$' . number_format($total_bid_value ?: 0),
         'label' => __('Total Bid Value', 'art-in-heaven'),
+        'link'  => admin_url('admin.php?page=art-in-heaven-winners'),
     ));
     AIH_Admin::close_stat_grid();
     ?>

@@ -90,11 +90,13 @@ $current_tab = isset($_GET['tab']) ? sanitize_key($_GET['tab']) : 'items';
         'value'   => '$' . number_format($total_paid, 2),
         'label'   => __('Paid', 'art-in-heaven'),
         'variant' => 'success',
+        'link'    => admin_url('admin.php?page=art-in-heaven-orders&tab=paid'),
     ));
     AIH_Admin::render_stat_card(array(
         'value'   => '$' . number_format($total_pending, 2),
         'label'   => __('Pending Orders', 'art-in-heaven'),
         'variant' => 'warning',
+        'link'    => admin_url('admin.php?page=art-in-heaven-orders&tab=pending'),
     ));
     AIH_Admin::render_stat_card(array(
         'value'   => '$' . number_format($total_unpaid, 2),
