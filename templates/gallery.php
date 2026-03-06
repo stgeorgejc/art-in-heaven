@@ -307,7 +307,7 @@ $bidder_bid_ids = $bid_model->get_bidder_bid_ids_batch($piece_ids, $bidder_id);
 </div>
 
 <!-- Toast -->
-<div id="aih-toast" class="aih-toast"></div>
+<div id="aih-toast" class="aih-toast" role="status" aria-live="polite"></div>
 
 <!-- Scroll to Top Button -->
 <button type="button" class="aih-scroll-top" id="aih-scroll-top" title="<?php esc_attr_e('Scroll to top', 'art-in-heaven'); ?>">&uarr;</button>
