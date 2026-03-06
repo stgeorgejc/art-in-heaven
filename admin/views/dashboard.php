@@ -65,7 +65,7 @@ $can_view_bids = AIH_Roles::can_view_bids();
                 <li><a href="<?php echo admin_url('admin.php?page=art-in-heaven-orders'); ?>" class="button"><?php _e('View Orders', 'art-in-heaven'); ?></a></li>
                 <?php endif; ?>
                 <?php if (AIH_Roles::can_view_reports()): ?>
-                <li><a href="<?php echo admin_url('admin.php?page=art-in-heaven-reports'); ?>" class="button"><?php _e('View Reports', 'art-in-heaven'); ?></a></li>
+                <li><a href="<?php echo admin_url('admin.php?page=art-in-heaven-analytics'); ?>" class="button"><?php _e('View Analytics', 'art-in-heaven'); ?></a></li>
                 <?php endif; ?>
             </ul>
         </div>
