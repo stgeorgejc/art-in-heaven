@@ -143,7 +143,7 @@ class AIH_Favorites {
      * Get favorite art piece IDs for bidder
      *
      * @param int|string $bidder_id
-     * @return array<int, int>
+     * @return list<string>
      */
     public function get_bidder_favorite_ids($bidder_id) {
         global $wpdb;
@@ -158,7 +158,7 @@ class AIH_Favorites {
      * Get favorite count for art piece
      *
      * @param int $art_piece_id
-     * @return int
+     * @return string|null
      */
     public function get_favorite_count($art_piece_id) {
         global $wpdb;

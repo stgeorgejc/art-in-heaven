@@ -250,7 +250,7 @@ class FavoritesTest extends TestCase
 
     // ── get_favorite_count() ──
 
-    public function testGetFavoriteCountReturnsInt(): void
+    public function testGetFavoriteCountReturnsStringCount(): void
     {
         $this->wpdb->get_var_queue[] = '7';
 
