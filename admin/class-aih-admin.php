@@ -579,7 +579,7 @@ class AIH_Admin {
         }
 
         $checkout = AIH_Checkout::get_instance();
-        $status_filter = isset($_GET['status']) ? sanitize_text_field($_GET['status']) : '';
+        $status_filter = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : '';
         $search = isset($_GET['search']) ? sanitize_text_field($_GET['search']) : '';
         $single_order = isset($_GET['order_id']) ? $checkout->get_order(intval($_GET['order_id'])) : null;
 

@@ -190,36 +190,7 @@ if (!defined('ABSPATH')) {
             </div>
         </div>
 
-        <!-- Pickup Modal -->
-        <div id="aih-pickup-modal" class="aih-modal" style="display: none;">
-            <div class="aih-modal-content aih-modal-content--sm">
-                <div class="aih-modal-header">
-                    <h3><?php _e('Mark as Picked Up', 'art-in-heaven'); ?></h3>
-                    <button type="button" class="aih-modal-close">&times;</button>
-                </div>
-                <div class="aih-modal-body">
-                    <p class="aih-modal-order-info"></p>
-                    <form id="aih-pickup-form">
-                        <input type="hidden" name="order_id" id="pickup-order-id" value="">
-                        <div class="aih-form-row">
-                            <label for="pickup-by"><?php _e('Your Name', 'art-in-heaven'); ?> <span style="color: #a63d40;">*</span></label>
-                            <input type="text" id="pickup-by" name="pickup_by" required placeholder="<?php esc_attr_e('Enter your name', 'art-in-heaven'); ?>" style="width: 100%; padding: 8px 10px;">
-                        </div>
-                        <div class="aih-form-row">
-                            <label for="pickup-notes"><?php _e('Notes', 'art-in-heaven'); ?> <span style="color: #9ca3af; font-weight: normal;">(<?php _e('optional', 'art-in-heaven'); ?>)</span></label>
-                            <textarea id="pickup-notes" name="pickup_notes" rows="3" placeholder="<?php esc_attr_e('Any notes about the pickup...', 'art-in-heaven'); ?>" style="width: 100%; padding: 8px 10px;"></textarea>
-                        </div>
-                    </form>
-                </div>
-                <div class="aih-modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; padding: 15px 20px; border-top: 1px solid #e5e7eb; background: #f9fafb;">
-                    <button type="button" class="button aih-modal-cancel"><?php _e('Cancel', 'art-in-heaven'); ?></button>
-                    <button type="button" class="button button-primary" id="aih-confirm-pickup">
-                        <span class="dashicons dashicons-yes" style="margin-right: 5px;"></span>
-                        <?php _e('Confirm Pickup', 'art-in-heaven'); ?>
-                    </button>
-                </div>
-            </div>
-        </div>
+        <?php include __DIR__ . '/partials/pickup-modal.php'; ?>
 
     <?php else: ?>
         <!-- Orders List View -->
@@ -231,45 +202,40 @@ if (!defined('ABSPATH')) {
         </div>
         <?php endif; ?>
 
-        <div class="aih-dashboard-stats">
-            <div class="aih-stat-card">
-                <div class="aih-stat-icon total"><span class="dashicons dashicons-cart"></span></div>
-                <div class="aih-stat-content">
-                    <span class="aih-stat-number"><?php echo intval($payment_stats->total_orders); ?></span>
-                    <span class="aih-stat-label"><?php _e('Total Orders', 'art-in-heaven'); ?></span>
-                </div>
-            </div>
-            <div class="aih-stat-card">
-                <div class="aih-stat-icon active"><span class="dashicons dashicons-yes-alt"></span></div>
-                <div class="aih-stat-content">
-                    <span class="aih-stat-number"><?php echo intval($payment_stats->paid_orders); ?></span>
-                    <span class="aih-stat-label"><?php _e('Paid Orders', 'art-in-heaven'); ?></span>
-                </div>
-            </div>
-            <div class="aih-stat-card">
-                <div class="aih-stat-icon ended"><span class="dashicons dashicons-clock"></span></div>
-                <div class="aih-stat-content">
-                    <span class="aih-stat-number"><?php echo intval($payment_stats->pending_orders); ?></span>
-                    <span class="aih-stat-label"><?php _e('Pending Payment', 'art-in-heaven'); ?></span>
-                </div>
-            </div>
-            <div class="aih-stat-card">
-                <div class="aih-stat-icon bids"><span class="dashicons dashicons-money-alt"></span></div>
-                <div class="aih-stat-content">
-                    <span class="aih-stat-number">$<?php echo number_format($payment_stats->total_collected, 2); ?></span>
-                    <span class="aih-stat-label"><?php _e('Total Collected', 'art-in-heaven'); ?></span>
-                </div>
-            </div>
+        <?php AIH_Admin::open_stat_grid(); ?>
+            <?php AIH_Admin::render_stat_card(array(
+                'value' => (string) intval($payment_stats->total_orders),
+                'label' => __('Total Orders', 'art-in-heaven'),
+                'icon'  => 'dashicons-cart',
+                'variant' => 'info',
+            )); ?>
+            <?php AIH_Admin::render_stat_card(array(
+                'value' => (string) intval($payment_stats->paid_orders),
+                'label' => __('Paid Orders', 'art-in-heaven'),
+                'icon'  => 'dashicons-yes-alt',
+                'variant' => 'success',
+            )); ?>
+            <?php AIH_Admin::render_stat_card(array(
+                'value' => (string) intval($payment_stats->pending_orders),
+                'label' => __('Pending Payment', 'art-in-heaven'),
+                'icon'  => 'dashicons-clock',
+                'variant' => 'warning',
+            )); ?>
+            <?php AIH_Admin::render_stat_card(array(
+                'value' => '$' . number_format($payment_stats->total_collected, 2),
+                'label' => __('Total Collected', 'art-in-heaven'),
+                'icon'  => 'dashicons-money-alt',
+                'variant' => 'money',
+            )); ?>
             <?php if ($payment_stats->items_needing_orders > 0): ?>
-            <div class="aih-stat-card">
-                <div class="aih-stat-icon upcoming"><span class="dashicons dashicons-warning"></span></div>
-                <div class="aih-stat-content">
-                    <span class="aih-stat-number"><?php echo intval($payment_stats->items_needing_orders); ?></span>
-                    <span class="aih-stat-label"><?php _e('Items Needing Orders', 'art-in-heaven'); ?></span>
-                </div>
-            </div>
+            <?php AIH_Admin::render_stat_card(array(
+                'value' => (string) intval($payment_stats->items_needing_orders),
+                'label' => __('Items Needing Orders', 'art-in-heaven'),
+                'icon'  => 'dashicons-warning',
+                'variant' => 'danger',
+            )); ?>
             <?php endif; ?>
-        </div>
+        <?php AIH_Admin::close_stat_grid(); ?>
 
         <!-- Won Items Without Orders -->
         <?php if (!empty($won_without_orders)): ?>
@@ -314,16 +280,16 @@ if (!defined('ABSPATH')) {
             <a href="?page=art-in-heaven-orders" class="nav-tab <?php echo empty($status_filter) ? 'nav-tab-active' : ''; ?>">
                 <?php _e('All Orders', 'art-in-heaven'); ?> (<?php echo intval($payment_stats->total_orders); ?>)
             </a>
-            <a href="?page=art-in-heaven-orders&status=pending" class="nav-tab <?php echo $status_filter === 'pending' ? 'nav-tab-active' : ''; ?>">
+            <a href="?page=art-in-heaven-orders&tab=pending" class="nav-tab <?php echo $status_filter === 'pending' ? 'nav-tab-active' : ''; ?>">
                 <?php _e('Pending', 'art-in-heaven'); ?> (<?php echo intval($payment_stats->pending_orders); ?>)
             </a>
-            <a href="?page=art-in-heaven-orders&status=paid" class="nav-tab <?php echo $status_filter === 'paid' ? 'nav-tab-active' : ''; ?>">
+            <a href="?page=art-in-heaven-orders&tab=paid" class="nav-tab <?php echo $status_filter === 'paid' ? 'nav-tab-active' : ''; ?>">
                 <?php _e('Paid', 'art-in-heaven'); ?> (<?php echo intval($payment_stats->paid_orders); ?>)
             </a>
-            <a href="?page=art-in-heaven-orders&status=refunded" class="nav-tab <?php echo $status_filter === 'refunded' ? 'nav-tab-active' : ''; ?>">
+            <a href="?page=art-in-heaven-orders&tab=refunded" class="nav-tab <?php echo $status_filter === 'refunded' ? 'nav-tab-active' : ''; ?>">
                 <?php _e('Refunded', 'art-in-heaven'); ?>
             </a>
-            <a href="?page=art-in-heaven-orders&status=cancelled" class="nav-tab <?php echo $status_filter === 'cancelled' ? 'nav-tab-active' : ''; ?>">
+            <a href="?page=art-in-heaven-orders&tab=cancelled" class="nav-tab <?php echo $status_filter === 'cancelled' ? 'nav-tab-active' : ''; ?>">
                 <?php _e('Cancelled', 'art-in-heaven'); ?>
             </a>
         </nav>
@@ -334,12 +300,12 @@ if (!defined('ABSPATH')) {
             <form method="get" class="aih-search-form">
                 <input type="hidden" name="page" value="art-in-heaven-orders">
                 <?php if ($status_filter): ?>
-                    <input type="hidden" name="status" value="<?php echo esc_attr($status_filter); ?>">
+                    <input type="hidden" name="tab" value="<?php echo esc_attr($status_filter); ?>">
                 <?php endif; ?>
                 <input type="search" name="search" value="<?php echo esc_attr($search); ?>" placeholder="<?php esc_attr_e('Search by order #, email, or name...', 'art-in-heaven'); ?>">
                 <button type="submit" class="button"><?php _e('Search', 'art-in-heaven'); ?></button>
                 <?php if (!empty($search)): ?>
-                    <a href="<?php echo admin_url('admin.php?page=art-in-heaven-orders' . ($status_filter ? '&status=' . urlencode($status_filter) : '')); ?>" class="button"><?php _e('Show All', 'art-in-heaven'); ?></a>
+                    <a href="<?php echo admin_url('admin.php?page=art-in-heaven-orders' . ($status_filter ? '&tab=' . urlencode($status_filter) : '')); ?>" class="button"><?php _e('Show All', 'art-in-heaven'); ?></a>
                 <?php endif; ?>
             </form>
             <span class="aih-filter-count">
