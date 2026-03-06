@@ -167,7 +167,8 @@ class AIH_Assets {
      * @return string
      */
     private static function get_critical_css() {
-        // Core layout and typography that needs to load immediately
+        // Core layout, dark mode, WP resets, gallery grid, and login card
+        // — everything needed to prevent FOUC on first paint
         return '
             :root {
                 --color-bg: #faf9f7;
@@ -175,13 +176,51 @@ class AIH_Assets {
                 --color-surface: #ffffff;
                 --color-primary: #1c1c1c;
                 --color-secondary: #4a4a4a;
-                --color-muted: #8a8a8a;
+                --color-muted: #6b6b6b;
                 --color-border: #e8e6e3;
                 --color-accent: #b8956b;
+                --shadow-lg: 0 10px 40px rgba(0,0,0,0.08);
+                --radius: 4px;
                 --font-display: "Cormorant Garamond", Georgia, serif;
                 --font-body: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
             }
-            *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+            .aih-page.dark-mode {
+                --color-bg: #121212;
+                --color-bg-alt: #1a1a1a;
+                --color-surface: #1e1e1e;
+                --color-primary: #e8e6e3;
+                --color-secondary: #b5b3b0;
+                --color-muted: #8a8a8a;
+                --color-border: #2a2a2a;
+                --color-accent: #d4a574;
+                --shadow-lg: 0 10px 40px rgba(0,0,0,0.6);
+            }
+            .aih-page, .aih-page *, .aih-page *::before, .aih-page *::after { box-sizing: border-box; margin: 0; padding: 0; }
+            body.aih-active .site-content,
+            body.aih-active .content-area,
+            body.aih-active .site-main,
+            body.aih-active .entry-content,
+            body.aih-active .wp-block-post-content,
+            body.aih-active .page-content,
+            body.aih-active .is-layout-constrained,
+            body.aih-active .is-layout-flow,
+            body.aih-active .has-global-padding {
+                background: transparent !important;
+                padding-left: 0 !important;
+                padding-right: 0 !important;
+                margin: 0 !important;
+                max-width: 100% !important;
+                width: 100% !important;
+            }
+            body.aih-active .entry-title,
+            body.aih-active .wp-block-post-title,
+            body.aih-active .page-title { display: none !important; }
+            body.aih-active .wp-site-blocks > header,
+            body.aih-active .wp-site-blocks > footer { display: none !important; }
+            body.aih-active .wp-site-blocks {
+                padding-block-start: 0 !important;
+                padding-block-end: 0 !important;
+            }
             .aih-page {
                 min-height: 100vh;
                 display: flex;
@@ -191,6 +230,8 @@ class AIH_Assets {
                 font-size: 14px;
                 line-height: 1.6;
                 color: var(--color-primary);
+                -webkit-font-smoothing: antialiased;
+                overflow-x: hidden;
             }
             .aih-header {
                 background: var(--color-surface);
@@ -225,6 +266,93 @@ class AIH_Assets {
                 background: var(--color-bg);
                 max-width: 100%;
                 margin: 0 auto;
+            }
+            .aih-page .aih-main-centered,
+            .aih-page .aih-main.aih-main-centered {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                max-width: 100%;
+            }
+            .aih-gallery-grid {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 8px;
+                width: 100%;
+            }
+            .aih-card {
+                background: var(--color-surface);
+                border: 1px solid var(--color-border);
+                display: flex;
+                flex-direction: column;
+            }
+            .aih-card-image {
+                position: relative;
+                padding-bottom: 100%;
+                height: 0;
+                overflow: hidden;
+                background: var(--color-bg-alt);
+                width: 100%;
+            }
+            .aih-card-image a {
+                display: block;
+                width: 100%;
+                height: 100%;
+            }
+            .aih-card-image img {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+            .aih-card-body {
+                padding: 6px 8px;
+                min-width: 0;
+                display: flex;
+                flex-direction: column;
+            }
+            .aih-login-card {
+                width: 100%;
+                max-width: 400px;
+                background: var(--color-surface);
+                border: 1px solid var(--color-border);
+                box-shadow: var(--shadow-lg);
+                margin: 0 auto;
+            }
+            .aih-login-header {
+                text-align: center;
+                padding: 32px 24px 24px;
+                border-bottom: 1px solid var(--color-border);
+            }
+            .aih-login-header h1 {
+                font-family: var(--font-display);
+                font-size: 28px;
+                font-weight: 500;
+                margin-bottom: 10px;
+            }
+            .aih-ornament {
+                font-size: 16px;
+                color: var(--color-accent);
+                margin-bottom: 16px;
+                letter-spacing: 8px;
+            }
+            .aih-login-form { padding: 24px; }
+            @media (min-width: 480px) {
+                .aih-gallery-grid {
+                    gap: 12px;
+                }
+            }
+            @media (min-width: 768px) {
+                .aih-gallery-grid {
+                    grid-template-columns: repeat(3, minmax(0, 1fr));
+                }
+            }
+            @media (min-width: 1200px) {
+                .aih-gallery-grid {
+                    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                }
             }
         ';
     }
