@@ -420,7 +420,7 @@ $art_pieces = $art_model->get_all_with_stats($filter_args);
                             <?php elseif ($computed_status === 'ended' || $auction_ended): ?>
                                 <?php if ($piece->total_bids > 0): ?>
                                     <?php if (!empty($piece->pickup_status) && $piece->pickup_status === 'picked_up'): ?>
-                                        <span class="aih-status-badge" style="background: #dbeafe; color: #1e40af;"><?php _e('Picked Up', 'art-in-heaven'); ?></span>
+                                        <span class="aih-status-badge picked_up"><?php _e('Picked Up', 'art-in-heaven'); ?></span>
                                     <?php elseif (!empty($piece->payment_status) && $piece->payment_status === 'paid'): ?>
                                         <span class="aih-status-badge paid"><?php _e('Paid', 'art-in-heaven'); ?></span>
                                     <?php else: ?>

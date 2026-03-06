@@ -147,8 +147,8 @@ if (!defined('ABSPATH')) {
                     <?php else: ?>
                         <div class="aih-pickup-status-display" style="margin-bottom: 15px;">
                             <?php if ($pickup_status === 'picked_up'): ?>
-                                <span class="aih-badge aih-badge-info" style="font-size: 14px; padding: 8px 16px;">
-                                    <span class="dashicons dashicons-yes-alt" style="margin-right: 5px;"></span>
+                                <span class="aih-badge aih-badge-info aih-badge-lg">
+                                    <span class="dashicons dashicons-yes-alt"></span>
                                     <?php _e('Picked Up', 'art-in-heaven'); ?>
                                 </span>
                                 <?php if ($pickup_date): ?>
@@ -167,8 +167,8 @@ if (!defined('ABSPATH')) {
                                     </p>
                                 <?php endif; ?>
                             <?php else: ?>
-                                <span class="aih-badge aih-badge-warning" style="font-size: 14px; padding: 8px 16px;">
-                                    <span class="dashicons dashicons-clock" style="margin-right: 5px;"></span>
+                                <span class="aih-badge aih-badge-warning aih-badge-lg">
+                                    <span class="dashicons dashicons-clock"></span>
                                     <?php _e('Ready for Pickup', 'art-in-heaven'); ?>
                                 </span>
                             <?php endif; ?>
