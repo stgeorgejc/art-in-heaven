@@ -970,8 +970,17 @@ class AIH_Ajax {
         $table = AIH_Database::get_table('art_pieces');
         $updated = $wpdb->query($wpdb->prepare("UPDATE $table SET auction_start = %s WHERE status = 'active'", $event_date));
         if ($updated === false) {
+            error_log(sprintf('[AIH] admin_apply_event_date failed: %s', $wpdb->last_error));
             wp_send_json_error(array('message' => __('Database error applying event date.', 'art-in-heaven')));
         }
+        AIH_Database::log_audit('event_date_applied', array(
+            'object_type' => 'art_piece',
+            'details'     => array(
+                'event_date'    => $event_date,
+                'pieces_updated' => $updated,
+                'admin_user_id' => get_current_user_id(),
+            ),
+        ));
         wp_send_json_success(array('message' => sprintf('%d art pieces updated.', $updated)));
     }
     
@@ -1021,10 +1030,15 @@ class AIH_Ajax {
         if (!AIH_Roles::can_view_financial()) wp_send_json_error(array('message' => __('Permission denied.', 'art-in-heaven')));
         $order_id = intval($_POST['order_id'] ?? 0);
         if (!$order_id) wp_send_json_error(array('message' => __('Invalid.', 'art-in-heaven')));
-        AIH_Checkout::get_instance()->delete_order($order_id);
+        $result = AIH_Checkout::get_instance()->delete_order($order_id);
+        if ($result === false) {
+            error_log(sprintf('[AIH] admin_delete_order failed for order %d by admin %d', $order_id, get_current_user_id()));
+            wp_send_json_error(array('message' => __('Failed to delete order.', 'art-in-heaven')));
+        }
         AIH_Database::log_audit('order_deleted', array(
             'object_type' => 'order',
             'object_id'   => $order_id,
+            'details'     => array('admin_user_id' => get_current_user_id()),
         ));
         wp_send_json_success(array('message' => __('Deleted.', 'art-in-heaven')));
     }
@@ -1120,9 +1134,10 @@ class AIH_Ajax {
             'object_id' => $bid_id,
             'bidder_id' => $bidder_id,
             'details' => array(
-                'art_piece_id' => $art_piece_id,
-                'bid_amount' => $bid->bid_amount,
-                'was_winning' => $was_winning,
+                'art_piece_id'  => $art_piece_id,
+                'bid_amount'    => $bid->bid_amount,
+                'was_winning'   => $was_winning,
+                'admin_user_id' => get_current_user_id(),
             ),
         ));
 
@@ -1771,9 +1786,10 @@ class AIH_Ajax {
         );
 
         // Audit log before purge (since audit_log table itself will be truncated)
+        error_log(sprintf('[AIH] admin_purge_data triggered by admin %d — truncating tables: %s', get_current_user_id(), implode(', ', $tables)));
         AIH_Database::log_audit('data_purged', array(
             'object_type' => 'system',
-            'details' => array('tables' => $tables),
+            'details' => array('tables' => $tables, 'admin_user_id' => get_current_user_id()),
         ));
 
         $cleared = array();

@@ -301,7 +301,7 @@ class AIH_Checkout {
 
         } catch (Exception $e) {
             $wpdb->query('ROLLBACK');
-            error_log('AIH Checkout Error: ' . $e->getMessage());
+            error_log(sprintf('[AIH] Checkout error for bidder %s (items: %s): %s', $bidder_id, implode(',', $art_piece_ids), $e->getMessage()));
             return array('success' => false, 'message' => __('An error occurred while creating your order. Please try again.', 'art-in-heaven'));
         }
     }
