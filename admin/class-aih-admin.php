@@ -1005,7 +1005,7 @@ class AIH_Admin {
             $classes[] = $variant_map[$args['variant']];
         }
 
-        $has_link = ($args['link'] !== '');
+        $has_link = (is_string($args['link']) && $args['link'] !== '');
         if ($has_link) {
             $classes[] = 'aih-stat-card--linked';
             echo '<a href="' . esc_url($args['link']) . '" class="aih-stat-card-link">';

@@ -106,7 +106,7 @@ if ($current_tab === 'not_logged_in') {
         'icon'       => 'dashicons-clock',
         'icon_color' => '#f59e0b',
         'variant'    => 'warning',
-        'link'       => admin_url('admin.php?page=art-in-heaven-bidders&tab=no_bids'),
+        'link'       => admin_url('admin.php?page=art-in-heaven-bidders&tab=logged_in_no_bids'),
     ));
     AIH_Admin::render_stat_card(array(
         'value'      => number_format($logged_in_has_bids_count),
@@ -114,7 +114,7 @@ if ($current_tab === 'not_logged_in') {
         'icon'       => 'dashicons-yes-alt',
         'icon_color' => '#10b981',
         'variant'    => 'success',
-        'link'       => admin_url('admin.php?page=art-in-heaven-bidders&tab=has_bids'),
+        'link'       => admin_url('admin.php?page=art-in-heaven-bidders&tab=logged_in_has_bids'),
     ));
     AIH_Admin::render_stat_card(array(
         'value'      => number_format($all_registrants_count),
