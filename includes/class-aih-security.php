@@ -34,7 +34,7 @@ class AIH_Security {
      * 
      * @param mixed  $value The value to sanitize
      * @param string $type  The type of sanitization
-     * @param array  $args  Additional arguments
+     * @param array<string, mixed>  $args  Additional arguments
      * @return mixed
      */
     public static function sanitize($value, $type = 'text', $args = array()) {
@@ -161,9 +161,9 @@ class AIH_Security {
     /**
      * Sanitize multiple fields at once
      * 
-     * @param array $data   The data to sanitize
-     * @param array $schema Schema defining field types
-     * @return array
+     * @param array<string, mixed> $data   The data to sanitize
+     * @param array<string, mixed> $schema Schema defining field types
+     * @return array<string, mixed>
      */
     public static function sanitize_fields($data, $schema) {
         $sanitized = array();
@@ -249,6 +249,7 @@ class AIH_Security {
      * 
      * @param string $action The action name
      * @param string $key    The POST/GET key containing the nonce
+     * @return void
      */
     public static function check_ajax_referer($action = 'aih_nonce', $key = 'nonce') {
         if (!self::verify_ajax_nonce($action, $key)) {
@@ -274,6 +275,7 @@ class AIH_Security {
      * 
      * @param string $capability The capability to check
      * @param string $message    Custom error message
+     * @return void
      */
     public static function require_capability($capability, $message = null) {
         if (!self::can($capability)) {
@@ -392,7 +394,7 @@ class AIH_Security {
      * Validate that a value is in an allowed list
      * 
      * @param mixed $value   The value to check
-     * @param array $allowed Allowed values
+     * @param array<int, string> $allowed Allowed values
      * @param mixed $default Default value if not in list
      * @return mixed
      */
@@ -407,7 +409,7 @@ class AIH_Security {
      * Sanitize SQL order by clause
      * 
      * @param string $orderby  The column name
-     * @param array  $allowed  Allowed column names
+     * @param array<int, string>  $allowed  Allowed column names
      * @param string $default  Default column
      * @return string
      */
@@ -429,7 +431,8 @@ class AIH_Security {
      * Log security event
      * 
      * @param string $event   Event type
-     * @param array  $context Additional context
+     * @param array<string, mixed>  $context Additional context
+     * @return void
      */
     public static function log_event($event, $context = array()) {
         if (!defined('WP_DEBUG') || !WP_DEBUG) {
@@ -610,6 +613,8 @@ class AIH_Security {
     
     /**
      * Prevent caching for sensitive pages
+     *
+     * @return void
      */
     public static function prevent_caching() {
         if (!defined('DONOTCACHEPAGE')) {

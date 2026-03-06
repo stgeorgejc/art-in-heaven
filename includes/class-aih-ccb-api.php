@@ -15,18 +15,25 @@ if (!defined('ABSPATH')) {
 }
 
 class AIH_CCB_API {
-    
+
+    /** @var self|null */
     private static $instance = null;
-    
+
     // API Configuration
+    /** @var string */
     private $base_url = '';
+    /** @var string */
     private $username = '';
+    /** @var string */
     private $password = '';
+    /** @var string */
     private $form_id = '';
+    /** @var int */
     private $timeout = 60;
-    
+
     // Field mapping: CCB field name => local database column
     // Customize this to map any CCB fields to your database
+    /** @var array<string, string> */
     private $field_map = array(
         // Profile fields (from profile_info elements)
         'email_primary'    => 'email_primary',
@@ -45,12 +52,16 @@ class AIH_CCB_API {
     );
     
     // Direct fields (not in profile_info, directly in form_response)
+    /** @var array<int, string> */
     private $direct_fields = array(
         'confirmation_code',
         'individual_id',
         'individual_name',
     );
     
+    /**
+     * @return self
+     */
     public static function get_instance() {
         if (null === self::$instance) {
             self::$instance = new self();
@@ -64,6 +75,8 @@ class AIH_CCB_API {
     
     /**
      * Load API settings from WordPress options
+     *
+     * @return void
      */
     private function load_settings() {
         $this->base_url = get_option('aih_api_base_url', '');
@@ -77,6 +90,8 @@ class AIH_CCB_API {
     
     /**
      * Reload settings (useful after saving new options)
+     *
+     * @return self
      */
     public function reload_settings() {
         $this->load_settings();
@@ -85,6 +100,8 @@ class AIH_CCB_API {
     
     /**
      * Check if API is configured
+     *
+     * @return bool
      */
     public function is_configured() {
         return !empty($this->base_url) && !empty($this->form_id);
@@ -92,6 +109,8 @@ class AIH_CCB_API {
     
     /**
      * Get current configuration status
+     *
+     * @return array<string, bool>
      */
     public function get_config_status() {
         return array(
@@ -108,6 +127,7 @@ class AIH_CCB_API {
      * 
      * @param string $ccb_field   The field name in CCB XML
      * @param string $local_field The column name in your database
+     * @return self
      */
     public function add_field_mapping($ccb_field, $local_field) {
         $this->field_map[$ccb_field] = $local_field;
@@ -117,7 +137,8 @@ class AIH_CCB_API {
     /**
      * Set multiple field mappings at once
      * 
-     * @param array $mappings Array of ccb_field => local_field
+     * @param array<string, string> $mappings Array of ccb_field => local_field
+     * @return self
      */
     public function set_field_mappings($mappings) {
         $this->field_map = array_merge($this->field_map, $mappings);
@@ -126,6 +147,8 @@ class AIH_CCB_API {
     
     /**
      * Get all field mappings
+     *
+     * @return array<string, string>
      */
     public function get_field_mappings() {
         return $this->field_map;
@@ -134,9 +157,9 @@ class AIH_CCB_API {
     /**
      * Make an API request
      * 
-     * @param string $service The CCB service name (e.g., 'form_responses')
-     * @param array  $params  Additional query parameters
-     * @return array ['success' => bool, 'data' => string|null, 'error' => string|null]
+     * @param string               $service The CCB service name (e.g., 'form_responses')
+     * @param array<string, string> $params  Additional query parameters
+     * @return array<string, mixed>
      */
     public function request($service, $params = array()) {
         if (empty($this->base_url)) {
@@ -187,7 +210,7 @@ class AIH_CCB_API {
      * Get form responses (registrants)
      * 
      * @param string|null $form_id Optional form ID (uses configured one if not provided)
-     * @return array ['success' => bool, 'data' => array|null, 'error' => string|null, 'count' => int]
+     * @return array<string, mixed>
      */
     public function get_form_responses($form_id = null) {
         $form_id = $form_id ?: $this->form_id;
@@ -221,7 +244,7 @@ class AIH_CCB_API {
     /**
      * Test API connection
      * 
-     * @return array ['success' => bool, 'message' => string, 'count' => int]
+     * @return array<string, mixed>
      */
     public function test_connection() {
         $result = $this->get_form_responses();
@@ -277,7 +300,7 @@ class AIH_CCB_API {
      * Parse form_responses XML into array of registrants using SimpleXML
      *
      * @param string $xml_string Raw XML response
-     * @return array Array of parsed registrant data, or array with 'ccb_error' key on API error
+     * @return array<int|string, mixed>
      */
     private function parse_form_responses($xml_string) {
         $registrants = array();
@@ -327,7 +350,7 @@ class AIH_CCB_API {
      * Parse a single form_response SimpleXML element
      *
      * @param SimpleXMLElement $node Single form_response XML element
-     * @return array Parsed registrant data
+     * @return array<string, mixed>
      */
     private function parse_single_response_xml($node) {
         $data = array();
@@ -376,6 +399,9 @@ class AIH_CCB_API {
     
     /**
      * Helper: Create success response
+     *
+     * @param string $data Response body data
+     * @return array<string, mixed>
      */
     private function success($data) {
         return array('success' => true, 'data' => $data, 'error' => null);
@@ -383,6 +409,9 @@ class AIH_CCB_API {
     
     /**
      * Helper: Create error response
+     *
+     * @param string $message Error message
+     * @return array<string, mixed>
      */
     private function error($message) {
         return array('success' => false, 'data' => null, 'error' => $message);

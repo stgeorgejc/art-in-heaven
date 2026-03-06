@@ -12,6 +12,7 @@ if (!defined('ABSPATH')) {
 
 class AIH_Bid {
 
+    /** @var string */
     private $table;
 
     public function __construct() {
@@ -24,7 +25,7 @@ class AIH_Bid {
      * @param int    $art_piece_id Art piece ID
      * @param string $bidder_id    Bidder's confirmation code
      * @param float  $amount       Bid amount
-     * @return array Result with success, message, bid_id
+     * @return array{success: bool, message: string, bid_id?: int, current_bid?: float, bid_too_low?: bool, bid_too_high?: bool}
      */
     public function place_bid($art_piece_id, $bidder_id, $amount) {
         global $wpdb;
@@ -149,6 +150,9 @@ class AIH_Bid {
     
     /**
      * Get highest bid amount for an art piece (only valid bids)
+     *
+     * @param int $art_piece_id Art piece ID.
+     * @return float
      */
     public function get_highest_bid_amount($art_piece_id) {
         global $wpdb;
@@ -161,6 +165,10 @@ class AIH_Bid {
     
     /**
      * Get all bids for an art piece (includes bidder info, only valid bids)
+     *
+     * @param int      $art_piece_id Art piece ID.
+     * @param int|null $limit        Maximum number of bids to return.
+     * @return array<int, object>
      */
     public function get_bids_for_art_piece($art_piece_id, $limit = null) {
         global $wpdb;
@@ -187,6 +195,11 @@ class AIH_Bid {
     
     /**
      * Get bids by bidder for a specific art piece
+     *
+     * @param int    $art_piece_id   Art piece ID.
+     * @param string $bidder_id      Bidder's confirmation code.
+     * @param bool   $successful_only Whether to return only successful bids.
+     * @return array<int, object>
      */
     public function get_bidder_bids_for_art_piece($art_piece_id, $bidder_id, $successful_only = false) {
         global $wpdb;
@@ -221,6 +234,10 @@ class AIH_Bid {
     
     /**
      * Get only successful (winning) bids for display - excludes "too low" bids
+     *
+     * @param int    $art_piece_id Art piece ID.
+     * @param string $bidder_id    Bidder's confirmation code.
+     * @return array<int, object>
      */
     public function get_successful_bids_for_art_piece($art_piece_id, $bidder_id) {
         global $wpdb;
@@ -238,6 +255,9 @@ class AIH_Bid {
     /**
      * Get all bids by bidder (confirmation_code)
      * Returns only the bidder's highest bid per art piece to avoid duplicates
+     *
+     * @param string $bidder_id Bidder's confirmation code.
+     * @return array<int, object>
      */
     public function get_bidder_bids($bidder_id) {
         global $wpdb;
@@ -271,6 +291,10 @@ class AIH_Bid {
     
     /**
      * Check if a bidder has placed any valid bid on an art piece
+     *
+     * @param int    $art_piece_id Art piece ID.
+     * @param string $bidder_id    Bidder's confirmation code.
+     * @return bool
      */
     public function has_bidder_bid($art_piece_id, $bidder_id) {
         global $wpdb;
@@ -288,6 +312,10 @@ class AIH_Bid {
 
     /**
      * Check if bidder is winning an art piece
+     *
+     * @param int|string $art_piece_id Art piece ID.
+     * @param int|string $bidder_id    Bidder's confirmation code.
+     * @return bool
      */
     public function is_bidder_winning($art_piece_id, $bidder_id) {
         global $wpdb;
@@ -304,6 +332,9 @@ class AIH_Bid {
     
     /**
      * Get winning bid for an art piece
+     *
+     * @param int $art_piece_id Art piece ID.
+     * @return object|null
      */
     public function get_winning_bid($art_piece_id) {
         global $wpdb;
@@ -325,6 +356,9 @@ class AIH_Bid {
     
     /**
      * Get bid count for art piece (only valid bids)
+     *
+     * @param int $art_piece_id Art piece ID.
+     * @return int
      */
     public function get_bid_count($art_piece_id) {
         global $wpdb;
@@ -337,6 +371,9 @@ class AIH_Bid {
     
     /**
      * Get unique bidder count for art piece (only valid bids)
+     *
+     * @param int $art_piece_id Art piece ID.
+     * @return int
      */
     public function get_unique_bidder_count($art_piece_id) {
         global $wpdb;
@@ -349,6 +386,9 @@ class AIH_Bid {
     
     /**
      * Delete bid
+     *
+     * @param int $bid_id Bid ID.
+     * @return int|false Number of rows deleted, or false on failure.
      */
     public function delete($bid_id) {
         global $wpdb;
@@ -413,6 +453,8 @@ class AIH_Bid {
 
     /**
      * Get all winning bids (for winners report)
+     *
+     * @return array<int, object>
      */
     public function get_all_winning_bids() {
         global $wpdb;
@@ -461,8 +503,8 @@ class AIH_Bid {
     /**
      * Batch fetch highest bids for multiple art pieces.
      *
-     * @param array $piece_ids
-     * @return array Keyed by art_piece_id => highest bid amount
+     * @param array<int, int> $piece_ids Art piece IDs.
+     * @return array<int, float> Keyed by art_piece_id => highest bid amount.
      */
     public function get_highest_bids_batch($piece_ids) {
         global $wpdb;
@@ -487,9 +529,9 @@ class AIH_Bid {
     /**
      * Batch fetch art piece IDs where a bidder is currently winning.
      *
-     * @param array  $piece_ids
-     * @param string $bidder_id
-     * @return array Keyed by art_piece_id => true
+     * @param array<int, int> $piece_ids Art piece IDs.
+     * @param string          $bidder_id Bidder's confirmation code.
+     * @return array<int, true> Keyed by art_piece_id => true.
      */
     public function get_winning_ids_batch($piece_ids, $bidder_id) {
         global $wpdb;
@@ -512,9 +554,9 @@ class AIH_Bid {
     /**
      * Batch fetch art piece IDs where a bidder has placed any valid bid.
      *
-     * @param array  $piece_ids
-     * @param string $bidder_id
-     * @return array Keyed by art_piece_id => true
+     * @param array<int, int> $piece_ids Art piece IDs.
+     * @param string          $bidder_id Bidder's confirmation code.
+     * @return array<int, true> Keyed by art_piece_id => true.
      */
     public function get_bidder_bid_ids_batch($piece_ids, $bidder_id) {
         global $wpdb;
@@ -537,6 +579,8 @@ class AIH_Bid {
     /**
      * Get bid statistics
      * Consolidated into a single query with conditional aggregation + caching
+     *
+     * @return object{total_bids: int, winning_bids: int, outbid_bids: int, rejected_bids: int, unique_bidders: int, unique_art_pieces: int, total_bid_value: float, highest_bid: float, average_bid: float}
      */
     public function get_stats() {
         global $wpdb;

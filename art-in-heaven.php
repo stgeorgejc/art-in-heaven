@@ -64,6 +64,8 @@ class Art_In_Heaven {
     
     /**
      * Check minimum requirements
+     *
+     * @return bool
      */
     private function check_requirements() {
         if (version_compare(PHP_VERSION, self::MIN_PHP_VERSION, '<')) {
@@ -73,6 +75,11 @@ class Art_In_Heaven {
         return true;
     }
     
+    /**
+     * Display PHP version notice.
+     *
+     * @return void
+     */
     public function php_version_notice() {
         $message = sprintf(
             esc_html__('Art in Heaven requires PHP %2$s or higher. You have %1$s.', 'art-in-heaven'),
@@ -83,6 +90,8 @@ class Art_In_Heaven {
     
     /**
      * Load dependencies
+     *
+     * @return void
      */
     private function load_dependencies() {
         // Core
@@ -125,6 +134,8 @@ class Art_In_Heaven {
     
     /**
      * Initialize hooks
+     *
+     * @return void
      */
     private function init_hooks() {
         register_activation_hook(__FILE__, array($this, 'activate'));
@@ -184,8 +195,8 @@ class Art_In_Heaven {
      * by key. Each header is guarded with !isset() so we only fill gaps — never
      * override what another plugin, theme, or server config has already declared.
      *
-     * @param array $headers Existing headers from WordPress and other plugins
-     * @return array Headers with security defaults filled in
+     * @param array<string, string> $headers Existing headers from WordPress and other plugins
+     * @return array<string, string> Headers with security defaults filled in
      */
     public function add_security_headers($headers) {
         // Skip admin, AJAX, and cron — those have their own header handling
@@ -213,6 +224,9 @@ class Art_In_Heaven {
 
     /**
      * Add custom cron schedules
+     *
+     * @param array<string, array{interval: int, display: string}> $schedules Existing cron schedules.
+     * @return array<string, array{interval: int, display: string}>
      */
     public function add_cron_schedules($schedules) {
         // Add 30-second schedule for frequent CCB sync during live events
@@ -227,6 +241,8 @@ class Art_In_Heaven {
      * Flush rewrite rules if the plugin's rules are missing from the stored rules.
      * Runs at priority 99 on admin requests only (after all rules are registered).
      * Uses a transient to avoid repeated flush attempts on every admin page load.
+     *
+     * @return void
      */
     public function maybe_flush_rewrite_rules() {
         // Only run in admin context to avoid expensive flushes on frontend requests
@@ -271,6 +287,8 @@ class Art_In_Heaven {
 
     /**
      * Auto-run database migrations when plugin version changes
+     *
+     * @return void
      */
     public function maybe_update_db() {
         $installed_version = get_option('aih_db_version', '0');
@@ -282,6 +300,10 @@ class Art_In_Heaven {
     /**
      * Disable WordPress intermediate image sizes for AIH uploads
      * This prevents WordPress from creating 6+ copies of every uploaded image
+     *
+     * @param array<string, array{width: int, height: int, crop: bool}> $sizes    Associative array of image sizes.
+     * @param array<string, mixed>                                      $metadata Image metadata.
+     * @return array<string, array{width: int, height: int, crop: bool}>
      */
     public function disable_intermediate_sizes($sizes, $metadata) {
         // Check if we're in an AIH upload context
@@ -296,13 +318,17 @@ class Art_In_Heaven {
     
     /**
      * Set flag before AIH image upload
+     *
+     * @return void
      */
     public static function before_aih_upload() {
         set_transient('aih_uploading_image', true, 120); // 2 minute timeout
     }
     
     /**
-     * Clear flag after AIH image upload  
+     * Clear flag after AIH image upload
+     *
+     * @return void
      */
     public static function after_aih_upload() {
         delete_transient('aih_uploading_image');
@@ -310,6 +336,8 @@ class Art_In_Heaven {
     
     /**
      * Plugin activation
+     *
+     * @return void
      */
     public function activate() {
         if (!current_user_can('activate_plugins')) return;
@@ -357,6 +385,8 @@ class Art_In_Heaven {
 
     /**
      * Plugin deactivation
+     *
+     * @return void
      */
     public function deactivate() {
         wp_clear_scheduled_hook('aih_hourly_cleanup');
@@ -372,6 +402,8 @@ class Art_In_Heaven {
     
     /**
      * Initialize plugin
+     *
+     * @return void
      */
     public function init() {
         load_plugin_textdomain('art-in-heaven', false, dirname(AIH_PLUGIN_BASENAME) . '/languages');
@@ -405,6 +437,8 @@ class Art_In_Heaven {
      *
      * Early installs stored a permalink string in aih_gallery_page / aih_login_page.
      * All code now expects a numeric post ID. This converts any remaining URL values.
+     *
+     * @return void
      */
     private function maybe_migrate_page_settings() {
         foreach (array('aih_gallery_page', 'aih_login_page') as $option) {
@@ -418,6 +452,11 @@ class Art_In_Heaven {
         }
     }
 
+    /**
+     * Initialize REST API.
+     *
+     * @return void
+     */
     public function init_rest_api() {
         // Load REST API class only when REST requests are made
         $rest_file = AIH_PLUGIN_DIR . 'includes/class-aih-rest-api.php';
@@ -433,6 +472,8 @@ class Art_In_Heaven {
     /**
      * Serve the push notification service worker from site root scope.
      * Intercepted via /?aih-sw=1 so the SW gets "/" scope.
+     *
+     * @return void
      */
     public function serve_service_worker() {
         if (!isset($_GET['aih-sw']) || $_GET['aih-sw'] !== '1') {
@@ -453,6 +494,8 @@ class Art_In_Heaven {
 
     /**
      * Serve the PWA manifest dynamically via /?aih-manifest=1.
+     *
+     * @return void
      */
     public function serve_manifest() {
         if (!isset($_GET['aih-manifest']) || $_GET['aih-manifest'] !== '1') {
@@ -468,7 +511,7 @@ class Art_In_Heaven {
     /**
      * Build the PWA manifest data array.
      *
-     * @return array Manifest data suitable for JSON encoding.
+     * @return array<string, mixed> Manifest data suitable for JSON encoding.
      */
     public function build_manifest_array() {
         // Relative path for start_url — always same-origin since get_gallery_url()
@@ -519,6 +562,8 @@ class Art_In_Heaven {
 
     /**
      * Output PWA meta tags for iOS Add to Home Screen support.
+     *
+     * @return void
      */
     public function add_pwa_meta() {
         if (!$this->is_aih_page()) return;
@@ -537,6 +582,11 @@ class Art_In_Heaven {
         echo '<link rel="apple-touch-icon" href="' . $icon_url . '">' . "\n";
     }
 
+    /**
+     * Run hourly cleanup tasks.
+     *
+     * @return void
+     */
     public function run_hourly_cleanup() {
         try {
             if (class_exists('AIH_Cache')) AIH_Cache::cleanup_expired();
@@ -547,6 +597,8 @@ class Art_In_Heaven {
     
     /**
      * Check if the current page contains an AIH shortcode.
+     *
+     * @return bool
      */
     private function is_aih_page() {
         global $post;
@@ -563,6 +615,9 @@ class Art_In_Heaven {
 
     /**
      * Add body class on plugin pages for CSS targeting
+     *
+     * @param string[] $classes Existing body classes.
+     * @return string[]
      */
     public function add_body_class($classes) {
         if ($this->is_aih_page()) {
@@ -574,6 +629,8 @@ class Art_In_Heaven {
 
     /**
      * Enqueue frontend assets
+     *
+     * @return void
      */
     public function enqueue_frontend_assets() {
         if (!$this->is_aih_page()) return;
@@ -681,6 +738,8 @@ class Art_In_Heaven {
     
     /**
      * Add preconnect hints for Google Fonts
+     *
+     * @return void
      */
     public function add_preconnect_hints() {
         if (!$this->is_aih_page()) return;
@@ -694,6 +753,8 @@ class Art_In_Heaven {
 
     /**
      * Preload the LCP image (first gallery image) for faster rendering
+     *
+     * @return void
      */
     public function preload_lcp_image() {
         if (!$this->is_aih_page()) return;
@@ -733,6 +794,8 @@ class Art_In_Heaven {
 
     /**
      * AJAX endpoint to set Mercure subscriber cookie (keeps main page cacheable)
+     *
+     * @return void
      */
     public function ajax_mercure_cookie() {
         if (!AIH_Mercure::is_enabled()) {
@@ -759,6 +822,8 @@ class Art_In_Heaven {
 
     /**
      * Generate custom color CSS from settings
+     *
+     * @return string
      */
     public function get_custom_color_css() {
         $color_defaults = array(
@@ -853,6 +918,10 @@ class Art_In_Heaven {
     
     /**
      * Convert hex color to rgba
+     *
+     * @param string $hex   Hex color value.
+     * @param float  $alpha Alpha transparency value.
+     * @return string
      */
     private function hex_to_rgba($hex, $alpha = 1) {
         $hex = str_replace('#', '', $hex);
@@ -867,6 +936,10 @@ class Art_In_Heaven {
     
     /**
      * Adjust brightness of hex color
+     *
+     * @param string $hex     Hex color value.
+     * @param int    $percent Percentage to adjust brightness.
+     * @return string
      */
     private function adjust_brightness($hex, $percent) {
         $hex = str_replace('#', '', $hex);
@@ -921,6 +994,9 @@ class Art_In_Heaven {
 
     /**
      * Enqueue admin assets
+     *
+     * @param string $hook Current admin page hook suffix.
+     * @return void
      */
     public function enqueue_admin_assets($hook) {
         if (strpos($hook, 'art-in-heaven') === false) return;
@@ -949,6 +1025,11 @@ class Art_In_Heaven {
         ));
     }
     
+    /**
+     * Create upload directories for plugin assets.
+     *
+     * @return void
+     */
     private function create_upload_directories() {
         $upload_dir = wp_upload_dir();
         $base = $upload_dir['basedir'] . '/art-in-heaven';
@@ -961,6 +1042,11 @@ class Art_In_Heaven {
         }
     }
     
+    /**
+     * Set default plugin options.
+     *
+     * @return void
+     */
     private function set_default_options() {
         $defaults = array(
             'aih_auction_year' => wp_date('Y'),
@@ -977,6 +1063,11 @@ class Art_In_Heaven {
         }
     }
     
+    /**
+     * Add privacy policy content.
+     *
+     * @return void
+     */
     public function add_privacy_policy_content() {
         if (!function_exists('wp_add_privacy_policy_content')) return;
         $content = '<h2>' . __('Art in Heaven Auction Plugin', 'art-in-heaven') . '</h2>';
@@ -984,6 +1075,12 @@ class Art_In_Heaven {
         wp_add_privacy_policy_content('Art in Heaven', wp_kses_post($content));
     }
     
+    /**
+     * Register personal data exporter for GDPR compliance.
+     *
+     * @param array<string, array{exporter_friendly_name: string, callback: callable}> $exporters Registered exporters.
+     * @return array<string, array{exporter_friendly_name: string, callback: callable}>
+     */
     public function register_data_exporter($exporters) {
         $exporters['art-in-heaven'] = array(
             'exporter_friendly_name' => __('Art in Heaven Data', 'art-in-heaven'),
@@ -992,6 +1089,12 @@ class Art_In_Heaven {
         return $exporters;
     }
     
+    /**
+     * Register personal data eraser for GDPR compliance.
+     *
+     * @param array<string, array{eraser_friendly_name: string, callback: callable}> $erasers Registered erasers.
+     * @return array<string, array{eraser_friendly_name: string, callback: callable}>
+     */
     public function register_data_eraser($erasers) {
         $erasers['art-in-heaven'] = array(
             'eraser_friendly_name' => __('Art in Heaven Data', 'art-in-heaven'),
@@ -1000,6 +1103,12 @@ class Art_In_Heaven {
         return $erasers;
     }
     
+    /**
+     * Invalidate art piece cache.
+     *
+     * @param int|null $art_id Art piece ID, or null to invalidate all.
+     * @return void
+     */
     public function invalidate_art_cache($art_id = null) {
         if (class_exists('AIH_Cache')) {
             AIH_Cache::delete_group('art_pieces');
@@ -1007,6 +1116,12 @@ class Art_In_Heaven {
         }
     }
     
+    /**
+     * Invalidate bid cache.
+     *
+     * @param int|null $bid_id Bid ID, or null to invalidate all.
+     * @return void
+     */
     public function invalidate_bid_cache($bid_id = null) {
         if (class_exists('AIH_Cache')) {
             AIH_Cache::delete_group('bids');
@@ -1016,6 +1131,11 @@ class Art_In_Heaven {
     }
 }
 
+/**
+ * Get the Art_In_Heaven singleton instance.
+ *
+ * @return Art_In_Heaven
+ */
 function art_in_heaven() {
     return Art_In_Heaven::get_instance();
 }

@@ -43,7 +43,7 @@ class AIH_Cache {
     /**
      * In-memory cache of group versions to avoid repeated lookups within a request
      *
-     * @var array
+     * @var array<string, int>
      */
     private static $group_versions = array();
 
@@ -314,7 +314,7 @@ class AIH_Cache {
     /**
      * Get cache statistics
      *
-     * @return array
+     * @return array<string, mixed>
      */
     public static function get_stats() {
         global $wpdb;
@@ -346,8 +346,8 @@ class AIH_Cache {
     /**
      * Cache art pieces list
      *
-     * @param array $args Query arguments
-     * @return array|null
+     * @param array<string, mixed> $args Query arguments
+     * @return array<int, object>|null
      */
     public static function get_art_pieces($args = array()) {
         $key = 'art_pieces_' . md5(serialize($args));
@@ -357,8 +357,8 @@ class AIH_Cache {
     /**
      * Cache art pieces list
      *
-     * @param array $args   Query arguments
-     * @param array $pieces The art pieces data
+     * @param array<string, mixed> $args   Query arguments
+     * @param array<int, object>  $pieces The art pieces data
      * @return bool
      */
     public static function set_art_pieces($args, $pieces) {
@@ -412,6 +412,7 @@ class AIH_Cache {
      * Invalidate bidder cache
      *
      * @param string $identifier Email or confirmation code
+     * @return void
      */
     public static function invalidate_bidder($identifier) {
         self::delete('bidder_' . md5($identifier), 'bidders');

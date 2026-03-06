@@ -17,6 +17,8 @@ class AIH_Database {
 
     /**
      * Cached auction year to avoid repeated get_option() calls
+     *
+     * @var string|null
      */
     private static $cached_year = null;
 
@@ -27,7 +29,7 @@ class AIH_Database {
      * Migrations are run in order; only those with version > current
      * stored aih_db_migration_version are executed.
      *
-     * @var array
+     * @var array<string, string>
      */
     private static $migrations = array(
         '1.0' => 'migrate_bids_table',
@@ -50,6 +52,8 @@ class AIH_Database {
 
     /**
      * Clear the cached auction year (call after updating the option)
+     *
+     * @return void
      */
     public static function clear_year_cache() {
         self::$cached_year = null;
@@ -57,6 +61,8 @@ class AIH_Database {
     
     /**
      * Plugin activation - create database tables
+     *
+     * @return void
      */
     public static function activate() {
         self::create_tables();
@@ -64,8 +70,9 @@ class AIH_Database {
     
     /**
      * Create all tables for current year
-     * 
+     *
      * @param int|null $year Optional year override
+     * @return void
      */
     public static function create_tables($year = null) {
         global $wpdb;
@@ -406,8 +413,9 @@ class AIH_Database {
     
     /**
      * Migrate bids table - add bid_status column if not exists
-     * 
+     *
      * @param int|null $year
+     * @return void
      */
     public static function migrate_bids_table($year = null) {
         global $wpdb;
@@ -446,8 +454,9 @@ class AIH_Database {
     
     /**
      * Migrate art pieces table - add show_end_time column if not exists
-     * 
+     *
      * @param int|null $year
+     * @return void
      */
     public static function migrate_art_pieces_table($year = null) {
         global $wpdb;
@@ -483,8 +492,9 @@ class AIH_Database {
     
     /**
      * Clean up old columns from bidders table
-     * 
+     *
      * @param int|null $year
+     * @return void
      */
     public static function cleanup_bidders_table($year = null) {
         global $wpdb;
@@ -542,6 +552,7 @@ class AIH_Database {
      * the JOIN/WHERE predicates so MySQL can use it as a covering index.
      *
      * @param int|null $year
+     * @return void
      */
     public static function add_bids_composite_index($year = null) {
         global $wpdb;
@@ -601,6 +612,7 @@ class AIH_Database {
      * version after each successful migration.
      *
      * @param int|null $year
+     * @return void
      */
     public static function run_pending_migrations($year = null) {
         if (!$year) {
@@ -628,6 +640,7 @@ class AIH_Database {
      * re-running on a database that already has the constraints is safe.
      *
      * @param int|null $year
+     * @return void
      */
     public static function add_foreign_keys($year = null) {
         global $wpdb;
@@ -698,6 +711,8 @@ class AIH_Database {
 
     /**
      * Plugin deactivation
+     *
+     * @return void
      */
     public static function deactivate() {
         // Clear transients
@@ -773,8 +788,8 @@ class AIH_Database {
     /**
      * Log an audit event
      * 
-     * @param string $event_type Event type
-     * @param array  $data       Event data
+     * @param string               $event_type Event type
+     * @param array<string, mixed> $data       Event data
      * @return int|false Insert ID or false
      */
     public static function log_audit($event_type, $data = array()) {
@@ -800,8 +815,8 @@ class AIH_Database {
     
     /**
      * Get table statistics
-     * 
-     * @return array
+     *
+     * @return array<string, array<string, mixed>>
      */
     public static function get_table_stats() {
         global $wpdb;

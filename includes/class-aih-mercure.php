@@ -32,9 +32,16 @@ class AIH_Mercure {
     /** Default hub URL (internal, for PHP → Mercure) */
     const DEFAULT_HUB_URL = 'http://127.0.0.1:3000/.well-known/mercure';
 
-    /** Cached publisher JWT to avoid regenerating per request */
+    /**
+     * Cached publisher JWT to avoid regenerating per request
+     *
+     * @var string|null
+     */
     private $publisher_jwt = null;
 
+    /**
+     * @return self
+     */
     public static function get_instance() {
         if (null === self::$instance) {
             self::$instance = new self();
@@ -214,7 +221,7 @@ class AIH_Mercure {
     /**
      * Encode a JWT using HMAC-SHA256
      *
-     * @param array $payload JWT claims
+     * @param array<string, mixed> $payload JWT claims
      * @return string Encoded JWT
      */
     private static function encode_jwt($payload) {
@@ -254,9 +261,9 @@ class AIH_Mercure {
     /**
      * Publish an event to the Mercure hub
      *
-     * @param string $topic   Full topic URL
-     * @param array  $data    Event data (will be JSON-encoded)
-     * @param bool   $private Whether this is a private (authorized) topic
+     * @param string               $topic   Full topic URL
+     * @param array<string, mixed> $data    Event data (will be JSON-encoded)
+     * @param bool                 $private Whether this is a private (authorized) topic
      * @return bool Success
      */
     public function publish($topic, $data, $private = false) {
@@ -313,6 +320,7 @@ class AIH_Mercure {
      * @param int    $art_piece_id
      * @param string $new_bidder_id
      * @param float  $amount
+     * @return void
      */
     public function on_bid_placed($bid_id, $art_piece_id, $new_bidder_id, $amount) {
         global $wpdb;

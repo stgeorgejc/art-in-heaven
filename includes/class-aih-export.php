@@ -22,7 +22,7 @@ class AIH_Export {
      * 
      * @param string $email_address The user's email address
      * @param int    $page          Page number
-     * @return array
+     * @return array<string, mixed>
      */
     public static function export_personal_data($email_address, $page = 1) {
         $export_items = array();
@@ -118,7 +118,7 @@ class AIH_Export {
      * 
      * @param string $email_address The user's email address
      * @param int    $page          Page number
-     * @return array
+     * @return array<string, mixed>
      */
     public static function erase_personal_data($email_address, $page = 1) {
         global $wpdb;
@@ -224,7 +224,7 @@ class AIH_Export {
      * Export data to CSV
      * 
      * @param string $type Export type (art, bids, bidders, orders)
-     * @param array  $filters Optional filters
+     * @param array<string, mixed> $filters Optional filters
      * @return string CSV content
      */
     public static function to_csv($type, $filters = array()) {
@@ -322,7 +322,7 @@ class AIH_Export {
      * Results are cached for 5 minutes via AIH_Cache to avoid running
      * 11 separate COUNT/SUM queries on every call.
      *
-     * @return array
+     * @return array<string, mixed>
      */
     public static function get_auction_stats() {
         return AIH_Cache::remember('auction_stats', function () {
