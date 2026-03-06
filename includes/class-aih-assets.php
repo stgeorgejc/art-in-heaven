@@ -176,7 +176,7 @@ class AIH_Assets {
                 --color-surface: #ffffff;
                 --color-primary: #1c1c1c;
                 --color-secondary: #4a4a4a;
-                --color-muted: #8a8a8a;
+                --color-muted: #6b6b6b;
                 --color-border: #e8e6e3;
                 --color-accent: #b8956b;
                 --shadow-lg: 0 10px 40px rgba(0,0,0,0.08);
@@ -195,7 +195,7 @@ class AIH_Assets {
                 --color-accent: #d4a574;
                 --shadow-lg: 0 10px 40px rgba(0,0,0,0.6);
             }
-            *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+            .aih-page, .aih-page *, .aih-page *::before, .aih-page *::after { box-sizing: border-box; margin: 0; padding: 0; }
             body.aih-active .site-content,
             body.aih-active .content-area,
             body.aih-active .site-main,
@@ -294,6 +294,11 @@ class AIH_Assets {
                 background: var(--color-bg-alt);
                 width: 100%;
             }
+            .aih-card-image a {
+                display: block;
+                width: 100%;
+                height: 100%;
+            }
             .aih-card-image img {
                 position: absolute;
                 top: 0;
@@ -327,7 +332,18 @@ class AIH_Assets {
                 font-weight: 500;
                 margin-bottom: 10px;
             }
+            .aih-ornament {
+                font-size: 16px;
+                color: var(--color-accent);
+                margin-bottom: 16px;
+                letter-spacing: 8px;
+            }
             .aih-login-form { padding: 24px; }
+            @media (min-width: 480px) {
+                .aih-gallery-grid {
+                    gap: 12px;
+                }
+            }
             @media (min-width: 768px) {
                 .aih-gallery-grid {
                     grid-template-columns: repeat(3, minmax(0, 1fr));
