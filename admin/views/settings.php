@@ -14,13 +14,13 @@ $event_date = get_option('aih_event_date', '');
     <form method="post" action="options.php">
         <?php settings_fields('aih_settings'); ?>
         
-        <!-- Event Settings -->
+        <!-- Auction Settings -->
         <div class="aih-settings-section">
-            <h2><?php _e('Event Settings', 'art-in-heaven'); ?></h2>
+            <h2><?php _e('Auction Settings', 'art-in-heaven'); ?></h2>
             
             <table class="form-table">
                 <tr>
-                    <th scope="row"><label for="aih_event_date"><?php _e('Event Start Date & Time', 'art-in-heaven'); ?></label></th>
+                    <th scope="row"><label for="aih_event_date"><?php _e('Auction Start Date & Time', 'art-in-heaven'); ?></label></th>
                     <td>
                         <input type="datetime-local" id="aih_event_date" name="aih_event_date" 
                                value="<?php echo esc_attr($event_date ? substr(str_replace(' ', 'T', $event_date), 0, 16) : ''); ?>" 
@@ -33,7 +33,7 @@ $event_date = get_option('aih_event_date', '');
                     </td>
                 </tr>
                 <tr>
-                    <th scope="row"><label for="aih_event_end_date"><?php _e('Event End Date & Time', 'art-in-heaven'); ?></label></th>
+                    <th scope="row"><label for="aih_event_end_date"><?php _e('Auction End Date & Time', 'art-in-heaven'); ?></label></th>
                     <td>
                         <?php $event_end_date = get_option('aih_event_end_date', ''); ?>
                         <input type="datetime-local" id="aih_event_end_date" name="aih_event_end_date" 
@@ -81,10 +81,10 @@ $event_date = get_option('aih_event_date', '');
                         <?php endif; ?>
                         <br><br>
                         <button type="button" id="aih-create-tables" class="button"><?php printf(__('Create Tables for %d', 'art-in-heaven'), $current_year); ?></button>
-                        <button type="button" id="aih-cleanup-tables" class="button"><?php _e('Cleanup & Migrate Old Columns', 'art-in-heaven'); ?></button>
-                        <button type="button" id="aih-purge-data" class="button" style="color:#a00;"><?php _e('Delete All Data', 'art-in-heaven'); ?></button>
+                        <button type="button" id="aih-cleanup-tables" class="button"><?php _e('Migrate Legacy Columns', 'art-in-heaven'); ?></button>
+                        <button type="button" id="aih-purge-data" class="button" style="color:#a00;"><?php _e('Permanently Delete All Data', 'art-in-heaven'); ?></button>
                         <span id="aih-tables-result"></span>
-                        <p class="description"><?php _e('Cleanup migrates data from old column names (email, first_name, etc.) to new ones (email_primary, name_first, etc.) and removes the old columns.', 'art-in-heaven'); ?></p>
+                        <p class="description"><?php _e('Use "Migrate Legacy Columns" only after upgrading from an older plugin version. It moves data from old column names (email, first_name) to current ones (email_primary, name_first) and removes the old columns.', 'art-in-heaven'); ?></p>
                     </td>
                 </tr>
             </table>
@@ -155,7 +155,7 @@ $event_date = get_option('aih_event_date', '');
                     <td>
                         <button type="button" class="button" id="aih-regenerate-watermarks"><?php _e('Regenerate All Watermarks', 'art-in-heaven'); ?></button>
                         <span id="aih-regenerate-status" style="margin-left: 10px;"></span>
-                        <p class="description"><?php _e('Use this after changing watermark settings to apply new settings to all existing images. This may take a while for many images.', 'art-in-heaven'); ?></p>
+                        <p class="description"><?php _e('Use this after changing watermark text, crosshatch, or overlay settings to re-apply them to all existing images. May take several minutes for large catalogs (50+ images).', 'art-in-heaven'); ?></p>
                     </td>
                 </tr>
                 <tr>
@@ -366,7 +366,7 @@ jQuery(document).ready(function($) {
     
     // Cleanup tables
     $('#aih-cleanup-tables').on('click', function() {
-        if (!confirm('<?php echo esc_js(__('This will migrate data from old columns to new columns and remove old columns. Continue?', 'art-in-heaven')); ?>')) return;
+        if (!confirm('<?php echo esc_js(__('This will migrate data from old columns to new columns and remove the old columns. This is only needed after a plugin upgrade. Continue?', 'art-in-heaven')); ?>')) return;
         
         var $btn = $(this).prop('disabled', true);
         var $result = $('#aih-tables-result').html('<span style="color:#666;">Cleaning up...</span>');
@@ -411,9 +411,9 @@ jQuery(document).ready(function($) {
         });
     });
 
-    // Apply event date
+    // Apply auction date
     $('#aih-apply-event-date').on('click', function() {
-        if (!confirm('<?php echo esc_js(__('This will update the start time for ALL active art pieces. Continue?', 'art-in-heaven')); ?>')) return;
+        if (!confirm('<?php echo esc_js(__('This will update the start time for all active art pieces to match this date. Continue?', 'art-in-heaven')); ?>')) return;
         
         var $btn = $(this).prop('disabled', true);
         var $result = $('#aih-event-date-result').html('<span style="color:#666;">Updating...</span>');

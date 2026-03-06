@@ -102,7 +102,7 @@
 
     // Toast notification helper — auto-inject element if missing
     if (!$('#aih-toast').length) {
-        $('body').append('<div id="aih-toast" class="aih-toast"></div>');
+        $('body').append('<div id="aih-toast" class="aih-toast" role="status" aria-live="polite"></div>');
     }
 
     function showToast(message, type = 'info') {
@@ -1169,9 +1169,9 @@
         // Inject modal HTML if not present
         if (!$('#aih-confirm-modal').length) {
             $('body').append(
-                '<div id="aih-confirm-modal" class="aih-confirm-overlay">' +
+                '<div id="aih-confirm-modal" class="aih-confirm-overlay" role="dialog" aria-modal="true" aria-labelledby="aih-confirm-text">' +
                     '<div class="aih-confirm-card">' +
-                        '<p class="aih-confirm-text">Confirm bid of <strong id="aih-confirm-amount"></strong>?</p>' +
+                        '<p class="aih-confirm-text" id="aih-confirm-text">Confirm bid of <strong id="aih-confirm-amount"></strong>?</p>' +
                         '<div class="aih-confirm-actions">' +
                             '<button type="button" class="aih-confirm-cancel">Cancel</button>' +
                             '<button type="button" class="aih-confirm-yes">Confirm</button>' +
@@ -1183,10 +1183,15 @@
 
         var $modal = $('#aih-confirm-modal');
         var pendingCallback = null;
+        var lastFocusBeforeModal = null;
 
         function closeModal() {
             $modal.removeClass('active');
             pendingCallback = null;
+            if (lastFocusBeforeModal) {
+                lastFocusBeforeModal.focus();
+                lastFocusBeforeModal = null;
+            }
         }
 
         $modal.on('click', '.aih-confirm-cancel', closeModal);
@@ -1201,17 +1206,32 @@
         });
 
         $(document).on('keydown', function(e) {
-            if (e.key === 'Escape' && $modal.hasClass('active')) {
+            if (!$modal.hasClass('active')) return;
+            if (e.key === 'Escape') {
                 closeModal();
+                return;
+            }
+            // Focus trap: cycle Tab within modal buttons
+            if (e.key === 'Tab') {
+                var $focusable = $modal.find('button:visible');
+                var $first = $focusable.first();
+                var $last = $focusable.last();
+                if (e.shiftKey && document.activeElement === $first[0]) {
+                    e.preventDefault();
+                    $last.focus();
+                } else if (!e.shiftKey && document.activeElement === $last[0]) {
+                    e.preventDefault();
+                    $first.focus();
+                }
             }
         });
 
         // Global function used by all templates
         window.aihConfirmBid = function(amount, callback) {
+            lastFocusBeforeModal = document.activeElement;
             $('#aih-confirm-amount').text(amount);
             pendingCallback = callback;
             $modal.addClass('active');
-            // Focus trap: focus the confirm button
             $modal.find('.aih-confirm-yes').focus();
         };
     })();

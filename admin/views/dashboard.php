@@ -63,8 +63,8 @@ $can_view_bids = AIH_Roles::can_view_bids();
             <h2><?php _e('Payment Summary', 'art-in-heaven'); ?></h2>
             <table class="widefat">
                 <tr><td><?php _e('Total Orders', 'art-in-heaven'); ?></td><td><strong><?php echo $payment_stats->total_orders ?: 0; ?></strong></td></tr>
-                <tr><td><?php _e('Paid', 'art-in-heaven'); ?></td><td><strong style="color: #065f46;"><?php echo $payment_stats->paid_orders ?: 0; ?></strong></td></tr>
-                <tr><td><?php _e('Pending', 'art-in-heaven'); ?></td><td><strong style="color: #d97706;"><?php echo $payment_stats->pending_orders ?: 0; ?></strong></td></tr>
+                <tr><td><span class="dashicons dashicons-yes-alt" style="color: #065f46; font-size: 16px; width: 16px; height: 16px; vertical-align: text-bottom;" aria-hidden="true"></span> <?php _e('Paid', 'art-in-heaven'); ?></td><td><strong style="color: #065f46;"><?php echo $payment_stats->paid_orders ?: 0; ?></strong></td></tr>
+                <tr><td><span class="dashicons dashicons-clock" style="color: #d97706; font-size: 16px; width: 16px; height: 16px; vertical-align: text-bottom;" aria-hidden="true"></span> <?php _e('Pending', 'art-in-heaven'); ?></td><td><strong style="color: #d97706;"><?php echo $payment_stats->pending_orders ?: 0; ?></strong></td></tr>
                 <tr><td><?php _e('Total Pending', 'art-in-heaven'); ?></td><td><strong>$<?php echo number_format($payment_stats->total_pending ?: 0, 2); ?></strong></td></tr>
             </table>
         </div>

@@ -156,7 +156,7 @@ $status_options = AIH_Status::get_status_options();
                                value="<?php echo esc_attr(aih_get_prop($art_piece, 'art_id', '')); ?>"
                                style="font-family: monospace; text-transform: uppercase;">
                         <p class="description">
-                            <?php _e('Required. Use a consistent format like AIH-001, AIH-002, etc.', 'art-in-heaven'); ?>
+                            <?php _e('Required. A unique identifier for this piece, used in labels and pickup. Use a consistent format like AIH-001, AIH-002, etc.', 'art-in-heaven'); ?>
                         </p>
                     </div>
 
@@ -175,7 +175,7 @@ $status_options = AIH_Status::get_status_options();
                             <?php endforeach; ?>
                         </select>
                         <p class="description">
-                            <?php _e('Required. Categorize art pieces by tier (1-4).', 'art-in-heaven'); ?>
+                            <?php _e('Required. Group art pieces by price range or category. Tier 1 is typically the highest value. Tiers control how pieces are grouped in the gallery.', 'art-in-heaven'); ?>
                         </p>
                     </div>
                 </div>

@@ -6404,7 +6404,7 @@ html.aih-lightbox-open body {
     }
 }
 
-/* Respect reduced motion preferences */
+/* Respect users with motion sensitivity */
 @media (prefers-reduced-motion: reduce) {
     .aih-page *,
     .aih-page *::before,

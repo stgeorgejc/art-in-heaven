@@ -12,6 +12,9 @@ class AIH_Checkout {
     /** @var self|null */
     private static $instance = null;
 
+    /** @var array{merchant_key: string, base_url: string, fund: string}|null */
+    private static $cached_pushpay_settings = null;
+
     /**
      * @return self
      */
@@ -26,11 +29,17 @@ class AIH_Checkout {
      * @return array{merchant_key: string, base_url: string, fund: string}
      */
     public function get_pushpay_settings() {
-        return array(
+        if (self::$cached_pushpay_settings !== null) {
+            return self::$cached_pushpay_settings;
+        }
+
+        self::$cached_pushpay_settings = array(
             'merchant_key' => get_option('aih_pushpay_merchant_key', ''),
             'base_url' => get_option('aih_pushpay_base_url', 'https://pushpay.com/pay/'),
             'fund' => get_option('aih_pushpay_fund', 'art-in-heaven')
         );
+
+        return self::$cached_pushpay_settings;
     }
     
     /**
@@ -292,7 +301,7 @@ class AIH_Checkout {
 
         } catch (Exception $e) {
             $wpdb->query('ROLLBACK');
-            error_log('AIH Checkout Error: ' . $e->getMessage());
+            error_log(sprintf('[AIH] Checkout error for bidder %s (items: %s): %s', $bidder_id, implode(',', $art_piece_ids), $e->getMessage()));
             return array('success' => false, 'message' => __('An error occurred while creating your order. Please try again.', 'art-in-heaven'));
         }
     }

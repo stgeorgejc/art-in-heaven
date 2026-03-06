@@ -81,7 +81,7 @@ $cart_count = count($checkout->get_won_items($bidder_id));
         <?php else: ?>
         <div class="aih-wins-grid">
             <?php foreach ($purchases as $item): ?>
-            <article class="aih-win-card" data-id="<?php echo $item->art_piece_id; ?>">
+            <article class="aih-win-card" data-id="<?php echo esc_attr($item->art_piece_id); ?>">
                 <div class="aih-win-image">
                     <?php if ($item->image_url): ?>
                     <a href="<?php echo esc_url(AIH_Template_Helper::get_art_url($item->art_id)); ?>">
