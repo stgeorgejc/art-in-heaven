@@ -159,7 +159,7 @@ $bidder_bid_ids = $bid_model->get_bidder_bid_ids_batch($piece_ids, $bidder_id);
             <p><?php _e('Art pieces will be available here when the auction begins.', 'art-in-heaven'); ?></p>
         </div>
         <?php else: ?>
-        <div class="aih-gallery-grid" id="aih-gallery">
+        <div class="aih-gallery-grid" id="aih-gallery" role="region" aria-label="<?php esc_attr_e('Art auction gallery', 'art-in-heaven'); ?>">
             <?php $card_index = 0; ?>
             <?php foreach ($art_pieces as $piece):
                 $bidder_has_bid_check = false;
@@ -307,7 +307,7 @@ $bidder_bid_ids = $bid_model->get_bidder_bid_ids_batch($piece_ids, $bidder_id);
 </div>
 
 <!-- Toast -->
-<div id="aih-toast" class="aih-toast"></div>
+<div id="aih-toast" class="aih-toast" role="status" aria-live="polite"></div>
 
 <!-- Scroll to Top Button -->
 <button type="button" class="aih-scroll-top" id="aih-scroll-top" title="<?php esc_attr_e('Scroll to top', 'art-in-heaven'); ?>">&uarr;</button>
