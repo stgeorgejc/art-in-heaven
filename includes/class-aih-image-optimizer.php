@@ -325,7 +325,7 @@ class AIH_Image_Optimizer {
 
         if ($source_width > $target_width) {
             $target_height = (int) round($source_height * ($target_width / $source_width));
-            $resized = imagecreatetruecolor($target_width, $target_height);
+            $resized = imagecreatetruecolor(max(1, $target_width), max(1, $target_height));
             imagecopyresampled($resized, $source, 0, 0, 0, 0, $target_width, $target_height, $source_width, $source_height);
         } else {
             $resized = $source;

@@ -457,10 +457,12 @@ class AIH_Admin {
         
         $art_model = new AIH_Art_Piece();
         $all_art = $art_model->get_all_with_stats();
+        /** @var stdClass|null $counts */
         $counts = $art_model->get_counts();
         $checkout = AIH_Checkout::get_instance();
+        /** @var stdClass|null $payment_stats */
         $payment_stats = $checkout->get_payment_stats();
-        
+
         // Ensure counts has all required properties
         if (!$counts) {
             $counts = new stdClass();
@@ -482,7 +484,7 @@ class AIH_Admin {
         $payment_stats->pending_orders = isset($payment_stats->pending_orders) ? $payment_stats->pending_orders : 0;
         $payment_stats->total_collected = isset($payment_stats->total_collected) ? $payment_stats->total_collected : 0;
         $payment_stats->total_pending = isset($payment_stats->total_pending) ? $payment_stats->total_pending : 0;
-        
+
         $total_bids = 0;
         if ($all_art) {
             foreach ($all_art as $piece) {
@@ -576,6 +578,7 @@ class AIH_Admin {
         $orders = $checkout->get_all_orders(array('status' => $status_filter, 'search' => $search, 'limit' => $per_page, 'offset' => $offset));
         $total_orders_filtered = $checkout->count_orders(array('status' => $status_filter, 'search' => $search));
         $total_pages = ceil($total_orders_filtered / $per_page);
+        /** @var stdClass|null $payment_stats */
         $payment_stats = $checkout->get_payment_stats();
 
         // Ensure payment_stats has all required properties

@@ -31,11 +31,12 @@ class AIH_Export {
         
         // Export bidder data
         $bidders_table = AIH_Database::get_table('bidders');
+        /** @var object{id: string, email_primary: string, name_first: string, name_last: string, phone_mobile: string, mailing_street: string, mailing_city: string, mailing_state: string, mailing_zip: string, confirmation_code: string, created_at: string}|null $bidder */
         $bidder = $wpdb->get_row($wpdb->prepare(
             "SELECT * FROM $bidders_table WHERE email_primary = %s",
             $email_address
         ));
-        
+
         if ($bidder) {
             $data = array(
                 array('name' => __('Email', 'art-in-heaven'), 'value' => $bidder->email_primary),
@@ -130,6 +131,7 @@ class AIH_Export {
         $registrants_table = AIH_Database::get_table('registrants');
 
         // Look up confirmation_code BEFORE anonymizing (needed for bids/favorites queries)
+        /** @var object{confirmation_code: string}|null $bidder */
         $bidder = $wpdb->get_row($wpdb->prepare(
             "SELECT confirmation_code FROM $bidders_table WHERE email_primary = %s",
             $email_address
@@ -278,6 +280,9 @@ class AIH_Export {
 
         // Build CSV with chunked queries to prevent memory exhaustion
         $output = fopen('php://temp', 'r+');
+        if ($output === false) {
+            return '';
+        }
 
         // Add BOM for Excel
         fprintf($output, chr(0xEF) . chr(0xBB) . chr(0xBF));
@@ -335,6 +340,7 @@ class AIH_Export {
             $orders_table     = AIH_Database::get_table('orders');
 
             // Consolidate art piece counts into a single query
+            /** @var object{total: string, active: string, ended: string}|null $art_counts */
             $art_counts = $wpdb->get_row(
                 "SELECT
                     COUNT(*) AS total,
@@ -355,12 +361,14 @@ class AIH_Export {
             );
 
             // Consolidate bid counts into a single query
+            /** @var object{total: string, unique_bidders: string}|null $bid_counts */
             $bid_counts = $wpdb->get_row(
                 "SELECT COUNT(*) AS total, COUNT(DISTINCT bidder_id) AS unique_bidders
                  FROM $bids_table"
             );
 
             // Consolidate order counts into a single query
+            /** @var object{total: string, paid: string, revenue: string}|null $order_counts */
             $order_counts = $wpdb->get_row(
                 "SELECT
                     COUNT(*) AS total,

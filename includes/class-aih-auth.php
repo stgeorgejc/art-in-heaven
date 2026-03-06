@@ -357,6 +357,7 @@ class AIH_Auth {
         
         $existing = null;
         if (!empty($data['confirmation_code'])) {
+            /** @var stdClass|null $existing */
             $existing = $wpdb->get_row($wpdb->prepare(
                 "SELECT * FROM $table WHERE confirmation_code = %s",
                 $data['confirmation_code']
@@ -399,11 +400,12 @@ class AIH_Auth {
      * Get registrant by confirmation code
      *
      * @param string $code
-     * @return object|null
+     * @return stdClass|null
      */
     public function get_registrant_by_confirmation_code($code) {
         global $wpdb;
         $table = AIH_Database::get_table('registrants');
+        /** @var stdClass|null $row */
         $row = $wpdb->get_row($wpdb->prepare(
             "SELECT * FROM $table WHERE confirmation_code = %s",
             trim(strtoupper($code))
@@ -418,11 +420,12 @@ class AIH_Auth {
      * Get all registrants
      *
      * @param int $limit Maximum number of rows to return (default 10000).
-     * @return array<int, object>
+     * @return array<int, stdClass>
      */
     public function get_all_registrants($limit = 10000) {
         global $wpdb;
         $table = AIH_Database::get_table('registrants');
+        /** @var list<stdClass> $rows */
         $rows = $wpdb->get_results($wpdb->prepare(
             "SELECT * FROM $table ORDER BY name_last, name_first ASC LIMIT %d",
             $limit
@@ -434,7 +437,7 @@ class AIH_Auth {
         }
         return $rows;
     }
-    
+
     /**
      * Get registrant count
      *
@@ -449,7 +452,7 @@ class AIH_Auth {
     /**
      * Get registrants who haven't logged in
      *
-     * @return array<int, object>
+     * @return array<int, stdClass>
      */
     public function get_registrants_not_logged_in() {
         global $wpdb;
@@ -460,7 +463,7 @@ class AIH_Auth {
     /**
      * Get registrants who logged in but haven't bid
      *
-     * @return array<int, object>
+     * @return array<int, stdClass>
      */
     public function get_registrants_no_bids() {
         global $wpdb;
@@ -475,7 +478,7 @@ class AIH_Auth {
     /**
      * Copy registrant to bidders table (called on first login)
      *
-     * @param object $registrant
+     * @param stdClass $registrant
      * @return int|false
      */
     private function copy_to_bidders($registrant) {
@@ -483,6 +486,7 @@ class AIH_Auth {
         $bidders_table = AIH_Database::get_table('bidders');
         
         // Check if already in bidders
+        /** @var stdClass|null $existing */
         $existing = $wpdb->get_row($wpdb->prepare(
             "SELECT id FROM $bidders_table WHERE confirmation_code = %s",
             $registrant->confirmation_code
@@ -546,13 +550,14 @@ class AIH_Auth {
      * Get bidder by confirmation code
      *
      * @param string $code
-     * @return object|null
+     * @return stdClass|null
      */
     public function get_bidder_by_confirmation_code($code) {
         global $wpdb;
         $code = trim(strtoupper($code));
 
         $bidders_table = AIH_Database::get_table('bidders');
+        /** @var stdClass|null $bidder */
         $bidder = $wpdb->get_row($wpdb->prepare(
             "SELECT * FROM $bidders_table WHERE confirmation_code = %s",
             $code
@@ -572,26 +577,29 @@ class AIH_Auth {
      * Get bidder by email
      *
      * @param string $email
-     * @return object|null
+     * @return stdClass|null
      */
     public function get_bidder_by_email($email) {
         global $wpdb;
         $table = AIH_Database::get_table('bidders');
-        return $wpdb->get_row($wpdb->prepare(
+        /** @var stdClass|null $result */
+        $result = $wpdb->get_row($wpdb->prepare(
             "SELECT * FROM $table WHERE email_primary = %s",
             trim($email)
         ));
+        return $result;
     }
     
     /**
      * Get all bidders (only those who have logged in)
      *
      * @param int $limit Maximum number of rows to return (default 10000).
-     * @return array<int, object>
+     * @return array<int, stdClass>
      */
     public function get_all_bidders($limit = 10000) {
         global $wpdb;
         $table = AIH_Database::get_table('bidders');
+        /** @var list<stdClass> $rows */
         $rows = $wpdb->get_results($wpdb->prepare(
             "SELECT * FROM $table ORDER BY name_last, name_first ASC LIMIT %d",
             $limit
@@ -603,7 +611,7 @@ class AIH_Auth {
         }
         return $rows;
     }
-    
+
     /**
      * Get bidder count
      *
@@ -688,7 +696,7 @@ class AIH_Auth {
      * checkout, and favorites all work normally.
      *
      * @param string $code The full test code (e.g. AIHTEST001)
-     * @return object|null The registrant row, or null on failure
+     * @return stdClass|null The registrant row, or null on failure
      */
     private function get_or_create_test_registrant($code) {
         global $wpdb;
@@ -698,6 +706,7 @@ class AIH_Auth {
         $code = sanitize_text_field($code);
 
         // Return existing test registrant if already created
+        /** @var stdClass|null $existing */
         $existing = $wpdb->get_row($wpdb->prepare(
             "SELECT * FROM $table WHERE confirmation_code = %s",
             $code
@@ -728,10 +737,12 @@ class AIH_Auth {
             return null;
         }
 
-        return $wpdb->get_row($wpdb->prepare(
+        /** @var stdClass|null $result */
+        $result = $wpdb->get_row($wpdb->prepare(
             "SELECT * FROM $table WHERE confirmation_code = %s",
             $code
         ));
+        return $result;
     }
 
     /**
@@ -749,6 +760,7 @@ class AIH_Auth {
         
         // Get the registrant
         $registrants_table = AIH_Database::get_table('registrants');
+        /** @var stdClass|null $registrant */
         $registrant = $wpdb->get_row($wpdb->prepare(
             "SELECT * FROM $registrants_table WHERE confirmation_code = %s",
             $confirmation_code
@@ -830,7 +842,7 @@ class AIH_Auth {
     /**
      * Get current bidder's full record
      *
-     * @return object|null
+     * @return stdClass|null
      */
     public function get_current_bidder() {
         $confirmation_code = $this->get_current_bidder_id();
@@ -919,6 +931,7 @@ class AIH_Auth {
         );
 
         foreach ($tables as $table) {
+            /** @var list<stdClass> $rows */
             $rows = $wpdb->get_results("SELECT id, api_data FROM $table WHERE api_data IS NOT NULL AND api_data != ''");
             foreach ($rows as $row) {
                 // Skip already-encrypted values

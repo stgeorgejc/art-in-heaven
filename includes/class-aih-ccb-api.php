@@ -391,7 +391,7 @@ class AIH_CCB_API {
         }
 
         // Store raw XML for debugging (truncated)
-        $raw_xml = $node->asXML();
+        $raw_xml = $node->asXML() ?: '';
         $data['api_data'] = strlen($raw_xml) > 5000 ? substr($raw_xml, 0, 5000) . '...' : $raw_xml;
 
         return $data;

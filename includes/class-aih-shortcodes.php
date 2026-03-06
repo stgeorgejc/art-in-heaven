@@ -147,7 +147,7 @@ class AIH_Shortcodes {
         
         foreach ($requires_login as $shortcode) {
             if (has_shortcode($post->post_content, $shortcode)) {
-                $redirect_url = add_query_arg('redirect_to', urlencode(get_permalink()), $login_page);
+                $redirect_url = add_query_arg('redirect_to', urlencode(get_permalink() ?: ''), $login_page);
                 wp_safe_redirect($redirect_url);
                 exit;
             }
@@ -179,28 +179,28 @@ class AIH_Shortcodes {
         
         ob_start();
         include AIH_PLUGIN_DIR . 'templates/login.php';
-        return ob_get_clean();
+        return ob_get_clean() ?: '';
     }
-    
+
     /**
      * @param array<string, mixed>|string $atts
      * @return string
      */
     public function gallery_shortcode($atts) {
-        $atts = shortcode_atts(array('columns' => 3, 'per_page' => -1), $atts);
+        $atts = shortcode_atts(array('columns' => 3, 'per_page' => -1), is_array($atts) ? $atts : []);
         
         // Check if viewing my bids
         if (isset($_GET['my_bids']) && $_GET['my_bids'] == '1') {
             ob_start();
             include AIH_PLUGIN_DIR . 'templates/my-bids.php';
-            return ob_get_clean();
+            return ob_get_clean() ?: '';
         }
         
         // Check if viewing checkout
         if (isset($_GET['checkout']) && $_GET['checkout'] == '1') {
             ob_start();
             include AIH_PLUGIN_DIR . 'templates/checkout.php';
-            return ob_get_clean();
+            return ob_get_clean() ?: '';
         }
         
         // Check if viewing individual art piece (clean URL or legacy query string)
@@ -212,13 +212,13 @@ class AIH_Shortcodes {
             if ($art_piece && (!isset($art_piece->computed_status) || $art_piece->computed_status !== 'upcoming')) {
                 ob_start();
                 include AIH_PLUGIN_DIR . 'templates/single-item.php';
-                return ob_get_clean();
+                return ob_get_clean() ?: '';
             }
         }
         
         ob_start();
         include AIH_PLUGIN_DIR . 'templates/gallery.php';
-        return ob_get_clean();
+        return ob_get_clean() ?: '';
     }
     
     /**
@@ -226,7 +226,7 @@ class AIH_Shortcodes {
      * @return string
      */
     public function item_shortcode($atts) {
-        $atts = shortcode_atts(array('id' => 0), $atts);
+        $atts = shortcode_atts(array('id' => 0), is_array($atts) ? $atts : []);
         if (!$atts['id']) return '<p>' . __('Please specify an art piece ID.', 'art-in-heaven') . '</p>';
         
         $art_model = new AIH_Art_Piece();
@@ -235,7 +235,7 @@ class AIH_Shortcodes {
         
         ob_start();
         include AIH_PLUGIN_DIR . 'templates/single-item.php';
-        return ob_get_clean();
+        return ob_get_clean() ?: '';
     }
     
     /**
@@ -245,7 +245,7 @@ class AIH_Shortcodes {
     public function my_bids_shortcode($atts) {
         ob_start();
         include AIH_PLUGIN_DIR . 'templates/my-bids.php';
-        return ob_get_clean();
+        return ob_get_clean() ?: '';
     }
     
     /**
@@ -255,7 +255,7 @@ class AIH_Shortcodes {
     public function checkout_shortcode($atts) {
         ob_start();
         include AIH_PLUGIN_DIR . 'templates/checkout.php';
-        return ob_get_clean();
+        return ob_get_clean() ?: '';
     }
     
     /**
@@ -265,7 +265,7 @@ class AIH_Shortcodes {
     public function winners_shortcode($atts) {
         ob_start();
         include AIH_PLUGIN_DIR . 'templates/winners.php';
-        return ob_get_clean();
+        return ob_get_clean() ?: '';
     }
 
     /**
@@ -275,6 +275,6 @@ class AIH_Shortcodes {
     public function my_wins_shortcode($atts) {
         ob_start();
         include AIH_PLUGIN_DIR . 'templates/my-wins.php';
-        return ob_get_clean();
+        return ob_get_clean() ?: '';
     }
 }
