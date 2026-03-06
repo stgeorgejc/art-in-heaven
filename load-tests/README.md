@@ -185,10 +185,11 @@ Push notifications are controlled by the `aih_push_enabled` admin setting. The l
 
 ### Push enabled (`PUSH_ENABLED=true`)
 
-- Clients receive server-sent push notifications for outbid events
+- Clients receive Web Push (VAPID) notifications for outbid events
 - `check_outbid` polling is skipped (push handles it)
 - `poll_status` intervals are longer (15–60s depending on persona)
-- Lighter server load, but adds push send overhead per outbid
+- Lighter server load, but adds Web Push delivery overhead per outbid event
+- **Current limitation:** the k6 scenarios do **not** call `aih_push_subscribe` (or otherwise seed push subscriptions), so `AIH_Push::send_push()` returns early with no work to do. As a result, `PUSH_ENABLED=true` tests primarily measure the effect of reduced polling, **not** the full push-enabled production load. Interpret results accordingly.
 
 ### Spike test
 

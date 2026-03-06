@@ -14,7 +14,7 @@ export const AJAX_URL = `${BASE_URL}/wp-admin/admin-ajax.php`;
 // Push notification toggle — mirrors the aih_push_enabled admin setting.
 // When false (default), scenarios poll check_outbid aggressively (worst-case
 // server load). When true, polling intervals are longer since real clients
-// receive server-sent push notifications for outbid events.
+// receive Web Push notifications for outbid events.
 export const PUSH_ENABLED = __ENV.PUSH_ENABLED === 'true';
 
 // ---------------------------------------------------------------------------
