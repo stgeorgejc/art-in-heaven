@@ -42,7 +42,12 @@ class AIH_Security {
      */
     public static function get_csp_nonce() {
         if (self::$csp_nonce === null) {
-            self::$csp_nonce = base64_encode(random_bytes(16));
+            try {
+                self::$csp_nonce = base64_encode(random_bytes(16));
+            } catch (\Exception $e) {
+                // Fallback if random_bytes() fails (e.g. insufficient entropy)
+                self::$csp_nonce = base64_encode(wp_generate_password(16, false));
+            }
         }
         return self::$csp_nonce;
     }
