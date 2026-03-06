@@ -79,7 +79,9 @@ export function spikeBidder() {
     api.placeBid(ajaxUrl, frontendNonce, artId, randomBidAmount(10, 500));
     sleep(randomIntBetween(2, 4));
 
-    // Aggressive polling (every 2-3 seconds, like the real app does <1 min)
+    // Aggressive polling (every 2-3 seconds, like the real app does <1 min).
+    // Always uses check_outbid regardless of PUSH_ENABLED — during the final
+    // seconds of an auction, all clients poll aggressively as a safety net.
     api.pollStatus(ajaxUrl, frontendNonce, artIds.slice(0, 50));
     api.checkOutbid(ajaxUrl, frontendNonce);
     sleep(randomIntBetween(2, 3));
