@@ -118,7 +118,7 @@ class AjaxPushVerifyTest extends TestCase
     }
 
     /**
-     * Unauthenticated request returns error with 'Not authenticated'.
+     * Unauthenticated request returns error with 'Please sign in.' and login_required flag.
      */
     public function testPushVerifyRejectsUnauthenticated(): void
     {
@@ -140,7 +140,8 @@ class AjaxPushVerifyTest extends TestCase
         $this->runPushVerifyLogic(false, 'https://example.com/push');
 
         $this->assertIsArray($errorResponse);
-        $this->assertSame('Not authenticated', $errorResponse['message']);
+        $this->assertSame('Please sign in.', $errorResponse['message']);
+        $this->assertTrue($errorResponse['login_required']);
     }
 
     /**
@@ -155,7 +156,7 @@ class AjaxPushVerifyTest extends TestCase
         check_ajax_referer('aih_frontend_nonce', 'nonce');
 
         if (!$isLoggedIn) {
-            wp_send_json_error(['message' => 'Not authenticated']);
+            wp_send_json_error(['message' => 'Please sign in.', 'login_required' => true]);
             return;
         }
 

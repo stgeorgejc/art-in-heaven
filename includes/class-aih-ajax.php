@@ -2652,7 +2652,7 @@ class AIH_Ajax {
 
         $auth = AIH_Auth::get_instance();
         if (!$auth->is_logged_in()) {
-            wp_send_json_error(array('message' => __('Not authenticated.', 'art-in-heaven'), 'login_required' => true));
+            wp_send_json_error(array('message' => __('Please sign in.', 'art-in-heaven'), 'login_required' => true));
         }
 
         $bidder_id = $auth->get_current_bidder_id();
@@ -2705,7 +2705,7 @@ class AIH_Ajax {
 
         $auth = AIH_Auth::get_instance();
         if (!$auth->is_logged_in()) {
-            wp_send_json_error(array('message' => __('Not authenticated.', 'art-in-heaven'), 'login_required' => true));
+            wp_send_json_error(array('message' => __('Please sign in.', 'art-in-heaven'), 'login_required' => true));
         }
 
         $endpoint = isset($_POST['endpoint']) ? esc_url_raw($_POST['endpoint']) : '';
@@ -2737,7 +2737,7 @@ class AIH_Ajax {
 
         $auth = AIH_Auth::get_instance();
         if (!$auth->is_logged_in()) {
-            wp_send_json_error(array('message' => __('Not authenticated.', 'art-in-heaven'), 'login_required' => true));
+            wp_send_json_error(array('message' => __('Please sign in.', 'art-in-heaven'), 'login_required' => true));
         }
 
         $permission = isset($_POST['permission']) ? sanitize_text_field($_POST['permission']) : '';
@@ -2770,7 +2770,7 @@ class AIH_Ajax {
 
         $auth = AIH_Auth::get_instance();
         if (!$auth->is_logged_in()) {
-            wp_send_json_error(array('message' => __('Not authenticated.', 'art-in-heaven'), 'login_required' => true));
+            wp_send_json_error(array('message' => __('Please sign in.', 'art-in-heaven'), 'login_required' => true));
         }
 
         $notification_type = isset($_POST['notification_type']) ? sanitize_text_field($_POST['notification_type']) : 'outbid';
@@ -2801,7 +2801,7 @@ class AIH_Ajax {
 
         $auth = AIH_Auth::get_instance();
         if (!$auth->is_logged_in()) {
-            wp_send_json_error(array('message' => __('Not authenticated.', 'art-in-heaven'), 'login_required' => true));
+            wp_send_json_error(array('message' => __('Please sign in.', 'art-in-heaven'), 'login_required' => true));
         }
 
         $bidder_id      = $auth->get_current_bidder_id();
@@ -2834,7 +2834,7 @@ class AIH_Ajax {
 
         $auth = AIH_Auth::get_instance();
         if (!$auth->is_logged_in()) {
-            wp_send_json_error(array('message' => __('Not authenticated.', 'art-in-heaven'), 'login_required' => true));
+            wp_send_json_error(array('message' => __('Please sign in.', 'art-in-heaven'), 'login_required' => true));
         }
 
         $bidder_id = $auth->get_current_bidder_id() ?? '';
