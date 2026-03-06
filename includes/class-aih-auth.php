@@ -126,7 +126,8 @@ class AIH_Auth {
                     'aih_create_order', 'aih_get_pushpay_link',
                     'aih_get_order_details', 'aih_get_my_purchases',
                     'aih_poll_status', 'aih_check_outbid',
-                    'aih_push_subscribe', 'aih_push_unsubscribe'
+                    'aih_push_subscribe', 'aih_push_unsubscribe',
+                    'aih_push_permission', 'aih_push_clicked'
                 );
                 return in_array($_POST['action'], $our_actions);
             }

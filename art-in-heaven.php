@@ -1015,7 +1015,7 @@ class Art_In_Heaven {
 
         // Chart.js for engagement stats page
         if (strpos($hook, 'art-in-heaven-stats') !== false) {
-            wp_enqueue_script('chartjs', 'https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js', array(), '4.4.7', true);
+            wp_enqueue_script('chartjs', $this->get_asset_url('assets/js/chart.min.js'), array(), '4.4.7', true);
         }
 
         wp_localize_script('aih-admin', 'aihAdmin', array(

@@ -18,6 +18,13 @@ if (!isset($engagement_metrics)) { $engagement_metrics = array(); }
 $funnel           = isset($engagement_metrics['funnel']) ? $engagement_metrics['funnel'] : array();
 $bid_attribution  = isset($engagement_metrics['bid_attribution']) ? $engagement_metrics['bid_attribution'] : array();
 $push_bidders     = isset($engagement_metrics['push_bidders']) ? $engagement_metrics['push_bidders'] : 0;
+
+// Initialize notification breakdown vars used by Chart.js script block on all tabs
+$notif_breakdown = array();
+$type_labels = array(
+    'outbid' => __('Outbid', 'art-in-heaven'),
+    'winner' => __('Winner', 'art-in-heaven'),
+);
 $total_bidders_db = isset($engagement_metrics['total_bidders']) ? $engagement_metrics['total_bidders'] : 0;
 
 // Compute overview numbers from art_pieces
@@ -711,11 +718,6 @@ $tabs = array(
                     $notif_breakdown[$nt]['clicked'] = (int) $row->cnt;
                 }
             }
-
-            $type_labels = array(
-                'outbid' => __('Outbid', 'art-in-heaven'),
-                'winner' => __('Winner', 'art-in-heaven'),
-            );
 
             if (empty($notif_breakdown)):
             ?>

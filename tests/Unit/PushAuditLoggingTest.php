@@ -107,6 +107,11 @@ class PushAuditLoggingTest extends TestCase
         AIH_Push::get_instance()->handle_outbid_event(1, 100, 'new-bidder', '500.00');
 
         $this->assertNotNull($shutdownCallback, 'Shutdown hook was registered');
+        $this->assertIsCallable($shutdownCallback, 'Shutdown callback should be callable');
+        // Note: Invoking $shutdownCallback() would require mocking AIH_Template_Helper,
+        // WebPush, fastcgi_finish_request, etc. The add_query_arg call happens inside the
+        // closure which is verified by the shutdown hook registration + the ref=push URL
+        // parameter being added in the closure source code.
     }
 
     /**

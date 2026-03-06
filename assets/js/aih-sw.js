@@ -65,7 +65,8 @@ self.addEventListener('notificationclick', function(event) {
 
     event.waitUntil(
         self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clientList) {
-            // Notify open tabs about the click for metrics tracking
+            // Notify a single open tab about the click for metrics tracking
+            // (send to one client only to avoid overcounting with multiple tabs)
             var clickMessage = {
                 type: 'aih-push-clicked',
                 data: {
@@ -73,8 +74,8 @@ self.addEventListener('notificationclick', function(event) {
                     notification_type: notifData.type || 'outbid'
                 }
             };
-            for (var k = 0; k < clientList.length; k++) {
-                clientList[k].postMessage(clickMessage);
+            if (clientList.length > 0) {
+                clientList[0].postMessage(clickMessage);
             }
 
             // Focus existing tab if one matches this exact URL

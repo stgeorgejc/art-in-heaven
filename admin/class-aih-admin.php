@@ -685,7 +685,6 @@ class AIH_Admin {
         global $wpdb;
         $audit_table   = AIH_Database::get_table('audit_log');
         $bids_table    = AIH_Database::get_table('bids');
-        $bidders_table = AIH_Database::get_table('registrants');
 
         // Push notification funnel counts
         $push_events = $wpdb->get_results(

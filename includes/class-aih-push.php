@@ -340,17 +340,12 @@ class AIH_Push {
                     'contentEncoding' => 'aes128gcm',
                 ));
                 $webPush->queueNotification($subscription, $json_payload ?: null);
-                $queued++;
-            }
-
-            if ($queued > 0) {
                 AIH_Database::log_audit('push_sent', array(
                     'bidder_id' => $bidder_id,
                     'object_id' => $art_piece_id,
                     'details'   => array(
                         'notification_type' => $notification_type,
                         'art_piece_id'      => $art_piece_id,
-                        'subscriptions'     => $queued,
                     ),
                 ));
             }
