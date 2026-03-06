@@ -201,8 +201,8 @@ $total_bid_value = $wpdb->get_var("SELECT SUM(bid_amount) FROM {$bids_table}");
                             <?php endif; ?>
                         </td>
                         <td class="column-actions">
-                            <button type="button" class="button button-small aih-delete-bid" data-bid-id="<?php echo $bid->id; ?>" data-bidder="<?php echo esc_attr($bid->confirmation_code); ?>" data-amount="<?php echo $bid->bid_amount; ?>">
-                                <span class="dashicons dashicons-trash"></span>
+                            <button type="button" class="button button-small aih-delete-bid" data-bid-id="<?php echo $bid->id; ?>" data-bidder="<?php echo esc_attr($bid->confirmation_code); ?>" data-amount="<?php echo $bid->bid_amount; ?>" aria-label="<?php esc_attr_e('Delete bid', 'art-in-heaven'); ?>">
+                                <span class="dashicons dashicons-trash" aria-hidden="true"></span>
                             </button>
                         </td>
                     </tr>
