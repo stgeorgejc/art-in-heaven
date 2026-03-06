@@ -319,9 +319,12 @@ jQuery(document).ready(function($) {
     });
 
     // Countdown timer functionality
+    var $countdownEls = $('.aih-time-remaining');
+    var $countdownCards = $('.aih-card[data-end]');
+
     function updateCountdowns() {
         // Update visible countdown timers
-        $('.aih-time-remaining').each(function() {
+        $countdownEls.each(function() {
             var $el = $(this);
             var endTime = $el.attr('data-end');
             if (!endTime) return;
@@ -363,7 +366,7 @@ jQuery(document).ready(function($) {
         });
 
         // Update badges and disable forms for all cards with data-end
-        $('.aih-card[data-end]').each(function() {
+        $countdownCards.each(function() {
             var $card = $(this);
             if ($card.hasClass('ended') || $card.hasClass('won') || $card.hasClass('paid')) return;
 

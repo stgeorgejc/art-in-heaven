@@ -56,7 +56,7 @@ $total = $subtotal + $tax;
 ?>
 
 <div class="aih-page aih-checkout-page">
-<script>(function(){var t=localStorage.getItem('aih-theme');if(t==='dark'){document.currentScript.parentElement.classList.add('dark-mode');}})();</script>
+<script>(function(){var p=document.currentScript.parentElement,t=localStorage.getItem('aih-theme');if(t==='dark')p.classList.add('dark-mode');else if(t==='light')p.classList.add('light-mode');})();</script>
     <?php $active_page = 'checkout'; $cart_count = 0; include AIH_PLUGIN_DIR . 'templates/partials/header.php'; ?>
 
     <main class="aih-main">
