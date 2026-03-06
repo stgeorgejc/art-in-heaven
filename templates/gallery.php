@@ -159,7 +159,7 @@ $bidder_bid_ids = $bid_model->get_bidder_bid_ids_batch($piece_ids, $bidder_id);
             <p><?php _e('Art pieces will be available here when the auction begins.', 'art-in-heaven'); ?></p>
         </div>
         <?php else: ?>
-        <div class="aih-gallery-grid" id="aih-gallery">
+        <div class="aih-gallery-grid" id="aih-gallery" role="region" aria-label="<?php esc_attr_e('Art auction gallery', 'art-in-heaven'); ?>">
             <?php $card_index = 0; ?>
             <?php foreach ($art_pieces as $piece):
                 $bidder_has_bid_check = false;

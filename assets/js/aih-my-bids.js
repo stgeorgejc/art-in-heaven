@@ -111,10 +111,27 @@ jQuery(document).ready(function($) {
         if (lastFocusedElement) lastFocusedElement.focus();
     });
 
-    $(document).on('keyup', function(e) {
-        if (e.key === 'Escape' && $('#aih-order-modal').is(':visible')) {
-            $('#aih-order-modal').hide();
+    $(document).on('keydown', function(e) {
+        var $modal = $('#aih-order-modal');
+        if (!$modal.is(':visible')) return;
+        if (e.key === 'Escape') {
+            $modal.hide();
             if (lastFocusedElement) lastFocusedElement.focus();
+            return;
+        }
+        // Focus trap: cycle Tab within modal
+        if (e.key === 'Tab') {
+            var $focusable = $modal.find('button:visible, a:visible, [tabindex]:visible').filter(':not([tabindex="-1"])');
+            if (!$focusable.length) return;
+            var $first = $focusable.first();
+            var $last = $focusable.last();
+            if (e.shiftKey && document.activeElement === $first[0]) {
+                e.preventDefault();
+                $last.focus();
+            } else if (!e.shiftKey && document.activeElement === $last[0]) {
+                e.preventDefault();
+                $first.focus();
+            }
         }
     });
 
