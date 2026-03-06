@@ -54,7 +54,7 @@ $art_images = new AIH_Art_Images();
             // Group by end date
             $grouped = array();
             foreach ($winning_bids as $bid) {
-                $date_key = wp_date('Y-m-d H:i', strtotime($bid->auction_end));
+                $date_key = AIH_Status::format_db_date($bid->auction_end, 'Y-m-d H:i');
                 if (!isset($grouped[$date_key])) $grouped[$date_key] = array();
                 $grouped[$date_key][] = $bid;
             }
@@ -83,7 +83,7 @@ $art_images = new AIH_Art_Images();
             <?php foreach ($grouped as $date => $bids): ?>
             <div class="aih-winners-group">
                 <div class="aih-date-divider">
-                    <span><?php echo wp_date('F j, Y \a\t g:i A', strtotime($date)); ?></span>
+                    <span><?php echo AIH_Status::format_db_date($date, 'F j, Y \a\t g:i A'); ?></span>
                 </div>
                 <div class="aih-gallery-grid">
                     <?php foreach ($bids as $bid):

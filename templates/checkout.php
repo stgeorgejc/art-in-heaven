@@ -183,7 +183,7 @@ $total = $subtotal + $tax;
                     </div>
                     <div class="aih-order-details">
                         <p><?php echo intval($order->item_count); ?> <?php echo $order->item_count != 1 ? __('items', 'art-in-heaven') : __('item', 'art-in-heaven'); ?> &bull; $<?php echo number_format($order->total); ?></p>
-                        <p class="aih-order-date"><?php echo esc_html(wp_date('M j, Y', strtotime($order->created_at))); ?></p>
+                        <p class="aih-order-date"><?php echo esc_html(AIH_Status::format_db_date($order->created_at, 'M j, Y')); ?></p>
                     </div>
                     <div class="aih-order-view-link">
                         <span><?php _e('View Details', 'art-in-heaven'); ?> &rarr;</span>

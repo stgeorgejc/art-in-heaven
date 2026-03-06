@@ -335,8 +335,9 @@ $art_pieces = $art_model->get_all_with_stats($filter_args);
                     }
 
                     // Format dates for datetime-local input
-                    $auction_start_value = !empty($piece->auction_start) ? wp_date('Y-m-d\TH:i', strtotime($piece->auction_start)) : '';
-                    $auction_end_value = !empty($piece->auction_end) ? wp_date('Y-m-d\TH:i', strtotime($piece->auction_end)) : '';
+                    // DB stores local times as entered by admin — just reformat without timezone conversion
+                    $auction_start_value = !empty($piece->auction_start) ? substr(str_replace(' ', 'T', $piece->auction_start), 0, 16) : '';
+                    $auction_end_value = !empty($piece->auction_end) ? substr(str_replace(' ', 'T', $piece->auction_end), 0, 16) : '';
                 ?>
                     <tr data-id="<?php echo esc_attr($piece->id); ?>"
                         data-title="<?php echo esc_attr(strtolower($piece->title)); ?>"
@@ -346,7 +347,7 @@ $art_pieces = $art_model->get_all_with_stats($filter_args);
                         data-starting="<?php echo esc_attr($piece->starting_bid); ?>"
                         data-current="<?php echo esc_attr($current_bid); ?>"
                         data-bids="<?php echo esc_attr($piece->total_bids); ?>"
-                        data-endtime="<?php echo esc_attr(strtotime($piece->auction_end)); ?>">
+                        data-endtime="<?php echo esc_attr($piece->auction_end); ?>">
                         
                         <td class="aih-check-column" data-label=""><input type="checkbox" class="aih-art-checkbox" value="<?php echo esc_attr($piece->id); ?>"></td>
                         
@@ -393,11 +394,11 @@ $art_pieces = $art_model->get_all_with_stats($filter_args);
                         <?php endif; ?>
                         
                         <td class="aih-editable aih-editable-datetime" data-field="auction_start" data-value="<?php echo esc_attr($auction_start_value); ?>" data-label="<?php esc_attr_e('Start', 'art-in-heaven'); ?>">
-                            <span class="aih-cell-value"><?php echo !empty($piece->auction_start) ? date_i18n('M j, g:ia', strtotime($piece->auction_start)) : '—'; ?></span>
+                            <span class="aih-cell-value"><?php echo AIH_Status::format_db_date($piece->auction_start, 'M j, g:ia'); ?></span>
                         </td>
-                        
+
                         <td class="aih-editable aih-editable-datetime" data-field="auction_end" data-value="<?php echo esc_attr($auction_end_value); ?>" data-label="<?php esc_attr_e('End', 'art-in-heaven'); ?>">
-                            <span class="aih-cell-value"><?php echo !empty($piece->auction_end) ? date_i18n('M j, g:ia', strtotime($piece->auction_end)) : '—'; ?></span>
+                            <span class="aih-cell-value"><?php echo AIH_Status::format_db_date($piece->auction_end, 'M j, g:ia'); ?></span>
                             <?php 
                             $end_visible = !empty($piece->show_end_time);
                             if ($end_visible): ?>
@@ -408,7 +409,7 @@ $art_pieces = $art_model->get_all_with_stats($filter_args);
                         <td class="aih-status-cell" data-label="<?php esc_attr_e('Status', 'art-in-heaven'); ?>">
                             <?php 
                             $computed_status = isset($piece->computed_status) ? $piece->computed_status : $piece->status;
-                            $auction_ended = !empty($piece->auction_end) && strtotime($piece->auction_end) && strtotime($piece->auction_end) < current_time('timestamp');
+                            $auction_ended = !empty($piece->auction_end) && $piece->auction_end <= current_time('mysql');
                             
                             if ($piece->status === 'draft'): ?>
                                 <span class="aih-status-badge draft"><?php _e('Draft', 'art-in-heaven'); ?></span>

@@ -335,4 +335,105 @@ class StatusTest extends TestCase
         $this->assertArrayHasKey('ended', $options);
         $this->assertCount(3, $options);
     }
+
+    // ── format_db_date() ──
+
+    public function testFormatDbDateWithValidDate(): void
+    {
+        $this->assertSame('Jun 15, 2025 2:30 PM', AIH_Status::format_db_date('2025-06-15 14:30:00'));
+    }
+
+    public function testFormatDbDateWithCustomFormat(): void
+    {
+        $this->assertSame('2025-12-25', AIH_Status::format_db_date('2025-12-25 09:00:00', 'Y-m-d'));
+    }
+
+    public function testFormatDbDateWithEmptyString(): void
+    {
+        $this->assertSame('—', AIH_Status::format_db_date(''));
+    }
+
+    public function testFormatDbDateWithNull(): void
+    {
+        $this->assertSame('—', AIH_Status::format_db_date(null));
+    }
+
+    public function testFormatDbDateWithMilliseconds(): void
+    {
+        $this->assertSame('Jun 15, 2025 2:30 PM', AIH_Status::format_db_date('2025-06-15 14:30:00.123'));
+    }
+
+    public function testFormatDbDateWithTimeOnlyFormat(): void
+    {
+        $this->assertSame('2:30:00 PM', AIH_Status::format_db_date('2025-06-15 14:30:00', 'g:i:s A'));
+    }
+
+    public function testFormatDbDateWithInvalidString(): void
+    {
+        $this->assertSame('—', AIH_Status::format_db_date('not-a-date'));
+    }
+
+    public function testFormatDbDateWithInlineEditFormat(): void
+    {
+        // The 'M j, g:ia' format used by admin inline edit and art-pieces table
+        $this->assertSame('Jun 15, 2:30pm', AIH_Status::format_db_date('2025-06-15 14:30:00', 'M j, g:ia'));
+    }
+
+    // ── calculate_auto_status() ──
+
+    public function testCalculateAutoStatusDraftStaysWhenTimesUnchanged(): void
+    {
+        $result = AIH_Status::calculate_auto_status(
+            $this->pastDate(), $this->futureDate(), 'draft', false
+        );
+        $this->assertSame('draft', $result);
+    }
+
+    public function testCalculateAutoStatusDraftBecomesActiveWhenStartPast(): void
+    {
+        $result = AIH_Status::calculate_auto_status(
+            $this->pastDate(), $this->futureDate(), 'draft', true
+        );
+        $this->assertSame('active', $result);
+    }
+
+    public function testCalculateAutoStatusDraftStaysDraftWhenStartFuture(): void
+    {
+        $result = AIH_Status::calculate_auto_status(
+            $this->futureDate('+6 months'), $this->futureDate('+1 year'), 'draft', true
+        );
+        $this->assertSame('draft', $result);
+    }
+
+    public function testCalculateAutoStatusDraftBecomesEndedWhenEndPast(): void
+    {
+        $result = AIH_Status::calculate_auto_status(
+            $this->pastDate('-2 years'), $this->pastDate(), 'draft', true
+        );
+        $this->assertSame('ended', $result);
+    }
+
+    public function testCalculateAutoStatusActiveStaysActive(): void
+    {
+        $result = AIH_Status::calculate_auto_status(
+            $this->pastDate(), $this->futureDate(), 'active', true
+        );
+        $this->assertSame('active', $result);
+    }
+
+    public function testCalculateAutoStatusEndedRespectedWhenTimesUnchanged(): void
+    {
+        $result = AIH_Status::calculate_auto_status(
+            $this->pastDate(), $this->futureDate(), 'ended', false
+        );
+        $this->assertSame('ended', $result);
+    }
+
+    public function testCalculateAutoStatusEndedRecalculatesWhenTimesChanged(): void
+    {
+        $result = AIH_Status::calculate_auto_status(
+            $this->pastDate(), $this->futureDate(), 'ended', true
+        );
+        $this->assertSame('active', $result);
+    }
 }
