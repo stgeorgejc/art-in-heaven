@@ -74,6 +74,8 @@ class ManifestTest extends TestCase
             'check_ajax_referer' => true,
             'get_permalink' => 'https://example.com/?p=1',
             'wp_parse_args' => function ($a, array $d = []): array { return array_merge($d, (array) $a); },
+            'get_transient' => false,
+            'set_transient' => true,
             'wp_cache_get' => false,
             'wp_cache_set' => true,
             'wp_cache_delete' => true,

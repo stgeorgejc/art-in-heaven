@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ArtInHeaven\Tests\Unit;
 
 use AIH_Template_Helper;
+use AIH_Database;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 use PHPUnit\Framework\TestCase;
@@ -82,6 +83,71 @@ class TemplateHelperTest extends TestCase
     {
         $bidder = (object) ['name_first' => '', 'individual_name' => ''];
         $this->assertSame('Anonymous', AIH_Template_Helper::get_bidder_display_name($bidder, 'Anonymous'));
+    }
+
+    // ── get_page_url() transient caching ──
+
+    public function testGetPageUrlReturnsTransientCacheHit(): void
+    {
+        // Clear static cache
+        AIH_Template_Helper::clear_cache();
+
+        $wpdb = new class {
+            public string $prefix = 'wp_';
+            public string $options = 'wp_options';
+            /** @var list<string> */
+            public array $queries = [];
+            public function prepare(string $q, mixed ...$a): string { return $q; }
+            public function query(string $q): void { $this->queries[] = $q; }
+        };
+        $GLOBALS['wpdb'] = $wpdb;
+
+        Functions\stubs([
+            'get_option' => fn($key, $default = false) => '',
+            'get_transient' => fn($key) => 'https://example.com/gallery/',
+            'set_transient' => fn() => true,
+            'home_url' => fn() => 'https://example.com/',
+        ]);
+
+        $url = AIH_Template_Helper::get_page_url('art_in_heaven_gallery', 'aih_gallery_page');
+
+        $this->assertSame('https://example.com/gallery/', $url);
+    }
+
+    public function testGetPageUrlSetsTransientOnCacheMiss(): void
+    {
+        // Clear static cache
+        AIH_Template_Helper::clear_cache();
+
+        $wpdb = new class {
+            public string $prefix = 'wp_';
+            public string $posts = 'wp_posts';
+            public string $options = 'wp_options';
+            /** @var list<string> */
+            public array $queries = [];
+            public function prepare(string $q, mixed ...$a): string { return $q; }
+            public function get_var(string $q = ''): ?string { return '42'; }
+            public function query(string $q): void { $this->queries[] = $q; }
+            public function esc_like(string $t): string { return $t; }
+        };
+        $GLOBALS['wpdb'] = $wpdb;
+
+        $transient_set = false;
+        Functions\stubs([
+            'get_option' => fn($key, $default = false) => '',
+            'get_transient' => fn($key) => false,
+            'set_transient' => function ($key, $value, $expiration) use (&$transient_set) {
+                $transient_set = true;
+                return true;
+            },
+            'get_permalink' => fn($id) => 'https://example.com/gallery/',
+            'home_url' => fn() => 'https://example.com/',
+        ]);
+
+        $url = AIH_Template_Helper::get_page_url('art_in_heaven_gallery', 'aih_gallery_page');
+
+        $this->assertSame('https://example.com/gallery/', $url);
+        $this->assertTrue($transient_set, 'set_transient should have been called');
     }
 
     // ── format_art_piece() ──

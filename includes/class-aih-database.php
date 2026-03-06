@@ -37,6 +37,7 @@ class AIH_Database {
         '1.2' => 'cleanup_bidders_table',
         '1.3' => 'add_bids_composite_index',
         '1.4' => 'add_audit_log_bidder_index',
+        '1.5' => 'drop_redundant_bids_indexes',
     );
 
     /**
@@ -136,11 +137,7 @@ class AIH_Database {
             bid_status varchar(20) DEFAULT 'valid',
             ip_address varchar(45) DEFAULT '',
             PRIMARY KEY (id),
-            KEY art_piece_id (art_piece_id),
-            KEY bidder_id (bidder_id),
             KEY bid_time (bid_time),
-            KEY is_winning (is_winning),
-            KEY bid_status (bid_status),
             KEY art_winning (art_piece_id, is_winning),
             KEY bidder_art (bidder_id, art_piece_id),
             KEY bidder_status (bidder_id, bid_status),
@@ -625,6 +622,48 @@ class AIH_Database {
                 "ALTER TABLE `" . esc_sql($table) . "`
                  ADD INDEX `event_bidder` (`event_type`, `bidder_id`)"
             );
+        }
+    }
+
+    /**
+     * Drop redundant single-column indexes from Bids table.
+     *
+     * art_piece_id, bidder_id, is_winning, and bid_status are left-prefixes
+     * of existing composite indexes, making them redundant.
+     *
+     * @param int|null $year
+     * @return void
+     */
+    public static function drop_redundant_bids_indexes(?int $year = null): void {
+        global $wpdb;
+
+        if (!$year) {
+            $year = self::get_auction_year();
+        }
+
+        $table = $wpdb->prefix . absint($year) . '_Bids';
+
+        $table_exists = $wpdb->get_var($wpdb->prepare(
+            "SHOW TABLES LIKE %s",
+            $table
+        ));
+
+        if (!$table_exists) {
+            return;
+        }
+
+        $redundant = array('art_piece_id', 'bidder_id', 'is_winning', 'bid_status');
+
+        foreach ($redundant as $index_name) {
+            $exists = $wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS
+                 WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s AND INDEX_NAME = %s",
+                DB_NAME, $table, $index_name
+            ));
+
+            if ($exists) {
+                $wpdb->query("ALTER TABLE `" . esc_sql($table) . "` DROP INDEX `" . esc_sql($index_name) . "`");
+            }
         }
     }
 

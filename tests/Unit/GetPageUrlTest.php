@@ -22,6 +22,11 @@ class GetPageUrlTest extends TestCase
         parent::setUp();
         Monkey\setUp();
 
+        Functions\stubs([
+            'get_transient' => false,
+            'set_transient' => true,
+        ]);
+
         // Clear the static page cache between tests
         AIH_Template_Helper::clear_cache();
     }
@@ -117,6 +122,7 @@ class GetPageUrlTest extends TestCase
 
         $wpdb = new class($get_var_return) {
             public string $posts = 'wp_posts';
+            public string $options = 'wp_options';
             private $get_var_return;
 
             public function __construct($get_var_return)
@@ -137,6 +143,11 @@ class GetPageUrlTest extends TestCase
             public function get_var($query = null)
             {
                 return $this->get_var_return;
+            }
+
+            public function query($query = null)
+            {
+                return true;
             }
         };
 

@@ -205,6 +205,7 @@ class Art_In_Heaven {
         add_action('aih_art_created', array($this, 'invalidate_art_cache'));
         add_action('aih_art_updated', array($this, 'invalidate_art_cache'));
         add_action('aih_bid_placed', array($this, 'invalidate_bid_cache'));
+        add_action('save_post_page', array('AIH_Template_Helper', 'clear_cache'));
 
         // Outbid alerts: record event synchronously (fast), defer push sending (slow)
         add_action('aih_bid_placed', array(AIH_Push::get_instance(), 'handle_outbid_event'), 10, 4);

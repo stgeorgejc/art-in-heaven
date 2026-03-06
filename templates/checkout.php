@@ -49,6 +49,16 @@ $won_items = $checkout->get_won_items($bidder_id);
 $orders = $checkout->get_bidder_orders($bidder_id);
 $art_images = new AIH_Art_Images();
 
+// Batch-fetch images for all won items to avoid N+1 queries
+$won_art_piece_ids = array();
+foreach ($won_items as $item) {
+    $pid = isset($item->art_piece_id) ? (int) $item->art_piece_id : (isset($item->id) ? (int) $item->id : 0);
+    if ($pid) {
+        $won_art_piece_ids[] = $pid;
+    }
+}
+$images_batch = $art_images->get_images_batch($won_art_piece_ids);
+
 $subtotal = 0;
 foreach ($won_items as $item) {
     // Support both winning_bid and winning_amount property names
@@ -117,7 +127,7 @@ $total = $subtotal + $tax;
                 <?php foreach ($won_items as $item):
                     // Support both id and art_piece_id property names
                     $art_piece_id = isset($item->art_piece_id) ? $item->art_piece_id : (isset($item->id) ? $item->id : 0);
-                    $images = $art_images->get_images($art_piece_id);
+                    $images = isset($images_batch[(int) $art_piece_id]) ? $images_batch[(int) $art_piece_id] : array();
                     $image_url = !empty($images) ? $images[0]->watermarked_url : (isset($item->watermarked_url) ? $item->watermarked_url : (isset($item->image_url) ? $item->image_url : ''));
                     // Support both winning_bid and winning_amount property names
                     $winning_amount = isset($item->winning_bid) ? $item->winning_bid : (isset($item->winning_amount) ? $item->winning_amount : 0);
