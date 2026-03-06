@@ -120,9 +120,16 @@ class SecurityEdgeCaseTest extends TestCase
 
     public function testLogEventWritesToErrorLog(): void
     {
-        // WP_DEBUG is true in test bootstrap
-        Functions\expect('error_log')->once();
+        // Stub error_log (cannot use expect() on built-in without patchwork config)
+        $logged = false;
+        Functions\stubs([
+            'error_log' => function () use (&$logged) {
+                $logged = true;
+            },
+        ]);
 
         AIH_Security::log_event('test_event', ['key' => 'value']);
+
+        $this->assertTrue($logged, 'error_log should have been called');
     }
 }
