@@ -61,7 +61,7 @@ $bidder_bid_ids = $bid_model->get_bidder_bid_ids_batch($piece_ids, $bidder_id);
 
 <div id="aih-gallery-wrapper" data-server-time="<?php echo esc_attr(time() * 1000); ?>">
 <div class="aih-page aih-gallery-page">
-<script>(function(){var t=localStorage.getItem('aih-theme');if(t==='dark'){document.currentScript.parentElement.classList.add('dark-mode');}})();</script>
+<script nonce="<?php echo esc_attr(AIH_Security::get_csp_nonce()); ?>">(function(){var t=localStorage.getItem('aih-theme');if(t==='dark'){document.currentScript.parentElement.classList.add('dark-mode');}})();</script>
     <?php $active_page = 'gallery'; include AIH_PLUGIN_DIR . 'templates/partials/header.php'; ?>
 
     <div class="aih-ptr-indicator"><span class="aih-ptr-spinner"></span></div>

@@ -221,6 +221,9 @@ class Art_In_Heaven {
 
         // Adaptive HTTP security headers (priority 99 — run late so other plugins set theirs first)
         add_filter('wp_headers', array($this, 'add_security_headers'), 99);
+
+        // Add CSP nonce to enqueued script tags
+        add_filter('script_loader_tag', array($this, 'add_csp_nonce_to_script'), 10, 2);
     }
     
     /**
@@ -253,8 +256,33 @@ class Art_In_Heaven {
         if (!isset($headers['Permissions-Policy'])) {
             $headers['Permissions-Policy'] = 'camera=(), microphone=(), geolocation=()';
         }
+        if (!isset($headers['Content-Security-Policy'])) {
+            $nonce = AIH_Security::get_csp_nonce();
+            $headers['Content-Security-Policy'] = "script-src 'self' 'nonce-{$nonce}' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://sandbox.pushpay.io https://pushpay.com;";
+        }
 
         return $headers;
+    }
+
+    /**
+     * Add CSP nonce attribute to enqueued script tags.
+     *
+     * @param string $tag    The <script> tag HTML.
+     * @param string $handle The script handle.
+     * @return string Modified tag with nonce attribute.
+     */
+    public function add_csp_nonce_to_script($tag, $handle) {
+        if (is_admin()) {
+            return $tag;
+        }
+
+        $nonce = AIH_Security::get_csp_nonce();
+        // Avoid double-adding if nonce already present
+        if (strpos($tag, 'nonce=') !== false) {
+            return $tag;
+        }
+
+        return str_replace('<script ', '<script nonce="' . esc_attr($nonce) . '" ', $tag);
     }
 
     /**

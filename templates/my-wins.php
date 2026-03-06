@@ -60,7 +60,7 @@ $cart_count = count($checkout->get_won_items($bidder_id));
 ?>
 
 <div class="aih-page aih-mywins-page">
-<script>(function(){var t=localStorage.getItem('aih-theme');if(t==='dark'){document.currentScript.parentElement.classList.add('dark-mode');}})();</script>
+<script nonce="<?php echo esc_attr(AIH_Security::get_csp_nonce()); ?>">(function(){var t=localStorage.getItem('aih-theme');if(t==='dark'){document.currentScript.parentElement.classList.add('dark-mode');}})();</script>
     <?php $active_page = 'my-wins'; include AIH_PLUGIN_DIR . 'templates/partials/header.php'; ?>
 
     <main class="aih-main">
@@ -139,7 +139,7 @@ $cart_count = count($checkout->get_won_items($bidder_id));
     </footer>
 </div>
 
-<script>
+<script nonce="<?php echo esc_attr(AIH_Security::get_csp_nonce()); ?>">
 jQuery(document).ready(function($) {
     // Logout handled by aih-frontend.js
 });

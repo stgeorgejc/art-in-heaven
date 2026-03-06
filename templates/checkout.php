@@ -23,12 +23,17 @@ endif;
 // Handle PushPay redirect - check for payment token
 $payment_result = null;
 if (!empty($_GET['paymentToken'])) {
-    $pushpay = AIH_Pushpay_API::get_instance();
-    $payment_data = $pushpay->get_payment_by_token(sanitize_text_field($_GET['paymentToken']));
-    if (!is_wp_error($payment_data)) {
-        $payment_result = 'success';
-    } else {
+    $ip = AIH_Security::get_client_ip();
+    if (!AIH_Security::check_rate_limit('pushpay_token_' . $ip, 10, 60)) {
         $payment_result = 'error';
+    } else {
+        $pushpay = AIH_Pushpay_API::get_instance();
+        $payment_data = $pushpay->get_payment_by_token(sanitize_text_field($_GET['paymentToken']));
+        if (!is_wp_error($payment_data)) {
+            $payment_result = 'success';
+        } else {
+            $payment_result = 'error';
+        }
     }
 } elseif (isset($_GET['sr']) && !isset($_GET['paymentToken'])) {
     // Source reference present but no payment token = payment was cancelled/failed
@@ -56,7 +61,7 @@ $total = $subtotal + $tax;
 ?>
 
 <div class="aih-page aih-checkout-page">
-<script>(function(){var t=localStorage.getItem('aih-theme');if(t==='dark'){document.currentScript.parentElement.classList.add('dark-mode');}})();</script>
+<script nonce="<?php echo esc_attr(AIH_Security::get_csp_nonce()); ?>">(function(){var t=localStorage.getItem('aih-theme');if(t==='dark'){document.currentScript.parentElement.classList.add('dark-mode');}})();</script>
     <?php $active_page = 'checkout'; $cart_count = 0; include AIH_PLUGIN_DIR . 'templates/partials/header.php'; ?>
 
     <main class="aih-main">
@@ -214,7 +219,7 @@ $total = $subtotal + $tax;
     </footer>
 </div>
 
-<script>
+<script nonce="<?php echo esc_attr(AIH_Security::get_csp_nonce()); ?>">
 jQuery(document).ready(function($) {
     function escapeHtml(text) {
         if (!text) return '';
