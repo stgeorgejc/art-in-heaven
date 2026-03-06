@@ -439,8 +439,69 @@ class AIH_Pushpay_API {
                 if (defined('WP_DEBUG') && WP_DEBUG) error_log('Pushpay sync: ' . count($payments) . ' payments after fund filter.');
             }
 
+            // --- Batch pre-fetch existing transactions (1 query instead of N) ---
+            $payment_tokens = array_map(function($p) { return $p['paymentToken']; }, $payments);
+            $token_placeholders = implode(',', array_fill(0, count($payment_tokens), '%s'));
+            /** @var list<object{id: string, pushpay_id: string, order_id: string|null}> $existing_rows */
+            $existing_rows = $wpdb->get_results($wpdb->prepare(
+                "SELECT id, pushpay_id, order_id FROM {$transactions_table} WHERE pushpay_id IN ($token_placeholders)",
+                ...$payment_tokens
+            ));
+            $existing_map = array();
+            foreach ($existing_rows as $row) {
+                $existing_map[$row->pushpay_id] = $row;
+            }
+
+            // --- Batch pre-fetch linked orders needing backfill (1 query instead of N) ---
+            $linked_order_ids = array();
+            foreach ($existing_rows as $row) {
+                if ($row->order_id !== null) {
+                    $linked_order_ids[] = (int) $row->order_id;
+                }
+            }
+            $linked_orders_map = array();
+            if (!empty($linked_order_ids)) {
+                $order_id_placeholders = implode(',', array_fill(0, count($linked_order_ids), '%d'));
+                /** @var list<object{id: string, payment_reference: string}> $linked_order_rows */
+                $linked_order_rows = $wpdb->get_results($wpdb->prepare(
+                    "SELECT id, payment_reference FROM {$orders_table} WHERE id IN ($order_id_placeholders)",
+                    ...$linked_order_ids
+                ));
+                foreach ($linked_order_rows as $row) {
+                    $linked_orders_map[(int) $row->id] = $row;
+                }
+            }
+
+            // --- Extract order numbers from payments and batch fetch matching orders ---
+            $order_numbers_by_token = array();
             foreach ($payments as $payment) {
-                // Store transaction
+                $search_fields = array(
+                    isset($payment['payerNote']) ? $payment['payerNote'] : '',
+                    isset($payment['paymentMethodDetails']['reference']) ? $payment['paymentMethodDetails']['reference'] : '',
+                );
+                foreach ($search_fields as $field) {
+                    if (preg_match('/\bAIH-[A-Z0-9]{8}\b/', strtoupper($field), $matches)) {
+                        $order_numbers_by_token[$payment['paymentToken']] = $matches[0];
+                        break;
+                    }
+                }
+            }
+            $matched_orders_map = array();
+            if (!empty($order_numbers_by_token)) {
+                $unique_order_numbers = array_unique(array_values($order_numbers_by_token));
+                $on_placeholders = implode(',', array_fill(0, count($unique_order_numbers), '%s'));
+                /** @var list<object{id: string, order_number: string, payment_status: string, payment_reference: string}> $order_rows */
+                $order_rows = $wpdb->get_results($wpdb->prepare(
+                    "SELECT * FROM {$orders_table} WHERE order_number IN ($on_placeholders)",
+                    ...$unique_order_numbers
+                ));
+                foreach ($order_rows as $row) {
+                    $matched_orders_map[$row->order_number] = $row;
+                }
+            }
+
+            // --- Process each payment using pre-fetched data ---
+            foreach ($payments as $payment) {
                 $transaction_data = array(
                     'pushpay_id' => $payment['paymentToken'],
                     'amount' => floatval($payment['amount']['amount']),
@@ -455,27 +516,15 @@ class AIH_Pushpay_API {
                     'raw_data' => json_encode($payment),
                     'synced_at' => current_time('mysql')
                 );
-                
-                // Check if transaction already exists
-                $existing = $wpdb->get_var($wpdb->prepare(
-                    "SELECT id FROM {$transactions_table} WHERE pushpay_id = %s",
-                    $payment['paymentToken']
-                ));
-                
+
+                $existing = isset($existing_map[$payment['paymentToken']]) ? $existing_map[$payment['paymentToken']] : null;
+
                 if ($existing) {
-                    $wpdb->update($transactions_table, $transaction_data, array('id' => $existing));
+                    $wpdb->update($transactions_table, $transaction_data, array('id' => $existing->id));
 
                     // Backfill payment_reference for already-linked orders missing it
-                    $linked_order_id = $wpdb->get_var($wpdb->prepare(
-                        "SELECT order_id FROM {$transactions_table} WHERE id = %d AND order_id IS NOT NULL",
-                        $existing
-                    ));
-                    if ($linked_order_id) {
-                        /** @var object{id: string, payment_reference: string}|null $linked_order */
-                    $linked_order = $wpdb->get_row($wpdb->prepare(
-                            "SELECT id, payment_reference FROM {$orders_table} WHERE id = %d",
-                            $linked_order_id
-                        ));
+                    if ($existing->order_id !== null) {
+                        $linked_order = isset($linked_orders_map[(int) $existing->order_id]) ? $linked_orders_map[(int) $existing->order_id] : null;
                         if ($linked_order && empty($linked_order->payment_reference)) {
                             $wpdb->update(
                                 $orders_table,
@@ -492,27 +541,11 @@ class AIH_Pushpay_API {
                     $total_synced++;
                 }
 
-                // Try to match to an order by order number in designated payment fields
-                $order_number = null;
-                $search_fields = array(
-                    isset($payment['payerNote']) ? $payment['payerNote'] : '',
-                    isset($payment['paymentMethodDetails']['reference']) ? $payment['paymentMethodDetails']['reference'] : '',
-                );
-                foreach ($search_fields as $field) {
-                    if (preg_match('/\bAIH-[A-Z0-9]{8}\b/', strtoupper($field), $matches)) {
-                        $order_number = $matches[0];
-                        break;
-                    }
-                }
-                
-                // Update order if matched
+                // Match to order using pre-fetched data
+                $order_number = isset($order_numbers_by_token[$payment['paymentToken']]) ? $order_numbers_by_token[$payment['paymentToken']] : null;
                 if ($order_number) {
-                    /** @var object{id: string, payment_status: string, payment_reference: string}|null $order */
-                    $order = $wpdb->get_row($wpdb->prepare(
-                        "SELECT * FROM {$orders_table} WHERE order_number = %s",
-                        $order_number
-                    ));
-                    
+                    $order = isset($matched_orders_map[$order_number]) ? $matched_orders_map[$order_number] : null;
+
                     if ($order && $order->payment_status !== 'paid') {
                         $wpdb->update(
                             $orders_table,
@@ -547,14 +580,14 @@ class AIH_Pushpay_API {
                             ),
                             array('id' => $order->id)
                         );
-                        
+
                         // Link transaction to order
                         $wpdb->update(
                             $transactions_table,
                             array('order_id' => $order->id),
                             array('pushpay_id' => $payment['paymentToken'])
                         );
-                        
+
                         $total_matched++;
                     }
                 }
