@@ -241,11 +241,11 @@ class AIH_Ajax {
     public function toggle_favorite() {
         check_ajax_referer('aih_frontend_nonce', 'nonce');
         $auth = AIH_Auth::get_instance();
-        if (!$auth->is_logged_in()) wp_send_json_error(array('login_required' => true));
-        
+        if (!$auth->is_logged_in()) wp_send_json_error(array('message' => __('Please sign in.', 'art-in-heaven'), 'login_required' => true));
+
         $art_piece_id = intval($_POST['art_piece_id'] ?? 0);
         if (!$art_piece_id) wp_send_json_error(array('message' => __('Invalid.', 'art-in-heaven')));
-        
+
         wp_send_json_success((new AIH_Favorites())->toggle($auth->get_current_bidder_id() ?? '', $art_piece_id));
     }
     
@@ -343,8 +343,8 @@ class AIH_Ajax {
     public function get_won_items() {
         check_ajax_referer('aih_frontend_nonce', 'nonce');
         $auth = AIH_Auth::get_instance();
-        if (!$auth->is_logged_in()) wp_send_json_error(array('login_required' => true));
-        
+        if (!$auth->is_logged_in()) wp_send_json_error(array('message' => __('Please sign in.', 'art-in-heaven'), 'login_required' => true));
+
         $checkout = AIH_Checkout::get_instance();
         $items = $checkout->get_won_items($auth->get_current_bidder_id() ?? '');
         $data = array();
@@ -359,7 +359,7 @@ class AIH_Ajax {
     public function create_order() {
         check_ajax_referer('aih_frontend_nonce', 'nonce');
         $auth = AIH_Auth::get_instance();
-        if (!$auth->is_logged_in()) wp_send_json_error(array('login_required' => true));
+        if (!$auth->is_logged_in()) wp_send_json_error(array('message' => __('Please sign in.', 'art-in-heaven'), 'login_required' => true));
 
         // Rate limiting: 5 orders per 60 seconds
         if (!AIH_Security::check_rate_limit('ajax_order_' . $auth->get_current_bidder_id(), 5, 60)) {
@@ -387,7 +387,7 @@ class AIH_Ajax {
     public function get_pushpay_link() {
         check_ajax_referer('aih_frontend_nonce', 'nonce');
         $auth = AIH_Auth::get_instance();
-        if (!$auth->is_logged_in()) wp_send_json_error(array('login_required' => true));
+        if (!$auth->is_logged_in()) wp_send_json_error(array('message' => __('Please sign in.', 'art-in-heaven'), 'login_required' => true));
 
         $checkout = AIH_Checkout::get_instance();
         $order = $checkout->get_order_by_number(sanitize_text_field($_POST['order_number'] ?? ''));
@@ -464,7 +464,7 @@ class AIH_Ajax {
     public function get_my_purchases() {
         check_ajax_referer('aih_frontend_nonce', 'nonce');
         $auth = AIH_Auth::get_instance();
-        if (!$auth->is_logged_in()) wp_send_json_error(array('login_required' => true));
+        if (!$auth->is_logged_in()) wp_send_json_error(array('message' => __('Please sign in.', 'art-in-heaven'), 'login_required' => true));
 
         $bidder_id = $auth->get_current_bidder_id();
         $checkout = AIH_Checkout::get_instance();
@@ -2652,7 +2652,7 @@ class AIH_Ajax {
 
         $auth = AIH_Auth::get_instance();
         if (!$auth->is_logged_in()) {
-            wp_send_json_error(array('message' => 'Not authenticated'));
+            wp_send_json_error(array('message' => __('Please sign in.', 'art-in-heaven'), 'login_required' => true));
         }
 
         $bidder_id = $auth->get_current_bidder_id();
@@ -2661,18 +2661,18 @@ class AIH_Ajax {
         $auth_key  = isset($_POST['auth']) ? sanitize_text_field($_POST['auth']) : '';
 
         if (empty($endpoint) || empty($p256dh) || empty($auth_key)) {
-            wp_send_json_error(array('message' => 'Missing subscription data'));
+            wp_send_json_error(array('message' => __('Missing subscription data.', 'art-in-heaven')));
         }
 
         if (!AIH_Push::is_valid_push_endpoint($endpoint)) {
-            wp_send_json_error(array('message' => 'Invalid push endpoint'));
+            wp_send_json_error(array('message' => __('Invalid push endpoint.', 'art-in-heaven')));
         }
 
         $result = AIH_Push::save_subscription($bidder_id ?? '', $endpoint, $p256dh, $auth_key);
         if ($result) {
             wp_send_json_success();
         } else {
-            wp_send_json_error(array('message' => 'Failed to save subscription'));
+            wp_send_json_error(array('message' => __('Failed to save subscription.', 'art-in-heaven')));
         }
     }
 
@@ -2686,7 +2686,7 @@ class AIH_Ajax {
 
         $endpoint = isset($_POST['endpoint']) ? esc_url_raw($_POST['endpoint']) : '';
         if (empty($endpoint)) {
-            wp_send_json_error(array('message' => 'Missing endpoint'));
+            wp_send_json_error(array('message' => __('Missing endpoint.', 'art-in-heaven')));
         }
 
         AIH_Push::delete_subscription($endpoint);
@@ -2705,12 +2705,12 @@ class AIH_Ajax {
 
         $auth = AIH_Auth::get_instance();
         if (!$auth->is_logged_in()) {
-            wp_send_json_error(array('message' => 'Not authenticated'));
+            wp_send_json_error(array('message' => __('Please sign in.', 'art-in-heaven'), 'login_required' => true));
         }
 
         $endpoint = isset($_POST['endpoint']) ? esc_url_raw($_POST['endpoint']) : '';
         if (empty($endpoint)) {
-            wp_send_json_error(array('message' => 'Missing endpoint'));
+            wp_send_json_error(array('message' => __('Missing endpoint.', 'art-in-heaven')));
         }
 
         global $wpdb;
@@ -2723,7 +2723,7 @@ class AIH_Ajax {
         if ($exists) {
             wp_send_json_success(array('valid' => true));
         } else {
-            wp_send_json_error(array('valid' => false, 'message' => 'Subscription not found'));
+            wp_send_json_error(array('valid' => false, 'message' => __('Subscription not found.', 'art-in-heaven')));
         }
     }
 
@@ -2737,7 +2737,7 @@ class AIH_Ajax {
 
         $auth = AIH_Auth::get_instance();
         if (!$auth->is_logged_in()) {
-            wp_send_json_error(array('message' => 'Not authenticated'));
+            wp_send_json_error(array('message' => __('Please sign in.', 'art-in-heaven'), 'login_required' => true));
         }
 
         $permission = isset($_POST['permission']) ? sanitize_text_field($_POST['permission']) : '';
@@ -2747,7 +2747,7 @@ class AIH_Ajax {
         }
 
         if (!in_array($permission, array('granted', 'denied'), true)) {
-            wp_send_json_error(array('message' => 'Invalid permission value'));
+            wp_send_json_error(array('message' => __('Invalid permission value.', 'art-in-heaven')));
         }
 
         $event_type = 'granted' === $permission ? 'push_permission_granted' : 'push_permission_denied';
@@ -2770,7 +2770,7 @@ class AIH_Ajax {
 
         $auth = AIH_Auth::get_instance();
         if (!$auth->is_logged_in()) {
-            wp_send_json_error(array('message' => 'Not authenticated'));
+            wp_send_json_error(array('message' => __('Please sign in.', 'art-in-heaven'), 'login_required' => true));
         }
 
         $notification_type = isset($_POST['notification_type']) ? sanitize_text_field($_POST['notification_type']) : 'outbid';
@@ -2801,7 +2801,7 @@ class AIH_Ajax {
 
         $auth = AIH_Auth::get_instance();
         if (!$auth->is_logged_in()) {
-            wp_send_json_error(array('message' => 'Not authenticated'));
+            wp_send_json_error(array('message' => __('Please sign in.', 'art-in-heaven'), 'login_required' => true));
         }
 
         $bidder_id      = $auth->get_current_bidder_id();
@@ -2834,7 +2834,7 @@ class AIH_Ajax {
 
         $auth = AIH_Auth::get_instance();
         if (!$auth->is_logged_in()) {
-            wp_send_json_error(array('message' => 'Not authenticated'));
+            wp_send_json_error(array('message' => __('Please sign in.', 'art-in-heaven'), 'login_required' => true));
         }
 
         $bidder_id = $auth->get_current_bidder_id() ?? '';
@@ -2842,7 +2842,7 @@ class AIH_Ajax {
         $ids = isset($_POST['art_piece_ids']) ? array_map('intval', (array) $_POST['art_piece_ids']) : array();
         $ids = array_filter($ids);
         if (empty($ids)) {
-            wp_send_json_error(array('message' => 'No art piece IDs provided'));
+            wp_send_json_error(array('message' => __('No art piece IDs provided.', 'art-in-heaven')));
         }
 
         // Cap to prevent abuse

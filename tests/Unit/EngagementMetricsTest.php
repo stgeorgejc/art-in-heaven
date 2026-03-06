@@ -82,7 +82,7 @@ class EngagementMetricsTest extends TestCase
 
         $this->assertNull($result['audit']);
         $this->assertFalse($result['success']);
-        $this->assertSame('Not authenticated', $result['error']);
+        $this->assertSame('Please sign in.', $result['error']);
     }
 
     // ========== push_clicked handler ==========
@@ -122,7 +122,7 @@ class EngagementMetricsTest extends TestCase
 
         $this->assertNull($result['audit']);
         $this->assertFalse($result['success']);
-        $this->assertSame('Not authenticated', $result['error']);
+        $this->assertSame('Please sign in.', $result['error']);
     }
 
     // ========== bid_source attribution ==========
@@ -220,7 +220,7 @@ class EngagementMetricsTest extends TestCase
         string $source
     ): array {
         if (!$isLoggedIn) {
-            return ['success' => false, 'error' => 'Not authenticated', 'audit' => null];
+            return ['success' => false, 'error' => 'Please sign in.', 'audit' => null];
         }
 
         $sanitizedPermission = sanitize_text_field($permission);
@@ -262,7 +262,7 @@ class EngagementMetricsTest extends TestCase
         int $artPieceId
     ): array {
         if (!$isLoggedIn) {
-            return ['success' => false, 'error' => 'Not authenticated', 'audit' => null];
+            return ['success' => false, 'error' => 'Please sign in.', 'audit' => null];
         }
 
         $sanitizedType = sanitize_text_field($notificationType);
