@@ -19,7 +19,7 @@ class AIH_Favorites {
     /**
      * Add to favorites
      *
-     * @param int|string $bidder_id
+     * @param string $bidder_id
      * @param int $art_piece_id
      * @return bool
      */
@@ -47,7 +47,7 @@ class AIH_Favorites {
     /**
      * Remove from favorites
      *
-     * @param int|string $bidder_id
+     * @param string $bidder_id
      * @param int $art_piece_id
      * @return int|false
      */
@@ -67,7 +67,7 @@ class AIH_Favorites {
     /**
      * Toggle favorite
      *
-     * @param int|string $bidder_id
+     * @param string $bidder_id
      * @param int $art_piece_id
      * @return array{action: string, is_favorite: bool}
      */
@@ -102,7 +102,7 @@ class AIH_Favorites {
     /**
      * Check if art piece is favorite
      *
-     * @param int|string $bidder_id
+     * @param string $bidder_id
      * @param int $art_piece_id
      * @return bool
      */
@@ -121,7 +121,7 @@ class AIH_Favorites {
     /**
      * Get all favorites for bidder
      *
-     * @param int|string $bidder_id
+     * @param string $bidder_id
      * @return array<int, object>
      */
     public function get_bidder_favorites($bidder_id) {
@@ -142,7 +142,7 @@ class AIH_Favorites {
     /**
      * Get favorite art piece IDs for bidder
      *
-     * @param int|string $bidder_id
+     * @param string $bidder_id
      * @return list<string>
      */
     public function get_bidder_favorite_ids($bidder_id) {

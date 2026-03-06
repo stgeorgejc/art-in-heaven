@@ -18,8 +18,7 @@ class AIH_Template_Helper {
     /** @var AIH_Template_Helper|null */
     private static $instance = null;
 
-    /** @var array<string, string|false> Cached page URLs */
-    /** @var array<string, string> */
+    /** @var array<string, string> Cached page URLs */
     private static $page_cache = array();
 
     /**
