@@ -23,12 +23,17 @@ endif;
 // Handle PushPay redirect - check for payment token
 $payment_result = null;
 if (!empty($_GET['paymentToken'])) {
-    $pushpay = AIH_Pushpay_API::get_instance();
-    $payment_data = $pushpay->get_payment_by_token(sanitize_text_field($_GET['paymentToken']));
-    if (!is_wp_error($payment_data)) {
-        $payment_result = 'success';
-    } else {
+    $ip = AIH_Security::get_client_ip();
+    if (!AIH_Security::check_rate_limit('pushpay_token_' . $ip, 10, 60)) {
         $payment_result = 'error';
+    } else {
+        $pushpay = AIH_Pushpay_API::get_instance();
+        $payment_data = $pushpay->get_payment_by_token(sanitize_text_field($_GET['paymentToken']));
+        if (!is_wp_error($payment_data)) {
+            $payment_result = 'success';
+        } else {
+            $payment_result = 'error';
+        }
     }
 } elseif (isset($_GET['sr']) && !isset($_GET['paymentToken'])) {
     // Source reference present but no payment token = payment was cancelled/failed
@@ -44,6 +49,16 @@ $won_items = $checkout->get_won_items($bidder_id);
 $orders = $checkout->get_bidder_orders($bidder_id);
 $art_images = new AIH_Art_Images();
 
+// Batch-fetch images for all won items to avoid N+1 queries
+$won_art_piece_ids = array();
+foreach ($won_items as $item) {
+    $pid = isset($item->art_piece_id) ? (int) $item->art_piece_id : (isset($item->id) ? (int) $item->id : 0);
+    if ($pid) {
+        $won_art_piece_ids[] = $pid;
+    }
+}
+$images_batch = $art_images->get_images_batch($won_art_piece_ids);
+
 $subtotal = 0;
 foreach ($won_items as $item) {
     // Support both winning_bid and winning_amount property names
@@ -56,7 +71,7 @@ $total = $subtotal + $tax;
 ?>
 
 <div class="aih-page aih-checkout-page">
-<script>(function(){var p=document.currentScript.parentElement,t=null;try{t=localStorage.getItem('aih-theme');}catch(e){}if(t==='dark')p.classList.add('dark-mode');else if(t==='light')p.classList.add('light-mode');else if(window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches)p.classList.add('dark-mode');})();</script>
+<script nonce="<?php echo esc_attr(AIH_Security::get_csp_nonce()); ?>">(function(){var p=document.currentScript.parentElement,t=null;try{t=localStorage.getItem('aih-theme');}catch(e){}if(t==='dark')p.classList.add('dark-mode');else if(t==='light')p.classList.add('light-mode');else if(window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches)p.classList.add('dark-mode');})();</script>
     <?php $active_page = 'checkout'; $cart_count = 0; include AIH_PLUGIN_DIR . 'templates/partials/header.php'; ?>
 
     <main class="aih-main">
@@ -112,7 +127,7 @@ $total = $subtotal + $tax;
                 <?php foreach ($won_items as $item):
                     // Support both id and art_piece_id property names
                     $art_piece_id = isset($item->art_piece_id) ? $item->art_piece_id : (isset($item->id) ? $item->id : 0);
-                    $images = $art_images->get_images($art_piece_id);
+                    $images = isset($images_batch[(int) $art_piece_id]) ? $images_batch[(int) $art_piece_id] : array();
                     $image_url = !empty($images) ? $images[0]->watermarked_url : (isset($item->watermarked_url) ? $item->watermarked_url : (isset($item->image_url) ? $item->image_url : ''));
                     // Support both winning_bid and winning_amount property names
                     $winning_amount = isset($item->winning_bid) ? $item->winning_bid : (isset($item->winning_amount) ? $item->winning_amount : 0);
@@ -214,7 +229,7 @@ $total = $subtotal + $tax;
     </footer>
 </div>
 
-<script>
+<script nonce="<?php echo esc_attr(AIH_Security::get_csp_nonce()); ?>">
 jQuery(document).ready(function($) {
     function escapeHtml(text) {
         if (!text) return '';

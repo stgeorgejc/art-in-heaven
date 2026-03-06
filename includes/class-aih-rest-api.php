@@ -137,7 +137,7 @@ class AIH_REST_API {
             array(
                 'methods' => WP_REST_Server::CREATABLE,
                 'callback' => array($this, 'logout'),
-                'permission_callback' => '__return_true',
+                'permission_callback' => array($this, 'check_bidder_permission'),
             ),
         ));
         

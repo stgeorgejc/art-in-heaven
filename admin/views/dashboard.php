@@ -10,37 +10,43 @@ $can_view_bids = AIH_Roles::can_view_bids();
 <div class="wrap aih-admin-wrap">
     <h1><?php _e('Art in Heaven Dashboard', 'art-in-heaven'); ?></h1>
     
-    <div class="aih-dashboard-stats">
-        <div class="aih-stat-card">
-            <span class="aih-stat-number"><?php echo $counts->total; ?></span>
-            <span class="aih-stat-label"><?php _e('Total Art Pieces', 'art-in-heaven'); ?></span>
-        </div>
-        <div class="aih-stat-card aih-stat-active">
-            <span class="aih-stat-number"><?php echo $counts->active; ?></span>
-            <span class="aih-stat-label"><?php _e('Active Auctions', 'art-in-heaven'); ?></span>
-        </div>
-        <div class="aih-stat-card aih-stat-bids">
-            <span class="aih-stat-number"><?php echo isset($counts->bid_rate_percent) ? $counts->bid_rate_percent : 0; ?>%</span>
-            <span class="aih-stat-label"><?php _e('With Bids', 'art-in-heaven'); ?></span>
-            <span class="aih-stat-sublabel"><?php printf(__('%d of %d pieces', 'art-in-heaven'), isset($counts->pieces_with_bids) ? $counts->pieces_with_bids : 0, isset($counts->total) ? $counts->total : 0); ?></span>
-        </div>
-        <div class="aih-stat-card aih-stat-nobids">
-            <span class="aih-stat-number"><?php echo $counts->active_no_bids; ?></span>
-            <span class="aih-stat-label"><?php _e('No Bids Yet', 'art-in-heaven'); ?></span>
-        </div>
-        <?php if ($can_view_bids): ?>
-        <div class="aih-stat-card">
-            <span class="aih-stat-number"><?php echo $total_bids; ?></span>
-            <span class="aih-stat-label"><?php _e('Total Bids', 'art-in-heaven'); ?></span>
-        </div>
-        <?php endif; ?>
-        <?php if ($can_view_financial): ?>
-        <div class="aih-stat-card aih-stat-money">
-            <span class="aih-stat-number">$<?php echo number_format($payment_stats->total_collected ?: 0, 2); ?></span>
-            <span class="aih-stat-label"><?php _e('Collected', 'art-in-heaven'); ?></span>
-        </div>
-        <?php endif; ?>
-    </div>
+    <?php
+    AIH_Admin::open_stat_grid();
+    AIH_Admin::render_stat_card(array(
+        'value' => (string) $counts->total,
+        'label' => __('Total Art Pieces', 'art-in-heaven'),
+    ));
+    AIH_Admin::render_stat_card(array(
+        'value'   => (string) $counts->active,
+        'label'   => __('Active Auctions', 'art-in-heaven'),
+        'variant' => 'active',
+    ));
+    AIH_Admin::render_stat_card(array(
+        'value'    => (isset($counts->bid_rate_percent) ? $counts->bid_rate_percent : 0) . '%',
+        'label'    => __('With Bids', 'art-in-heaven'),
+        'sublabel' => sprintf(__('%d of %d pieces', 'art-in-heaven'), isset($counts->pieces_with_bids) ? $counts->pieces_with_bids : 0, isset($counts->total) ? $counts->total : 0),
+        'variant'  => 'bids',
+    ));
+    AIH_Admin::render_stat_card(array(
+        'value'   => (string) $counts->active_no_bids,
+        'label'   => __('No Bids Yet', 'art-in-heaven'),
+        'variant' => 'nobids',
+    ));
+    if ($can_view_bids) {
+        AIH_Admin::render_stat_card(array(
+            'value' => (string) $total_bids,
+            'label' => __('Total Bids', 'art-in-heaven'),
+        ));
+    }
+    if ($can_view_financial) {
+        AIH_Admin::render_stat_card(array(
+            'value'   => '$' . number_format($payment_stats->total_collected ?: 0, 2),
+            'label'   => __('Collected', 'art-in-heaven'),
+            'variant' => 'money',
+        ));
+    }
+    AIH_Admin::close_stat_grid();
+    ?>
     
     <div class="aih-dashboard-grid">
         <div class="aih-dashboard-section">

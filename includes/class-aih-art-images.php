@@ -292,11 +292,54 @@ class AIH_Art_Images {
      */
     public function get_images($art_piece_id) {
         global $wpdb;
-        
+
         return $wpdb->get_results($wpdb->prepare(
             "SELECT * FROM {$this->table} WHERE art_piece_id = %d ORDER BY is_primary DESC, sort_order ASC",
             $art_piece_id
         ));
+    }
+
+    /**
+     * Batch fetch images for multiple art pieces.
+     *
+     * Returns an associative array keyed by art_piece_id, each containing
+     * the array of image objects for that piece (ordered primary-first).
+     *
+     * @param array<int, int> $art_piece_ids
+     * @return array<int, array<int, object>>
+     */
+    public function get_images_batch($art_piece_ids) {
+        global $wpdb;
+
+        if (empty($art_piece_ids)) {
+            return array();
+        }
+
+        $ids = array_map('intval', $art_piece_ids);
+        $ids = array_values(array_unique(array_filter($ids, function ($id) {
+            return $id > 0;
+        })));
+
+        if (empty($ids)) {
+            return array();
+        }
+
+        $placeholders = implode(',', array_fill(0, count($ids), '%d'));
+
+        $rows = $wpdb->get_results($wpdb->prepare(
+            "SELECT * FROM {$this->table} WHERE art_piece_id IN ($placeholders) ORDER BY is_primary DESC, sort_order ASC",
+            $ids
+        ));
+
+        $result = array();
+        foreach ($ids as $id) {
+            $result[$id] = array();
+        }
+        foreach ($rows as $row) {
+            $result[(int) $row->art_piece_id][] = $row;
+        }
+
+        return $result;
     }
     
     /**

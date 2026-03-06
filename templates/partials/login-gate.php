@@ -48,7 +48,7 @@ if ( empty( $_COOKIE['aih_rl_token'] ) ) {
         </div>
     </main>
 </div>
-<script>
+<script nonce="<?php echo esc_attr(AIH_Security::get_csp_nonce()); ?>">
 jQuery(document).ready(function($) {
     $('#aih-login-btn').on('click', function() {
         var code = $('#aih-login-code').val().trim().toUpperCase();

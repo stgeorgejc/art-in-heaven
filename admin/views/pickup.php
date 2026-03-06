@@ -114,26 +114,26 @@ if (!empty($order_ids)) {
     </h1>
 
     <!-- Stats Cards -->
-    <div class="aih-stats-grid" style="margin: 20px 0;">
-        <div class="aih-stat-card aih-stat-card--horizontal">
-            <div class="aih-stat-icon" style="background: #fef3c7; color: #d97706;">
-                <span class="dashicons dashicons-clock"></span>
-            </div>
-            <div class="aih-stat-content">
-                <div class="aih-stat-number"><?php echo intval($ready_count); ?></div>
-                <div class="aih-stat-label aih-stat-label--plain"><?php _e('Ready for Pickup', 'art-in-heaven'); ?></div>
-            </div>
-        </div>
-        <div class="aih-stat-card aih-stat-card--horizontal">
-            <div class="aih-stat-icon" style="background: #d1fae5; color: #4a7c59;">
-                <span class="dashicons dashicons-yes-alt"></span>
-            </div>
-            <div class="aih-stat-content">
-                <div class="aih-stat-number"><?php echo intval($picked_up_count); ?></div>
-                <div class="aih-stat-label aih-stat-label--plain"><?php _e('Picked Up', 'art-in-heaven'); ?></div>
-            </div>
-        </div>
-    </div>
+    <?php
+    AIH_Admin::open_stat_grid('', 'margin: 20px 0;');
+    AIH_Admin::render_stat_card(array(
+        'value'    => (string) intval($ready_count),
+        'label'    => __('Ready for Pickup', 'art-in-heaven'),
+        'icon'     => 'dashicons-clock',
+        'icon_bg'  => '#fef3c7',
+        'icon_color' => '#d97706',
+        'layout'   => 'horizontal',
+    ));
+    AIH_Admin::render_stat_card(array(
+        'value'    => (string) intval($picked_up_count),
+        'label'    => __('Picked Up', 'art-in-heaven'),
+        'icon'     => 'dashicons-yes-alt',
+        'icon_bg'  => '#d1fae5',
+        'icon_color' => '#4a7c59',
+        'layout'   => 'horizontal',
+    ));
+    AIH_Admin::close_stat_grid();
+    ?>
 
     <!-- Tabs -->
     <nav class="nav-tab-wrapper">

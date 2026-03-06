@@ -94,7 +94,7 @@ if (empty($image_urls) && $primary_image) {
 
 <div id="aih-single-wrapper" data-server-time="<?php echo esc_attr(time() * 1000); ?>" data-piece-id="<?php echo intval($art_piece->id); ?>" data-is-ended="<?php echo $is_ended ? '1' : '0'; ?>" data-images="<?php echo esc_attr(wp_json_encode($image_urls)); ?>">
 <div class="aih-page aih-single-page">
-<script>(function(){var p=document.currentScript.parentElement,t=null;try{t=localStorage.getItem('aih-theme');}catch(e){}if(t==='dark')p.classList.add('dark-mode');else if(t==='light')p.classList.add('light-mode');else if(window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches)p.classList.add('dark-mode');})();</script>
+<script nonce="<?php echo esc_attr(AIH_Security::get_csp_nonce()); ?>">(function(){var p=document.currentScript.parentElement,t=null;try{t=localStorage.getItem('aih-theme');}catch(e){}if(t==='dark')p.classList.add('dark-mode');else if(t==='light')p.classList.add('light-mode');else if(window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches)p.classList.add('dark-mode');})();</script>
     <?php $active_page = 'single-item'; include AIH_PLUGIN_DIR . 'templates/partials/header.php'; ?>
 
     <main class="aih-main">

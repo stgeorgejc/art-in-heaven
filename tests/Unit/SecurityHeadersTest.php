@@ -117,13 +117,15 @@ class SecurityHeadersTest extends TestCase
         $this->assertSame('SAMEORIGIN', $result['X-Frame-Options']);
         $this->assertSame('strict-origin-when-cross-origin', $result['Referrer-Policy']);
         $this->assertSame('camera=(), microphone=(), geolocation=()', $result['Permissions-Policy']);
+        $this->assertArrayHasKey('Content-Security-Policy', $result);
+        $this->assertStringContainsString("'nonce-", $result['Content-Security-Policy']);
     }
 
-    public function testReturnsFourSecurityHeaders(): void
+    public function testReturnsFiveSecurityHeaders(): void
     {
         $result = $this->plugin->add_security_headers([]);
 
-        $this->assertCount(4, $result);
+        $this->assertCount(5, $result);
     }
 
     // ── Adaptive: never override existing headers ──
@@ -148,10 +150,11 @@ class SecurityHeadersTest extends TestCase
     public function testDoesNotOverrideAnyPreexistingHeaders(): void
     {
         $existing = [
-            'X-Content-Type-Options' => 'custom',
-            'X-Frame-Options'        => 'DENY',
-            'Referrer-Policy'        => 'no-referrer',
-            'Permissions-Policy'     => 'fullscreen=(self)',
+            'X-Content-Type-Options'   => 'custom',
+            'X-Frame-Options'          => 'DENY',
+            'Referrer-Policy'          => 'no-referrer',
+            'Permissions-Policy'       => 'fullscreen=(self)',
+            'Content-Security-Policy'  => "script-src 'self'",
         ];
         $result = $this->plugin->add_security_headers($existing);
 

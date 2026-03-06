@@ -192,69 +192,68 @@ if ($computed === 'ended' || ($auction_ended && $piece->status !== 'draft')) {
     </div>
 
     <!-- Statistics Cards -->
-    <div class="aih-stats-grid">
-        <div class="aih-stat-card">
-            <div class="aih-stat-value">$<?php echo number_format($piece->starting_bid, 2); ?></div>
-            <div class="aih-stat-label"><?php _e('Starting Bid', 'art-in-heaven'); ?></div>
-        </div>
-        <div class="aih-stat-card <?php echo $highest_bid > $piece->starting_bid ? 'aih-highlight' : ''; ?>">
-            <div class="aih-stat-value">$<?php echo number_format($current_bid, 2); ?></div>
-            <div class="aih-stat-label"><?php _e('Current Bid', 'art-in-heaven'); ?></div>
-        </div>
-        <div class="aih-stat-card">
-            <div class="aih-stat-value"><?php echo $total_bids; ?></div>
-            <div class="aih-stat-label"><?php _e('Total Bids', 'art-in-heaven'); ?></div>
-        </div>
-        <div class="aih-stat-card">
-            <div class="aih-stat-value"><?php echo $unique_bidders; ?></div>
-            <div class="aih-stat-label"><?php _e('Unique Bidders', 'art-in-heaven'); ?></div>
-        </div>
-        <div class="aih-stat-card" style="<?php echo $favorites_count > 0 ? 'background: #fef3c7; border-color: #f59e0b;' : ''; ?>">
-            <div class="aih-stat-value"><?php echo $favorites_count; ?></div>
-            <div class="aih-stat-label"><?php _e('Favorites', 'art-in-heaven'); ?></div>
-        </div>
-        <div class="aih-stat-card">
-            <div class="aih-stat-value">
-                <?php
-                if ($last_bid_time) {
-                    echo AIH_Status::format_db_date($last_bid_time, 'M j, g:i a');
-                } else {
-                    _e('No bids yet', 'art-in-heaven');
-                }
-                ?>
-            </div>
-            <div class="aih-stat-label"><?php _e('Last Bid', 'art-in-heaven'); ?></div>
-        </div>
-    </div>
+    <?php
+    AIH_Admin::open_stat_grid();
+    AIH_Admin::render_stat_card(array(
+        'value' => '$' . number_format($piece->starting_bid, 2),
+        'label' => __('Starting Bid', 'art-in-heaven'),
+    ));
+    AIH_Admin::render_stat_card(array(
+        'value'   => '$' . number_format($current_bid, 2),
+        'label'   => __('Current Bid', 'art-in-heaven'),
+        'variant' => $highest_bid > $piece->starting_bid ? 'highlight' : '',
+    ));
+    AIH_Admin::render_stat_card(array(
+        'value' => (string) $total_bids,
+        'label' => __('Total Bids', 'art-in-heaven'),
+    ));
+    AIH_Admin::render_stat_card(array(
+        'value' => (string) $unique_bidders,
+        'label' => __('Unique Bidders', 'art-in-heaven'),
+    ));
+    AIH_Admin::render_stat_card(array(
+        'value'   => (string) $favorites_count,
+        'label'   => __('Favorites', 'art-in-heaven'),
+        'variant' => $favorites_count > 0 ? 'favorites' : '',
+    ));
+    AIH_Admin::render_stat_card(array(
+        'value' => $last_bid_time ? AIH_Status::format_db_date($last_bid_time, 'M j, g:i a') : __('No bids yet', 'art-in-heaven'),
+        'label' => __('Last Bid', 'art-in-heaven'),
+    ));
+    AIH_Admin::close_stat_grid();
 
-    <?php if ($total_bids > 0): ?>
-    <div class="aih-stats-grid" style="margin-top: 20px;">
-        <div class="aih-stat-card">
-            <div class="aih-stat-value">$<?php echo number_format($highest_bid, 2); ?></div>
-            <div class="aih-stat-label"><?php _e('Highest Bid', 'art-in-heaven'); ?></div>
-        </div>
-        <div class="aih-stat-card">
-            <div class="aih-stat-value">$<?php echo number_format($lowest_bid, 2); ?></div>
-            <div class="aih-stat-label"><?php _e('Lowest Valid Bid', 'art-in-heaven'); ?></div>
-        </div>
-        <div class="aih-stat-card">
-            <div class="aih-stat-value"><?php echo $valid_bids; ?></div>
-            <div class="aih-stat-label"><?php _e('Valid Bids', 'art-in-heaven'); ?></div>
-        </div>
-        <div class="aih-stat-card" <?php echo $rejected_bids > 0 ? 'style="background: #fef3c7; border-color: #f59e0b;"' : ''; ?>>
-            <div class="aih-stat-value"><?php echo $rejected_bids; ?></div>
-            <div class="aih-stat-label"><?php _e('Rejected (Too Low)', 'art-in-heaven'); ?></div>
-        </div>
-        <div class="aih-stat-card">
-            <div class="aih-stat-value">$<?php echo number_format($average_bid, 2); ?></div>
-            <div class="aih-stat-label"><?php _e('Average Bid', 'art-in-heaven'); ?></div>
-        </div>
-        <div class="aih-stat-card">
-            <div class="aih-stat-value">+$<?php echo number_format(max(0, $current_bid - $piece->starting_bid), 2); ?></div>
-            <div class="aih-stat-label"><?php _e('Increase from Start', 'art-in-heaven'); ?></div>
-        </div>
-    </div>
-    <?php endif; ?>
+    if ($total_bids > 0):
+    ?>
+    <?php
+    AIH_Admin::open_stat_grid('', 'margin-top: 20px;');
+    AIH_Admin::render_stat_card(array(
+        'value' => '$' . number_format($highest_bid, 2),
+        'label' => __('Highest Bid', 'art-in-heaven'),
+    ));
+    AIH_Admin::render_stat_card(array(
+        'value' => '$' . number_format($lowest_bid, 2),
+        'label' => __('Lowest Valid Bid', 'art-in-heaven'),
+    ));
+    AIH_Admin::render_stat_card(array(
+        'value' => (string) $valid_bids,
+        'label' => __('Valid Bids', 'art-in-heaven'),
+    ));
+    AIH_Admin::render_stat_card(array(
+        'value'   => (string) $rejected_bids,
+        'label'   => __('Rejected (Too Low)', 'art-in-heaven'),
+        'variant' => $rejected_bids > 0 ? 'favorites' : '',
+    ));
+    AIH_Admin::render_stat_card(array(
+        'value' => '$' . number_format($average_bid, 2),
+        'label' => __('Average Bid', 'art-in-heaven'),
+    ));
+    AIH_Admin::render_stat_card(array(
+        'value' => '+$' . number_format(max(0, $current_bid - $piece->starting_bid), 2),
+        'label' => __('Increase from Start', 'art-in-heaven'),
+    ));
+    AIH_Admin::close_stat_grid();
+    endif;
+    ?>
 
     <!-- Winning Bidder -->
     <?php if ($winning_bid): ?>

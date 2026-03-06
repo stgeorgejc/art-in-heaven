@@ -139,27 +139,29 @@ $matchable_orders = $wpdb->get_results(
     </div>
 
     <!-- Stats Cards -->
-    <div class="aih-stats-cards">
-        <div class="aih-stat-card">
-            <div class="aih-stat-number"><?php echo number_format($total_items); ?></div>
-            <div class="aih-stat-label"><?php _e('Total Transactions', 'art-in-heaven'); ?></div>
-        </div>
-        <div class="aih-stat-card success">
-            <div class="aih-stat-number"><?php echo number_format($matched_count); ?></div>
-            <div class="aih-stat-label"><?php _e('Matched to Orders', 'art-in-heaven'); ?></div>
-        </div>
-        <div class="aih-stat-card warning">
-            <div class="aih-stat-number"><?php echo number_format($unmatched_count); ?></div>
-            <div class="aih-stat-label"><?php _e('Unmatched', 'art-in-heaven'); ?></div>
-        </div>
-        <div class="aih-stat-card">
-            <div class="aih-stat-number">$<?php
-                $total_amount = $wpdb->get_var("SELECT SUM(amount) FROM {$transactions_table} WHERE status = 'Success'");
-                echo number_format($total_amount ?: 0, 2);
-            ?></div>
-            <div class="aih-stat-label"><?php _e('Total Amount', 'art-in-heaven'); ?></div>
-        </div>
-    </div>
+    <?php
+    $total_amount = $wpdb->get_var("SELECT SUM(amount) FROM {$transactions_table} WHERE status = 'Success'");
+    AIH_Admin::open_stat_grid();
+    AIH_Admin::render_stat_card(array(
+        'value' => number_format($total_items),
+        'label' => __('Total Transactions', 'art-in-heaven'),
+    ));
+    AIH_Admin::render_stat_card(array(
+        'value'   => number_format($matched_count),
+        'label'   => __('Matched to Orders', 'art-in-heaven'),
+        'variant' => 'active',
+    ));
+    AIH_Admin::render_stat_card(array(
+        'value'   => number_format($unmatched_count),
+        'label'   => __('Unmatched', 'art-in-heaven'),
+        'variant' => 'nobids',
+    ));
+    AIH_Admin::render_stat_card(array(
+        'value' => '$' . number_format($total_amount ?: 0, 2),
+        'label' => __('Total Amount', 'art-in-heaven'),
+    ));
+    AIH_Admin::close_stat_grid();
+    ?>
 
     <!-- Filters -->
     <div class="aih-filters-bar">
@@ -381,10 +383,6 @@ $matchable_orders = $wpdb->get_results(
 .aih-last-sync { color: #8a8a8a; font-size: 13px; }
 .aih-sync-actions { display: flex; gap: 10px; }
 .aih-sync-actions .dashicons { font-size: 16px; width: 16px; height: 16px; line-height: 1; vertical-align: middle; }
-
-.aih-stats-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px; }
-.aih-stat-card.success { border-left-color: #10b981; }
-.aih-stat-card.warning { border-left-color: #f59e0b; }
 
 .aih-filters-bar { background: #fff; padding: 15px 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 20px; }
 .aih-filters-bar form { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
