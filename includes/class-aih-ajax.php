@@ -1277,7 +1277,7 @@ class AIH_Ajax {
                 $csv_type = 'orders';
             }
             $csv = AIH_Export::to_csv($csv_type);
-            if ($csv === '') {
+            if ($csv === '' || strlen($csv) <= 10) {
                 wp_send_json_error(array('message' => __('No data to export.', 'art-in-heaven')));
             }
             wp_send_json_success(array('data' => $csv));

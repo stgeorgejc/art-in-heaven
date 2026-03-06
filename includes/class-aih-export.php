@@ -300,7 +300,12 @@ class AIH_Export {
             foreach ($rows as $row) {
                 $csv_row = array();
                 foreach ($fields as $field) {
-                    $csv_row[] = isset($row[$field]) ? $row[$field] : '';
+                    $value = isset($row[$field]) ? (string) $row[$field] : '';
+                    // Sanitize against CSV formula injection.
+                    if ($value !== '' && in_array($value[0], array('=', '+', '-', '@', "\t", "\r"), true)) {
+                        $value = "'" . $value;
+                    }
+                    $csv_row[] = $value;
                 }
                 fputcsv($output, $csv_row);
             }

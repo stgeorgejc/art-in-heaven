@@ -263,7 +263,7 @@ foreach ( $notif_types as $row ) {
 		'value'   => number_format( intval( $stats->active_count ) ),
 		'label'   => __( 'Active Auctions', 'art-in-heaven' ),
 		'variant' => 'active',
-		'link'    => admin_url( 'admin.php?page=art-in-heaven-art&tab=active' ),
+		'link'    => admin_url( 'admin.php?page=art-in-heaven-art&tab=active_bids' ),
 	) );
 	AIH_Admin::close_stat_grid();
 	?>
@@ -342,9 +342,9 @@ foreach ( $notif_types as $row ) {
 	<div class="aih-report-sections">
 		<div class="aih-report-section">
 			<h2>
-			<?php _e( 'Art Piece Statistics', 'art-in-heaven' ); ?>
-			<a href="<?php echo esc_url( admin_url( 'admin.php?page=art-in-heaven-art' ) ); ?>" class="page-title-action"><?php _e( 'View All', 'art-in-heaven' ); ?></a>
-		</h2>
+				<?php _e( 'Art Piece Statistics', 'art-in-heaven' ); ?>
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=art-in-heaven-art' ) ); ?>" class="page-title-action"><?php _e( 'View All', 'art-in-heaven' ); ?></a>
+			</h2>
 			<table class="widefat">
 				<tr><th><?php _e( 'Active Pieces', 'art-in-heaven' ); ?></th><td><?php echo intval( $stats->active_count ); ?></td></tr>
 				<tr><th><?php _e( 'Draft Pieces', 'art-in-heaven' ); ?></th><td><?php echo intval( $stats->draft_count ); ?></td></tr>
@@ -357,9 +357,9 @@ foreach ( $notif_types as $row ) {
 		</div>
 		<div class="aih-report-section">
 			<h2>
-			<?php _e( 'Payment Statistics', 'art-in-heaven' ); ?>
-			<a href="<?php echo esc_url( admin_url( 'admin.php?page=art-in-heaven-orders' ) ); ?>" class="page-title-action"><?php _e( 'View Orders', 'art-in-heaven' ); ?></a>
-		</h2>
+				<?php _e( 'Payment Statistics', 'art-in-heaven' ); ?>
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=art-in-heaven-orders' ) ); ?>" class="page-title-action"><?php _e( 'View Orders', 'art-in-heaven' ); ?></a>
+			</h2>
 			<table class="widefat">
 				<tr><th><?php _e( 'Total Orders', 'art-in-heaven' ); ?></th><td><?php echo intval( $payment_stats->total_orders ); ?></td></tr>
 				<tr><th><?php _e( 'Paid Orders', 'art-in-heaven' ); ?></th><td><?php echo intval( $payment_stats->paid_orders ); ?></td></tr>
@@ -677,7 +677,7 @@ foreach ( $notif_types as $row ) {
 	AIH_Admin::render_stat_card( array(
 		'value' => number_format( intval( $registrant_counts->logged_in ) ),
 		'label' => __( 'Logged In', 'art-in-heaven' ),
-		'link'  => admin_url( 'admin.php?page=art-in-heaven-bidders&tab=logged_in_no_bids' ),
+		'link'  => admin_url( 'admin.php?page=art-in-heaven-bidders&tab=all' ),
 	) );
 	AIH_Admin::render_stat_card( array(
 		'value'   => number_format( intval( $registrant_counts->has_bids ) ),
