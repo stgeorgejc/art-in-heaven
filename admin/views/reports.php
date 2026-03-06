@@ -67,48 +67,49 @@ $last_bid_time = $last_bid ? $last_bid->bid_time : null;
     <h1><?php _e('Auction Reports', 'art-in-heaven'); ?></h1>
     
     <!-- Quick Stats -->
-    <div class="aih-stats-grid">
-        <div class="aih-stat-card">
-            <span class="aih-stat-number"><?php echo number_format($stats->total_pieces); ?></span>
-            <span class="aih-stat-label"><?php _e('Total Art Pieces', 'art-in-heaven'); ?></span>
-        </div>
-        <div class="aih-stat-card">
-            <span class="aih-stat-number"><?php echo number_format($stats->total_bids); ?></span>
-            <span class="aih-stat-label"><?php _e('Total Bids', 'art-in-heaven'); ?></span>
-        </div>
-        <div class="aih-stat-card">
-            <span class="aih-stat-number"><?php echo number_format($stats->unique_bidders); ?></span>
-            <span class="aih-stat-label"><?php _e('Unique Bidders', 'art-in-heaven'); ?></span>
-        </div>
-        <div class="aih-stat-card">
-            <span class="aih-stat-number">$<?php echo number_format($bid_stats->total_bid_value ?: 0, 2); ?></span>
-            <span class="aih-stat-label"><?php _e('Total Winning Bid Value', 'art-in-heaven'); ?></span>
-        </div>
-        <div class="aih-stat-card aih-last-bid-card">
-            <span class="aih-stat-number"><?php 
-                if ($last_bid_time) {
-                    $bid_dt = new DateTime($last_bid_time, wp_timezone());
-                    $now_dt = new DateTime('now', wp_timezone());
-                    $time_diff = $now_dt->getTimestamp() - $bid_dt->getTimestamp();
-                    if ($time_diff < 60) {
-                        echo __('Just now', 'art-in-heaven');
-                    } elseif ($time_diff < 3600) {
-                        echo sprintf(__('%d min ago', 'art-in-heaven'), floor($time_diff / 60));
-                    } elseif ($time_diff < 86400) {
-                        echo sprintf(__('%d hr ago', 'art-in-heaven'), floor($time_diff / 3600));
-                    } else {
-                        echo sprintf(__('%d days ago', 'art-in-heaven'), floor($time_diff / 86400));
-                    }
-                } else {
-                    echo '—';
-                }
-            ?></span>
-            <span class="aih-stat-label"><?php _e('Last Bid', 'art-in-heaven'); ?></span>
-            <?php if ($last_bid_time): ?>
-            <span class="aih-stat-detail"><?php echo AIH_Status::format_db_date($last_bid_time, 'M j, g:i a'); ?></span>
-            <?php endif; ?>
-        </div>
-    </div>
+    <?php
+    // Calculate last bid display text
+    $last_bid_display = '—';
+    if ($last_bid_time) {
+        $bid_dt = new DateTime($last_bid_time, wp_timezone());
+        $now_dt = new DateTime('now', wp_timezone());
+        $time_diff = $now_dt->getTimestamp() - $bid_dt->getTimestamp();
+        if ($time_diff < 60) {
+            $last_bid_display = __('Just now', 'art-in-heaven');
+        } elseif ($time_diff < 3600) {
+            $last_bid_display = sprintf(__('%d min ago', 'art-in-heaven'), floor($time_diff / 60));
+        } elseif ($time_diff < 86400) {
+            $last_bid_display = sprintf(__('%d hr ago', 'art-in-heaven'), floor($time_diff / 3600));
+        } else {
+            $last_bid_display = sprintf(__('%d days ago', 'art-in-heaven'), floor($time_diff / 86400));
+        }
+    }
+
+    AIH_Admin::open_stat_grid();
+    AIH_Admin::render_stat_card(array(
+        'value' => number_format($stats->total_pieces),
+        'label' => __('Total Art Pieces', 'art-in-heaven'),
+    ));
+    AIH_Admin::render_stat_card(array(
+        'value' => number_format($stats->total_bids),
+        'label' => __('Total Bids', 'art-in-heaven'),
+    ));
+    AIH_Admin::render_stat_card(array(
+        'value' => number_format($stats->unique_bidders),
+        'label' => __('Unique Bidders', 'art-in-heaven'),
+    ));
+    AIH_Admin::render_stat_card(array(
+        'value' => '$' . number_format($bid_stats->total_bid_value ?: 0, 2),
+        'label' => __('Total Winning Bid Value', 'art-in-heaven'),
+    ));
+    AIH_Admin::render_stat_card(array(
+        'value'   => $last_bid_display,
+        'label'   => __('Last Bid', 'art-in-heaven'),
+        'detail'  => $last_bid_time ? AIH_Status::format_db_date($last_bid_time, 'M j, g:i a') : '',
+        'variant' => 'last-bid',
+    ));
+    AIH_Admin::close_stat_grid();
+    ?>
     
     <!-- Detailed Stats -->
     <div class="aih-report-sections">

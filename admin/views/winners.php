@@ -80,24 +80,29 @@ $current_tab = isset($_GET['tab']) ? sanitize_key($_GET['tab']) : 'items';
     <h1><?php _e('Winners & Sales', 'art-in-heaven'); ?></h1>
     
     <!-- Summary Cards -->
-    <div class="aih-stats-grid">
-        <div class="aih-stat-card">
-            <div class="aih-stat-value">$<?php echo number_format($total_won, 2); ?></div>
-            <div class="aih-stat-label"><?php _e('Total Won', 'art-in-heaven'); ?></div>
-        </div>
-        <div class="aih-stat-card aih-card-success">
-            <div class="aih-stat-value">$<?php echo number_format($total_paid, 2); ?></div>
-            <div class="aih-stat-label"><?php _e('Paid', 'art-in-heaven'); ?></div>
-        </div>
-        <div class="aih-stat-card aih-card-warning">
-            <div class="aih-stat-value">$<?php echo number_format($total_pending, 2); ?></div>
-            <div class="aih-stat-label"><?php _e('Pending Orders', 'art-in-heaven'); ?></div>
-        </div>
-        <div class="aih-stat-card aih-card-danger">
-            <div class="aih-stat-value">$<?php echo number_format($total_unpaid, 2); ?></div>
-            <div class="aih-stat-label"><?php _e('Not Yet Ordered', 'art-in-heaven'); ?></div>
-        </div>
-    </div>
+    <?php
+    AIH_Admin::open_stat_grid();
+    AIH_Admin::render_stat_card(array(
+        'value' => '$' . number_format($total_won, 2),
+        'label' => __('Total Won', 'art-in-heaven'),
+    ));
+    AIH_Admin::render_stat_card(array(
+        'value'   => '$' . number_format($total_paid, 2),
+        'label'   => __('Paid', 'art-in-heaven'),
+        'variant' => 'success',
+    ));
+    AIH_Admin::render_stat_card(array(
+        'value'   => '$' . number_format($total_pending, 2),
+        'label'   => __('Pending Orders', 'art-in-heaven'),
+        'variant' => 'warning',
+    ));
+    AIH_Admin::render_stat_card(array(
+        'value'   => '$' . number_format($total_unpaid, 2),
+        'label'   => __('Not Yet Ordered', 'art-in-heaven'),
+        'variant' => 'danger',
+    ));
+    AIH_Admin::close_stat_grid();
+    ?>
     
     <!-- Tabs -->
     <nav class="nav-tab-wrapper">
