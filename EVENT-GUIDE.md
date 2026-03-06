@@ -232,9 +232,9 @@ Create WordPress accounts for your event staff. Go to **Users > Add New** in Wor
 
 | Role | Who Should Have It | What They Can Do |
 |------|-------------------|-----------------|
-| AIH Super Admin | Event organizer | Everything — full access to all settings and data |
-| AIH Art Manager | Art team volunteers | Add/edit art pieces, upload images |
-| AIH Pickup Manager | Pickup table volunteers | Only see the Pickup page to check off items as picked up |
+| AIH - Super Admin | Event organizer | Everything — full access to all settings and data |
+| AIH - Art Manager | Art team volunteers | Add/edit art pieces, upload images, view reports, manage pickup |
+| AIH - Operations | Front desk / event staff | Manage registrants and pickup status |
 
 WordPress Administrators automatically get full plugin access.
 

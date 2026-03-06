@@ -1,11 +1,11 @@
 <?php
 /**
  * Roles & Capabilities Management
- * 
+ *
  * Three admin roles:
- * 1. AIH Super Admin - Full access to everything
- * 2. AIH Art Manager - Can only add/edit art pieces, no financial data
- * 3. AIH Pickup Manager - Can only manage pickup status
+ * 1. AIH - Super Admin — Full access to everything
+ * 2. AIH - Art Manager — Add/edit art, view reports, manage pickup
+ * 3. AIH - Operations — Manage registrants and pickup
  */
 
 if (!defined('ABSPATH')) {
@@ -20,7 +20,7 @@ class AIH_Roles {
     // Role slugs
     const ROLE_SUPER_ADMIN = 'aih_super_admin';
     const ROLE_ART_MANAGER = 'aih_art_manager';
-    const ROLE_PICKUP_MANAGER = 'aih_pickup_manager';
+    const ROLE_OPERATIONS = 'aih_operations';
     
     // Capabilities
     const CAP_MANAGE_AUCTION = 'aih_manage_auction';        // Full access
@@ -40,6 +40,7 @@ class AIH_Roles {
         'auction_manager',
         'sa_admin',
         'aih_admin',
+        'aih_pickup_manager',
     );
     
     /**
@@ -102,11 +103,11 @@ class AIH_Roles {
             $admin->add_cap(self::CAP_MANAGE_PICKUP);
         }
         
-        // Create AIH Super Admin role (full access)
+        // Create AIH - Super Admin role (full access)
         remove_role(self::ROLE_SUPER_ADMIN);
         add_role(
             self::ROLE_SUPER_ADMIN,
-            __('AIH Super Admin', 'art-in-heaven'),
+            __('AIH - Super Admin', 'art-in-heaven'),
             array(
                 'read' => true,
                 'upload_files' => true,
@@ -121,26 +122,28 @@ class AIH_Roles {
             )
         );
 
-        // Create AIH Art Manager role (limited access)
+        // Create AIH - Art Manager role (art + reports + pickup)
         remove_role(self::ROLE_ART_MANAGER);
         add_role(
             self::ROLE_ART_MANAGER,
-            __('AIH Art Manager', 'art-in-heaven'),
+            __('AIH - Art Manager', 'art-in-heaven'),
             array(
                 'read' => true,
                 'upload_files' => true,
                 self::CAP_MANAGE_ART => true,
-                // No financial capabilities
+                self::CAP_VIEW_REPORTS => true,
+                self::CAP_MANAGE_PICKUP => true,
             )
         );
 
-        // Create AIH Pickup Manager role (pickup only)
-        remove_role(self::ROLE_PICKUP_MANAGER);
+        // Create AIH - Operations role (registrants + pickup)
+        remove_role(self::ROLE_OPERATIONS);
         add_role(
-            self::ROLE_PICKUP_MANAGER,
-            __('AIH Pickup Manager', 'art-in-heaven'),
+            self::ROLE_OPERATIONS,
+            __('AIH - Operations', 'art-in-heaven'),
             array(
                 'read' => true,
+                self::CAP_MANAGE_BIDDERS => true,
                 self::CAP_MANAGE_PICKUP => true,
             )
         );
@@ -158,7 +161,7 @@ class AIH_Roles {
         // Remove custom roles
         remove_role(self::ROLE_SUPER_ADMIN);
         remove_role(self::ROLE_ART_MANAGER);
-        remove_role(self::ROLE_PICKUP_MANAGER);
+        remove_role(self::ROLE_OPERATIONS);
         
         // Also remove any legacy roles
         foreach (self::$legacy_roles as $legacy_role) {
@@ -189,7 +192,7 @@ class AIH_Roles {
      */
     public function ensure_admin_caps() {
         $admin = get_role('administrator');
-        if ($admin && (!$admin->has_cap(self::CAP_MANAGE_AUCTION) || !$admin->has_cap(self::CAP_MANAGE_PICKUP))) {
+        if ($admin && (!$admin->has_cap(self::CAP_MANAGE_AUCTION) || !$admin->has_cap(self::CAP_MANAGE_BIDDERS))) {
             self::install();
         }
     }
@@ -272,7 +275,7 @@ class AIH_Roles {
      * @return bool
      */
     public static function can_access_menu() {
-        return self::can_manage_art() || self::can_manage_pickup() || self::can_manage_auction();
+        return self::can_manage_art() || self::can_manage_pickup() || self::can_manage_bidders() || self::can_manage_auction();
     }
 
     /**
@@ -292,16 +295,16 @@ class AIH_Roles {
     public static function get_roles() {
         return array(
             self::ROLE_SUPER_ADMIN => array(
-                'name' => __('AIH Super Admin', 'art-in-heaven'),
+                'name' => __('AIH - Super Admin', 'art-in-heaven'),
                 'description' => __('Full access to all Art in Heaven features including financial data, settings, and reports.', 'art-in-heaven'),
             ),
             self::ROLE_ART_MANAGER => array(
-                'name' => __('AIH Art Manager', 'art-in-heaven'),
-                'description' => __('Can add and edit art pieces only. Cannot view bids, orders, payments, or settings.', 'art-in-heaven'),
+                'name' => __('AIH - Art Manager', 'art-in-heaven'),
+                'description' => __('Can add and edit art pieces, view reports, and manage pickup. Cannot view bids, orders, payments, or settings.', 'art-in-heaven'),
             ),
-            self::ROLE_PICKUP_MANAGER => array(
-                'name' => __('AIH Pickup Manager', 'art-in-heaven'),
-                'description' => __('Can only view and manage pickup status. Cannot view art pieces, bids, orders, payments, or settings.', 'art-in-heaven'),
+            self::ROLE_OPERATIONS => array(
+                'name' => __('AIH - Operations', 'art-in-heaven'),
+                'description' => __('Can manage registrants and pickup status. Cannot view art pieces, bids, orders, payments, or settings.', 'art-in-heaven'),
             ),
         );
     }
@@ -326,8 +329,11 @@ class AIH_Roles {
             ),
             self::ROLE_ART_MANAGER => array(
                 self::CAP_MANAGE_ART,
+                self::CAP_VIEW_REPORTS,
+                self::CAP_MANAGE_PICKUP,
             ),
-            self::ROLE_PICKUP_MANAGER => array(
+            self::ROLE_OPERATIONS => array(
+                self::CAP_MANAGE_BIDDERS,
                 self::CAP_MANAGE_PICKUP,
             ),
         );
