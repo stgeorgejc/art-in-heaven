@@ -29,7 +29,8 @@ self.addEventListener('push', function(event) {
         renotify: true,
         data: {
             url: data.url || '/',
-            art_piece_id: data.art_piece_id || null
+            art_piece_id: data.art_piece_id || null,
+            type: data.type || 'outbid'
         }
     };
 
@@ -59,10 +60,24 @@ self.addEventListener('push', function(event) {
 self.addEventListener('notificationclick', function(event) {
     event.notification.close();
 
-    var url = event.notification.data && event.notification.data.url ? event.notification.data.url : '/';
+    var notifData = event.notification.data || {};
+    var url = notifData.url || '/';
 
     event.waitUntil(
         self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clientList) {
+            // Notify a single open tab about the click for metrics tracking
+            // (send to one client only to avoid overcounting with multiple tabs)
+            var clickMessage = {
+                type: 'aih-push-clicked',
+                data: {
+                    art_piece_id: notifData.art_piece_id || null,
+                    notification_type: notifData.type || 'outbid'
+                }
+            };
+            if (clientList.length > 0) {
+                clientList[0].postMessage(clickMessage);
+            }
+
             // Focus existing tab if one matches this exact URL
             for (var i = 0; i < clientList.length; i++) {
                 var client = clientList[i];

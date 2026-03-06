@@ -279,6 +279,9 @@ class AIH_Push {
                     fastcgi_finish_request();
                 }
                 $url = $push_data['catalog_art_id'] ? AIH_Template_Helper::get_art_url($push_data['catalog_art_id']) : '';
+                if ($url) {
+                    $url = add_query_arg('ref', 'push', $url);
+                }
                 AIH_Push::get_instance()->send_push($push_data['outbid_bidder'], array(
                     'type'         => 'outbid',
                     'title'        => "You've been outbid!",
@@ -309,6 +312,8 @@ class AIH_Push {
         $json_payload = wp_json_encode($payload);
 
         $vapid = self::get_vapid_keys();
+        $notification_type = isset($payload['type']) ? $payload['type'] : 'unknown';
+        $art_piece_id      = isset($payload['art_piece_id']) ? $payload['art_piece_id'] : 0;
 
         try {
             $auth = array(
@@ -320,6 +325,7 @@ class AIH_Push {
             );
 
             $webPush = new WebPush($auth);
+            $queued = 0;
 
             foreach ($subscriptions as $sub) {
                 /** @var stdClass $sub */
@@ -334,11 +340,36 @@ class AIH_Push {
                     'contentEncoding' => 'aes128gcm',
                 ));
                 $webPush->queueNotification($subscription, $json_payload ?: null);
+                AIH_Database::log_audit('push_sent', array(
+                    'bidder_id' => $bidder_id,
+                    'object_id' => $art_piece_id,
+                    'details'   => array(
+                        'notification_type' => $notification_type,
+                        'art_piece_id'      => $art_piece_id,
+                    ),
+                ));
             }
 
             foreach ($webPush->flush() as $report) {
                 if ($report->isSubscriptionExpired()) {
                     self::delete_subscription($report->getEndpoint());
+                    AIH_Database::log_audit('push_expired', array(
+                        'bidder_id' => $bidder_id,
+                        'object_id' => $art_piece_id,
+                        'details'   => array(
+                            'notification_type' => $notification_type,
+                            'art_piece_id'      => $art_piece_id,
+                        ),
+                    ));
+                } elseif ($report->isSuccess()) {
+                    AIH_Database::log_audit('push_delivered', array(
+                        'bidder_id' => $bidder_id,
+                        'object_id' => $art_piece_id,
+                        'details'   => array(
+                            'notification_type' => $notification_type,
+                            'art_piece_id'      => $art_piece_id,
+                        ),
+                    ));
                 }
             }
         } catch (\Exception $e) {
@@ -421,13 +452,14 @@ class AIH_Push {
                 if (function_exists('fastcgi_finish_request')) {
                     fastcgi_finish_request();
                 }
+                $checkout_url = add_query_arg('ref', 'push', AIH_Template_Helper::get_checkout_url());
                 AIH_Push::get_instance()->send_push($push_data['bidder_id'], array(
                     'type'         => 'winner',
                     'title'        => 'You won!',
                     'body'         => sprintf('Congratulations! You won "%s". Head to checkout to complete your purchase.', $push_data['title']),
                     'item_title'   => $push_data['title'],
                     'art_piece_id' => $push_data['art_piece_id'],
-                    'url'          => AIH_Template_Helper::get_checkout_url(),
+                    'url'          => $checkout_url,
                     'tag'          => 'winner-' . $push_data['art_piece_id'],
                 ));
             });

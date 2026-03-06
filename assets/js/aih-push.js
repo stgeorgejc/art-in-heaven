@@ -136,7 +136,25 @@ window.addEventListener('beforeinstallprompt', function(e) {
 
             // Listen for messages from the service worker (push → page bridge)
             navigator.serviceWorker.addEventListener('message', function(event) {
-                if (!event.data || event.data.type !== 'aih-push') return;
+                if (!event.data) return;
+
+                // Handle notification click tracking
+                if (event.data.type === 'aih-push-clicked') {
+                    var clickData = event.data.data || {};
+                    aihPost('push-clicked', {
+                        action:            'aih_push_clicked',
+                        nonce:             aihAjax.nonce,
+                        notification_type: clickData.notification_type || 'outbid',
+                        art_piece_id:      clickData.art_piece_id || 0
+                    });
+                    // Mark session as push-referred for bid attribution
+                    try {
+                        sessionStorage.setItem('aih_ref', 'push');
+                    } catch (e) {}
+                    return;
+                }
+
+                if (event.data.type !== 'aih-push') return;
                 var payload = event.data.data;
                 if (!payload) return;
 
@@ -478,7 +496,7 @@ window.addEventListener('beforeinstallprompt', function(e) {
          * Request notification permission and subscribe.
          * Called from: bell button click, after bid.
          */
-        requestPermission: function() {
+        requestPermission: function(source) {
             if (this.pushSubscribed) {
                 return;
             }
@@ -488,9 +506,20 @@ window.addEventListener('beforeinstallprompt', function(e) {
             }
 
             var self = this;
+            var permissionSource = source || 'bell';
 
             Notification.requestPermission().then(function(permission) {
                 self.updateBellState(permission);
+
+                // Log permission decision for engagement metrics
+                if (permission === 'granted' || permission === 'denied') {
+                    aihPost('push-permission', {
+                        action:     'aih_push_permission',
+                        nonce:      aihAjax.nonce,
+                        permission: permission,
+                        source:     permissionSource
+                    });
+                }
 
                 if (permission === 'granted') {
                     self.subscribe();
@@ -513,7 +542,7 @@ window.addEventListener('beforeinstallprompt', function(e) {
             if (!this.swRegistration) return;
 
             var self = this;
-            setTimeout(function() { self.requestPermission(); }, 2000);
+            setTimeout(function() { self.requestPermission('after_bid'); }, 2000);
         },
 
         /**
@@ -727,6 +756,14 @@ window.addEventListener('beforeinstallprompt', function(e) {
 
     // Set initial connection status
     window.aihConnectionStatus = navigator.onLine ? 'polling' : 'offline';
+
+    // Detect ref=push URL parameter (from notification click deep links)
+    try {
+        var urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('ref') === 'push') {
+            sessionStorage.setItem('aih_ref', 'push');
+        }
+    } catch (e) {}
 
     // Expose for external triggering (e.g. after bid, from other scripts)
     window.AIHPush = AIHPush;
