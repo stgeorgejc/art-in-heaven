@@ -154,17 +154,17 @@ if ($current_tab === 'not_logged_in') {
             <tr>
                 <td colspan="7" style="text-align: center; padding: 40px;">
                     <?php if ($current_tab === 'not_logged_in'): ?>
-                        <span class="dashicons dashicons-yes-alt" style="color: #10b981; font-size: 32px; width: 32px; height: 32px;"></span><br>
+                        <span class="dashicons dashicons-yes-alt" style="color: #10b981; font-size: 32px; width: 32px; height: 32px;" aria-hidden="true"></span><br>
                         <strong><?php _e('All registrants have logged in.', 'art-in-heaven'); ?></strong>
                     <?php elseif ($current_tab === 'logged_in_no_bids'): ?>
-                        <span class="dashicons dashicons-yes-alt" style="color: #10b981; font-size: 32px; width: 32px; height: 32px;"></span><br>
+                        <span class="dashicons dashicons-yes-alt" style="color: #10b981; font-size: 32px; width: 32px; height: 32px;" aria-hidden="true"></span><br>
                         <strong><?php _e('All logged-in registrants have placed bids.', 'art-in-heaven'); ?></strong>
                     <?php elseif ($current_tab === 'logged_in_has_bids'): ?>
-                        <span class="dashicons dashicons-info-outline" style="color: #9ca3af; font-size: 32px; width: 32px; height: 32px;"></span><br>
+                        <span class="dashicons dashicons-info-outline" style="color: #9ca3af; font-size: 32px; width: 32px; height: 32px;" aria-hidden="true"></span><br>
                         <strong><?php _e('No bids have been placed yet.', 'art-in-heaven'); ?></strong><br>
                         <?php _e('Bids will appear here once registrants start bidding.', 'art-in-heaven'); ?>
                     <?php else: ?>
-                        <span class="dashicons dashicons-info-outline" style="color: #9ca3af; font-size: 32px; width: 32px; height: 32px;"></span><br>
+                        <span class="dashicons dashicons-info-outline" style="color: #9ca3af; font-size: 32px; width: 32px; height: 32px;" aria-hidden="true"></span><br>
                         <strong><?php _e('No registrants in database.', 'art-in-heaven'); ?></strong><br>
                         <?php _e('Click "Sync from API" above to import registrants from CCB.', 'art-in-heaven'); ?>
                     <?php endif; ?>

@@ -331,10 +331,10 @@ if ($computed === 'ended' || ($auction_ended && $piece->status !== 'draft')) {
             <thead>
                 <tr>
                     <th style="width: 40px;">#</th>
-                    <th class="sortable" data-sort="name"><?php _e('Bidder', 'art-in-heaven'); ?> <span class="aih-sort-icon" aria-label="<?php esc_attr_e('Sort', 'art-in-heaven'); ?>">⇅</span></th>
+                    <th class="sortable" data-sort="name" aria-sort="none"><button type="button" class="aih-sort-btn"><?php _e('Bidder', 'art-in-heaven'); ?> <span class="aih-sort-icon" aria-hidden="true">⇅</span></button></th>
                     <th style="width: 140px;"><?php _e('Confirmation Code', 'art-in-heaven'); ?></th>
-                    <th class="sortable" data-sort="amount" style="width: 120px;"><?php _e('Bid Amount', 'art-in-heaven'); ?> <span class="aih-sort-icon" aria-label="<?php esc_attr_e('Sort', 'art-in-heaven'); ?>">⇅</span></th>
-                    <th class="sortable" data-sort="time" style="width: 180px;"><?php _e('Time', 'art-in-heaven'); ?> <span class="aih-sort-icon" aria-label="<?php esc_attr_e('Sort', 'art-in-heaven'); ?>">⇅</span></th>
+                    <th class="sortable" data-sort="amount" style="width: 120px;" aria-sort="none"><button type="button" class="aih-sort-btn"><?php _e('Bid Amount', 'art-in-heaven'); ?> <span class="aih-sort-icon" aria-hidden="true">⇅</span></button></th>
+                    <th class="sortable" data-sort="time" style="width: 180px;" aria-sort="none"><button type="button" class="aih-sort-btn"><?php _e('Time', 'art-in-heaven'); ?> <span class="aih-sort-icon" aria-hidden="true">⇅</span></button></th>
                     <th style="width: 100px;"><?php _e('Status', 'art-in-heaven'); ?></th>
                 </tr>
             </thead>
@@ -395,13 +395,14 @@ jQuery(document).ready(function($) {
     var $rows = $tbody.find('tr');
 
     // Sorting functionality
-    $('th.sortable').on('click', function() {
-        var $th = $(this);
+    $('th.sortable .aih-sort-btn, th.sortable').on('click', function(e) {
+        var $th = $(this).closest('th');
         var sortKey = $th.data('sort');
         var isAsc = $th.hasClass('asc');
 
-        $('th.sortable').removeClass('asc desc');
+        $('th.sortable').removeClass('asc desc').attr('aria-sort', 'none');
         $th.addClass(isAsc ? 'desc' : 'asc');
+        $th.attr('aria-sort', isAsc ? 'descending' : 'ascending');
         var sortDir = isAsc ? -1 : 1;
 
         var rows = $rows.get();

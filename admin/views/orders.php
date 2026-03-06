@@ -355,12 +355,12 @@ if (!defined('ABSPATH')) {
         <table class="wp-list-table widefat fixed striped aih-admin-table aih-orders-table" id="aih-orders-table">
             <thead>
                 <tr>
-                    <th class="sortable" data-sort="order"><?php _e('Order #', 'art-in-heaven'); ?> <span class="aih-sort-icon" aria-label="<?php esc_attr_e('Sort', 'art-in-heaven'); ?>">⇅</span></th>
+                    <th class="sortable" data-sort="order" aria-sort="none"><button type="button" class="aih-sort-btn"><?php _e('Order #', 'art-in-heaven'); ?> <span class="aih-sort-icon" aria-hidden="true">⇅</span></button></th>
                     <th><?php _e('Bidder', 'art-in-heaven'); ?></th>
-                    <th class="sortable" data-sort="items"><?php _e('Items', 'art-in-heaven'); ?> <span class="aih-sort-icon" aria-label="<?php esc_attr_e('Sort', 'art-in-heaven'); ?>">⇅</span></th>
-                    <th class="sortable" data-sort="total"><?php _e('Total', 'art-in-heaven'); ?> <span class="aih-sort-icon" aria-label="<?php esc_attr_e('Sort', 'art-in-heaven'); ?>">⇅</span></th>
+                    <th class="sortable" data-sort="items" aria-sort="none"><button type="button" class="aih-sort-btn"><?php _e('Items', 'art-in-heaven'); ?> <span class="aih-sort-icon" aria-hidden="true">⇅</span></button></th>
+                    <th class="sortable" data-sort="total" aria-sort="none"><button type="button" class="aih-sort-btn"><?php _e('Total', 'art-in-heaven'); ?> <span class="aih-sort-icon" aria-hidden="true">⇅</span></button></th>
                     <th><?php _e('Status', 'art-in-heaven'); ?></th>
-                    <th class="sortable" data-sort="date"><?php _e('Date', 'art-in-heaven'); ?> <span class="aih-sort-icon" aria-label="<?php esc_attr_e('Sort', 'art-in-heaven'); ?>">⇅</span></th>
+                    <th class="sortable" data-sort="date" aria-sort="none"><button type="button" class="aih-sort-btn"><?php _e('Date', 'art-in-heaven'); ?> <span class="aih-sort-icon" aria-hidden="true">⇅</span></button></th>
                     <th><?php _e('Actions', 'art-in-heaven'); ?></th>
                 </tr>
             </thead>
@@ -510,13 +510,14 @@ jQuery(document).ready(function($) {
     var $rows = $tbody.find('tr[data-order]');
 
     // Sorting functionality
-    $('th.sortable').on('click', function() {
-        var $th = $(this);
+    $('th.sortable .aih-sort-btn, th.sortable').on('click', function(e) {
+        var $th = $(this).closest('th');
         var sortKey = $th.data('sort');
         var isAsc = $th.hasClass('asc');
 
-        $('th.sortable').removeClass('asc desc');
+        $('th.sortable').removeClass('asc desc').attr('aria-sort', 'none');
         $th.addClass(isAsc ? 'desc' : 'asc');
+        $th.attr('aria-sort', isAsc ? 'descending' : 'ascending');
         var sortDir = isAsc ? -1 : 1;
 
         var rows = $rows.get();
