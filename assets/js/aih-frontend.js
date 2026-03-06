@@ -90,7 +90,7 @@
     };
 
     // Global logout handler with fallback
-    $('#aih-logout').on('click', function() {
+    $('#aih-logout, .aih-logout-action').on('click', function() {
         var data = {action: 'aih_logout', nonce: aihAjax.publicNonce};
         aihPost('logout', data, function() {
             location.reload();
