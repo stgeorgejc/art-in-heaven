@@ -206,11 +206,11 @@ if ($current_tab === 'not_logged_in') {
                     </td>
                     <td data-label="<?php esc_attr_e('Status', 'art-in-heaven'); ?>">
                         <?php if ($bid_count > 0): ?>
-                            <span class="aih-status-pill has-bid"><?php _e('Has Bids', 'art-in-heaven'); ?></span>
+                            <span class="aih-badge aih-status-pill has-bid"><?php _e('Has Bids', 'art-in-heaven'); ?></span>
                         <?php elseif ($person->has_logged_in): ?>
-                            <span class="aih-status-pill logged-in"><?php _e('Logged In', 'art-in-heaven'); ?></span>
+                            <span class="aih-badge aih-status-pill logged-in"><?php _e('Logged In', 'art-in-heaven'); ?></span>
                         <?php else: ?>
-                            <span class="aih-status-pill not-active"><?php _e('Not Active', 'art-in-heaven'); ?></span>
+                            <span class="aih-badge aih-status-pill not-active"><?php _e('Not Active', 'art-in-heaven'); ?></span>
                         <?php endif; ?>
                     </td>
                     <td data-label="<?php esc_attr_e('Last Login', 'art-in-heaven'); ?>">

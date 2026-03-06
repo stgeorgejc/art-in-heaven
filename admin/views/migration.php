@@ -88,7 +88,7 @@ rsort($years);
                     <td><?php echo number_format($orders_count); ?></td>
                     <td>
                         <?php if ($year == $current_year): ?>
-                            <span class="aih-current-badge"><?php _e('Active', 'art-in-heaven'); ?></span>
+                            <span class="aih-badge aih-badge-success"><?php _e('Active', 'art-in-heaven'); ?></span>
                         <?php else: ?>
                             <button type="button" class="button button-small aih-switch-year" data-year="<?php echo esc_attr($year); ?>"><?php _e('Switch', 'art-in-heaven'); ?></button>
                         <?php endif; ?>

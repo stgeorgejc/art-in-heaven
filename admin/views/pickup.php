@@ -458,12 +458,6 @@ if (!empty($order_ids)) {
     color: #111827;
 }
 
-.aih-confirmation-code {
-    font-size: 12px;
-    background: #f3f4f6;
-    padding: 2px 8px;
-    border-radius: 4px;
-}
 
 .aih-bidder-contact {
     display: flex;
