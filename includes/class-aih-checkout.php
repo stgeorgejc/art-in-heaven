@@ -78,7 +78,7 @@ class AIH_Checkout {
         $pending_ids = $wpdb->get_col($wpdb->prepare(
             "SELECT id FROM $orders_table WHERE bidder_id = %s AND payment_status = 'pending' AND created_at < %s",
             $bidder_id,
-            (new \DateTime(current_time('mysql'), wp_timezone()))->modify('-10 minutes')->format('Y-m-d H:i:s')
+            (new DateTime(current_time('mysql'), wp_timezone()))->modify('-10 minutes')->format('Y-m-d H:i:s')
         ));
 
         foreach ($pending_ids as $order_id) {

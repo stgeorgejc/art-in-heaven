@@ -368,6 +368,17 @@ class StatusTest extends TestCase
         $this->assertSame('2:30:00 PM', AIH_Status::format_db_date('2025-06-15 14:30:00', 'g:i:s A'));
     }
 
+    public function testFormatDbDateWithInvalidString(): void
+    {
+        $this->assertSame('—', AIH_Status::format_db_date('not-a-date'));
+    }
+
+    public function testFormatDbDateWithInlineEditFormat(): void
+    {
+        // The 'M j, g:ia' format used by admin inline edit and art-pieces table
+        $this->assertSame('Jun 15, 2:30pm', AIH_Status::format_db_date('2025-06-15 14:30:00', 'M j, g:ia'));
+    }
+
     // ── calculate_auto_status() ──
 
     public function testCalculateAutoStatusDraftStaysWhenTimesUnchanged(): void
