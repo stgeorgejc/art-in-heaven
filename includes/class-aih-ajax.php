@@ -2713,8 +2713,10 @@ class AIH_Ajax {
 
     /**
      * Log a push permission decision (granted or denied) for engagement metrics.
+     *
+     * @return void
      */
-    public function push_permission() {
+    public function push_permission(): void {
         check_ajax_referer('aih_frontend_nonce', 'nonce');
 
         $auth = AIH_Auth::get_instance();
@@ -2744,8 +2746,10 @@ class AIH_Ajax {
 
     /**
      * Log a push notification click for engagement metrics.
+     *
+     * @return void
      */
-    public function push_clicked() {
+    public function push_clicked(): void {
         check_ajax_referer('aih_frontend_nonce', 'nonce');
 
         $auth = AIH_Auth::get_instance();

@@ -594,8 +594,9 @@ class AIH_Database {
      * Add composite index on AuditLog (event_type, bidder_id) for engagement metrics queries.
      *
      * @param int|null $year
+     * @return void
      */
-    public static function add_audit_log_bidder_index($year = null) {
+    public static function add_audit_log_bidder_index(?int $year = null): void {
         global $wpdb;
 
         if (!$year) {
