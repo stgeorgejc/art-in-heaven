@@ -150,7 +150,7 @@ class AIH_Assets {
 
         // Nonced inline script to swap media on load (CSP-compliant)
         $nonce = \AIH_Security::get_csp_nonce();
-        $onload_script = '<script nonce="' . esc_attr($nonce) . '">document.getElementById("aih-elegant-theme-css").onload=function(){this.media="all"};</script>';
+        $onload_script = '<script nonce="' . esc_attr($nonce) . '">(function(){var l=document.getElementById("aih-elegant-theme-css");if(!l)return;function e(){l.media="all";}l.addEventListener("load",e);if(l.sheet){e();}else{setTimeout(function(){if(l.media!=="all"){e();}},3000);}}());</script>';
 
         // noscript fallback for users without JS
         $noscript = str_replace(

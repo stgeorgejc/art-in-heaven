@@ -854,7 +854,7 @@ class Art_In_Heaven {
         $fonts_url = 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap';
         $nonce = AIH_Security::get_csp_nonce();
         echo '<link id="aih-google-fonts" rel="stylesheet" href="' . esc_url($fonts_url) . '" media="print">' . "\n";
-        echo '<script nonce="' . esc_attr($nonce) . '">document.getElementById("aih-google-fonts").onload=function(){this.media="all"};</script>' . "\n";
+        echo '<script nonce="' . esc_attr($nonce) . '">(function(){var l=document.getElementById("aih-google-fonts");if(!l)return;function e(){l.media="all";}l.addEventListener("load",e);if(l.sheet){e();}else{setTimeout(function(){if(l.media!=="all"){e();}},3000);}}());</script>' . "\n";
         echo '<noscript><link rel="stylesheet" href="' . esc_url($fonts_url) . '"></noscript>' . "\n";
     }
 
