@@ -129,15 +129,15 @@ class AIH_Admin {
             );
         }
 
-        // Engagement Stats - requires reports access (super admin only)
+        // Analytics - requires reports access (super admin only)
         if (AIH_Roles::can_view_reports()) {
             add_submenu_page(
                 $default_slug,
-                __('Engagement Stats', 'art-in-heaven'),
-                __('Engagement Stats', 'art-in-heaven'),
+                __('Analytics', 'art-in-heaven'),
+                __('Analytics', 'art-in-heaven'),
                 AIH_Roles::CAP_VIEW_REPORTS,
-                'art-in-heaven-stats',
-                array($this, 'render_stats')
+                'art-in-heaven-analytics',
+                array($this, 'render_analytics')
             );
         }
 
@@ -195,15 +195,23 @@ class AIH_Admin {
             );
         }
 
-        // Reports - requires reports access (super admin only)
+        // Legacy slug redirects — keeps old bookmarks working.
         if (AIH_Roles::can_view_reports()) {
             add_submenu_page(
-                $default_slug,
-                __('Reports', 'art-in-heaven'),
-                __('Reports', 'art-in-heaven'),
+                'options.php',
+                __('Analytics', 'art-in-heaven'),
+                __('Analytics', 'art-in-heaven'),
                 AIH_Roles::CAP_VIEW_REPORTS,
                 'art-in-heaven-reports',
-                array($this, 'render_reports')
+                array($this, 'render_analytics_redirect')
+            );
+            add_submenu_page(
+                'options.php',
+                __('Analytics', 'art-in-heaven'),
+                __('Analytics', 'art-in-heaven'),
+                AIH_Roles::CAP_VIEW_REPORTS,
+                'art-in-heaven-stats',
+                array($this, 'render_analytics_redirect')
             );
         }
 
@@ -667,26 +675,69 @@ class AIH_Admin {
     }
 
     /**
+     * Render the consolidated Analytics page (replaces reports + stats).
+     *
      * @return void
      */
-    public function render_reports() {
+    public function render_analytics() {
         if (!AIH_Roles::can_view_reports()) {
             wp_die(__('You do not have permission to access this page.', 'art-in-heaven'));
         }
-        include AIH_PLUGIN_DIR . 'admin/views/reports.php';
-    }
 
-    /**
-     * @return void
-     */
-    public function render_stats() {
-        if (!AIH_Roles::can_view_reports()) {
-            wp_die(__('You do not have permission to access this page.', 'art-in-heaven'));
+        // Check if tables exist.
+        if (!AIH_Database::tables_exist()) {
+            echo '<div class="wrap"><div class="notice notice-warning"><p>' . esc_html__('Database tables have not been created yet. Please visit the Dashboard first.', 'art-in-heaven') . '</p></div></div>';
+            return;
         }
+
         $art_model = new AIH_Art_Piece();
         $art_pieces = $art_model->get_all_with_stats();
         $engagement_metrics = $this->get_engagement_metrics();
-        include AIH_PLUGIN_DIR . 'admin/views/stats.php';
+
+        $stats = $art_model->get_reporting_stats();
+        if (!$stats) {
+            $stats = new stdClass();
+        }
+
+        $checkout = AIH_Checkout::get_instance();
+        $payment_stats = $checkout->get_payment_stats();
+        if (!$payment_stats) {
+            $payment_stats = new stdClass();
+        }
+
+        $bid_model = new AIH_Bid();
+        $bid_stats = $bid_model->get_stats();
+        if (!$bid_stats) {
+            $bid_stats = new stdClass();
+        }
+
+        // Last bid time.
+        global $wpdb;
+        $bids_table = AIH_Database::get_table('bids');
+        /** @var stdClass|null $last_bid_row */
+        $last_bid_row = $wpdb->get_row("SELECT bid_time FROM $bids_table ORDER BY bid_time DESC LIMIT 1");
+        $last_bid_time = $last_bid_row ? $last_bid_row->bid_time : null;
+
+        // Registrant funnel counts for the Bidders tab.
+        $registrants_table = AIH_Database::get_table('registrants');
+        $registrant_counts = new stdClass();
+        $registrant_counts->total = (int) $wpdb->get_var("SELECT COUNT(*) FROM $registrants_table");
+        $registrant_counts->logged_in = (int) $wpdb->get_var("SELECT COUNT(*) FROM $registrants_table WHERE has_logged_in = 1");
+        $registrant_counts->has_bids = (int) $wpdb->get_var(
+            "SELECT COUNT(*) FROM $registrants_table r WHERE has_logged_in = 1 AND EXISTS (SELECT 1 FROM $bids_table b WHERE b.bidder_id = r.confirmation_code)"
+        );
+
+        include AIH_PLUGIN_DIR . 'admin/views/analytics.php';
+    }
+
+    /**
+     * Redirect legacy reports/stats slugs to the new Analytics page.
+     *
+     * @return void
+     */
+    public function render_analytics_redirect() {
+        wp_safe_redirect(admin_url('admin.php?page=art-in-heaven-analytics'));
+        exit;
     }
 
     /**
