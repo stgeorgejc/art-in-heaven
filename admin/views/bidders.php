@@ -90,28 +90,38 @@ if ($current_tab === 'not_logged_in') {
     <div id="aih-sync-result" style="margin-bottom: 15px;"></div>
 
     <!-- Summary Cards -->
-    <div class="aih-bidder-stats">
-        <div class="aih-stat-card" style="border-left: 4px solid #ef4444;">
-            <div class="aih-stat-number"><?php echo number_format($not_logged_in_count); ?></div>
-            <div class="aih-stat-label"><?php _e('Not Logged In', 'art-in-heaven'); ?></div>
-            <div class="aih-stat-icon"><span class="dashicons dashicons-dismiss" style="color: #ef4444;" aria-hidden="true"></span></div>
-        </div>
-        <div class="aih-stat-card" style="border-left: 4px solid #f59e0b;">
-            <div class="aih-stat-number"><?php echo number_format($logged_in_no_bids_count); ?></div>
-            <div class="aih-stat-label"><?php _e('Logged In - No Bids', 'art-in-heaven'); ?></div>
-            <div class="aih-stat-icon"><span class="dashicons dashicons-clock" style="color: #f59e0b;" aria-hidden="true"></span></div>
-        </div>
-        <div class="aih-stat-card" style="border-left: 4px solid #10b981;">
-            <div class="aih-stat-number"><?php echo number_format($logged_in_has_bids_count); ?></div>
-            <div class="aih-stat-label"><?php _e('Logged In - Has Bids', 'art-in-heaven'); ?></div>
-            <div class="aih-stat-icon"><span class="dashicons dashicons-yes-alt" style="color: #10b981;" aria-hidden="true"></span></div>
-        </div>
-        <div class="aih-stat-card" style="border-left: 4px solid #6366f1;">
-            <div class="aih-stat-number"><?php echo number_format($all_registrants_count); ?></div>
-            <div class="aih-stat-label"><?php _e('All Registrants', 'art-in-heaven'); ?></div>
-            <div class="aih-stat-icon"><span class="dashicons dashicons-groups" style="color: #6366f1;" aria-hidden="true"></span></div>
-        </div>
-    </div>
+    <?php
+    AIH_Admin::open_stat_grid();
+    AIH_Admin::render_stat_card(array(
+        'value'      => number_format($not_logged_in_count),
+        'label'      => __('Not Logged In', 'art-in-heaven'),
+        'icon'       => 'dashicons-dismiss',
+        'icon_color' => '#ef4444',
+        'variant'    => 'danger',
+    ));
+    AIH_Admin::render_stat_card(array(
+        'value'      => number_format($logged_in_no_bids_count),
+        'label'      => __('Logged In - No Bids', 'art-in-heaven'),
+        'icon'       => 'dashicons-clock',
+        'icon_color' => '#f59e0b',
+        'variant'    => 'warning',
+    ));
+    AIH_Admin::render_stat_card(array(
+        'value'      => number_format($logged_in_has_bids_count),
+        'label'      => __('Logged In - Has Bids', 'art-in-heaven'),
+        'icon'       => 'dashicons-yes-alt',
+        'icon_color' => '#10b981',
+        'variant'    => 'success',
+    ));
+    AIH_Admin::render_stat_card(array(
+        'value'      => number_format($all_registrants_count),
+        'label'      => __('All Registrants', 'art-in-heaven'),
+        'icon'       => 'dashicons-groups',
+        'icon_color' => '#6366f1',
+        'variant'    => 'info',
+    ));
+    AIH_Admin::close_stat_grid();
+    ?>
 
     <!-- Tabs -->
     <nav class="nav-tab-wrapper">

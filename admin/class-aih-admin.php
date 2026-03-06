@@ -919,4 +919,144 @@ class AIH_Admin {
         }
         include AIH_PLUGIN_DIR . 'admin/views/logs.php';
     }
+
+    /**
+     * Render the opening tag of a stat card grid container.
+     *
+     * @param string $extra_class Optional additional CSS class(es).
+     * @param string $extra_style Optional inline style.
+     * @return void
+     */
+    public static function open_stat_grid($extra_class = '', $extra_style = '') {
+        $classes = 'aih-stats-grid';
+        if ($extra_class !== '') {
+            $classes .= ' ' . $extra_class;
+        }
+        $style_attr = $extra_style !== '' ? ' style="' . esc_attr($extra_style) . '"' : '';
+        echo '<div class="' . esc_attr($classes) . '"' . $style_attr . '>';
+    }
+
+    /**
+     * Render the closing tag of a stat card grid container.
+     *
+     * @return void
+     */
+    public static function close_stat_grid() {
+        echo '</div>';
+    }
+
+    /**
+     * Render a single stat card with unified markup.
+     *
+     * @param array{
+     *     value: string,
+     *     label: string,
+     *     sublabel?: string,
+     *     detail?: string,
+     *     icon?: string,
+     *     icon_color?: string,
+     *     icon_bg?: string,
+     *     variant?: string,
+     *     layout?: string
+     * } $args Card configuration.
+     * @return void
+     */
+    public static function render_stat_card($args) {
+        $defaults = array(
+            'value'      => '',
+            'label'      => '',
+            'sublabel'   => '',
+            'detail'     => '',
+            'icon'       => '',
+            'icon_color' => '',
+            'icon_bg'    => '',
+            'variant'    => '',
+            'layout'     => 'vertical',
+        );
+        $args = wp_parse_args($args, $defaults);
+
+        // Build card CSS classes
+        $classes = array('aih-stat-card');
+
+        if ($args['layout'] === 'horizontal') {
+            $classes[] = 'aih-stat-card--horizontal';
+        }
+
+        // Map variant to CSS class
+        $variant_map = array(
+            'success'  => 'aih-card-success',
+            'warning'  => 'aih-card-warning',
+            'danger'   => 'aih-card-danger',
+            'info'     => 'aih-card-info',
+            'active'   => 'aih-stat-active',
+            'bids'     => 'aih-stat-bids',
+            'nobids'   => 'aih-stat-nobids',
+            'money'    => 'aih-stat-money',
+            'highlight' => 'aih-stat-highlight',
+            'favorites' => 'aih-stat-favorites',
+            'last-bid' => 'aih-last-bid-card',
+        );
+        if ($args['variant'] !== '' && isset($variant_map[$args['variant']])) {
+            $classes[] = $variant_map[$args['variant']];
+        }
+
+        echo '<div class="' . esc_attr(implode(' ', $classes)) . '">';
+
+        // Horizontal layout: icon first, then content wrapper
+        if ($args['layout'] === 'horizontal' && $args['icon'] !== '') {
+            $icon_style = '';
+            $style_parts = array();
+            if ($args['icon_bg'] !== '') {
+                $style_parts[] = 'background: ' . $args['icon_bg'];
+            }
+            if ($args['icon_color'] !== '') {
+                $style_parts[] = 'color: ' . $args['icon_color'];
+            }
+            if (!empty($style_parts)) {
+                $icon_style = ' style="' . esc_attr(implode('; ', $style_parts)) . ';"';
+            }
+            echo '<div class="aih-stat-icon"' . $icon_style . '>';
+            echo '<span class="dashicons ' . esc_attr($args['icon']) . '"></span>';
+            echo '</div>';
+            echo '<div class="aih-stat-content">';
+        }
+
+        // Value
+        echo '<div class="aih-stat-number">' . $args['value'] . '</div>';
+
+        // Label
+        $label_class = 'aih-stat-label';
+        if ($args['layout'] === 'horizontal') {
+            $label_class .= ' aih-stat-label--plain';
+        }
+        echo '<div class="' . esc_attr($label_class) . '">' . esc_html($args['label']) . '</div>';
+
+        // Sublabel (optional)
+        if ($args['sublabel'] !== '') {
+            echo '<span class="aih-stat-sublabel">' . esc_html($args['sublabel']) . '</span>';
+        }
+
+        // Detail (optional)
+        if ($args['detail'] !== '') {
+            echo '<span class="aih-stat-detail">' . esc_html($args['detail']) . '</span>';
+        }
+
+        // Vertical layout icon (after label)
+        if ($args['layout'] !== 'horizontal' && $args['icon'] !== '') {
+            $icon_style = '';
+            if ($args['icon_color'] !== '') {
+                $icon_style = ' style="color: ' . esc_attr($args['icon_color']) . ';"';
+            }
+            echo '<div class="aih-stat-icon">';
+            echo '<span class="dashicons ' . esc_attr($args['icon']) . '"' . $icon_style . ' aria-hidden="true"></span>';
+            echo '</div>';
+        }
+
+        // Close content wrapper for horizontal layout
+        if ($args['layout'] === 'horizontal' && $args['icon'] !== '') {
+            echo '</div>'; // .aih-stat-content
+        }
+
+        echo '</div>'; // .aih-stat-card
+    }
 }

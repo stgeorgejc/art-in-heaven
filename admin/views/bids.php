@@ -104,24 +104,26 @@ $total_bid_value = $wpdb->get_var("SELECT SUM(bid_amount) FROM {$bids_table}");
     <?php endif; ?>
     
     <!-- Summary Cards -->
-    <div class="aih-stats-row">
-        <div class="aih-stat-card">
-            <div class="aih-stat-number"><?php echo number_format($total_bid_count); ?></div>
-            <div class="aih-stat-label"><?php _e('Total Bids', 'art-in-heaven'); ?></div>
-        </div>
-        <div class="aih-stat-card">
-            <div class="aih-stat-number"><?php echo number_format($winning_bid_count); ?></div>
-            <div class="aih-stat-label"><?php _e('Winning Bids', 'art-in-heaven'); ?></div>
-        </div>
-        <div class="aih-stat-card">
-            <div class="aih-stat-number"><?php echo number_format($unique_bidders); ?></div>
-            <div class="aih-stat-label"><?php _e('Unique Bidders', 'art-in-heaven'); ?></div>
-        </div>
-        <div class="aih-stat-card">
-            <div class="aih-stat-number">$<?php echo number_format($total_bid_value ?: 0); ?></div>
-            <div class="aih-stat-label"><?php _e('Total Bid Value', 'art-in-heaven'); ?></div>
-        </div>
-    </div>
+    <?php
+    AIH_Admin::open_stat_grid();
+    AIH_Admin::render_stat_card(array(
+        'value' => number_format($total_bid_count),
+        'label' => __('Total Bids', 'art-in-heaven'),
+    ));
+    AIH_Admin::render_stat_card(array(
+        'value' => number_format($winning_bid_count),
+        'label' => __('Winning Bids', 'art-in-heaven'),
+    ));
+    AIH_Admin::render_stat_card(array(
+        'value' => number_format($unique_bidders),
+        'label' => __('Unique Bidders', 'art-in-heaven'),
+    ));
+    AIH_Admin::render_stat_card(array(
+        'value' => '$' . number_format($total_bid_value ?: 0),
+        'label' => __('Total Bid Value', 'art-in-heaven'),
+    ));
+    AIH_Admin::close_stat_grid();
+    ?>
     
     <!-- Search Bar -->
     <div class="aih-toolbar aih-toolbar--minimal">
@@ -233,13 +235,6 @@ $total_bid_value = $wpdb->get_var("SELECT SUM(bid_amount) FROM {$bids_table}");
 </div>
 
 <style>
-.aih-stats-row {
-    display: flex;
-    gap: 20px;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-}
-
 .aih-toolbar-info {
     color: #8a8a8a;
     font-size: 13px;
@@ -332,14 +327,6 @@ $total_bid_value = $wpdb->get_var("SELECT SUM(bid_amount) FROM {$bids_table}");
 }
 
 @media (max-width: 782px) {
-    .aih-stats-row {
-        flex-direction: column;
-    }
-    
-    .aih-stat-card {
-        width: 100%;
-    }
-    
     .aih-toolbar {
         flex-direction: column;
         align-items: stretch;
