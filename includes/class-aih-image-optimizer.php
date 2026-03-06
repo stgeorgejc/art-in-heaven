@@ -20,17 +20,19 @@ class AIH_Image_Optimizer {
     /** @var int[] Responsive widths to generate */
     private static $widths = array(400, 800, 1200);
 
-    /** @var array Format => quality mapping */
+    /** @var array<string, int> Format => quality mapping */
     private static $formats = array(
         'avif' => 50,  // AVIF quality 50 ≈ JPEG 85 visually
         'webp' => 80,
     );
 
-    /** @var array|null Cached CLI binary paths keyed by format */
+    /** @var array<string, string>|null Cached CLI binary paths keyed by format */
     private static $cli_cache = null;
 
     /**
      * Check if any image processing library supports at least one modern format
+     *
+     * @return bool
      */
     public static function is_available() {
         return !empty(self::supported_formats());
@@ -38,6 +40,8 @@ class AIH_Image_Optimizer {
 
     /**
      * Check which formats are supported across Imagick, GD, and CLI binaries
+     *
+     * @return array<int, string>
      */
     public static function supported_formats() {
         $formats = array();
@@ -62,6 +66,8 @@ class AIH_Image_Optimizer {
 
     /**
      * Check which formats Imagick supports natively
+     *
+     * @return array<int, string>
      */
     private static function imagick_formats() {
         if (!extension_loaded('imagick') || !class_exists('Imagick')) {
@@ -76,6 +82,8 @@ class AIH_Image_Optimizer {
 
     /**
      * Check which formats GD supports natively
+     *
+     * @return array<int, string>
      */
     private static function gd_formats() {
         if (!extension_loaded('gd')) {
@@ -90,7 +98,7 @@ class AIH_Image_Optimizer {
     /**
      * Detect available CLI binaries for image encoding
      *
-     * @return array Format => binary path, e.g. ['webp' => '/home/user/bin/cwebp']
+     * @return array<string, string> Format => binary path, e.g. ['webp' => '/home/user/bin/cwebp']
      */
     private static function cli_binaries() {
         if (self::$cli_cache !== null) {
@@ -138,6 +146,8 @@ class AIH_Image_Optimizer {
 
     /**
      * Get the responsive variants directory path
+     *
+     * @return string
      */
     public static function get_responsive_dir() {
         $upload_dir = wp_upload_dir();
@@ -146,6 +156,8 @@ class AIH_Image_Optimizer {
 
     /**
      * Get the responsive variants directory URL
+     *
+     * @return string
      */
     public static function get_responsive_url() {
         $upload_dir = wp_upload_dir();
@@ -156,7 +168,7 @@ class AIH_Image_Optimizer {
      * Generate responsive AVIF/WebP variants from a watermarked image
      *
      * @param string $watermarked_path Absolute path to watermarked image
-     * @return array List of generated file paths, or empty on failure
+     * @return array<int, string> List of generated file paths, or empty on failure
      */
     public static function generate_variants($watermarked_path) {
         $available_formats = self::supported_formats();
@@ -280,6 +292,9 @@ class AIH_Image_Optimizer {
 
     /**
      * Load an image into a GD resource
+     *
+     * @param string $path Path to the image file
+     * @return \GdImage|false|null
      */
     private static function gd_load_image($path) {
         $info = @getimagesize($path);
@@ -296,13 +311,21 @@ class AIH_Image_Optimizer {
 
     /**
      * Generate a single variant using GD
+     *
+     * @param \GdImage $source      GD image resource
+     * @param int      $source_width  Original image width
+     * @param int      $target_width  Desired output width
+     * @param string   $format        Output format ('avif' or 'webp')
+     * @param int      $quality       Compression quality (0-100)
+     * @param string   $output_file   Absolute path for the output file
+     * @return bool
      */
     private static function gd_generate_variant($source, $source_width, $target_width, $format, $quality, $output_file) {
         $source_height = imagesy($source);
 
         if ($source_width > $target_width) {
             $target_height = (int) round($source_height * ($target_width / $source_width));
-            $resized = imagecreatetruecolor($target_width, $target_height);
+            $resized = imagecreatetruecolor(max(1, $target_width), max(1, $target_height));
             imagecopyresampled($resized, $source, 0, 0, 0, 0, $target_width, $target_height, $source_width, $source_height);
         } else {
             $resized = $source;
@@ -331,6 +354,15 @@ class AIH_Image_Optimizer {
 
     /**
      * Generate a single variant using a CLI binary (cwebp or ffmpeg)
+     *
+     * @param string $source_path  Absolute path to the source image
+     * @param int    $source_width Original image width
+     * @param int    $target_width Desired output width
+     * @param string $format       Output format ('avif' or 'webp')
+     * @param int    $quality      Compression quality (0-100)
+     * @param string $output_file  Absolute path for the output file
+     * @param string $cli_bin      Path to the CLI binary
+     * @return bool
      */
     private static function cli_generate_variant($source_path, $source_width, $target_width, $format, $quality, $output_file, $cli_bin) {
         $src = escapeshellarg($source_path);
@@ -370,7 +402,7 @@ class AIH_Image_Optimizer {
      * Derive responsive variant URLs from a watermarked URL
      *
      * @param string $watermarked_url URL to the watermarked image
-     * @return array ['avif' => [400 => url, 800 => url, ...], 'webp' => [...]]
+     * @return array<string, array<int, string>> ['avif' => [400 => url, 800 => url, ...], 'webp' => [...]]
      */
     public static function get_variant_urls($watermarked_url) {
         if (empty($watermarked_url) || strpos($watermarked_url, '/watermarked/') === false) {
@@ -408,6 +440,7 @@ class AIH_Image_Optimizer {
      * Delete all responsive variants for a watermarked image
      *
      * @param string $watermarked_url URL to the watermarked image
+     * @return void
      */
     public static function cleanup_variants($watermarked_url) {
         if (empty($watermarked_url) || strpos($watermarked_url, '/watermarked/') === false) {

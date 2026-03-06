@@ -8,12 +8,11 @@ if (!defined('ABSPATH')) {
 }
 
 class AIH_Watermark {
-    
-    private $opacity = 50;
-    private $font_size = 24;
-    
+
     /**
      * Check if GD library is available
+     *
+     * @return bool
      */
     public function is_available() {
         return extension_loaded('gd') && function_exists('imagecreatetruecolor');
@@ -21,6 +20,8 @@ class AIH_Watermark {
     
     /**
      * Get watermark text - uses logo text + current year
+     *
+     * @return string
      */
     private function get_watermark_text() {
         $custom_text = get_option('aih_watermark_text', '');
@@ -32,6 +33,8 @@ class AIH_Watermark {
     
     /**
      * Get the TTF font file path, downloading if necessary
+     *
+     * @return string|false
      */
     private function get_font_file() {
         $font_dir = AIH_PLUGIN_DIR . 'assets/fonts/';
@@ -98,6 +101,10 @@ class AIH_Watermark {
 
     /**
      * Apply watermark to an image
+     *
+     * @param string      $image_path  Path to the source image.
+     * @param string|null $output_path Path for the watermarked output.
+     * @return string|false Output path on success, false on failure.
      */
     public function apply_watermark($image_path, $output_path = null) {
         // Check if GD is available
@@ -219,6 +226,11 @@ class AIH_Watermark {
     
     /**
      * Add diagonal watermarks across the image
+     *
+     * @param \GdImage $image  GD image resource.
+     * @param int      $width  Image width.
+     * @param int      $height Image height.
+     * @return void
      */
     private function add_diagonal_watermarks($image, $width, $height) {
         // Get watermark overlay image if set
@@ -226,8 +238,11 @@ class AIH_Watermark {
         $overlay_path = '';
         if ($overlay_id) {
             $overlay_path = get_attached_file($overlay_id);
+            if (!$overlay_path) {
+                $overlay_path = '';
+            }
         }
-        
+
         // Apply overlay image if available
         if ($overlay_path && file_exists($overlay_path)) {
             $this->apply_overlay_pattern($image, $overlay_path, $width, $height);
@@ -257,11 +272,11 @@ class AIH_Watermark {
                 for ($y_pos = 0; $y_pos < $height * 1.5; $y_pos += $spacing_y) {
                     for ($x_pos = -$width * 0.5; $x_pos < $width * 1.5; $x_pos += $spacing_x) {
                         // Shadow
-                        $shadow = imagecolorallocatealpha($image, 0, 0, 0, 60);
+                        $shadow = (int) imagecolorallocatealpha($image, 0, 0, 0, 60);
                         @imagettftext($image, $font_size, 30, (int) ($x_pos + 3), (int) ($y_pos + 3), $shadow, $font_file, $text);
 
                         // White text
-                        $white = imagecolorallocatealpha($image, 255, 255, 255, 50);
+                        $white = (int) imagecolorallocatealpha($image, 255, 255, 255, 50);
                         @imagettftext($image, $font_size, 30, (int) $x_pos, (int) $y_pos, $white, $font_file, $text);
                     }
                 }
@@ -279,19 +294,25 @@ class AIH_Watermark {
     
     /**
      * Add watermark using built-in GD fonts (no TTF required)
+     *
+     * @param \GdImage $image  GD image resource.
+     * @param int      $width  Image width.
+     * @param int      $height Image height.
+     * @param string   $text   Watermark text.
+     * @return void
      */
     private function add_builtin_font_watermark($image, $width, $height, $text) {
         $font = 5; // Largest built-in font
         
         // Colors
-        $shadow = imagecolorallocatealpha($image, 0, 0, 0, 60);
-        $white = imagecolorallocatealpha($image, 255, 255, 255, 50);
-        
+        $shadow = (int) imagecolorallocatealpha($image, 0, 0, 0, 60);
+        $white = (int) imagecolorallocatealpha($image, 255, 255, 255, 50);
+
         // Calculate spacing
         $text_width = strlen($text) * imagefontwidth($font);
         $spacing_x = max($text_width + 50, $width / 3);
         $spacing_y = $height / 4;
-        
+
         // Grid of watermarks
         for ($y = 0; $y < $height; $y += $spacing_y) {
             for ($x = -$text_width; $x < $width + $text_width; $x += $spacing_x) {
@@ -301,11 +322,11 @@ class AIH_Watermark {
                 imagestring($image, $font, $x, $y, $text, $white);
             }
         }
-        
+
         // Center watermark
         $center_x = ($width - $text_width) / 2;
         $center_y = ($height - imagefontheight($font)) / 2;
-        
+
         // Larger center text - draw multiple times
         for ($i = 0; $i < 3; $i++) {
             imagestring($image, $font, $center_x + 2 + $i, $center_y + 2, $text, $shadow);
@@ -315,6 +336,12 @@ class AIH_Watermark {
     
     /**
      * Apply an overlay image pattern across the entire image
+     *
+     * @param \GdImage $image        GD image resource.
+     * @param string   $overlay_path Path to the overlay image file.
+     * @param int      $width        Image width.
+     * @param int      $height       Image height.
+     * @return void
      */
     private function apply_overlay_pattern($image, $overlay_path, $width, $height) {
         $overlay_info = @getimagesize($overlay_path);
@@ -362,14 +389,14 @@ class AIH_Watermark {
         $new_height = intval($overlay_height * $scale);
         
         // Create a scaled version of the overlay with full alpha support
-        $scaled_overlay = imagecreatetruecolor($new_width, $new_height);
+        $scaled_overlay = imagecreatetruecolor(max(1, $new_width), max(1, $new_height));
         
         // Critical: Set up alpha channel properly for scaled image
         imagealphablending($scaled_overlay, false);
         imagesavealpha($scaled_overlay, true);
         
         // Fill with fully transparent background
-        $transparent = imagecolorallocatealpha($scaled_overlay, 0, 0, 0, 127);
+        $transparent = (int) imagecolorallocatealpha($scaled_overlay, 0, 0, 0, 127);
         imagefilledrectangle($scaled_overlay, 0, 0, $new_width - 1, $new_height - 1, $transparent);
         
         // Scale the overlay (preserves alpha when alphablending is false)
@@ -424,6 +451,12 @@ class AIH_Watermark {
     
     /**
      * Apply opacity to an image by adjusting alpha values of each pixel
+     *
+     * @param \GdImage $image           GD image resource.
+     * @param int      $width           Image width.
+     * @param int      $height          Image height.
+     * @param int      $opacity_percent Opacity percentage (0-100).
+     * @return void
      */
     private function apply_opacity_to_image($image, $width, $height, $opacity_percent) {
         // Disable alpha blending to directly set pixel values
@@ -448,7 +481,7 @@ class AIH_Watermark {
                     $new_alpha = intval(127 - ($new_opacity * 127));
                     $new_alpha = max(0, min(127, $new_alpha));
                     
-                    $new_color = imagecolorallocatealpha($image, $r, $g, $b, $new_alpha);
+                    $new_color = (int) imagecolorallocatealpha($image, $r, $g, $b, $new_alpha);
                     imagesetpixel($image, $x, $y, $new_color);
                 }
             }
@@ -460,6 +493,13 @@ class AIH_Watermark {
     
     /**
      * Add prominent center watermark
+     *
+     * @param \GdImage    $image     GD image resource.
+     * @param int         $width     Image width.
+     * @param int         $height    Image height.
+     * @param string      $text      Watermark text.
+     * @param string|null $font_file Path to TTF font file.
+     * @return void
      */
     private function add_center_watermark($image, $width, $height, $text, $font_file = null) {
         $center_x = $width / 2;
@@ -472,6 +512,9 @@ class AIH_Watermark {
         if ($font_file && function_exists('imagettftext')) {
             // Calculate text bounding box for centering
             $bbox = imagettfbbox($font_size, 0, $font_file, $text);
+            if ($bbox === false) {
+                return;
+            }
             $text_width = abs($bbox[4] - $bbox[0]);
             $text_height = abs($bbox[5] - $bbox[1]);
             
@@ -479,13 +522,13 @@ class AIH_Watermark {
             $y = $center_y + ($text_height / 2);
             
             // Strong shadow
-            $shadow = imagecolorallocatealpha($image, 0, 0, 0, 30);
+            $shadow = (int) imagecolorallocatealpha($image, 0, 0, 0, 30);
             for ($s = 6; $s >= 1; $s--) {
                 imagettftext($image, $font_size, 0, $x + $s, $y + $s, $shadow, $font_file, $text);
             }
-            
+
             // White text
-            $white = imagecolorallocatealpha($image, 255, 255, 255, 15);
+            $white = (int) imagecolorallocatealpha($image, 255, 255, 255, 15);
             imagettftext($image, $font_size, 0, $x, $y, $white, $font_file, $text);
         } else {
             // Fallback with built-in fonts
@@ -495,9 +538,9 @@ class AIH_Watermark {
             $x = $center_x - ($text_width / 2);
             $y = $center_y - 5;
             
-            $shadow = imagecolorallocatealpha($image, 0, 0, 0, 40);
-            $white = imagecolorallocatealpha($image, 255, 255, 255, 30);
-            
+            $shadow = (int) imagecolorallocatealpha($image, 0, 0, 0, 40);
+            $white = (int) imagecolorallocatealpha($image, 255, 255, 255, 30);
+
             // Draw multiple times for bold effect
             for ($i = 0; $i < 3; $i++) {
                 for ($j = 0; $j < 3; $j++) {
@@ -510,6 +553,9 @@ class AIH_Watermark {
     
     /**
      * Process uploaded image and create watermarked version
+     *
+     * @param int $attachment_id WordPress attachment ID.
+     * @return string|false Watermarked image URL on success, false on failure.
      */
     public function process_upload($attachment_id) {
         if (!$this->is_available()) {
@@ -568,27 +614,39 @@ class AIH_Watermark {
     
     /**
      * Get watermarked URL for an attachment
+     *
+     * @param int $attachment_id WordPress attachment ID.
+     * @return string|false Watermarked image URL, or false on failure.
      */
     public function get_watermarked_url($attachment_id) {
         $upload_dir = wp_upload_dir();
         $file_path = get_attached_file($attachment_id);
+        if (!$file_path) {
+            return false;
+        }
         $filename = basename($file_path);
-        
+
         $watermarked_path = $upload_dir['basedir'] . '/art-in-heaven/watermarked/' . $filename;
-        
+
         if (file_exists($watermarked_path)) {
             return $upload_dir['baseurl'] . '/art-in-heaven/watermarked/' . $filename;
         }
-        
+
         // Create watermarked version if it doesn't exist
         return $this->process_upload($attachment_id);
     }
     
     /**
      * Delete watermarked version
+     *
+     * @param int $attachment_id WordPress attachment ID.
+     * @return bool True on success or if file didn't exist.
      */
     public function delete_watermarked($attachment_id) {
         $file_path = get_attached_file($attachment_id);
+        if (!$file_path) {
+            return false;
+        }
         $filename = basename($file_path);
         
         $upload_dir = wp_upload_dir();

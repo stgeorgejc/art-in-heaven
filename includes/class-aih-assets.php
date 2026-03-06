@@ -38,6 +38,8 @@ class AIH_Assets {
 
     /**
      * Register all plugin assets (but don't enqueue yet)
+     *
+     * @return void
      */
     public function register_assets() {
         // Google Fonts loaded async via Art_In_Heaven::add_preconnect_hints()
@@ -59,6 +61,8 @@ class AIH_Assets {
     /**
      * Enqueue the elegant theme styles
      * Called from templates that need the theme
+     *
+     * @return void
      */
     public static function enqueue_elegant_theme() {
         if (self::$elegant_theme_enqueued) {
@@ -78,6 +82,8 @@ class AIH_Assets {
 
     /**
      * Enqueue frontend extras (template-specific styles)
+     *
+     * @return void
      */
     public static function enqueue_frontend_extras() {
         self::enqueue_elegant_theme();
@@ -108,6 +114,8 @@ class AIH_Assets {
     /**
      * Output critical CSS inline in <head> for immediate above-fold rendering.
      * Hooked at wp_head priority 7, before wp_print_styles (priority 8).
+     *
+     * @return void
      */
     public static function output_critical_css() {
         echo '<style id="aih-critical-css">' . self::get_critical_css() . '</style>' . "\n";

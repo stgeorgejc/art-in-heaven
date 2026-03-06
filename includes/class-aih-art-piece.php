@@ -17,6 +17,7 @@ if (!defined('ABSPATH')) {
 
 class AIH_Art_Piece {
     
+    /** @var string */
     private $table;
     
     public function __construct() {
@@ -39,6 +40,9 @@ class AIH_Art_Piece {
     /**
      * Get all art pieces with optional filtering
      * FIXED: Now properly checks both auction_start AND auction_end
+     *
+     * @param array<string, mixed> $args
+     * @return array<int, object>
      */
     public function get_all($args = array()) {
         global $wpdb;
@@ -244,6 +248,9 @@ class AIH_Art_Piece {
     
     /**
      * Get count for filtered results
+     *
+     * @param array<string, mixed> $args
+     * @return int
      */
     public function get_count($args = array()) {
         global $wpdb;
@@ -288,6 +295,12 @@ class AIH_Art_Piece {
         return (int) $wpdb->get_var($query);
     }
     
+    /**
+     * Get a single art piece by ID.
+     *
+     * @param int|string $id
+     * @return object|null
+     */
     public function get($id) {
         global $wpdb;
 
@@ -318,6 +331,12 @@ class AIH_Art_Piece {
         return $result;
     }
     
+    /**
+     * Get a single art piece by its art_id field.
+     *
+     * @param string $art_id
+     * @return object|null
+     */
     public function get_by_art_id($art_id) {
         global $wpdb;
         $now = current_time('mysql');
@@ -341,6 +360,12 @@ class AIH_Art_Piece {
         ));
     }
     
+    /**
+     * Create a new art piece.
+     *
+     * @param array<string, mixed> $data
+     * @return int|false Insert ID on success, false on failure.
+     */
     public function create($data) {
         global $wpdb;
         
@@ -435,6 +460,13 @@ class AIH_Art_Piece {
         return $result ? $wpdb->insert_id : false;
     }
     
+    /**
+     * Update an art piece.
+     *
+     * @param int                  $id
+     * @param array<string, mixed> $data
+     * @return int|false|WP_Error Rows affected, false on failure, or WP_Error on conflict.
+     */
     public function update($id, $data) {
         global $wpdb;
 
@@ -491,6 +523,7 @@ class AIH_Art_Piece {
             
             if ($times_changed || $status_explicitly_set) {
                 // Get current piece data
+                /** @var object{auction_start: string|null, auction_end: string|null, status: string}|null $current */
                 $current = $wpdb->get_row($wpdb->prepare(
                     "SELECT auction_start, auction_end, status FROM {$this->table} WHERE id = %d",
                     $id
@@ -570,6 +603,12 @@ class AIH_Art_Piece {
         return $result;
     }
     
+    /**
+     * Delete an art piece and its related records.
+     *
+     * @param int $id
+     * @return int|false Rows affected or false on failure.
+     */
     public function delete($id) {
         global $wpdb;
 
@@ -630,6 +669,13 @@ class AIH_Art_Piece {
         }
     }
     
+    /**
+     * Bulk update auction end times and adjust statuses accordingly.
+     *
+     * @param array<int, int> $ids
+     * @param string          $new_end_time
+     * @return int|false Rows affected or false on failure.
+     */
     public function bulk_update_end_times($ids, $new_end_time) {
         global $wpdb;
         if (empty($ids)) return false;
@@ -668,6 +714,13 @@ class AIH_Art_Piece {
         return $result;
     }
     
+    /**
+     * Bulk update auction start times and adjust statuses accordingly.
+     *
+     * @param array<int, int> $ids
+     * @param string          $new_start_time
+     * @return int|false Rows affected or false on failure.
+     */
     public function bulk_update_start_times($ids, $new_start_time) {
         global $wpdb;
         if (empty($ids)) return false;
@@ -692,24 +745,35 @@ class AIH_Art_Piece {
     /**
      * Check if auction has ended
      * FIXED: Now properly checks auction_end time, not start time
+     *
+     * @param int $id
+     * @return bool
      */
     public function is_auction_ended($id) {
         $piece = $this->get($id);
         if (!$piece) return true;
+        /** @var stdClass $piece */
         return $piece->computed_status === 'ended';
     }
     
     /**
      * Check if auction is currently active (started and not ended)
+     *
+     * @param int $id
+     * @return bool
      */
     public function is_auction_active($id) {
         $piece = $this->get($id);
         if (!$piece) return false;
+        /** @var stdClass $piece */
         return $piece->computed_status === 'active';
     }
     
     /**
      * Get all art pieces with stats - FIXED to include ALL statuses
+     *
+     * @param array<string, mixed> $args
+     * @return array<int, object>
      */
     public function get_all_with_stats($args = array()) {
         global $wpdb;
@@ -804,6 +868,7 @@ class AIH_Art_Piece {
         $counts = new stdClass();
 
         // Query 1: All status counts in a single query (replaces 5 separate queries)
+        /** @var object{total: string, active: string, upcoming: string, draft: string, ended: string}|null $status_row */
         $status_row = $wpdb->get_row($wpdb->prepare(
             "SELECT
                 COUNT(*) as total,
@@ -822,6 +887,7 @@ class AIH_Art_Piece {
         $counts->ended = (int) ($status_row->ended ?? 0);
 
         // Query 2: Active bid counts in a single query (replaces 2 separate queries)
+        /** @var object{active_with_bids: string, active_no_bids: string}|null $bid_row */
         $bid_row = $wpdb->get_row($wpdb->prepare(
             "SELECT
                 COUNT(DISTINCT CASE WHEN b.id IS NOT NULL THEN a.id END) as active_with_bids,
@@ -838,6 +904,7 @@ class AIH_Art_Piece {
         $counts->active_no_bids = (int) ($bid_row->active_no_bids ?? 0);
 
         // Query 2b: Ended bid counts
+        /** @var object{ended_with_bids: string, ended_no_bids: string}|null $ended_bid_row */
         $ended_bid_row = $wpdb->get_row($wpdb->prepare(
             "SELECT
                 COUNT(DISTINCT CASE WHEN b.id IS NOT NULL THEN a.id END) as ended_with_bids,
@@ -853,6 +920,7 @@ class AIH_Art_Piece {
         $counts->ended_no_bids = (int) ($ended_bid_row->ended_no_bids ?? 0);
 
         // Query 3: Global bid/favorites counts (replaces 2 separate queries)
+        /** @var object{pieces_with_bids: string, with_favorites: string}|null $global_row */
         $global_row = $wpdb->get_row(
             "SELECT
                 (SELECT COUNT(DISTINCT art_piece_id) FROM $bids_table) as pieces_with_bids,
@@ -885,6 +953,7 @@ class AIH_Art_Piece {
         $bids_table = AIH_Database::get_table('bids');
 
         // Reuse get_counts() for shared piece-level metrics
+        /** @var stdClass $counts */
         $counts = $this->get_counts();
 
         $stats = new stdClass();
@@ -895,6 +964,7 @@ class AIH_Art_Piece {
         $stats->pieces_with_bids = $counts->pieces_with_bids;
 
         // Bid-level aggregates (consolidated into a single query)
+        /** @var object{total_bids: string, unique_bidders: string, highest_bid: string|null, average_bid: string|null}|null $bid_agg */
         $bid_agg = $wpdb->get_row(
             "SELECT COUNT(*) AS total_bids,
                     COUNT(DISTINCT bidder_id) AS unique_bidders,

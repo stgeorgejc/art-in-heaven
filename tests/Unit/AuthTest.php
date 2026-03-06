@@ -255,4 +255,26 @@ class AuthTest extends TestCase
         // The registrant's api_data should have been decrypted
         $this->assertSame('{"some":"data"}', $result['registrant']->api_data);
     }
+
+    // ── run_auto_sync (void behavior) ──
+
+    public function testRunAutoSyncReturnsVoid(): void
+    {
+        // Load CCB API class (dependency of sync_bidders_from_api)
+        if (!class_exists('AIH_CCB_API')) {
+            require_once __DIR__ . '/../../includes/class-aih-ccb-api.php';
+        }
+
+        // Stub HTTP functions so sync doesn't make real calls
+        Functions\stubs([
+            'wp_remote_get' => fn() => new \WP_Error('test', 'Mock error'),
+            'wp_remote_retrieve_response_code' => fn() => 0,
+            'wp_remote_retrieve_body' => fn() => '',
+            'is_wp_error' => fn($v) => $v instanceof \WP_Error,
+        ]);
+
+        // run_auto_sync should not return a value (it's a WP action callback)
+        $result = AIH_Auth::run_auto_sync();
+        $this->assertNull($result);
+    }
 }

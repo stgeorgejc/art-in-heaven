@@ -25,6 +25,19 @@ WordPress plugin for silent/blind art auctions. Registrants authenticate via CCB
 
 **HTTP Security Headers**: Added via `wp_headers` filter at priority 99 with `!isset()` guards. Never overrides headers set by other plugins, themes, or server config.
 
+## Static Analysis
+
+PHPStan is configured at **level 8** with zero errors and zero `ignoreErrors`. All new code must meet this standard.
+
+```bash
+php -d memory_limit=2G vendor/bin/phpstan analyse --memory-limit=2G
+```
+
+- Every method must have `@param` and `@return` type annotations (PHPDoc or native)
+- Do not add entries to `ignoreErrors` in `phpstan.neon` — fix the root cause instead
+- `bidder_id` is a **string** (confirmation code), not an int — type accordingly
+- WP action callbacks must return `void` (use `wp_doing_ajax()` instead of `DOING_AJAX` constant)
+
 ## Testing
 
 ```bash

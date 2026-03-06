@@ -16,8 +16,12 @@ if (!defined('ABSPATH')) {
 
 class AIH_Admin {
     
+    /** @var self|null */
     private static $instance = null;
-    
+
+    /**
+     * @return self
+     */
     public static function get_instance() {
         if (null === self::$instance) {
             self::$instance = new self();
@@ -30,6 +34,9 @@ class AIH_Admin {
         add_action('admin_init', array($this, 'admin_init'));
     }
     
+    /**
+     * @return void
+     */
     public function add_admin_menus() {
         // Main menu - accessible to anyone with any AIH capability
         $menu_cap = AIH_Roles::get_menu_capability();
@@ -221,6 +228,9 @@ class AIH_Admin {
         }
     }
     
+    /**
+     * @return void
+     */
     public function admin_init() {
         // Handle dashboard setup form before any output
         if (isset($_POST['aih_action']) && $_POST['aih_action'] === 'create_tables'
@@ -447,10 +457,12 @@ class AIH_Admin {
         
         $art_model = new AIH_Art_Piece();
         $all_art = $art_model->get_all_with_stats();
+        /** @var stdClass|null $counts */
         $counts = $art_model->get_counts();
         $checkout = AIH_Checkout::get_instance();
+        /** @var stdClass|null $payment_stats */
         $payment_stats = $checkout->get_payment_stats();
-        
+
         // Ensure counts has all required properties
         if (!$counts) {
             $counts = new stdClass();
@@ -472,7 +484,7 @@ class AIH_Admin {
         $payment_stats->pending_orders = isset($payment_stats->pending_orders) ? $payment_stats->pending_orders : 0;
         $payment_stats->total_collected = isset($payment_stats->total_collected) ? $payment_stats->total_collected : 0;
         $payment_stats->total_pending = isset($payment_stats->total_pending) ? $payment_stats->total_pending : 0;
-        
+
         $total_bids = 0;
         if ($all_art) {
             foreach ($all_art as $piece) {
@@ -521,6 +533,9 @@ class AIH_Admin {
         include AIH_PLUGIN_DIR . 'admin/views/add-art.php';
     }
     
+    /**
+     * @return void
+     */
     public function render_bids() {
         if (!AIH_Roles::can_view_bids()) {
             wp_die(__('You do not have permission to access this page.', 'art-in-heaven'));
@@ -528,6 +543,9 @@ class AIH_Admin {
         include AIH_PLUGIN_DIR . 'admin/views/bids.php';
     }
     
+    /**
+     * @return void
+     */
     public function render_orders() {
         if (!AIH_Roles::can_view_financial()) {
             wp_die(__('You do not have permission to access this page.', 'art-in-heaven'));
@@ -560,6 +578,7 @@ class AIH_Admin {
         $orders = $checkout->get_all_orders(array('status' => $status_filter, 'search' => $search, 'limit' => $per_page, 'offset' => $offset));
         $total_orders_filtered = $checkout->count_orders(array('status' => $status_filter, 'search' => $search));
         $total_pages = ceil($total_orders_filtered / $per_page);
+        /** @var stdClass|null $payment_stats */
         $payment_stats = $checkout->get_payment_stats();
 
         // Ensure payment_stats has all required properties
@@ -604,6 +623,9 @@ class AIH_Admin {
         include AIH_PLUGIN_DIR . 'admin/views/orders.php';
     }
     
+    /**
+     * @return void
+     */
     public function render_winners() {
         if (!AIH_Roles::can_view_financial()) {
             wp_die(__('You do not have permission to access this page.', 'art-in-heaven'));
@@ -611,6 +633,9 @@ class AIH_Admin {
         include AIH_PLUGIN_DIR . 'admin/views/winners.php';
     }
 
+    /**
+     * @return void
+     */
     public function render_pickup() {
         if (!AIH_Roles::can_manage_pickup()) {
             wp_die(__('You do not have permission to access this page.', 'art-in-heaven'));
@@ -618,6 +643,9 @@ class AIH_Admin {
         include AIH_PLUGIN_DIR . 'admin/views/pickup.php';
     }
 
+    /**
+     * @return void
+     */
     public function render_bidders() {
         if (!AIH_Roles::can_manage_bidders()) {
             wp_die(__('You do not have permission to access this page.', 'art-in-heaven'));
@@ -625,6 +653,9 @@ class AIH_Admin {
         include AIH_PLUGIN_DIR . 'admin/views/bidders.php';
     }
 
+    /**
+     * @return void
+     */
     public function render_reports() {
         if (!AIH_Roles::can_view_reports()) {
             wp_die(__('You do not have permission to access this page.', 'art-in-heaven'));
@@ -632,6 +663,9 @@ class AIH_Admin {
         include AIH_PLUGIN_DIR . 'admin/views/reports.php';
     }
 
+    /**
+     * @return void
+     */
     public function render_stats() {
         if (!AIH_Roles::can_view_reports()) {
             wp_die(__('You do not have permission to access this page.', 'art-in-heaven'));
@@ -641,6 +675,9 @@ class AIH_Admin {
         include AIH_PLUGIN_DIR . 'admin/views/stats.php';
     }
 
+    /**
+     * @return void
+     */
     public function render_migration() {
         if (!AIH_Roles::can_manage_auction()) {
             wp_die(__('You do not have permission to access this page.', 'art-in-heaven'));
@@ -648,6 +685,9 @@ class AIH_Admin {
         include AIH_PLUGIN_DIR . 'admin/views/migration.php';
     }
 
+    /**
+     * @return void
+     */
     public function render_integrations() {
         if (!AIH_Roles::can_manage_settings()) {
             wp_die(__('You do not have permission to access this page.', 'art-in-heaven'));
@@ -655,6 +695,9 @@ class AIH_Admin {
         include AIH_PLUGIN_DIR . 'admin/views/integrations.php';
     }
 
+    /**
+     * @return void
+     */
     public function render_transactions() {
         if (!AIH_Roles::can_manage_settings()) {
             wp_die(__('You do not have permission to access this page.', 'art-in-heaven'));
@@ -662,6 +705,9 @@ class AIH_Admin {
         include AIH_PLUGIN_DIR . 'admin/views/transactions.php';
     }
 
+    /**
+     * @return void
+     */
     public function render_settings() {
         if (!AIH_Roles::can_manage_settings()) {
             wp_die(__('You do not have permission to access this page.', 'art-in-heaven'));
@@ -669,6 +715,9 @@ class AIH_Admin {
         include AIH_PLUGIN_DIR . 'admin/views/settings.php';
     }
 
+    /**
+     * @return void
+     */
     public function render_logs() {
         if (!AIH_Roles::can_manage_settings()) {
             wp_die(__('You do not have permission to access this page.', 'art-in-heaven'));

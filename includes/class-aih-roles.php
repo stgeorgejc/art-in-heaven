@@ -13,7 +13,8 @@ if (!defined('ABSPATH')) {
 }
 
 class AIH_Roles {
-    
+
+    /** @var self|null */
     private static $instance = null;
     
     // Role slugs
@@ -31,7 +32,7 @@ class AIH_Roles {
     const CAP_VIEW_REPORTS = 'aih_view_reports';            // Reports & exports
     const CAP_MANAGE_PICKUP = 'aih_manage_pickup';          // Manage pickup status
     
-    // Legacy roles to clean up
+    /** @var array<int, string> Legacy roles to clean up */
     private static $legacy_roles = array(
         'sa_super_admin',
         'sa_art_manager', 
@@ -41,6 +42,9 @@ class AIH_Roles {
         'aih_admin',
     );
     
+    /**
+     * @return self
+     */
     public static function get_instance() {
         if (null === self::$instance) {
             self::$instance = new self();
@@ -58,6 +62,8 @@ class AIH_Roles {
     
     /**
      * Clean up any legacy roles from previous versions
+     *
+     * @return void
      */
     public function cleanup_legacy_roles() {
         // Only run once
@@ -74,6 +80,8 @@ class AIH_Roles {
     
     /**
      * Install roles and capabilities (run on plugin activation)
+     *
+     * @return void
      */
     public static function install() {
         // Remove any legacy/old roles that might exist from previous versions
@@ -143,6 +151,8 @@ class AIH_Roles {
     
     /**
      * Remove roles and capabilities (run on plugin deactivation)
+     *
+     * @return void
      */
     public static function uninstall() {
         // Remove custom roles
@@ -174,6 +184,8 @@ class AIH_Roles {
     
     /**
      * Ensure admin always has all caps (in case they were removed)
+     *
+     * @return void
      */
     public function ensure_admin_caps() {
         $admin = get_role('administrator');
@@ -184,6 +196,8 @@ class AIH_Roles {
     
     /**
      * Check if current user can manage auction (super admin level)
+     *
+     * @return bool
      */
     public static function can_manage_auction() {
         return current_user_can(self::CAP_MANAGE_AUCTION) || current_user_can('manage_options');
@@ -191,6 +205,8 @@ class AIH_Roles {
     
     /**
      * Check if current user can manage art pieces
+     *
+     * @return bool
      */
     public static function can_manage_art() {
         return current_user_can(self::CAP_MANAGE_ART) || self::can_manage_auction();
@@ -198,6 +214,8 @@ class AIH_Roles {
     
     /**
      * Check if current user can view bid amounts
+     *
+     * @return bool
      */
     public static function can_view_bids() {
         return current_user_can(self::CAP_VIEW_BIDS) || self::can_manage_auction();
@@ -205,6 +223,8 @@ class AIH_Roles {
     
     /**
      * Check if current user can view financial data (orders, payments, totals)
+     *
+     * @return bool
      */
     public static function can_view_financial() {
         return current_user_can(self::CAP_VIEW_FINANCIAL) || self::can_manage_auction();
@@ -212,6 +232,8 @@ class AIH_Roles {
     
     /**
      * Check if current user can manage bidders
+     *
+     * @return bool
      */
     public static function can_manage_bidders() {
         return current_user_can(self::CAP_MANAGE_BIDDERS) || self::can_manage_auction();
@@ -219,6 +241,8 @@ class AIH_Roles {
     
     /**
      * Check if current user can manage settings
+     *
+     * @return bool
      */
     public static function can_manage_settings() {
         return current_user_can(self::CAP_MANAGE_SETTINGS) || self::can_manage_auction();
@@ -226,6 +250,8 @@ class AIH_Roles {
     
     /**
      * Check if current user can view reports
+     *
+     * @return bool
      */
     public static function can_view_reports() {
         return current_user_can(self::CAP_VIEW_REPORTS) || self::can_manage_auction();
@@ -233,6 +259,8 @@ class AIH_Roles {
     
     /**
      * Check if current user can manage pickup
+     *
+     * @return bool
      */
     public static function can_manage_pickup() {
         return current_user_can(self::CAP_MANAGE_PICKUP) || self::can_manage_auction();
@@ -240,6 +268,8 @@ class AIH_Roles {
 
     /**
      * Check if current user has any AIH capability (can access menu at all)
+     *
+     * @return bool
      */
     public static function can_access_menu() {
         return self::can_manage_art() || self::can_manage_pickup() || self::can_manage_auction();
@@ -247,6 +277,8 @@ class AIH_Roles {
 
     /**
      * Get minimum capability required for menu access
+     *
+     * @return string
      */
     public static function get_menu_capability() {
         return self::CAP_MANAGE_ART;
@@ -254,6 +286,8 @@ class AIH_Roles {
     
     /**
      * Get all AIH roles for display
+     *
+     * @return array<string, array{name: string, description: string}>
      */
     public static function get_roles() {
         return array(
@@ -274,6 +308,9 @@ class AIH_Roles {
     
     /**
      * Get capabilities for a role
+     *
+     * @param string $role_slug
+     * @return array<int, string>
      */
     public static function get_role_capabilities($role_slug) {
         $caps = array(

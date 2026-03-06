@@ -21,7 +21,9 @@ class AIH_REST_API {
     const NAMESPACE = 'art-in-heaven/v1';
     
     /**
-     * Register REST routes
+     * Register REST routes.
+     *
+     * @return void
      */
     public function register_routes() {
         // Art pieces
@@ -175,7 +177,9 @@ class AIH_REST_API {
     }
     
     /**
-     * Get art collection arguments
+     * Get art collection arguments.
+     *
+     * @return array<string, array<string, mixed>>
      */
     private function get_art_collection_args() {
         return array(
@@ -218,7 +222,9 @@ class AIH_REST_API {
     }
     
     /**
-     * Check if bidder is logged in
+     * Check if bidder is logged in.
+     *
+     * @return bool
      */
     public function check_bidder_permission() {
         $auth = AIH_Auth::get_instance();
@@ -226,14 +232,19 @@ class AIH_REST_API {
     }
     
     /**
-     * Check if user has admin permissions
+     * Check if user has admin permissions.
+     *
+     * @return bool
      */
     public function check_admin_permission() {
         return current_user_can('manage_options') || AIH_Roles::can_manage_auction();
     }
     
     /**
-     * GET /art - Get art pieces
+     * GET /art - Get art pieces.
+     *
+     * @param \WP_REST_Request $request REST request object.
+     * @return \WP_REST_Response|\WP_Error
      */
     public function get_art_pieces($request) {
         // Rate limiting for public gallery endpoint
@@ -272,7 +283,7 @@ class AIH_REST_API {
         // Batch-fetch winning IDs to avoid N+1 queries
         $batch_data = null;
         if ($args['bidder_id'] && !empty($pieces)) {
-            $piece_ids = array_map(function($p) { return intval($p->id); }, $pieces);
+            $piece_ids = array_map(function($p) { /** @var stdClass $p */ return intval($p->id); }, $pieces);
             $bid_model = new AIH_Bid();
             $batch_data = array('winning_ids' => $bid_model->get_winning_ids_batch($piece_ids, $args['bidder_id']));
         }
@@ -290,7 +301,10 @@ class AIH_REST_API {
     }
     
     /**
-     * GET /art/{id} - Get single art piece
+     * GET /art/{id} - Get single art piece.
+     *
+     * @param \WP_REST_Request $request REST request object.
+     * @return \WP_REST_Response|\WP_Error
      */
     public function get_art_piece($request) {
         $id = $request->get_param('id');
@@ -313,6 +327,7 @@ class AIH_REST_API {
             $bids = $bid_model->get_bidder_bids_for_art_piece($id, $bidder_id);
             $data['user_bids'] = array();
             foreach ($bids as $bid) {
+                /** @var stdClass $bid */
                 $data['user_bids'][] = array(
                     'amount' => floatval($bid->bid_amount),
                     'time' => $bid->bid_time,
@@ -328,20 +343,23 @@ class AIH_REST_API {
     }
     
     /**
-     * POST /bids - Create a bid
+     * POST /bids - Create a bid.
+     *
+     * @param \WP_REST_Request $request REST request object.
+     * @return \WP_REST_Response|\WP_Error
      */
     public function create_bid($request) {
         $art_piece_id = $request->get_param('art_piece_id');
         $amount = $request->get_param('amount');
         
         $auth = AIH_Auth::get_instance();
-        $bidder_id = $auth->get_current_bidder_id();
-        
+        $bidder_id = $auth->get_current_bidder_id() ?? '';
+
         // Rate limiting
         if (!AIH_Security::check_rate_limit('bid_' . $bidder_id, 10, 60)) {
             return new WP_Error('rate_limited', __('Too many bid attempts. Please wait.', 'art-in-heaven'), array('status' => 429));
         }
-        
+
         $bid_model = new AIH_Bid();
         $result = $bid_model->place_bid($art_piece_id, $bidder_id, $amount);
         
@@ -360,13 +378,16 @@ class AIH_REST_API {
         return rest_ensure_response(array(
             'success' => true,
             'message' => $result['message'],
-            'bid_id' => $result['bid_id'],
+            'bid_id' => $result['bid_id'] ?? null,
             'current_bid' => floatval($highest ?: 0),
         ));
     }
     
     /**
-     * GET /art/{id}/bids - Get bids for an art piece
+     * GET /art/{id}/bids - Get bids for an art piece.
+     *
+     * @param \WP_REST_Request $request REST request object.
+     * @return \WP_REST_Response
      */
     public function get_art_bids($request) {
         $id = $request->get_param('id');
@@ -376,6 +397,7 @@ class AIH_REST_API {
         
         $data = array();
         foreach ($bids as $bid) {
+            /** @var stdClass $bid */
             $data[] = array(
                 'amount' => floatval($bid->bid_amount),
                 'time' => $bid->bid_time,
@@ -389,12 +411,15 @@ class AIH_REST_API {
     }
     
     /**
-     * GET /favorites - Get user's favorites
+     * GET /favorites - Get user's favorites.
+     *
+     * @param \WP_REST_Request $request REST request object.
+     * @return \WP_REST_Response
      */
     public function get_favorites($request) {
         $auth = AIH_Auth::get_instance();
-        $bidder_id = $auth->get_current_bidder_id();
-        
+        $bidder_id = $auth->get_current_bidder_id() ?? '';
+
         $favorites = new AIH_Favorites();
         $items = $favorites->get_bidder_favorites($bidder_id);
         
@@ -407,14 +432,17 @@ class AIH_REST_API {
     }
     
     /**
-     * POST /favorites - Toggle favorite
+     * POST /favorites - Toggle favorite.
+     *
+     * @param \WP_REST_Request $request REST request object.
+     * @return \WP_REST_Response
      */
     public function toggle_favorite($request) {
         $art_piece_id = $request->get_param('art_piece_id');
         
         $auth = AIH_Auth::get_instance();
-        $bidder_id = $auth->get_current_bidder_id();
-        
+        $bidder_id = $auth->get_current_bidder_id() ?? '';
+
         $favorites = new AIH_Favorites();
         $result = $favorites->toggle($bidder_id, $art_piece_id);
         
@@ -422,7 +450,10 @@ class AIH_REST_API {
     }
     
     /**
-     * POST /auth/verify - Verify confirmation code
+     * POST /auth/verify - Verify confirmation code.
+     *
+     * @param \WP_REST_Request $request REST request object.
+     * @return \WP_REST_Response|\WP_Error
      */
     public function verify_code($request) {
         $code = $request->get_param('code');
@@ -455,12 +486,16 @@ class AIH_REST_API {
     }
     
     /**
-     * GET /auth/status - Get auth status
+     * GET /auth/status - Get auth status.
+     *
+     * @param \WP_REST_Request $request REST request object.
+     * @return \WP_REST_Response
      */
     public function get_auth_status($request) {
         $auth = AIH_Auth::get_instance();
         $bidder = $auth->get_current_bidder();
         
+        /** @var stdClass $bidder */
         return rest_ensure_response(array(
             'logged_in' => $auth->is_logged_in(),
             'bidder' => $bidder ? array(
@@ -472,7 +507,10 @@ class AIH_REST_API {
     }
     
     /**
-     * POST /auth/logout - Logout
+     * POST /auth/logout - Logout.
+     *
+     * @param \WP_REST_Request $request REST request object.
+     * @return \WP_REST_Response
      */
     public function logout($request) {
         $auth = AIH_Auth::get_instance();
@@ -485,12 +523,15 @@ class AIH_REST_API {
     }
     
     /**
-     * GET /checkout/won-items - Get won items
+     * GET /checkout/won-items - Get won items.
+     *
+     * @param \WP_REST_Request $request REST request object.
+     * @return \WP_REST_Response
      */
     public function get_won_items($request) {
         $auth = AIH_Auth::get_instance();
-        $bidder_id = $auth->get_current_bidder_id();
-        
+        $bidder_id = $auth->get_current_bidder_id() ?? '';
+
         $checkout = AIH_Checkout::get_instance();
         $items = $checkout->get_won_items($bidder_id);
         
@@ -498,14 +539,17 @@ class AIH_REST_API {
     }
     
     /**
-     * POST /checkout/create-order - Create order
+     * POST /checkout/create-order - Create order.
+     *
+     * @param \WP_REST_Request $request REST request object.
+     * @return \WP_REST_Response|\WP_Error
      */
     public function create_order($request) {
         $item_ids = $request->get_param('item_ids');
         
         $auth = AIH_Auth::get_instance();
-        $bidder_id = $auth->get_current_bidder_id();
-        
+        $bidder_id = $auth->get_current_bidder_id() ?? '';
+
         $checkout = AIH_Checkout::get_instance();
         $result = $checkout->create_order($bidder_id, $item_ids);
         
@@ -517,15 +561,24 @@ class AIH_REST_API {
     }
     
     /**
-     * GET /stats - Get auction stats (admin)
+     * GET /stats - Get auction stats (admin).
+     *
+     * @param \WP_REST_Request $request REST request object.
+     * @return \WP_REST_Response
      */
     public function get_stats($request) {
         return rest_ensure_response(AIH_Export::get_auction_stats());
     }
     
     /**
-     * Format art piece for API response
-     * Uses consolidated AIH_Template_Helper::format_art_piece()
+     * Format art piece for API response.
+     * Uses consolidated AIH_Template_Helper::format_art_piece().
+     *
+     * @param object                       $piece      Art piece object.
+     * @param string|null                  $bidder_id  Current bidder confirmation code or null.
+     * @param bool                         $full       Whether to include full details.
+     * @param array<string, mixed>|null    $batch_data Pre-fetched batch data or null.
+     * @return array<string, mixed>
      */
     private function format_art_piece($piece, $bidder_id = null, $full = false, $batch_data = null) {
         return AIH_Template_Helper::format_art_piece($piece, $bidder_id, $full, false, $batch_data);

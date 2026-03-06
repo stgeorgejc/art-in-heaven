@@ -18,10 +18,16 @@ if (!defined('ABSPATH')) {
 
 class AIH_Auth {
     
+    /** @var self|null */
     private static $instance = null;
+    /** @var string */
     private $session_key = 'aih_bidder_session';
+    /** @var array<string, mixed>|null */
     private $session_data = null; // Cache session data in memory
     
+    /**
+     * @return self
+     */
     public static function get_instance() {
         if (null === self::$instance) {
             self::$instance = new self();
@@ -36,6 +42,8 @@ class AIH_Auth {
     
     /**
      * Check if this is a REST API request
+     *
+     * @return bool
      */
     private function is_rest_request() {
         // Check the constant first (most reliable)
@@ -59,6 +67,8 @@ class AIH_Auth {
     
     /**
      * Close PHP session to prevent locking during long operations
+     *
+     * @return void
      */
     private function close_session() {
         if (session_status() === PHP_SESSION_ACTIVE) {
@@ -68,6 +78,8 @@ class AIH_Auth {
     
     /**
      * Check if this is a loopback request
+     *
+     * @return bool
      */
     private function is_loopback_request() {
         // WordPress site health checks
@@ -87,6 +99,8 @@ class AIH_Auth {
     
     /**
      * Check if we should use sessions at all
+     *
+     * @return bool
      */
     private function should_use_session() {
         // Never use sessions for REST, AJAX heartbeat, cron, or loopback
@@ -102,7 +116,7 @@ class AIH_Auth {
             return false;
         }
         
-        if (defined('DOING_AJAX') && DOING_AJAX) {
+        if (wp_doing_ajax()) {
             // Allow sessions for our AJAX actions only
             if (isset($_POST['action'])) {
                 $our_actions = array(
@@ -124,6 +138,8 @@ class AIH_Auth {
     
     /**
      * Read session data - starts session, reads, and immediately closes
+     *
+     * @return array<string, mixed>
      */
     private function read_session() {
         // Return cached data if available
@@ -161,6 +177,9 @@ class AIH_Auth {
     
     /**
      * Write session data - starts session, writes, and immediately closes
+     *
+     * @param array<string, mixed> $data
+     * @return bool
      */
     private function write_session($data) {
         // Don't use sessions for REST/cron/loopback
@@ -192,6 +211,8 @@ class AIH_Auth {
     
     /**
      * Clear session data
+     *
+     * @return bool
      */
     private function clear_session() {
         if (!$this->should_use_session()) {
@@ -223,6 +244,8 @@ class AIH_Auth {
     
     /**
      * Sync all registrants from CCB API to Registrants table
+     *
+     * @return array<string, mixed>
      */
     public function sync_bidders_from_api() {
         global $wpdb;
@@ -288,6 +311,8 @@ class AIH_Auth {
     
     /**
      * Test API connection
+     *
+     * @return array<string, mixed>
      */
     public function test_api_connection() {
         $this->close_session();
@@ -296,6 +321,8 @@ class AIH_Auth {
     
     /**
      * Get sync status
+     *
+     * @return array<string, mixed>
      */
     public function get_sync_status() {
         return array(
@@ -313,6 +340,9 @@ class AIH_Auth {
     
     /**
      * Save or update a registrant (from API sync)
+     *
+     * @param array<string, mixed> $data
+     * @return string|false
      */
     public function save_registrant($data) {
         global $wpdb;
@@ -327,6 +357,7 @@ class AIH_Auth {
         
         $existing = null;
         if (!empty($data['confirmation_code'])) {
+            /** @var stdClass|null $existing */
             $existing = $wpdb->get_row($wpdb->prepare(
                 "SELECT * FROM $table WHERE confirmation_code = %s",
                 $data['confirmation_code']
@@ -367,10 +398,14 @@ class AIH_Auth {
     
     /**
      * Get registrant by confirmation code
+     *
+     * @param string $code
+     * @return stdClass|null
      */
     public function get_registrant_by_confirmation_code($code) {
         global $wpdb;
         $table = AIH_Database::get_table('registrants');
+        /** @var stdClass|null $row */
         $row = $wpdb->get_row($wpdb->prepare(
             "SELECT * FROM $table WHERE confirmation_code = %s",
             trim(strtoupper($code))
@@ -385,11 +420,12 @@ class AIH_Auth {
      * Get all registrants
      *
      * @param int $limit Maximum number of rows to return (default 10000).
-     * @return array
+     * @return array<int, stdClass>
      */
     public function get_all_registrants($limit = 10000) {
         global $wpdb;
         $table = AIH_Database::get_table('registrants');
+        /** @var list<stdClass> $rows */
         $rows = $wpdb->get_results($wpdb->prepare(
             "SELECT * FROM $table ORDER BY name_last, name_first ASC LIMIT %d",
             $limit
@@ -401,9 +437,11 @@ class AIH_Auth {
         }
         return $rows;
     }
-    
+
     /**
      * Get registrant count
+     *
+     * @return int
      */
     public function get_registrant_count() {
         global $wpdb;
@@ -413,6 +451,8 @@ class AIH_Auth {
     
     /**
      * Get registrants who haven't logged in
+     *
+     * @return array<int, stdClass>
      */
     public function get_registrants_not_logged_in() {
         global $wpdb;
@@ -422,6 +462,8 @@ class AIH_Auth {
     
     /**
      * Get registrants who logged in but haven't bid
+     *
+     * @return array<int, stdClass>
      */
     public function get_registrants_no_bids() {
         global $wpdb;
@@ -435,12 +477,16 @@ class AIH_Auth {
     
     /**
      * Copy registrant to bidders table (called on first login)
+     *
+     * @param stdClass $registrant
+     * @return int|false
      */
     private function copy_to_bidders($registrant) {
         global $wpdb;
         $bidders_table = AIH_Database::get_table('bidders');
         
         // Check if already in bidders
+        /** @var stdClass|null $existing */
         $existing = $wpdb->get_row($wpdb->prepare(
             "SELECT id FROM $bidders_table WHERE confirmation_code = %s",
             $registrant->confirmation_code
@@ -486,6 +532,9 @@ class AIH_Auth {
     
     /**
      * Mark registrant as having placed a bid (by confirmation_code)
+     *
+     * @param string $confirmation_code
+     * @return void
      */
     public function mark_registrant_has_bid($confirmation_code) {
         global $wpdb;
@@ -499,12 +548,16 @@ class AIH_Auth {
     
     /**
      * Get bidder by confirmation code
+     *
+     * @param string $code
+     * @return stdClass|null
      */
     public function get_bidder_by_confirmation_code($code) {
         global $wpdb;
         $code = trim(strtoupper($code));
 
         $bidders_table = AIH_Database::get_table('bidders');
+        /** @var stdClass|null $bidder */
         $bidder = $wpdb->get_row($wpdb->prepare(
             "SELECT * FROM $bidders_table WHERE confirmation_code = %s",
             $code
@@ -522,25 +575,31 @@ class AIH_Auth {
     
     /**
      * Get bidder by email
+     *
+     * @param string $email
+     * @return stdClass|null
      */
     public function get_bidder_by_email($email) {
         global $wpdb;
         $table = AIH_Database::get_table('bidders');
-        return $wpdb->get_row($wpdb->prepare(
+        /** @var stdClass|null $result */
+        $result = $wpdb->get_row($wpdb->prepare(
             "SELECT * FROM $table WHERE email_primary = %s",
             trim($email)
         ));
+        return $result;
     }
     
     /**
      * Get all bidders (only those who have logged in)
      *
      * @param int $limit Maximum number of rows to return (default 10000).
-     * @return array
+     * @return array<int, stdClass>
      */
     public function get_all_bidders($limit = 10000) {
         global $wpdb;
         $table = AIH_Database::get_table('bidders');
+        /** @var list<stdClass> $rows */
         $rows = $wpdb->get_results($wpdb->prepare(
             "SELECT * FROM $table ORDER BY name_last, name_first ASC LIMIT %d",
             $limit
@@ -552,9 +611,11 @@ class AIH_Auth {
         }
         return $rows;
     }
-    
+
     /**
      * Get bidder count
+     *
+     * @return int
      */
     public function get_bidder_count() {
         global $wpdb;
@@ -568,6 +629,9 @@ class AIH_Auth {
     
     /**
      * Verify confirmation code and return bidder info
+     *
+     * @param string $code
+     * @return array<string, mixed>
      */
     public function verify_confirmation_code($code) {
         $code = trim(strtoupper($code));
@@ -632,7 +696,7 @@ class AIH_Auth {
      * checkout, and favorites all work normally.
      *
      * @param string $code The full test code (e.g. AIHTEST001)
-     * @return object|null The registrant row, or null on failure
+     * @return stdClass|null The registrant row, or null on failure
      */
     private function get_or_create_test_registrant($code) {
         global $wpdb;
@@ -642,6 +706,7 @@ class AIH_Auth {
         $code = sanitize_text_field($code);
 
         // Return existing test registrant if already created
+        /** @var stdClass|null $existing */
         $existing = $wpdb->get_row($wpdb->prepare(
             "SELECT * FROM $table WHERE confirmation_code = %s",
             $code
@@ -672,10 +737,12 @@ class AIH_Auth {
             return null;
         }
 
-        return $wpdb->get_row($wpdb->prepare(
+        /** @var stdClass|null $result */
+        $result = $wpdb->get_row($wpdb->prepare(
             "SELECT * FROM $table WHERE confirmation_code = %s",
             $code
         ));
+        return $result;
     }
 
     /**
@@ -684,6 +751,7 @@ class AIH_Auth {
      * - Updates has_logged_in flag in Registrants
      *
      * @param string $confirmation_code The bidder's confirmation code
+     * @return bool
      */
     public function login_bidder($confirmation_code) {
         global $wpdb;
@@ -692,6 +760,7 @@ class AIH_Auth {
         
         // Get the registrant
         $registrants_table = AIH_Database::get_table('registrants');
+        /** @var stdClass|null $registrant */
         $registrant = $wpdb->get_row($wpdb->prepare(
             "SELECT * FROM $registrants_table WHERE confirmation_code = %s",
             $confirmation_code
@@ -728,6 +797,8 @@ class AIH_Auth {
     
     /**
      * Logout current bidder
+     *
+     * @return bool
      */
     public function logout_bidder() {
         $this->clear_session();
@@ -736,6 +807,8 @@ class AIH_Auth {
     
     /**
      * Check if a bidder is logged in
+     *
+     * @return bool
      */
     public function is_logged_in() {
         $data = $this->read_session();
@@ -758,6 +831,8 @@ class AIH_Auth {
     
     /**
      * Get current bidder's ID (confirmation_code)
+     *
+     * @return string|null
      */
     public function get_current_bidder_id() {
         $data = $this->read_session();
@@ -766,6 +841,8 @@ class AIH_Auth {
     
     /**
      * Get current bidder's full record
+     *
+     * @return stdClass|null
      */
     public function get_current_bidder() {
         $confirmation_code = $this->get_current_bidder_id();
@@ -780,6 +857,7 @@ class AIH_Auth {
      * Schedule auto sync cron job
      *
      * @param string|null $interval Optional interval override. If null, reads from options.
+     * @return void
      */
     public static function schedule_auto_sync($interval = null) {
         // Clear any existing schedule first
@@ -801,6 +879,8 @@ class AIH_Auth {
 
     /**
      * Unschedule auto sync cron job
+     *
+     * @return void
      */
     public static function unschedule_auto_sync() {
         wp_clear_scheduled_hook('aih_auto_sync_registrants');
@@ -810,6 +890,7 @@ class AIH_Auth {
      * Reschedule auto sync with new interval
      *
      * @param string $interval The new interval ('hourly' or 'every_thirty_seconds')
+     * @return void
      */
     public static function reschedule_auto_sync($interval) {
         if (get_option('aih_auto_sync_enabled', 0)) {
@@ -819,22 +900,24 @@ class AIH_Auth {
     
     /**
      * Run auto sync (called by cron)
+     *
+     * @return void
      */
     public static function run_auto_sync() {
         $instance = self::get_instance();
         $result = $instance->sync_bidders_from_api();
-        
+
         // Log result
         if (defined('WP_DEBUG') && WP_DEBUG) {
             error_log('Art in Heaven auto sync: ' . ($result['success'] ? 'Success' : 'Failed') . ' - ' . $result['message']);
         }
-        
-        return $result;
     }
 
     /**
      * One-time migration: encrypt existing plaintext api_data values.
      * Gated behind an option so it runs only once.
+     *
+     * @return void
      */
     public static function maybe_encrypt_api_data() {
         if (get_option('aih_api_data_encrypted')) {
@@ -848,6 +931,7 @@ class AIH_Auth {
         );
 
         foreach ($tables as $table) {
+            /** @var list<stdClass> $rows */
             $rows = $wpdb->get_results("SELECT id, api_data FROM $table WHERE api_data IS NOT NULL AND api_data != ''");
             foreach ($rows as $row) {
                 // Skip already-encrypted values

@@ -21,6 +21,8 @@ class AIH_Status {
     
     /**
      * All valid statuses for validation
+     *
+     * @var array<int, string>
      */
     private static $valid_statuses = array(
         self::STATUS_ACTIVE,
@@ -73,7 +75,7 @@ class AIH_Status {
      * @return string
      */
     public static function get_now_string($format = 'Y-m-d H:i:s') {
-        return current_time($format);
+        return (string) current_time($format);
     }
     
     /**
@@ -165,7 +167,7 @@ class AIH_Status {
      * Validate an art piece object has required properties
      * 
      * @param object|null $art_piece
-     * @return array Array with 'valid' bool and 'errors' array
+     * @return array<string, mixed> Array with 'valid' bool and 'errors' array
      */
     public static function validate_art_piece($art_piece) {
         $errors = array();
@@ -199,16 +201,17 @@ class AIH_Status {
      * Check for data inconsistencies in an art piece
      * 
      * @param object $art_piece
-     * @return array Array of warning messages
+     * @return array<int, string> Array of warning messages
      */
     public static function check_data_inconsistencies($art_piece) {
+        /** @var stdClass $art_piece */
         $warnings = array();
-        
+
         $validation = self::validate_art_piece($art_piece);
         if (!$validation['valid']) {
             return $validation['errors'];
         }
-        
+
         $start = self::parse_date($art_piece->auction_start);
         $end = self::parse_date($art_piece->auction_end);
         $now = self::get_now();
@@ -256,7 +259,7 @@ class AIH_Status {
      * This returns what the status SHOULD be based on database status and times.
      * 
      * @param object $art_piece
-     * @return array {
+     * @return array<string, mixed> {
      *     @type string $status The computed status
      *     @type string $display_status Human-readable status with context
      *     @type string $reason Why this status was computed
@@ -265,6 +268,7 @@ class AIH_Status {
      * }
      */
     public static function compute_status($art_piece) {
+        /** @var stdClass $art_piece */
         $result = array(
             'status' => self::STATUS_DRAFT,
             'display_status' => 'Unknown',
@@ -499,8 +503,8 @@ class AIH_Status {
     
     /**
      * Get all valid status options for a select dropdown
-     * 
-     * @return array
+     *
+     * @return array<string, string>
      */
     public static function get_status_options() {
         return array(
