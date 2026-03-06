@@ -84,7 +84,7 @@ class AIH_Database {
         // Validate year
         $year = absint($year);
         if ($year < 2020 || $year > 2100) {
-            $year = wp_date('Y');
+            $year = (int) wp_date('Y');
         }
         
         $charset_collate = $wpdb->get_charset_collate();
@@ -516,6 +516,7 @@ class AIH_Database {
         }
         
         // Check which columns exist
+        /** @var array<int, object{Field: string}> $columns */
         $columns = $wpdb->get_results("SHOW COLUMNS FROM `" . esc_sql($table) . "`");
         $existing_columns = array();
         foreach ($columns as $col) {
@@ -627,7 +628,9 @@ class AIH_Database {
             }
 
             if (method_exists(__CLASS__, $method)) {
-                call_user_func(array(__CLASS__, $method), $year);
+                /** @var callable $callback */
+                $callback = array(__CLASS__, $method);
+                call_user_func($callback, $year);
                 update_option('aih_db_migration_version', $version, false);
             }
         }

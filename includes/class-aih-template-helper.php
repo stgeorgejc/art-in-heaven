@@ -18,7 +18,8 @@ class AIH_Template_Helper {
     /** @var AIH_Template_Helper|null */
     private static $instance = null;
 
-    /** @var array<string, string> Cached page URLs */
+    /** @var array<string, string|false> Cached page URLs */
+    /** @var array<string, string> */
     private static $page_cache = array();
 
     /**
@@ -72,7 +73,8 @@ class AIH_Template_Helper {
 
         $url = $page_id ? get_permalink($page_id) : home_url();
 
-        // Cache the result
+        // Cache the result (get_permalink can return false)
+        $url = $url ?: home_url();
         self::$page_cache[$cache_key] = $url;
 
         return $url;
@@ -183,6 +185,7 @@ class AIH_Template_Helper {
      * @return array<string, mixed> Formatted art piece data
      */
     public static function format_art_piece($piece, $bidder_id = null, $full = false, $include_time_string = false, $batch_data = null) {
+        /** @var stdClass $piece */
         $secs = max(0, intval($piece->seconds_remaining ?? 0));
 
         $data = array(
@@ -267,7 +270,7 @@ class AIH_Template_Helper {
         $is_logged_in = $auth->is_logged_in();
         $bidder = $is_logged_in ? $auth->get_current_bidder() : null;
         $bidder_id = $is_logged_in ? $auth->get_current_bidder_id() : null;
-        $name = self::get_bidder_display_name($bidder, $bidder_id);
+        $name = self::get_bidder_display_name($bidder, $bidder_id ?? '');
 
         return array(
             'id' => $bidder_id,

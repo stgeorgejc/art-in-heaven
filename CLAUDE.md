@@ -27,7 +27,7 @@ WordPress plugin for silent/blind art auctions. Registrants authenticate via CCB
 
 ## Static Analysis
 
-PHPStan is configured at **level 6** with zero errors and zero `ignoreErrors`. All new code must meet this standard.
+PHPStan is configured at **level 8** with zero errors and zero `ignoreErrors`. All new code must meet this standard.
 
 ```bash
 php -d memory_limit=2G vendor/bin/phpstan analyse --memory-limit=2G

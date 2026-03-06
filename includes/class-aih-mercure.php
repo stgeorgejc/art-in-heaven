@@ -76,7 +76,7 @@ class AIH_Mercure {
     /**
      * Verify the Mercure hub is reachable.
      *
-     * @return array{status: string, error?: string, code?: int}
+     * @return array<string, mixed>
      */
     public function health_check() {
         if (!$this->is_configured()) {
@@ -233,9 +233,9 @@ class AIH_Mercure {
         $header = self::base64url_encode(wp_json_encode(array(
             'alg' => 'HS256',
             'typ' => 'JWT',
-        )));
+        )) ?: '');
 
-        $payload_encoded = self::base64url_encode(wp_json_encode($payload));
+        $payload_encoded = self::base64url_encode(wp_json_encode($payload) ?: '');
 
         $signature = self::base64url_encode(
             hash_hmac('sha256', $header . '.' . $payload_encoded, $secret, true)

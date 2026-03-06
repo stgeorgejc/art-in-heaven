@@ -768,7 +768,9 @@ class Art_In_Heaven {
         $pieces = $art_model->get_all(array('status' => 'active', 'limit' => 1));
         if (empty($pieces)) return;
 
-        $image_url = $pieces[0]->watermarked_url ?: $pieces[0]->image_url;
+        /** @var object{watermarked_url: string, image_url: string} $first_piece */
+        $first_piece = $pieces[0];
+        $image_url = $first_piece->watermarked_url ?: $first_piece->image_url;
         if (empty($image_url)) return;
 
         $variants = AIH_Image_Optimizer::get_variant_urls($image_url);

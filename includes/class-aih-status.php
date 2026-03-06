@@ -75,7 +75,7 @@ class AIH_Status {
      * @return string
      */
     public static function get_now_string($format = 'Y-m-d H:i:s') {
-        return current_time($format);
+        return (string) current_time($format);
     }
     
     /**
@@ -186,13 +186,14 @@ class AIH_Status {
      * @return array<int, string> Array of warning messages
      */
     public static function check_data_inconsistencies($art_piece) {
+        /** @var stdClass $art_piece */
         $warnings = array();
-        
+
         $validation = self::validate_art_piece($art_piece);
         if (!$validation['valid']) {
             return $validation['errors'];
         }
-        
+
         $start = self::parse_date($art_piece->auction_start);
         $end = self::parse_date($art_piece->auction_end);
         $now = self::get_now();
@@ -249,6 +250,7 @@ class AIH_Status {
      * }
      */
     public static function compute_status($art_piece) {
+        /** @var stdClass $art_piece */
         $result = array(
             'status' => self::STATUS_DRAFT,
             'display_status' => 'Unknown',

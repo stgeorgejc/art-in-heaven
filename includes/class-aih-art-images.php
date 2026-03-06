@@ -89,16 +89,17 @@ class AIH_Art_Images {
         if (defined('WP_DEBUG') && WP_DEBUG) { error_log('AIH Art Images: remove_image called for record ID: ' . $image_record_id); }
         
         // Get the image record first
+        /** @var object{id: string, art_piece_id: string, image_id: string|null, image_url: string, watermarked_url: string, sort_order: string, is_primary: string}|null $image */
         $image = $wpdb->get_row($wpdb->prepare(
             "SELECT * FROM {$this->table} WHERE id = %d",
             $image_record_id
         ));
-        
+
         if (!$image) {
             if (defined('WP_DEBUG') && WP_DEBUG) { error_log('AIH Art Images: No image found with ID: ' . $image_record_id . ' in table: ' . $this->table); }
             return false;
         }
-        
+
         $art_piece_id = $image->art_piece_id;
         $was_primary = $image->is_primary;
         $deleted_image_url = $image->image_url;
@@ -208,15 +209,16 @@ class AIH_Art_Images {
         global $wpdb;
         
         // Get the image record
+        /** @var object{id: string, art_piece_id: string, image_id: string|null, image_url: string, watermarked_url: string}|null $image */
         $image = $wpdb->get_row($wpdb->prepare(
             "SELECT * FROM {$this->table} WHERE id = %d",
             $image_record_id
         ));
-        
+
         if (!$image) {
             return false;
         }
-        
+
         // Unset all primaries for this art piece
         $wpdb->update(
             $this->table,
@@ -236,7 +238,7 @@ class AIH_Art_Images {
         );
         
         // Sync to art piece table
-        $this->sync_primary_to_art_piece($image->art_piece_id);
+        $this->sync_primary_to_art_piece((int) $image->art_piece_id);
         
         return true;
     }
@@ -254,6 +256,7 @@ class AIH_Art_Images {
         $art_table = AIH_Database::get_table('art_pieces');
         
         if ($primary) {
+            /** @var stdClass $primary */
             $wpdb->update(
                 $art_table,
                 array(
@@ -359,6 +362,7 @@ class AIH_Art_Images {
         $art_table = AIH_Database::get_table('art_pieces');
         
         // Get all art pieces with images
+        /** @var array<int, object{id: string, image_id: string|null, image_url: string, watermarked_url: string}> $pieces */
         $pieces = $wpdb->get_results(
             "SELECT id, image_id, image_url, watermarked_url FROM {$art_table} WHERE image_url IS NOT NULL AND image_url != ''"
         );
@@ -374,8 +378,8 @@ class AIH_Art_Images {
             
             if ($existing == 0 && !empty($piece->image_url)) {
                 $this->add_image(
-                    $piece->id,
-                    $piece->image_id,
+                    (int) $piece->id,
+                    (int) ($piece->image_id ?? 0),
                     $piece->image_url,
                     $piece->watermarked_url,
                     true // Set as primary

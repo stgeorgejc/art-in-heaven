@@ -101,7 +101,7 @@ class AIH_Push {
     /**
      * Get VAPID keys, auto-generating on first call (cached per request)
      *
-     * @return array{publicKey: string, privateKey: string, subject: string}
+     * @return array<string, string>
      */
     public static function get_vapid_keys() {
         if (self::$cached_vapid_keys !== null) {
@@ -256,6 +256,7 @@ class AIH_Push {
         }
 
         // Get art piece title and catalog art_id
+        /** @var object{title: string, art_id: string}|null $art_row */
         $art_row = $wpdb->get_row($wpdb->prepare(
             "SELECT title, art_id FROM `{$art_table}` WHERE id = %d",
             $art_piece_id
@@ -321,6 +322,7 @@ class AIH_Push {
             $webPush = new WebPush($auth);
 
             foreach ($subscriptions as $sub) {
+                /** @var stdClass $sub */
                 if (!self::is_valid_push_endpoint($sub->endpoint)) {
                     self::delete_subscription($sub->endpoint);
                     continue;
@@ -331,7 +333,7 @@ class AIH_Push {
                     'authToken'       => $sub->auth_key,
                     'contentEncoding' => 'aes128gcm',
                 ));
-                $webPush->queueNotification($subscription, $json_payload);
+                $webPush->queueNotification($subscription, $json_payload ?: null);
             }
 
             foreach ($webPush->flush() as $report) {

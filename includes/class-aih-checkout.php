@@ -40,6 +40,7 @@ class AIH_Checkout {
     public function get_pushpay_payment_url($order) {
         // Use the new Pushpay API class
         $pushpay = AIH_Pushpay_API::get_instance();
+        /** @var stdClass $order */
         return $pushpay->get_payment_url($order);
     }
     
@@ -119,6 +120,7 @@ class AIH_Checkout {
         $order_items_table = AIH_Database::get_table('order_items');
         $orders_table = AIH_Database::get_table('orders');
 
+        /** @var list<object{art_piece_id: string, payment_status: string}> $results */
         $results = $wpdb->get_results($wpdb->prepare(
             "SELECT b.art_piece_id, o.payment_status
              FROM $bids_table b
@@ -145,6 +147,7 @@ class AIH_Checkout {
     public function calculate_totals($items) {
         $subtotal = 0;
         foreach ($items as $item) {
+            /** @var stdClass $item */
             $subtotal += floatval($item->winning_amount);
         }
         
@@ -182,6 +185,7 @@ class AIH_Checkout {
             if ($existing_order_id) {
                 $order = $this->get_order($existing_order_id);
                 if ($order) {
+                    /** @var stdClass $order */
                     $pushpay_url = $this->get_pushpay_payment_url($order);
                     return array(
                         'success' => true,
@@ -212,6 +216,7 @@ class AIH_Checkout {
 
             if (!empty($art_piece_ids)) {
                 $won_items = array_filter($won_items, function($item) use ($art_piece_ids) {
+                    /** @var stdClass $item */
                     return in_array($item->id, $art_piece_ids);
                 });
             }
@@ -247,6 +252,7 @@ class AIH_Checkout {
             if (!$order_id) throw new Exception('Failed to create order.');
 
             foreach ($won_items as $item) {
+                /** @var stdClass $item */
                 $wpdb->insert($order_items_table, array(
                     'order_id' => $order_id,
                     'art_piece_id' => $item->id,
@@ -263,6 +269,10 @@ class AIH_Checkout {
             }
 
             $order = $this->get_order($order_id);
+            if (!$order) {
+                $wpdb->query('ROLLBACK');
+                return array('success' => false, 'message' => __('Order not found after creation.', 'art-in-heaven'));
+            }
             $pushpay_url = $this->get_pushpay_payment_url($order);
 
             if (empty($pushpay_url)) {
@@ -300,6 +310,7 @@ class AIH_Checkout {
         $bidders_table = AIH_Database::get_table('bidders');
         $registrants_table = AIH_Database::get_table('registrants');
 
+        /** @var stdClass|null $order */
         $order = $wpdb->get_row($wpdb->prepare(
             "SELECT o.*,
                     COALESCE(bd.name_first, rg.name_first) as name_first,
@@ -409,6 +420,7 @@ class AIH_Checkout {
         $art_table         = AIH_Database::get_table( 'art_pieces' );
 
         // Step 1: Check for an existing order for this art piece.
+        /** @var object{id: string, order_number: string, bidder_id: string, subtotal: string, tax: string, total: string, payment_status: string, payment_method: string, payment_reference: string, notes: string, payment_date: string|null, created_at: string, updated_at: string|null}|null $existing_order */
         $existing_order = $wpdb->get_row( $wpdb->prepare(
             "SELECT o.* FROM $orders_table o
              JOIN $order_items_table oi ON o.id = oi.order_id
@@ -437,6 +449,7 @@ class AIH_Checkout {
         }
 
         // Step 2: No order exists — find the winning bid.
+        /** @var object{id: string, art_piece_id: string, bidder_id: string, bid_amount: string, bid_time: string, is_winning: string, title: string}|null $winning_bid */
         $winning_bid = $wpdb->get_row( $wpdb->prepare(
             "SELECT b.*, a.title FROM $bids_table b
              JOIN $art_table a ON b.art_piece_id = a.id
@@ -631,6 +644,7 @@ class AIH_Checkout {
         global $wpdb;
         $orders_table = AIH_Database::get_table('orders');
 
+        /** @var object{total_orders: string, paid_orders: string, pending_orders: string, total_collected: string, total_pending: string}|null $stats */
         $stats = $wpdb->get_row(
             "SELECT
                 COUNT(*) as total_orders,

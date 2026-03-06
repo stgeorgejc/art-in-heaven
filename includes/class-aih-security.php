@@ -190,7 +190,7 @@ class AIH_Security {
      * 
      * @param mixed  $value   The value to escape
      * @param string $context The context (html, attr, url, js, textarea)
-     * @return string
+     * @return string|array<string, mixed>
      */
     public static function escape($value, $context = 'html') {
         if ($value === null) {
@@ -375,7 +375,7 @@ class AIH_Security {
      */
     public static function generate_token($length = 32) {
         if (function_exists('random_bytes')) {
-            return bin2hex(random_bytes($length / 2));
+            return bin2hex(random_bytes(max(1, (int) ($length / 2))));
         }
         return wp_generate_password($length, false, false);
     }

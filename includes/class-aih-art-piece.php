@@ -523,6 +523,7 @@ class AIH_Art_Piece {
             
             if ($times_changed || $status_explicitly_set) {
                 // Get current piece data
+                /** @var object{auction_start: string|null, auction_end: string|null, status: string}|null $current */
                 $current = $wpdb->get_row($wpdb->prepare(
                     "SELECT auction_start, auction_end, status FROM {$this->table} WHERE id = %d",
                     $id
@@ -751,6 +752,7 @@ class AIH_Art_Piece {
     public function is_auction_ended($id) {
         $piece = $this->get($id);
         if (!$piece) return true;
+        /** @var stdClass $piece */
         return $piece->computed_status === 'ended';
     }
     
@@ -763,6 +765,7 @@ class AIH_Art_Piece {
     public function is_auction_active($id) {
         $piece = $this->get($id);
         if (!$piece) return false;
+        /** @var stdClass $piece */
         return $piece->computed_status === 'active';
     }
     
@@ -865,6 +868,7 @@ class AIH_Art_Piece {
         $counts = new stdClass();
 
         // Query 1: All status counts in a single query (replaces 5 separate queries)
+        /** @var object{total: string, active: string, upcoming: string, draft: string, ended: string}|null $status_row */
         $status_row = $wpdb->get_row($wpdb->prepare(
             "SELECT
                 COUNT(*) as total,
@@ -883,6 +887,7 @@ class AIH_Art_Piece {
         $counts->ended = (int) ($status_row->ended ?? 0);
 
         // Query 2: Active bid counts in a single query (replaces 2 separate queries)
+        /** @var object{active_with_bids: string, active_no_bids: string}|null $bid_row */
         $bid_row = $wpdb->get_row($wpdb->prepare(
             "SELECT
                 COUNT(DISTINCT CASE WHEN b.id IS NOT NULL THEN a.id END) as active_with_bids,
@@ -899,6 +904,7 @@ class AIH_Art_Piece {
         $counts->active_no_bids = (int) ($bid_row->active_no_bids ?? 0);
 
         // Query 2b: Ended bid counts
+        /** @var object{ended_with_bids: string, ended_no_bids: string}|null $ended_bid_row */
         $ended_bid_row = $wpdb->get_row($wpdb->prepare(
             "SELECT
                 COUNT(DISTINCT CASE WHEN b.id IS NOT NULL THEN a.id END) as ended_with_bids,
@@ -914,6 +920,7 @@ class AIH_Art_Piece {
         $counts->ended_no_bids = (int) ($ended_bid_row->ended_no_bids ?? 0);
 
         // Query 3: Global bid/favorites counts (replaces 2 separate queries)
+        /** @var object{pieces_with_bids: string, with_favorites: string}|null $global_row */
         $global_row = $wpdb->get_row(
             "SELECT
                 (SELECT COUNT(DISTINCT art_piece_id) FROM $bids_table) as pieces_with_bids,
@@ -946,6 +953,7 @@ class AIH_Art_Piece {
         $bids_table = AIH_Database::get_table('bids');
 
         // Reuse get_counts() for shared piece-level metrics
+        /** @var stdClass $counts */
         $counts = $this->get_counts();
 
         $stats = new stdClass();
@@ -956,6 +964,7 @@ class AIH_Art_Piece {
         $stats->pieces_with_bids = $counts->pieces_with_bids;
 
         // Bid-level aggregates (consolidated into a single query)
+        /** @var object{total_bids: string, unique_bidders: string, highest_bid: string|null, average_bid: string|null}|null $bid_agg */
         $bid_agg = $wpdb->get_row(
             "SELECT COUNT(*) AS total_bids,
                     COUNT(DISTINCT bidder_id) AS unique_bidders,

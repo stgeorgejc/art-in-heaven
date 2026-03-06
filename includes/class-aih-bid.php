@@ -41,6 +41,7 @@ class AIH_Bid {
         try {
             // Lock the art piece row and get current highest bid atomically
             $status_sql = AIH_Status::get_status_sql('a', '%s');
+            /** @var object{id: string, starting_bid: string, auction_start: string|null, auction_end: string|null, status: string, computed_status: string, current_highest: string|null}|null $art_piece */
             $art_piece = $wpdb->get_row($wpdb->prepare(
                 "SELECT a.id, a.starting_bid, a.auction_start, a.auction_end, a.status,
                         ({$status_sql}) as computed_status,
@@ -394,6 +395,7 @@ class AIH_Bid {
         global $wpdb;
 
         // Get bid info first
+        /** @var object{id: string, art_piece_id: string, bidder_id: string, bid_amount: string, is_winning: string, bid_status: string|null}|null $bid */
         $bid = $wpdb->get_row($wpdb->prepare(
             "SELECT * FROM {$this->table} WHERE id = %d",
             $bid_id
@@ -417,6 +419,7 @@ class AIH_Bid {
             // If this was the winning bid, update the winning status
             if ($bid->is_winning) {
                 // Find the next highest valid bid
+                /** @var object{id: string, bid_amount: string}|null $next_highest */
                 $next_highest = $wpdb->get_row($wpdb->prepare(
                     "SELECT * FROM {$this->table}
                      WHERE art_piece_id = %d AND bid_status = 'valid'
@@ -580,7 +583,7 @@ class AIH_Bid {
      * Get bid statistics
      * Consolidated into a single query with conditional aggregation + caching
      *
-     * @return object{total_bids: int, winning_bids: int, outbid_bids: int, rejected_bids: int, unique_bidders: int, unique_art_pieces: int, total_bid_value: float, highest_bid: float, average_bid: float}
+     * @return object
      */
     public function get_stats() {
         global $wpdb;
@@ -595,6 +598,7 @@ class AIH_Bid {
 
         // Single query with conditional aggregation (replaces 9 separate queries)
         // Using prepare() with literal placeholders for SQL safety consistency
+        /** @var object{total_bids: string, winning_bids: string, outbid_bids: string, rejected_bids: string, unique_bidders: string, unique_art_pieces: string, total_bid_value: string, highest_bid: string|null, average_bid: string|null}|null $row */
         $row = $wpdb->get_row($wpdb->prepare(
             "SELECT
                 COUNT(CASE WHEN bid_status = %s OR bid_status IS NULL THEN 1 END) AS total_bids,

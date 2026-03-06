@@ -283,7 +283,7 @@ class AIH_REST_API {
         // Batch-fetch winning IDs to avoid N+1 queries
         $batch_data = null;
         if ($args['bidder_id'] && !empty($pieces)) {
-            $piece_ids = array_map(function($p) { return intval($p->id); }, $pieces);
+            $piece_ids = array_map(function($p) { /** @var stdClass $p */ return intval($p->id); }, $pieces);
             $bid_model = new AIH_Bid();
             $batch_data = array('winning_ids' => $bid_model->get_winning_ids_batch($piece_ids, $args['bidder_id']));
         }
@@ -327,6 +327,7 @@ class AIH_REST_API {
             $bids = $bid_model->get_bidder_bids_for_art_piece($id, $bidder_id);
             $data['user_bids'] = array();
             foreach ($bids as $bid) {
+                /** @var stdClass $bid */
                 $data['user_bids'][] = array(
                     'amount' => floatval($bid->bid_amount),
                     'time' => $bid->bid_time,
@@ -352,13 +353,13 @@ class AIH_REST_API {
         $amount = $request->get_param('amount');
         
         $auth = AIH_Auth::get_instance();
-        $bidder_id = $auth->get_current_bidder_id();
-        
+        $bidder_id = $auth->get_current_bidder_id() ?? '';
+
         // Rate limiting
         if (!AIH_Security::check_rate_limit('bid_' . $bidder_id, 10, 60)) {
             return new WP_Error('rate_limited', __('Too many bid attempts. Please wait.', 'art-in-heaven'), array('status' => 429));
         }
-        
+
         $bid_model = new AIH_Bid();
         $result = $bid_model->place_bid($art_piece_id, $bidder_id, $amount);
         
@@ -377,7 +378,7 @@ class AIH_REST_API {
         return rest_ensure_response(array(
             'success' => true,
             'message' => $result['message'],
-            'bid_id' => $result['bid_id'],
+            'bid_id' => $result['bid_id'] ?? null,
             'current_bid' => floatval($highest ?: 0),
         ));
     }
@@ -396,6 +397,7 @@ class AIH_REST_API {
         
         $data = array();
         foreach ($bids as $bid) {
+            /** @var stdClass $bid */
             $data[] = array(
                 'amount' => floatval($bid->bid_amount),
                 'time' => $bid->bid_time,
@@ -416,8 +418,8 @@ class AIH_REST_API {
      */
     public function get_favorites($request) {
         $auth = AIH_Auth::get_instance();
-        $bidder_id = $auth->get_current_bidder_id();
-        
+        $bidder_id = $auth->get_current_bidder_id() ?? '';
+
         $favorites = new AIH_Favorites();
         $items = $favorites->get_bidder_favorites($bidder_id);
         
@@ -439,8 +441,8 @@ class AIH_REST_API {
         $art_piece_id = $request->get_param('art_piece_id');
         
         $auth = AIH_Auth::get_instance();
-        $bidder_id = $auth->get_current_bidder_id();
-        
+        $bidder_id = $auth->get_current_bidder_id() ?? '';
+
         $favorites = new AIH_Favorites();
         $result = $favorites->toggle($bidder_id, $art_piece_id);
         
@@ -493,6 +495,7 @@ class AIH_REST_API {
         $auth = AIH_Auth::get_instance();
         $bidder = $auth->get_current_bidder();
         
+        /** @var stdClass $bidder */
         return rest_ensure_response(array(
             'logged_in' => $auth->is_logged_in(),
             'bidder' => $bidder ? array(
@@ -527,8 +530,8 @@ class AIH_REST_API {
      */
     public function get_won_items($request) {
         $auth = AIH_Auth::get_instance();
-        $bidder_id = $auth->get_current_bidder_id();
-        
+        $bidder_id = $auth->get_current_bidder_id() ?? '';
+
         $checkout = AIH_Checkout::get_instance();
         $items = $checkout->get_won_items($bidder_id);
         
@@ -545,8 +548,8 @@ class AIH_REST_API {
         $item_ids = $request->get_param('item_ids');
         
         $auth = AIH_Auth::get_instance();
-        $bidder_id = $auth->get_current_bidder_id();
-        
+        $bidder_id = $auth->get_current_bidder_id() ?? '';
+
         $checkout = AIH_Checkout::get_instance();
         $result = $checkout->create_order($bidder_id, $item_ids);
         

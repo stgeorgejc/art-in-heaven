@@ -192,7 +192,7 @@ class AIH_Pushpay_API {
         );
         
         if ($data && in_array($method, array('POST', 'PUT', 'PATCH'))) {
-            $args['body'] = json_encode($data);
+            $args['body'] = json_encode($data) ?: '';
         }
         
         if (defined('WP_DEBUG') && WP_DEBUG) error_log('Pushpay API Request: ' . $method . ' ' . $url);
@@ -471,7 +471,8 @@ class AIH_Pushpay_API {
                         $existing
                     ));
                     if ($linked_order_id) {
-                        $linked_order = $wpdb->get_row($wpdb->prepare(
+                        /** @var object{id: string, payment_reference: string}|null $linked_order */
+                    $linked_order = $wpdb->get_row($wpdb->prepare(
                             "SELECT id, payment_reference FROM {$orders_table} WHERE id = %d",
                             $linked_order_id
                         ));
@@ -506,6 +507,7 @@ class AIH_Pushpay_API {
                 
                 // Update order if matched
                 if ($order_number) {
+                    /** @var object{id: string, payment_status: string, payment_reference: string}|null $order */
                     $order = $wpdb->get_row($wpdb->prepare(
                         "SELECT * FROM {$orders_table} WHERE order_number = %s",
                         $order_number
@@ -653,6 +655,7 @@ class AIH_Pushpay_API {
         $orders_table = AIH_Database::get_table('orders');
         
         // Get transaction
+        /** @var object{id: string, raw_data: string, pushpay_id: string, status: string, payment_date: string}|null $transaction */
         $transaction = $wpdb->get_row($wpdb->prepare(
             "SELECT * FROM {$transactions_table} WHERE id = %d",
             $transaction_id
@@ -663,6 +666,7 @@ class AIH_Pushpay_API {
         }
         
         // Get order
+        /** @var object{id: string}|null $order */
         $order = $wpdb->get_row($wpdb->prepare(
             "SELECT * FROM {$orders_table} WHERE id = %d",
             $order_id
@@ -791,7 +795,7 @@ class AIH_Pushpay_API {
     /**
      * Generate payment URL with pre-filled data
      *
-     * @param object $order
+     * @param stdClass $order Order with bidder_id, total, order_number properties.
      * @return string
      */
     public function get_payment_url($order) {
@@ -808,7 +812,7 @@ class AIH_Pushpay_API {
         $redirect_key = get_option('aih_pushpay_redirect_key', '');
 
         $params = array(
-            'a' => number_format($order->total, 2, '.', ''),
+            'a' => number_format((float) $order->total, 2, '.', ''),
             'al' => 'true',          // Lock the amount
             'rcv' => 'false',        // Not recurring
             'fnd' => $settings['fund'],
