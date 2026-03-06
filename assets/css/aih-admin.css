@@ -11,6 +11,27 @@
  */
 
 /* ============================================
+   SKIP LINK (Accessibility)
+   ============================================ */
+.aih-skip-link:focus {
+    position: fixed;
+    top: 5px;
+    left: 5px;
+    z-index: 100000;
+    padding: 10px 20px;
+    background: #1c1c1c;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    border-radius: 4px;
+    clip: auto !important;
+    width: auto !important;
+    height: auto !important;
+    overflow: visible !important;
+}
+
+/* ============================================
    CSS VARIABLES
    ============================================ */
 :root {

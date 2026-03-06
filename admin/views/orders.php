@@ -355,12 +355,12 @@ if (!defined('ABSPATH')) {
         <table class="wp-list-table widefat fixed striped aih-admin-table aih-orders-table" id="aih-orders-table">
             <thead>
                 <tr>
-                    <th class="sortable" data-sort="order"><?php _e('Order #', 'art-in-heaven'); ?> <span class="aih-sort-icon">⇅</span></th>
+                    <th class="sortable" data-sort="order"><?php _e('Order #', 'art-in-heaven'); ?> <span class="aih-sort-icon" aria-label="<?php esc_attr_e('Sort', 'art-in-heaven'); ?>">⇅</span></th>
                     <th><?php _e('Bidder', 'art-in-heaven'); ?></th>
-                    <th class="sortable" data-sort="items"><?php _e('Items', 'art-in-heaven'); ?> <span class="aih-sort-icon">⇅</span></th>
-                    <th class="sortable" data-sort="total"><?php _e('Total', 'art-in-heaven'); ?> <span class="aih-sort-icon">⇅</span></th>
+                    <th class="sortable" data-sort="items"><?php _e('Items', 'art-in-heaven'); ?> <span class="aih-sort-icon" aria-label="<?php esc_attr_e('Sort', 'art-in-heaven'); ?>">⇅</span></th>
+                    <th class="sortable" data-sort="total"><?php _e('Total', 'art-in-heaven'); ?> <span class="aih-sort-icon" aria-label="<?php esc_attr_e('Sort', 'art-in-heaven'); ?>">⇅</span></th>
                     <th><?php _e('Status', 'art-in-heaven'); ?></th>
-                    <th class="sortable" data-sort="date"><?php _e('Date', 'art-in-heaven'); ?> <span class="aih-sort-icon">⇅</span></th>
+                    <th class="sortable" data-sort="date"><?php _e('Date', 'art-in-heaven'); ?> <span class="aih-sort-icon" aria-label="<?php esc_attr_e('Sort', 'art-in-heaven'); ?>">⇅</span></th>
                     <th><?php _e('Actions', 'art-in-heaven'); ?></th>
                 </tr>
             </thead>
@@ -687,7 +687,7 @@ jQuery(document).ready(function($) {
                 $btn.prop('disabled', false).html('<span class="dashicons dashicons-yes" style="margin-right: 5px;"></span> <?php echo esc_js(__("Confirm Pickup", "art-in-heaven")); ?>');
             }
         }).fail(function() {
-            alert('<?php echo esc_js(__("Request failed", "art-in-heaven")); ?>');
+            alert('<?php echo esc_js(__("Request failed. Check your network connection and try again.", "art-in-heaven")); ?>');
             $btn.prop('disabled', false).html('<span class="dashicons dashicons-yes" style="margin-right: 5px;"></span> <?php echo esc_js(__("Confirm Pickup", "art-in-heaven")); ?>');
         });
     });
@@ -724,7 +724,7 @@ jQuery(document).ready(function($) {
                 $btn.prop('disabled', false).html('<span class="dashicons dashicons-undo" style="margin-right: 5px;"></span> <?php echo esc_js(__("Undo Pickup", "art-in-heaven")); ?>');
             }
         }).fail(function() {
-            alert('<?php echo esc_js(__("Request failed", "art-in-heaven")); ?>');
+            alert('<?php echo esc_js(__("Request failed. Check your network connection and try again.", "art-in-heaven")); ?>');
             $btn.prop('disabled', false).html('<span class="dashicons dashicons-undo" style="margin-right: 5px;"></span> <?php echo esc_js(__("Undo Pickup", "art-in-heaven")); ?>');
         });
     });

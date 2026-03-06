@@ -54,7 +54,7 @@ if ($current_tab === 'not_logged_in') {
          ORDER BY r.name_last, r.name_first ASC"
     );
     $tab_title = __('Logged In - No Bids', 'art-in-heaven');
-    $tab_description = __('People who logged in but haven\'t placed any bids yet. They may need encouragement!', 'art-in-heaven');
+    $tab_description = __('Registrants who logged in but have not placed any bids yet.', 'art-in-heaven');
 } elseif ($current_tab === 'logged_in_has_bids') {
     $people = $wpdb->get_results(
         "SELECT r.* FROM $registrants_table r
@@ -63,7 +63,7 @@ if ($current_tab === 'not_logged_in') {
          ORDER BY r.name_last, r.name_first ASC"
     );
     $tab_title = __('Logged In - Has Bids', 'art-in-heaven');
-    $tab_description = __('Active bidders who have placed at least one bid. These are your engaged participants!', 'art-in-heaven');
+    $tab_description = __('Registrants who have placed at least one bid. These are your engaged participants.', 'art-in-heaven');
 } else {
     $people = $wpdb->get_results("SELECT * FROM $registrants_table ORDER BY name_last, name_first ASC");
     $tab_title = __('All Registrants', 'art-in-heaven');
@@ -72,7 +72,7 @@ if ($current_tab === 'not_logged_in') {
 }
 ?>
 <div class="wrap aih-admin-wrap">
-    <h1><?php _e('Bidders Management', 'art-in-heaven'); ?></h1>
+    <h1><?php _e('Registrants', 'art-in-heaven'); ?></h1>
 
     <!-- Sync Status & Actions -->
     <div class="aih-bidders-toolbar">
@@ -154,18 +154,19 @@ if ($current_tab === 'not_logged_in') {
             <tr>
                 <td colspan="7" style="text-align: center; padding: 40px;">
                     <?php if ($current_tab === 'not_logged_in'): ?>
-                        <span style="color: #10b981; font-size: 24px;">🎉</span><br>
-                        <strong><?php _e('Everyone has logged in! Great job!', 'art-in-heaven'); ?></strong>
+                        <span class="dashicons dashicons-yes-alt" style="color: #10b981; font-size: 32px; width: 32px; height: 32px;"></span><br>
+                        <strong><?php _e('All registrants have logged in.', 'art-in-heaven'); ?></strong>
                     <?php elseif ($current_tab === 'logged_in_no_bids'): ?>
-                        <span style="color: #10b981; font-size: 24px;">🎉</span><br>
-                        <strong><?php _e('Everyone who logged in has placed a bid!', 'art-in-heaven'); ?></strong>
+                        <span class="dashicons dashicons-yes-alt" style="color: #10b981; font-size: 32px; width: 32px; height: 32px;"></span><br>
+                        <strong><?php _e('All logged-in registrants have placed bids.', 'art-in-heaven'); ?></strong>
                     <?php elseif ($current_tab === 'logged_in_has_bids'): ?>
-                        <span style="color: #9ca3af; font-size: 24px;">📭</span><br>
-                        <strong><?php _e('No bids have been placed yet.', 'art-in-heaven'); ?></strong>
+                        <span class="dashicons dashicons-info-outline" style="color: #9ca3af; font-size: 32px; width: 32px; height: 32px;"></span><br>
+                        <strong><?php _e('No bids have been placed yet.', 'art-in-heaven'); ?></strong><br>
+                        <?php _e('Bids will appear here once registrants start bidding.', 'art-in-heaven'); ?>
                     <?php else: ?>
-                        <span style="color: #9ca3af; font-size: 24px;">📭</span><br>
+                        <span class="dashicons dashicons-info-outline" style="color: #9ca3af; font-size: 32px; width: 32px; height: 32px;"></span><br>
                         <strong><?php _e('No registrants in database.', 'art-in-heaven'); ?></strong><br>
-                        <?php _e('Click "Sync from API" to import registrants.', 'art-in-heaven'); ?>
+                        <?php _e('Click "Sync from API" above to import registrants from CCB.', 'art-in-heaven'); ?>
                     <?php endif; ?>
                 </td>
             </tr>
@@ -259,7 +260,7 @@ jQuery(document).ready(function($) {
             },
             error: function() {
                 var $err = $('<div class="notice notice-error"><p></p></div>');
-                $err.find('p').text('✗ <?php echo esc_js(__('Request failed. Please try again.', 'art-in-heaven')); ?>');
+                $err.find('p').text('<?php echo esc_js(__('Sync request failed. Check your network connection and API settings, then try again.', 'art-in-heaven')); ?>');
                 $result.html($err);
             },
             complete: function() {

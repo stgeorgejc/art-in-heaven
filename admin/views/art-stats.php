@@ -259,7 +259,7 @@ if ($computed === 'ended' || ($auction_ended && $piece->status !== 'draft')) {
     <!-- Winning Bidder -->
     <?php if ($winning_bid): ?>
     <div class="aih-winner-box">
-        <h3><?php _e('🏆 Winning Bidder', 'art-in-heaven'); ?></h3>
+        <h3><?php _e('Winning Bidder', 'art-in-heaven'); ?></h3>
         <p>
             <strong><?php echo esc_html(trim($winning_bid->name_first . ' ' . $winning_bid->name_last) ?: 'Unknown'); ?></strong>
             <code style="margin-left: 10px;"><?php echo esc_html($winning_bid->confirmation_code); ?></code>
@@ -295,7 +295,7 @@ if ($computed === 'ended' || ($auction_ended && $piece->status !== 'draft')) {
             </p>
         <?php else: ?>
             <p style="margin-bottom: 0; color: #856404;">
-                <?php _e('⚠ Not yet ordered', 'art-in-heaven'); ?>
+                <?php _e('Not yet ordered', 'art-in-heaven'); ?>
             </p>
         <?php endif; ?>
     </div>
@@ -331,10 +331,10 @@ if ($computed === 'ended' || ($auction_ended && $piece->status !== 'draft')) {
             <thead>
                 <tr>
                     <th style="width: 40px;">#</th>
-                    <th class="sortable" data-sort="name"><?php _e('Bidder', 'art-in-heaven'); ?> <span class="aih-sort-icon">⇅</span></th>
+                    <th class="sortable" data-sort="name"><?php _e('Bidder', 'art-in-heaven'); ?> <span class="aih-sort-icon" aria-label="<?php esc_attr_e('Sort', 'art-in-heaven'); ?>">⇅</span></th>
                     <th style="width: 140px;"><?php _e('Confirmation Code', 'art-in-heaven'); ?></th>
-                    <th class="sortable" data-sort="amount" style="width: 120px;"><?php _e('Bid Amount', 'art-in-heaven'); ?> <span class="aih-sort-icon">⇅</span></th>
-                    <th class="sortable" data-sort="time" style="width: 180px;"><?php _e('Time', 'art-in-heaven'); ?> <span class="aih-sort-icon">⇅</span></th>
+                    <th class="sortable" data-sort="amount" style="width: 120px;"><?php _e('Bid Amount', 'art-in-heaven'); ?> <span class="aih-sort-icon" aria-label="<?php esc_attr_e('Sort', 'art-in-heaven'); ?>">⇅</span></th>
+                    <th class="sortable" data-sort="time" style="width: 180px;"><?php _e('Time', 'art-in-heaven'); ?> <span class="aih-sort-icon" aria-label="<?php esc_attr_e('Sort', 'art-in-heaven'); ?>">⇅</span></th>
                     <th style="width: 100px;"><?php _e('Status', 'art-in-heaven'); ?></th>
                 </tr>
             </thead>

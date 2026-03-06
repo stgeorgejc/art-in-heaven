@@ -32,6 +32,19 @@ class AIH_Admin {
     private function __construct() {
         add_action('admin_menu', array($this, 'add_admin_menus'));
         add_action('admin_init', array($this, 'admin_init'));
+        add_action('in_admin_header', array($this, 'render_skip_link'));
+    }
+
+    /**
+     * Render a skip-to-content link for keyboard navigation on AIH pages.
+     *
+     * @return void
+     */
+    public function render_skip_link(): void {
+        $screen = get_current_screen();
+        if ($screen && strpos($screen->id, 'art-in-heaven') !== false) {
+            echo '<a class="aih-skip-link screen-reader-text" href="#wpbody-content">' . esc_html__('Skip to main content', 'art-in-heaven') . '</a>';
+        }
     }
     
     /**
@@ -92,12 +105,12 @@ class AIH_Admin {
             array($this, 'render_art_pieces')
         );
 
-        // Bidders - requires bidder management access (super admin only)
+        // Registrants - requires bidder management access (super admin only)
         if (AIH_Roles::can_manage_bidders()) {
             add_submenu_page(
                 $default_slug,
-                __('Bidders', 'art-in-heaven'),
-                __('Bidders', 'art-in-heaven'),
+                __('Registrants', 'art-in-heaven'),
+                __('Registrants', 'art-in-heaven'),
                 AIH_Roles::CAP_MANAGE_BIDDERS,
                 'art-in-heaven-bidders',
                 array($this, 'render_bidders')

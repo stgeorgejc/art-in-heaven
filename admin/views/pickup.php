@@ -176,8 +176,9 @@ if (!empty($order_ids)) {
                     <div class="aih-empty-icon">
                         <span class="dashicons dashicons-smiley"></span>
                     </div>
-                    <p class="aih-empty-message"><?php _e('No orders ready for pickup!', 'art-in-heaven'); ?></p>
+                    <p class="aih-empty-message"><?php _e('No orders ready for pickup.', 'art-in-heaven'); ?></p>
                     <p class="aih-empty-submessage"><?php _e('Orders will appear here once they are paid.', 'art-in-heaven'); ?></p>
+                    <p><a href="<?php echo esc_url(admin_url('admin.php?page=art-in-heaven-orders')); ?>" class="button"><?php _e('View Orders', 'art-in-heaven'); ?></a></p>
                 <?php else: ?>
                     <div class="aih-empty-icon">
                         <span class="dashicons dashicons-archive"></span>
@@ -724,7 +725,7 @@ jQuery(document).ready(function($) {
                 $btn.prop('disabled', false).html('<span class="dashicons dashicons-yes"></span> <?php echo esc_js(__('Confirm Pickup', 'art-in-heaven')); ?>');
             }
         }).fail(function() {
-            alert('<?php echo esc_js(__('Request failed', 'art-in-heaven')); ?>');
+            alert('<?php echo esc_js(__('Request failed. Check your network connection and try again.', 'art-in-heaven')); ?>');
             $btn.prop('disabled', false).html('<span class="dashicons dashicons-yes"></span> <?php echo esc_js(__('Confirm Pickup', 'art-in-heaven')); ?>');
         });
     });
@@ -761,7 +762,7 @@ jQuery(document).ready(function($) {
                 $btn.prop('disabled', false).html('<span class="dashicons dashicons-undo"></span> <?php echo esc_js(__('Undo Pickup', 'art-in-heaven')); ?>');
             }
         }).fail(function() {
-            alert('<?php echo esc_js(__('Request failed', 'art-in-heaven')); ?>');
+            alert('<?php echo esc_js(__('Request failed. Check your network connection and try again.', 'art-in-heaven')); ?>');
             $btn.prop('disabled', false).html('<span class="dashicons dashicons-undo"></span> <?php echo esc_js(__('Undo Pickup', 'art-in-heaven')); ?>');
         });
     });

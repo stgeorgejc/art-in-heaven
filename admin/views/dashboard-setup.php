@@ -40,7 +40,7 @@ $year = AIH_Database::get_auction_year();
         <ol>
             <li><?php _e('Database tables will be created for the current auction year', 'art-in-heaven'); ?></li>
             <li><?php _e('You can then add art pieces and configure settings', 'art-in-heaven'); ?></li>
-            <li><?php _e('Import bidders from CCB or add them manually', 'art-in-heaven'); ?></li>
+            <li><?php _e('Import registrants from CCB or add them manually', 'art-in-heaven'); ?></li>
             <li><?php _e('Your auction will be ready to go!', 'art-in-heaven'); ?></li>
         </ol>
     </div>
