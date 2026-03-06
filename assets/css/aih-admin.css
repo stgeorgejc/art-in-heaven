@@ -474,8 +474,8 @@ button.aih-action-btn .dashicons {
 .aih-stat-card.aih-card-warning { border-left-color: var(--aih-warning); background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); }
 .aih-stat-card.aih-card-danger { border-left-color: var(--aih-error); background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); }
 .aih-stat-card.aih-card-info { border-left-color: var(--aih-info); background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); }
-.aih-stat-card.aih-stat-highlight { border-left-color: var(--aih-success); background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); }
-.aih-stat-card.aih-stat-favorites { border-left-color: #f59e0b; background: #fef3c7; }
+.aih-stat-card.aih-stat-highlight { border-left-color: var(--aih-success); }
+.aih-stat-card.aih-stat-favorites { border-color: #f59e0b; background: #fef3c7; }
 
 .aih-stat-card.aih-last-bid-card {
     text-align: left;

@@ -924,7 +924,7 @@ class AIH_Admin {
      * Render the opening tag of a stat card grid container.
      *
      * @param string $extra_class Optional additional CSS class(es).
-     * @param string $extra_style Optional inline style.
+     * @param string $extra_style Optional inline style (kept for backward compatibility).
      * @return void
      */
     public static function open_stat_grid($extra_class = '', $extra_style = '') {
@@ -932,6 +932,7 @@ class AIH_Admin {
         if ($extra_class !== '') {
             $classes .= ' ' . $extra_class;
         }
+        // Backward compat: $extra_style is caller-supplied inline CSS, sanitized via esc_attr().
         $style_attr = $extra_style !== '' ? ' style="' . esc_attr($extra_style) . '"' : '';
         echo '<div class="' . esc_attr($classes) . '"' . $style_attr . '>';
     }
@@ -950,6 +951,7 @@ class AIH_Admin {
      *
      * @param array{
      *     value: string,
+     *     value_html?: string,
      *     label: string,
      *     sublabel?: string,
      *     detail?: string,
@@ -964,6 +966,7 @@ class AIH_Admin {
     public static function render_stat_card($args) {
         $defaults = array(
             'value'      => '',
+            'value_html' => '',
             'label'      => '',
             'sublabel'   => '',
             'detail'     => '',
@@ -1006,11 +1009,13 @@ class AIH_Admin {
         if ($args['layout'] === 'horizontal' && $args['icon'] !== '') {
             $icon_style = '';
             $style_parts = array();
-            if ($args['icon_bg'] !== '') {
-                $style_parts[] = 'background: ' . $args['icon_bg'];
+            $sanitized_bg = sanitize_hex_color($args['icon_bg']);
+            if ($sanitized_bg !== null && $sanitized_bg !== '') {
+                $style_parts[] = 'background: ' . $sanitized_bg;
             }
-            if ($args['icon_color'] !== '') {
-                $style_parts[] = 'color: ' . $args['icon_color'];
+            $sanitized_color = sanitize_hex_color($args['icon_color']);
+            if ($sanitized_color !== null && $sanitized_color !== '') {
+                $style_parts[] = 'color: ' . $sanitized_color;
             }
             if (!empty($style_parts)) {
                 $icon_style = ' style="' . esc_attr(implode('; ', $style_parts)) . ';"';
@@ -1021,8 +1026,12 @@ class AIH_Admin {
             echo '<div class="aih-stat-content">';
         }
 
-        // Value
-        echo '<div class="aih-stat-number">' . $args['value'] . '</div>';
+        // Value: use value_html (sanitized HTML) if provided, otherwise escape plain text.
+        if ($args['value_html'] !== '') {
+            echo '<div class="aih-stat-number">' . wp_kses_post($args['value_html']) . '</div>';
+        } else {
+            echo '<div class="aih-stat-number">' . esc_html($args['value']) . '</div>';
+        }
 
         // Label
         $label_class = 'aih-stat-label';
@@ -1044,8 +1053,9 @@ class AIH_Admin {
         // Vertical layout icon (after label)
         if ($args['layout'] !== 'horizontal' && $args['icon'] !== '') {
             $icon_style = '';
-            if ($args['icon_color'] !== '') {
-                $icon_style = ' style="color: ' . esc_attr($args['icon_color']) . ';"';
+            $sanitized_icon_color = sanitize_hex_color($args['icon_color']);
+            if ($sanitized_icon_color !== null && $sanitized_icon_color !== '') {
+                $icon_style = ' style="color: ' . esc_attr($sanitized_icon_color) . ';"';
             }
             echo '<div class="aih-stat-icon">';
             echo '<span class="dashicons ' . esc_attr($args['icon']) . '"' . $icon_style . ' aria-hidden="true"></span>';
