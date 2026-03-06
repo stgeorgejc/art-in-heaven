@@ -1800,7 +1800,8 @@ class AIH_Ajax {
                 $truncate_result = $wpdb->query("TRUNCATE TABLE $table");
                 if ($truncate_result === false) {
                     error_log('[AIH] clear_tables error on ' . $key . ': ' . $wpdb->last_error);
-                    $cleared[] = "$key (" . __('error', 'art-in-heaven') . ")";
+                    /* translators: %s: database table name */
+                    $cleared[] = sprintf(__('%s (error)', 'art-in-heaven'), $key);
                 } else {
                     $cleared[] = "$key ($count rows)";
                 }
@@ -1847,7 +1848,8 @@ class AIH_Ajax {
         $image_id = intval($_POST['image_id'] ?? 0);
         
         if (!$art_piece_id || !$image_id) {
-            wp_send_json_error(array('message' => __('Missing required fields.', 'art-in-heaven') . ' Art ID: ' . $art_piece_id . ', Image ID: ' . $image_id));
+            /* translators: 1: art piece ID, 2: image attachment ID */
+            wp_send_json_error(array('message' => sprintf(__('Missing required fields. Art ID: %1$d, Image ID: %2$d', 'art-in-heaven'), $art_piece_id, $image_id)));
         }
         
         $image_url = wp_get_attachment_url($image_id);
