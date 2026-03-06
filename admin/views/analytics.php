@@ -147,17 +147,20 @@ if ( $last_bid_time ) {
 	}
 }
 
-// Active tab.
-$active_tab = isset( $_GET['tab'] ) ? sanitize_text_field( $_GET['tab'] ) : 'overview';
-$tabs       = array(
+// Tabs and active tab.
+$tabs = array(
 	'overview'      => __( 'Overview', 'art-in-heaven' ),
 	'art-pieces'    => __( 'Art Pieces', 'art-in-heaven' ),
 	'bidders'       => __( 'Bidders', 'art-in-heaven' ),
 	'notifications' => __( 'Notifications', 'art-in-heaven' ),
 	'export'        => __( 'Export', 'art-in-heaven' ),
 );
+$active_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'overview';
+if ( ! isset( $tabs[ $active_tab ] ) ) {
+	$active_tab = 'overview';
+}
 
-// Sell-through rate.
+// Bid rate (% of pieces that have received at least one bid).
 $sell_through = $stats->total_pieces > 0 ? round( ( $stats->pieces_with_bids / $stats->total_pieces ) * 100 ) : 0;
 
 // Total revenue.
@@ -233,7 +236,7 @@ foreach ( $notif_types as $row ) {
 	AIH_Admin::open_stat_grid();
 	AIH_Admin::render_stat_card( array(
 		'value'    => $sell_through . '%',
-		'label'    => __( 'Sell-Through Rate', 'art-in-heaven' ),
+		'label'    => __( 'Bid Rate', 'art-in-heaven' ),
 		/* translators: 1: pieces with bids, 2: total pieces */
 		'sublabel' => sprintf( __( '%1$d of %2$d pieces', 'art-in-heaven' ), intval( $stats->pieces_with_bids ), intval( $stats->total_pieces ) ),
 		'variant'  => 'bids',
@@ -1129,7 +1132,7 @@ jQuery(document).ready(function($) {
 		var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
 		var link = document.createElement('a');
 		link.href = URL.createObjectURL(blob);
-		link.download = 'art-in-heaven-stats.csv';
+		link.download = 'art-in-heaven-analytics-art-pieces-' + new Date().toISOString().slice(0, 10) + '.csv';
 		link.click();
 	});
 

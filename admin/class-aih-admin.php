@@ -198,7 +198,7 @@ class AIH_Admin {
         // Legacy slug redirects — keeps old bookmarks working.
         if (AIH_Roles::can_view_reports()) {
             add_submenu_page(
-                '',
+                'options.php',
                 __('Analytics', 'art-in-heaven'),
                 __('Analytics', 'art-in-heaven'),
                 AIH_Roles::CAP_VIEW_REPORTS,
@@ -206,7 +206,7 @@ class AIH_Admin {
                 array($this, 'render_analytics_redirect')
             );
             add_submenu_page(
-                '',
+                'options.php',
                 __('Analytics', 'art-in-heaven'),
                 __('Analytics', 'art-in-heaven'),
                 AIH_Roles::CAP_VIEW_REPORTS,
