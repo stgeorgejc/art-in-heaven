@@ -316,6 +316,14 @@ class AIH_Art_Images {
         }
 
         $ids = array_map('intval', $art_piece_ids);
+        $ids = array_values(array_unique(array_filter($ids, function ($id) {
+            return $id > 0;
+        })));
+
+        if (empty($ids)) {
+            return array();
+        }
+
         $placeholders = implode(',', array_fill(0, count($ids), '%d'));
 
         $rows = $wpdb->get_results($wpdb->prepare(

@@ -12,10 +12,16 @@ use PHPUnit\Framework\TestCase;
 
 class TemplateHelperTest extends TestCase
 {
+    /** @var mixed */
+    private mixed $previousWpdb = null;
+
     protected function setUp(): void
     {
         parent::setUp();
         Monkey\setUp();
+
+        // Save previous $wpdb so we can restore it in tearDown
+        $this->previousWpdb = $GLOBALS['wpdb'] ?? null;
 
         Functions\stubs([
             '__' => function ($text) {
@@ -26,6 +32,11 @@ class TemplateHelperTest extends TestCase
 
     protected function tearDown(): void
     {
+        if ($this->previousWpdb !== null) {
+            $GLOBALS['wpdb'] = $this->previousWpdb;
+        } else {
+            unset($GLOBALS['wpdb']);
+        }
         Monkey\tearDown();
         parent::tearDown();
     }
@@ -99,6 +110,7 @@ class TemplateHelperTest extends TestCase
             public array $queries = [];
             public function prepare(string $q, mixed ...$a): string { return $q; }
             public function query(string $q): void { $this->queries[] = $q; }
+            public function esc_like(string $t): string { return $t; }
         };
         $GLOBALS['wpdb'] = $wpdb;
 

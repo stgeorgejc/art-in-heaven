@@ -427,7 +427,7 @@ class AIH_Database {
         // Check if table exists first
         $table_exists = $wpdb->get_var($wpdb->prepare(
             "SHOW TABLES LIKE %s",
-            $table
+            $wpdb->esc_like($table)
         ));
         
         if (!$table_exists) {
@@ -468,7 +468,7 @@ class AIH_Database {
         // Check if table exists first
         $table_exists = $wpdb->get_var($wpdb->prepare(
             "SHOW TABLES LIKE %s",
-            $table
+            $wpdb->esc_like($table)
         ));
         
         if (!$table_exists) {
@@ -506,7 +506,7 @@ class AIH_Database {
         // Check if table exists first
         $table_exists = $wpdb->get_var($wpdb->prepare(
             "SHOW TABLES LIKE %s",
-            $table
+            $wpdb->esc_like($table)
         ));
         
         if (!$table_exists) {
@@ -565,7 +565,7 @@ class AIH_Database {
         // Check if table exists first
         $table_exists = $wpdb->get_var($wpdb->prepare(
             "SHOW TABLES LIKE %s",
-            $table
+            $wpdb->esc_like($table)
         ));
 
         if (!$table_exists) {
@@ -604,7 +604,7 @@ class AIH_Database {
 
         $table_exists = $wpdb->get_var($wpdb->prepare(
             "SHOW TABLES LIKE %s",
-            $table
+            $wpdb->esc_like($table)
         ));
 
         if (!$table_exists) {
@@ -628,7 +628,7 @@ class AIH_Database {
     /**
      * Drop redundant single-column indexes from Bids table.
      *
-     * art_piece_id, bidder_id, is_winning, and bid_status are left-prefixes
+     * art_piece_id, bidder_id, and bid_status are left-prefixes
      * of existing composite indexes, making them redundant.
      *
      * @param int|null $year
@@ -645,14 +645,14 @@ class AIH_Database {
 
         $table_exists = $wpdb->get_var($wpdb->prepare(
             "SHOW TABLES LIKE %s",
-            $table
+            $wpdb->esc_like($table)
         ));
 
         if (!$table_exists) {
             return;
         }
 
-        $redundant = array('art_piece_id', 'bidder_id', 'is_winning', 'bid_status');
+        $redundant = array('art_piece_id', 'bidder_id', 'bid_status');
 
         foreach ($redundant as $index_name) {
             $exists = $wpdb->get_var($wpdb->prepare(

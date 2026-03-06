@@ -363,13 +363,15 @@ class AIH_Template_Helper {
         // Delete all page URL transients
         global $wpdb;
         if ($wpdb) {
+            $prefix = $wpdb->esc_like('_transient_aih_page_') . '%';
+            $timeout_prefix = $wpdb->esc_like('_transient_timeout_aih_page_') . '%';
             $wpdb->query(
                 $wpdb->prepare(
                     "DELETE FROM {$wpdb->options}
                      WHERE option_name LIKE %s
                      OR option_name LIKE %s",
-                    '_transient_aih_page_%',
-                    '_transient_timeout_aih_page_%'
+                    $prefix,
+                    $timeout_prefix
                 )
             );
         }

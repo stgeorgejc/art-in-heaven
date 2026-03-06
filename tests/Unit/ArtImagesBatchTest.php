@@ -15,11 +15,16 @@ require_once dirname(__DIR__, 2) . '/includes/class-aih-art-images.php';
 class ArtImagesBatchTest extends TestCase
 {
     private object $wpdb;
+    /** @var mixed */
+    private mixed $previousWpdb = null;
 
     protected function setUp(): void
     {
         parent::setUp();
         Monkey\setUp();
+
+        // Save previous $wpdb so we can restore it in tearDown
+        $this->previousWpdb = $GLOBALS['wpdb'] ?? null;
 
         // Reset AIH_Database cached_year
         $ref = new \ReflectionClass(AIH_Database::class);
@@ -64,6 +69,11 @@ class ArtImagesBatchTest extends TestCase
 
     protected function tearDown(): void
     {
+        if ($this->previousWpdb !== null) {
+            $GLOBALS['wpdb'] = $this->previousWpdb;
+        } else {
+            unset($GLOBALS['wpdb']);
+        }
         Monkey\tearDown();
         parent::tearDown();
     }
