@@ -36,6 +36,12 @@ if ( ! isset( $payment_stats ) ) {
 if ( ! isset( $last_bid_time ) ) {
 	$last_bid_time = null;
 }
+if ( ! isset( $bid_distribution ) ) {
+	$bid_distribution = array();
+}
+if ( ! isset( $top_by_revenue ) ) {
+	$top_by_revenue = array();
+}
 
 // Ensure stats has all required properties.
 $stats->total_pieces        = isset( $stats->total_pieces ) ? $stats->total_pieces : 0;
@@ -240,20 +246,24 @@ foreach ( $notif_types as $row ) {
 		/* translators: 1: pieces with bids, 2: total pieces */
 		'sublabel' => sprintf( __( '%1$d of %2$d pieces', 'art-in-heaven' ), intval( $stats->pieces_with_bids ), intval( $stats->total_pieces ) ),
 		'variant'  => 'bids',
+		'link'     => admin_url( 'admin.php?page=art-in-heaven-analytics&tab=art-pieces' ),
 	) );
 	AIH_Admin::render_stat_card( array(
 		'value'   => '$' . number_format( $total_revenue, 2 ),
 		'label'   => __( 'Total Revenue', 'art-in-heaven' ),
 		'variant' => 'money',
+		'link'    => admin_url( 'admin.php?page=art-in-heaven-orders' ),
 	) );
 	AIH_Admin::render_stat_card( array(
 		'value' => number_format( intval( $stats->unique_bidders ) ),
 		'label' => __( 'Unique Bidders', 'art-in-heaven' ),
+		'link'  => admin_url( 'admin.php?page=art-in-heaven-analytics&tab=bidders' ),
 	) );
 	AIH_Admin::render_stat_card( array(
 		'value'   => number_format( intval( $stats->active_count ) ),
 		'label'   => __( 'Active Auctions', 'art-in-heaven' ),
 		'variant' => 'active',
+		'link'    => admin_url( 'admin.php?page=art-in-heaven-art&tab=active_bids' ),
 	) );
 	AIH_Admin::close_stat_grid();
 	?>
@@ -316,10 +326,25 @@ foreach ( $notif_types as $row ) {
 		</div>
 	</div>
 
+	<!-- Top 10 by Revenue -->
+	<?php if ( ! empty( $top_by_revenue ) ) : ?>
+	<div class="postbox" style="margin-top: 24px;">
+		<h2 class="hndle"><span><?php _e( 'Top 10 Art Pieces by Revenue', 'art-in-heaven' ); ?></span></h2>
+		<div class="inside">
+			<div style="position: relative; height: <?php echo max( 200, count( $top_by_revenue ) * 32 ); ?>px;">
+				<canvas id="aih-top-revenue-chart"></canvas>
+			</div>
+		</div>
+	</div>
+	<?php endif; ?>
+
 	<!-- Payment Summary Tables -->
 	<div class="aih-report-sections">
 		<div class="aih-report-section">
-			<h2><?php _e( 'Art Piece Statistics', 'art-in-heaven' ); ?></h2>
+			<h2>
+				<?php _e( 'Art Piece Statistics', 'art-in-heaven' ); ?>
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=art-in-heaven-art' ) ); ?>" class="page-title-action"><?php _e( 'View All', 'art-in-heaven' ); ?></a>
+			</h2>
 			<table class="widefat">
 				<tr><th><?php _e( 'Active Pieces', 'art-in-heaven' ); ?></th><td><?php echo intval( $stats->active_count ); ?></td></tr>
 				<tr><th><?php _e( 'Draft Pieces', 'art-in-heaven' ); ?></th><td><?php echo intval( $stats->draft_count ); ?></td></tr>
@@ -331,7 +356,10 @@ foreach ( $notif_types as $row ) {
 			</table>
 		</div>
 		<div class="aih-report-section">
-			<h2><?php _e( 'Payment Statistics', 'art-in-heaven' ); ?></h2>
+			<h2>
+				<?php _e( 'Payment Statistics', 'art-in-heaven' ); ?>
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=art-in-heaven-orders' ) ); ?>" class="page-title-action"><?php _e( 'View Orders', 'art-in-heaven' ); ?></a>
+			</h2>
 			<table class="widefat">
 				<tr><th><?php _e( 'Total Orders', 'art-in-heaven' ); ?></th><td><?php echo intval( $payment_stats->total_orders ); ?></td></tr>
 				<tr><th><?php _e( 'Paid Orders', 'art-in-heaven' ); ?></th><td><?php echo intval( $payment_stats->paid_orders ); ?></td></tr>
@@ -344,7 +372,10 @@ foreach ( $notif_types as $row ) {
 
 	<?php elseif ( $active_tab === 'art-pieces' ) : ?>
 	<!-- ========== ART PIECES TAB ========== -->
-	<h2><?php _e( 'Statistics by Tier (Active Art Pieces)', 'art-in-heaven' ); ?></h2>
+	<h2>
+		<?php _e( 'Statistics by Tier (Active Art Pieces)', 'art-in-heaven' ); ?>
+		<a href="<?php echo esc_url( admin_url( 'admin.php?page=art-in-heaven-bids' ) ); ?>" class="page-title-action"><?php _e( 'View All Bids', 'art-in-heaven' ); ?></a>
+	</h2>
 	<p class="description"><?php _e( 'Click column headers to sort. Shows individual art pieces sorted by tier.', 'art-in-heaven' ); ?></p>
 
 	<?php
@@ -519,6 +550,18 @@ foreach ( $notif_types as $row ) {
 	</table>
 	</div>
 
+	<!-- Bid Distribution -->
+	<?php if ( ! empty( $bid_distribution ) ) : ?>
+	<div class="postbox" style="margin-top: 24px;">
+		<h2 class="hndle"><span><?php _e( 'Bid Distribution by Amount', 'art-in-heaven' ); ?></span></h2>
+		<div class="inside">
+			<div style="position: relative; height: 260px;">
+				<canvas id="aih-bid-distribution-chart"></canvas>
+			</div>
+		</div>
+	</div>
+	<?php endif; ?>
+
 	<!-- All Art Pieces table -->
 	<h2 style="margin-top: 30px;"><?php _e( 'All Art Pieces', 'art-in-heaven' ); ?></h2>
 	<div class="aih-table-wrap">
@@ -616,6 +659,11 @@ foreach ( $notif_types as $row ) {
 
 	<?php elseif ( $active_tab === 'bidders' ) : ?>
 	<!-- ========== BIDDERS TAB ========== -->
+	<h2>
+		<?php _e( 'Bidder Engagement', 'art-in-heaven' ); ?>
+		<a href="<?php echo esc_url( admin_url( 'admin.php?page=art-in-heaven-bidders' ) ); ?>" class="page-title-action"><?php _e( 'View All Registrants', 'art-in-heaven' ); ?></a>
+		<a href="<?php echo esc_url( admin_url( 'admin.php?page=art-in-heaven-bids' ) ); ?>" class="page-title-action"><?php _e( 'View All Bids', 'art-in-heaven' ); ?></a>
+	</h2>
 
 	<!-- Bidder funnel cards will use data from render function -->
 	<?php if ( isset( $registrant_counts ) ) : ?>
@@ -624,18 +672,35 @@ foreach ( $notif_types as $row ) {
 	AIH_Admin::render_stat_card( array(
 		'value' => number_format( intval( $registrant_counts->total ) ),
 		'label' => __( 'Registered', 'art-in-heaven' ),
+		'link'  => admin_url( 'admin.php?page=art-in-heaven-bidders&tab=all' ),
 	) );
 	AIH_Admin::render_stat_card( array(
 		'value' => number_format( intval( $registrant_counts->logged_in ) ),
 		'label' => __( 'Logged In', 'art-in-heaven' ),
+		'link'  => admin_url( 'admin.php?page=art-in-heaven-bidders&tab=all' ),
 	) );
 	AIH_Admin::render_stat_card( array(
 		'value'   => number_format( intval( $registrant_counts->has_bids ) ),
 		'label'   => __( 'Placed Bids', 'art-in-heaven' ),
 		'variant' => 'bids',
+		'link'    => admin_url( 'admin.php?page=art-in-heaven-bidders&tab=logged_in_has_bids' ),
 	) );
 	AIH_Admin::close_stat_grid();
 	?>
+	<?php endif; ?>
+
+	<!-- Conversion Funnel -->
+	<?php if ( isset( $registrant_counts ) && $registrant_counts->total > 0 ) : ?>
+	<div style="display: flex; flex-wrap: wrap; gap: 24px; margin-top: 16px;">
+		<div class="postbox" style="flex: 1; min-width: 400px; max-width: 700px; margin: 0;">
+			<h2 class="hndle"><span><?php _e( 'Conversion Funnel', 'art-in-heaven' ); ?></span></h2>
+			<div class="inside">
+				<div style="position: relative; height: 260px;">
+					<canvas id="aih-conversion-funnel-chart"></canvas>
+				</div>
+			</div>
+		</div>
+	</div>
 	<?php endif; ?>
 
 	<h2><?php _e( 'Bidder Engagement Comparison', 'art-in-heaven' ); ?></h2>
@@ -835,7 +900,10 @@ foreach ( $notif_types as $row ) {
 
 	<?php elseif ( $active_tab === 'notifications' ) : ?>
 	<!-- ========== NOTIFICATIONS TAB ========== -->
-	<h2><?php _e( 'Push Notification Analytics', 'art-in-heaven' ); ?></h2>
+	<h2>
+		<?php _e( 'Push Notification Analytics', 'art-in-heaven' ); ?>
+		<a href="<?php echo esc_url( admin_url( 'admin.php?page=art-in-heaven-bidders' ) ); ?>" class="page-title-action"><?php _e( 'View Registrants', 'art-in-heaven' ); ?></a>
+	</h2>
 
 	<?php
 	AIH_Admin::open_stat_grid();
@@ -1397,6 +1465,120 @@ jQuery(document).ready(function($) {
 				}
 			});
 		}
+	}
+
+	// -- Overview tab: Top 10 by Revenue (horizontal bar) --
+	var topRevCanvas = document.getElementById('aih-top-revenue-chart');
+	if (topRevCanvas) {
+		var topRevData = <?php echo wp_json_encode( array_map( function( $p ) {
+			return array(
+				'label' => $p->title . ' (' . $p->art_id . ')',
+				'value' => floatval( $p->highest_bid ),
+				'bids'  => intval( $p->bid_count ),
+			);
+		}, $top_by_revenue ) ); ?>;
+		new Chart(topRevCanvas, {
+			type: 'bar',
+			data: {
+				labels: topRevData.map(function(d) { return d.label; }),
+				datasets: [{
+					label: '<?php echo esc_js( __( 'Highest Bid ($)', 'art-in-heaven' ) ); ?>',
+					data: topRevData.map(function(d) { return d.value; }),
+					backgroundColor: chartColors.gold,
+					borderRadius: 4
+				}]
+			},
+			options: {
+				indexAxis: 'y',
+				responsive: true,
+				maintainAspectRatio: false,
+				plugins: {
+					legend: { display: false },
+					tooltip: {
+						callbacks: {
+							label: function(ctx) {
+								var item = topRevData[ctx.dataIndex];
+								return '$' + item.value.toLocaleString() + ' (' + item.bids + ' <?php echo esc_js( __( 'bids', 'art-in-heaven' ) ); ?>)';
+							}
+						}
+					}
+				},
+				scales: {
+					x: { beginAtZero: true, ticks: { callback: function(v) { return '$' + v.toLocaleString(); } } }
+				}
+			}
+		});
+	}
+
+	// -- Art Pieces tab: Bid Distribution histogram --
+	var bidDistCanvas = document.getElementById('aih-bid-distribution-chart');
+	if (bidDistCanvas) {
+		var distData = <?php echo wp_json_encode( array_map( function( $row ) {
+			return array(
+				'bracket' => $row->bracket,
+				'count'   => intval( $row->cnt ),
+			);
+		}, $bid_distribution ) ); ?>;
+		new Chart(bidDistCanvas, {
+			type: 'bar',
+			data: {
+				labels: distData.map(function(d) { return d.bracket; }),
+				datasets: [{
+					label: '<?php echo esc_js( __( 'Number of Bids', 'art-in-heaven' ) ); ?>',
+					data: distData.map(function(d) { return d.count; }),
+					backgroundColor: chartColors.green,
+					borderRadius: 4
+				}]
+			},
+			options: {
+				responsive: true,
+				maintainAspectRatio: false,
+				plugins: { legend: { display: false } },
+				scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+			}
+		});
+	}
+
+	// -- Bidders tab: Conversion Funnel --
+	var funnelCanvas = document.getElementById('aih-conversion-funnel-chart');
+	if (funnelCanvas) {
+		new Chart(funnelCanvas, {
+			type: 'bar',
+			data: {
+				labels: [
+					'<?php echo esc_js( __( 'Registered', 'art-in-heaven' ) ); ?>',
+					'<?php echo esc_js( __( 'Logged In', 'art-in-heaven' ) ); ?>',
+					'<?php echo esc_js( __( 'Placed Bids', 'art-in-heaven' ) ); ?>'
+				],
+				datasets: [{
+					label: '<?php echo esc_js( __( 'Count', 'art-in-heaven' ) ); ?>',
+					data: [
+						<?php echo isset( $registrant_counts ) ? intval( $registrant_counts->total ) : 0; ?>,
+						<?php echo isset( $registrant_counts ) ? intval( $registrant_counts->logged_in ) : 0; ?>,
+						<?php echo isset( $registrant_counts ) ? intval( $registrant_counts->has_bids ) : 0; ?>
+					],
+					backgroundColor: [chartColors.blue, chartColors.gold, chartColors.green],
+					borderRadius: 4
+				}]
+			},
+			options: {
+				responsive: true,
+				maintainAspectRatio: false,
+				plugins: {
+					legend: { display: false },
+					tooltip: {
+						callbacks: {
+							label: function(ctx) {
+								var total = <?php echo isset( $registrant_counts ) ? intval( $registrant_counts->total ) : 1; ?>;
+								var pct = total > 0 ? Math.round((ctx.raw / total) * 100) : 0;
+								return ctx.raw.toLocaleString() + ' (' + pct + '%)';
+							}
+						}
+					}
+				},
+				scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+			}
+		});
 	}
 });
 </script>

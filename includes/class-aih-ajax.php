@@ -1260,11 +1260,32 @@ class AIH_Ajax {
     /** @return void */
     public function admin_export_data() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
-        if (!AIH_Roles::can_view_reports()) wp_send_json_error(array('message' => __('Permission denied.', 'art-in-heaven')));
-        
-        $type = sanitize_text_field($_POST['type'] ?? 'art');
+        if (!AIH_Roles::can_view_reports()) {
+            wp_send_json_error(array('message' => __('Permission denied.', 'art-in-heaven')));
+        }
+
+        $type   = sanitize_text_field($_POST['type'] ?? 'art');
+        $format = sanitize_text_field($_POST['format'] ?? 'json');
+
+        // CSV exports via AIH_Export::to_csv().
+        if ($format === 'csv') {
+            $csv_type = $type;
+            // Map analytics button types to AIH_Export types.
+            if ($type === 'winners') {
+                $csv_type = 'bids';
+            } elseif ($type === 'financial') {
+                $csv_type = 'orders';
+            }
+            $csv = AIH_Export::to_csv($csv_type);
+            if ($csv === '' || strlen($csv) <= 10) {
+                wp_send_json_error(array('message' => __('No data to export.', 'art-in-heaven')));
+            }
+            wp_send_json_success(array('data' => $csv));
+        }
+
+        // JSON exports.
         $art_model = new AIH_Art_Piece();
-        
+
         switch ($type) {
             case 'bids':
                 global $wpdb;
@@ -1279,7 +1300,7 @@ class AIH_Ajax {
             default:
                 $data = $art_model->get_all_with_stats();
         }
-        
+
         wp_send_json_success(array('data' => $data));
     }
 

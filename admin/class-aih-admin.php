@@ -727,6 +727,36 @@ class AIH_Admin {
             "SELECT COUNT(*) FROM $registrants_table r WHERE has_logged_in = 1 AND EXISTS (SELECT 1 FROM $bids_table b WHERE b.bidder_id = r.confirmation_code)"
         );
 
+        // Bid distribution by amount ranges.
+        $bid_distribution = $wpdb->get_results(
+            "SELECT
+                CASE
+                    WHEN bid_amount < 50 THEN 'Under $50'
+                    WHEN bid_amount < 100 THEN '$50–$99'
+                    WHEN bid_amount < 250 THEN '$100–$249'
+                    WHEN bid_amount < 500 THEN '$250–$499'
+                    WHEN bid_amount < 1000 THEN '$500–$999'
+                    ELSE '$1,000+'
+                END AS bracket,
+                COUNT(*) AS cnt
+            FROM $bids_table
+            GROUP BY bracket
+            ORDER BY MIN(bid_amount) ASC"
+        );
+
+        // Top 10 pieces by current bid value (revenue proxy).
+        $art_table = AIH_Database::get_table('art_pieces');
+        $top_by_revenue = $wpdb->get_results(
+            "SELECT a.title, a.art_id,
+                    MAX(b.bid_amount) AS highest_bid,
+                    COUNT(b.id) AS bid_count
+             FROM $bids_table b
+             INNER JOIN $art_table a ON b.art_piece_id = a.id
+             GROUP BY a.id, a.title, a.art_id
+             ORDER BY highest_bid DESC
+             LIMIT 10"
+        );
+
         include AIH_PLUGIN_DIR . 'admin/views/analytics.php';
     }
 
