@@ -22,8 +22,26 @@
     --shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
     --shadow-md: 0 4px 20px rgba(0,0,0,0.06);
     --shadow-lg: 0 10px 40px rgba(0,0,0,0.08);
+    --color-badge-paid: #1565c0;
+    --color-badge-upcoming: #b08d57;
+    --color-status-pending: #e65100;
+    --color-status-pending-bg: #fff3e0;
+    --color-pickup-bg: #e3f2fd;
+    --color-pickup: #1565c0;
+    --overlay-white-95: rgba(255, 255, 255, 0.95);
+    --overlay-white-90: rgba(255, 255, 255, 0.9);
+    --overlay-white-80: rgba(255, 255, 255, 0.8);
+    --overlay-white-50: rgba(255, 255, 255, 0.5);
+    --overlay-black-70: rgba(0, 0, 0, 0.7);
+    --overlay-black-50: rgba(0, 0, 0, 0.5);
+    --overlay-black-40: rgba(0, 0, 0, 0.4);
+    --overlay-black-20: rgba(0, 0, 0, 0.2);
+    --overlay-black-15: rgba(0, 0, 0, 0.15);
+    --shadow-badge: 0 2px 8px rgba(0,0,0,0.15);
     --radius: 4px;
     --transition: 0.25s ease;
+    --transition-fast: 0.2s ease;
+    --transition-slow: 0.3s ease;
     /* Safe area insets for notched devices (iPhone X+) */
     --safe-area-top: env(safe-area-inset-top, 0px);
     --safe-area-bottom: env(safe-area-inset-bottom, 0px);
@@ -71,6 +89,21 @@
     --color-scrollbar-hover: #777;
     --color-success-bg: rgba(95, 168, 112, 0.15);
     --color-error-bg: rgba(216, 108, 111, 0.15);
+    --color-badge-upcoming: #c9a46c;
+    --color-status-pending: #ffb74d;
+    --color-status-pending-bg: rgba(230, 81, 0, 0.15);
+    --color-pickup-bg: rgba(66, 165, 245, 0.15);
+    --color-pickup: #64b5f6;
+    --overlay-white-95: rgba(30, 30, 30, 0.95);
+    --overlay-white-90: rgba(30, 30, 30, 0.9);
+    --overlay-white-80: rgba(30, 30, 30, 0.8);
+    --overlay-white-50: rgba(232, 230, 227, 0.3);
+    --overlay-black-70: rgba(0, 0, 0, 0.7);
+    --overlay-black-50: rgba(0, 0, 0, 0.5);
+    --overlay-black-40: rgba(0, 0, 0, 0.4);
+    --overlay-black-20: rgba(0, 0, 0, 0.4);
+    --overlay-black-15: rgba(0, 0, 0, 0.4);
+    --shadow-badge: 0 2px 8px rgba(0,0,0,0.4);
 }
 
 /* ============================================
@@ -137,9 +170,7 @@
 .aih-lightbox,
 .aih-modal,
 .aih-toast {
-    -webkit-transform: translateZ(0);
     transform: translateZ(0);
-    -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
 }
 
@@ -282,7 +313,7 @@ body.aih-active .wp-site-blocks {
 }
 
 .aih-page .aih-nav-link {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: var(--font-body);
     font-size: 11px;
     font-weight: 500;
     color: var(--color-muted);
@@ -355,7 +386,7 @@ body.aih-active .wp-site-blocks {
 .aih-page .aih-user-name {
     display: none;
     align-items: center;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: var(--font-body);
     font-size: 13px;
     font-weight: 500;
     color: var(--color-secondary);
@@ -412,7 +443,6 @@ body.aih-active .wp-site-blocks {
     word-wrap: break-word;
     max-width: 100%;
     margin: 0 auto;
-    box-sizing: border-box;
 }
 
 /* Centered main for login pages */
@@ -455,7 +485,7 @@ body.aih-active .wp-site-blocks {
 }
 
 .aih-page .aih-subtitle {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: var(--font-body);
     font-size: 12px;
     color: var(--color-muted);
     display: none;
@@ -487,10 +517,14 @@ body.aih-active .wp-site-blocks {
     border-radius: var(--radius);
     transition: all var(--transition);
     -webkit-appearance: none;
-    box-sizing: border-box;
 }
 
-.aih-search-input:focus {
+/* Shared input focus state */
+.aih-search-input:focus,
+.aih-select:focus,
+.aih-bid-input:focus,
+.aih-field input:focus,
+.aih-bid-form-single .aih-field input:focus {
     outline: none;
     border-color: var(--color-accent);
 }
@@ -526,7 +560,6 @@ body.aih-active .wp-site-blocks {
     cursor: pointer;
     transition: all var(--transition);
     white-space: nowrap;
-    box-sizing: border-box;
 }
 
 .aih-filter-toggle:hover {
@@ -552,11 +585,11 @@ body.aih-active .wp-site-blocks {
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: var(--overlay-black-50);
     z-index: var(--z-dropdown);
     opacity: 0;
     visibility: hidden;
-    transition: opacity 0.3s ease, visibility 0.3s ease;
+    transition: opacity var(--transition-slow), visibility var(--transition-slow);
 }
 
 .aih-filter-overlay.open {
@@ -576,7 +609,7 @@ body.aih-active .wp-site-blocks {
     border-radius: 16px 16px 0 0;
     z-index: calc(var(--z-dropdown) + 1);
     transform: translateY(100%);
-    transition: transform 0.3s ease;
+    transition: transform var(--transition-slow);
     max-height: 80vh;
     overflow-y: auto;
     margin-bottom: 0;
@@ -673,11 +706,6 @@ body.filter-open {
     min-width: 70px;
 }
 
-.aih-select:focus {
-    outline: none;
-    border-color: var(--color-accent);
-}
-
 .aih-select-narrow {
     flex: 1 1 calc(33% - 4px);
     max-width: calc(33% - 4px);
@@ -726,7 +754,6 @@ body.filter-open {
     flex-shrink: 0;
     order: 3;
     margin-left: auto;
-    box-sizing: border-box;
 }
 
 .aih-view-toggle .aih-view-btn {
@@ -965,7 +992,6 @@ body.filter-open {
     color: var(--color-muted);
     padding: 8px;
     text-align: center;
-    box-sizing: border-box;
 }
 
 .aih-placeholder-id {
@@ -1002,10 +1028,10 @@ body.filter-open {
     font-weight: 700;
     font-family: var(--font-display);
     letter-spacing: 0.5px;
-    background: rgba(255, 255, 255, 0.95);
+    background: var(--overlay-white-95);
     color: var(--color-accent);
     border-radius: 4px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    box-shadow: var(--shadow-badge);
     line-height: 1;
     display: flex;
     align-items: center;
@@ -1037,7 +1063,7 @@ body.filter-open {
 }
 
 .aih-badge-paid {
-    background: #1565c0;
+    background: var(--color-badge-paid);
     color: white;
 }
 
@@ -1047,7 +1073,7 @@ body.filter-open {
 }
 
 .aih-badge-upcoming {
-    background: #b08d57;
+    background: var(--color-badge-upcoming);
     color: white;
 }
 
@@ -1078,7 +1104,6 @@ body.filter-open {
     color: var(--color-muted);
     -webkit-tap-highlight-color: transparent;
     z-index: var(--z-badge);
-    box-sizing: border-box;
 }
 
 .aih-fav-btn:hover,
@@ -1182,7 +1207,6 @@ body.filter-open {
     min-width: 0;
     width: 100%;
     align-self: stretch;
-    box-sizing: border-box;
 }
 
 .aih-bid-info {
@@ -1238,7 +1262,6 @@ body.filter-open {
     margin-right: -4px;
     padding-left: 4px;
     padding-right: 4px;
-    box-sizing: border-box;
 }
 
 .aih-bid-input {
@@ -1251,7 +1274,6 @@ body.filter-open {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: var(--radius);
-    box-sizing: border-box;
     -webkit-appearance: none;
     -moz-appearance: textfield;
 }
@@ -1261,11 +1283,6 @@ body.filter-open {
 .aih-bid-input::-webkit-inner-spin-button {
     -webkit-appearance: none;
     margin: 0;
-}
-
-.aih-bid-input:focus {
-    outline: none;
-    border-color: var(--color-accent);
 }
 
 .aih-bid-input::placeholder {
@@ -1288,7 +1305,6 @@ body.filter-open {
     cursor: pointer;
     transition: all var(--transition);
     white-space: nowrap;
-    box-sizing: border-box;
     vertical-align: middle;
     -webkit-tap-highlight-color: transparent;
 }
@@ -1342,7 +1358,7 @@ body.filter-open {
 }
 
 .aih-page .aih-empty-state h2 {
-    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-family: var(--font-display);
     font-size: 26px;
     font-weight: 500;
     margin-bottom: 10px;
@@ -1350,7 +1366,7 @@ body.filter-open {
 }
 
 .aih-page .aih-empty-state p {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: var(--font-body);
     color: var(--color-muted);
     font-size: 14px;
 }
@@ -1427,9 +1443,8 @@ body.filter-open {
     -webkit-appearance: none;
 }
 
+/* outline/border-color handled by shared focus rule above */
 .aih-field input:focus {
-    outline: none;
-    border-color: var(--color-accent);
     background: var(--color-surface);
 }
 
@@ -1524,7 +1539,7 @@ body.filter-open {
     border-radius: var(--radius);
     box-shadow: var(--shadow-lg);
     opacity: 0;
-    transition: all 0.3s ease;
+    transition: all var(--transition-slow);
     z-index: var(--z-toast);
 }
 
@@ -1816,7 +1831,6 @@ body.filter-open {
     transition: all var(--transition);
     -webkit-appearance: none;
     -moz-appearance: textfield;
-    box-sizing: border-box;
 }
 
 .aih-bid-form-single .aih-field input::-webkit-outer-spin-button,
@@ -1825,10 +1839,7 @@ body.filter-open {
     margin: 0;
 }
 
-.aih-bid-form-single .aih-field input:focus {
-    outline: none;
-    border-color: var(--color-accent);
-}
+/* outline/border-color handled by shared focus rule */
 
 .aih-bid-form-single .aih-field input::placeholder {
     color: var(--color-muted);
@@ -1849,7 +1860,6 @@ body.filter-open {
     letter-spacing: 0;
     border-radius: var(--radius);
     white-space: nowrap;
-    box-sizing: border-box;
 }
 
 /* ============================================
@@ -1877,7 +1887,7 @@ body.filter-open {
     object-fit: cover;
     object-position: center;
     opacity: 0;
-    transition: opacity 0.3s ease;
+    transition: opacity var(--transition-slow);
 }
 
 .aih-carousel-img.active {
@@ -1894,7 +1904,7 @@ body.filter-open {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.9);
+    background: var(--overlay-white-90);
     border: none;
     border-radius: 50%;
     cursor: pointer;
@@ -1903,8 +1913,8 @@ body.filter-open {
     color: var(--color-primary);
     z-index: var(--z-badge);
     opacity: 1;
-    transition: opacity 0.2s ease, background 0.2s ease;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+    transition: opacity var(--transition-fast), background var(--transition-fast);
+    box-shadow: 0 1px 4px var(--overlay-black-15);
 }
 
 .aih-carousel-prev {
@@ -1934,14 +1944,14 @@ body.filter-open {
     width: 7px;
     height: 7px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.5);
+    background: var(--overlay-white-50);
     cursor: pointer;
-    transition: background 0.2s ease, transform 0.2s ease;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    transition: background var(--transition-fast), transform var(--transition-fast);
+    box-shadow: 0 1px 2px var(--overlay-black-20);
 }
 
 .aih-carousel-dot:hover {
-    background: rgba(255, 255, 255, 0.8);
+    background: var(--overlay-white-80);
 }
 
 .aih-carousel-dot.active {
@@ -1966,7 +1976,7 @@ body.filter-open {
     position: absolute;
     bottom: 8px;
     right: 8px;
-    background: rgba(0, 0, 0, 0.7);
+    background: var(--overlay-black-70);
     color: white;
     padding: 4px 8px;
     border-radius: 4px;
@@ -2022,7 +2032,7 @@ body.filter-open {
     fill: none;
     stroke: var(--color-muted);
     stroke-width: 2;
-    transition: fill 0.2s ease, stroke 0.2s ease;
+    transition: fill var(--transition-fast), stroke var(--transition-fast);
 }
 
 .aih-fav-btn:hover .aih-fav-icon svg {
@@ -2035,17 +2045,13 @@ body.filter-open {
 }
 
 /* ============================================
-   CHECKOUT PAGE - FULL WIDTH LAYOUT
+   FULL WIDTH LAYOUT — shared by all plugin pages
    ============================================ */
-.aih-checkout-page .aih-main {
-    max-width: 100%;
-    width: 100%;
-}
-
-/* ============================================
-   SINGLE ITEM PAGE - FULL WIDTH LAYOUT
-   ============================================ */
-.aih-single-page .aih-main {
+.aih-checkout-page .aih-main,
+.aih-single-page .aih-main,
+.aih-gallery-page .aih-main,
+.aih-mybids-page .aih-main,
+.aih-mywins-page .aih-main {
     max-width: 100%;
     width: 100%;
 }
@@ -2060,21 +2066,7 @@ body.filter-open {
     padding-right: 4px;
 }
 
-/* ============================================
-   GALLERY PAGE - FULL WIDTH LAYOUT
-   ============================================ */
-.aih-gallery-page .aih-main {
-    max-width: 100%;
-    width: 100%;
-}
-
-/* ============================================
-   MY BIDS PAGE - FULL WIDTH LAYOUT
-   ============================================ */
-.aih-mybids-page .aih-main {
-    max-width: 100%;
-    width: 100%;
-}
+/* Gallery and My Bids page .aih-main consolidated into shared rule above */
 
 /* ============================================
    SCROLL TO TOP BUTTON
@@ -2094,10 +2086,10 @@ body.filter-open {
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 12px var(--overlay-black-15);
     opacity: 0;
     visibility: hidden;
-    transition: all 0.3s ease;
+    transition: all var(--transition-slow);
     z-index: var(--z-dropdown);
 }
 
@@ -2164,7 +2156,6 @@ html {
 /* Improve font rendering on all devices */
 body {
     -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
 }
 
@@ -2807,11 +2798,7 @@ body {
    DARK MODE - Hardcoded Color Overrides
    ============================================ */
 
-/* Dark mode background scoped to plugin wrapper only */
-.aih-page.dark-mode {
-    background: #121212 !important;
-    min-height: 100vh;
-}
+/* Dark mode background auto-adapts via --color-bg variable */
 
 /* Scrollbar — inherits from CSS variables, dark-mode overrides via :root */
 .aih-page.dark-mode ::-webkit-scrollbar-track {
@@ -2835,24 +2822,9 @@ body {
     background: rgba(212, 165, 116, 0.3);
 }
 
-/* Badge upcoming */
-.aih-page.dark-mode .aih-badge-upcoming {
-    background: #c9a46c;
-    color: #121212;
-}
+/* Badge upcoming — auto-adapts via --color-badge-upcoming variable */
 
-/* Success/error messages */
-.aih-page.dark-mode .aih-bid-message.success,
-.aih-page.dark-mode .aih-message.success {
-    background: rgba(95, 168, 112, 0.15);
-    color: var(--color-success);
-}
-
-.aih-page.dark-mode .aih-bid-message.error,
-.aih-page.dark-mode .aih-message.error {
-    background: rgba(216, 108, 111, 0.15);
-    color: var(--color-error);
-}
+/* Success/error messages — auto-adapt via --color-success-bg/--color-error-bg variables */
 
 /* Loading spinner */
 .aih-page.dark-mode .aih-btn.loading::after {
@@ -2865,64 +2837,24 @@ body {
     color: #ff8080;
 }
 
-/* Carousel arrows */
-.aih-page.dark-mode .aih-carousel-arrow {
-    background: rgba(30, 30, 30, 0.9);
-    color: var(--color-primary);
-    box-shadow: 0 1px 4px rgba(0,0,0,0.4);
-}
-
-.aih-page.dark-mode .aih-carousel-arrow:hover {
-    background: var(--color-accent);
-    color: #121212;
-}
-
-/* Carousel dots */
-.aih-page.dark-mode .aih-carousel-dot {
-    background: rgba(232, 230, 227, 0.3);
-    box-shadow: 0 1px 2px rgba(0,0,0,0.4);
-}
-
-.aih-page.dark-mode .aih-carousel-dot:hover {
-    background: rgba(232, 230, 227, 0.6);
-}
-
-.aih-page.dark-mode .aih-carousel-dot.active {
-    background: var(--color-primary);
-}
-
-/* Art ID badge - dark mode */
-.aih-page.dark-mode .aih-art-id-badge,
-.aih-page.dark-mode .aih-art-id-badge-single {
-    background: rgba(30, 30, 30, 0.95);
-}
+/* Carousel arrows/dots and art-id badges auto-adapt via overlay variables */
 
 /* Bid history winning item */
 .aih-page.dark-mode .aih-bid-history-item.winning {
     background: rgba(74, 156, 96, 0.15);
 }
 
-/* Order status badges — see consolidated dark-mode section below */
-
-.aih-page.dark-mode .aih-status-pending {
-    background: rgba(230, 81, 0, 0.15);
-}
-
-/* Pickup badge */
-.aih-page.dark-mode .aih-pickup-badge {
-    background: rgba(21, 101, 192, 0.15);
-    color: #64b5f6;
-}
+/* Status pending and pickup badge auto-adapt via CSS variables */
 
 /* View toggle active button */
 .aih-page.dark-mode .aih-view-toggle .aih-view-btn.active {
     background: var(--color-accent);
-    color: #121212;
+    color: var(--color-bg);
 }
 
 /* Cart count badge */
 .aih-page.dark-mode .aih-cart-count {
-    color: #121212;
+    color: var(--color-bg);
 }
 
 /* Filter overlay */
@@ -2936,72 +2868,9 @@ body {
     background: rgba(0, 0, 0, 0.7);
 }
 
-/* Order modal dark mode overrides */
-.aih-page.dark-mode .aih-modal-header h3,
-.aih-page.dark-mode .aih-order-items-list h4,
-.aih-page.dark-mode .aih-order-total-row,
-.aih-page.dark-mode .aih-modal-body {
-    color: var(--color-primary);
-}
-
-.aih-page.dark-mode .aih-modal-close {
-    color: var(--color-muted);
-}
-
-.aih-page.dark-mode .aih-modal-close:hover {
-    color: var(--color-primary);
-}
-
-.aih-page.dark-mode .aih-status-pending {
-    background: rgba(230, 81, 0, 0.15);
-    color: #ffb74d;
-}
-
-.aih-page.dark-mode .aih-order-totals {
-    background: var(--color-surface);
-}
-
-.aih-page.dark-mode .aih-order-item-info h5 {
-    color: var(--color-primary);
-}
-
-.aih-page.dark-mode .aih-order-item-info p {
-    color: var(--color-muted);
-}
-
-.aih-page.dark-mode .aih-order-item-price {
-    color: var(--color-primary);
-}
-
-.aih-page.dark-mode .aih-txn-label {
-    color: var(--color-muted);
-}
-
-.aih-page.dark-mode .aih-txn-value {
-    color: var(--color-secondary);
-}
-
-.aih-page.dark-mode .aih-order-details p {
-    color: var(--color-secondary);
-}
-
-.aih-page.dark-mode .aih-order-card {
-    background: var(--color-surface);
-    border-color: var(--color-border);
-}
-
-.aih-page.dark-mode .aih-order-card:hover {
-    border-color: var(--color-accent);
-}
-
-.aih-page.dark-mode .aih-order-view-link span {
-    color: var(--color-accent);
-}
-
-/* Scroll to top button */
-.aih-page.dark-mode .aih-scroll-top {
-    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-}
+/* Order modal, status, card, and scroll-top — auto-adapt via CSS variables.
+   Status-pending auto-adapts via --color-status-pending and --color-status-pending-bg.
+   Scroll-top shadow auto-adapts via --overlay-black-15. */
 
 /* ============================================
    DARK MODE - Theme Toggle Button
@@ -3503,7 +3372,7 @@ body {
     pointer-events: auto;
     opacity: 0;
     transform: translateY(-20px);
-    transition: opacity 0.3s ease, transform 0.3s ease;
+    transition: opacity var(--transition-slow), transform var(--transition-slow);
     font-family: var(--font-body, 'Inter', -apple-system, sans-serif);
     font-size: 13px;
     color: var(--color-primary, #1a1a2e);
@@ -3601,7 +3470,7 @@ body {
 .aih-page.dark-mode-transition *,
 .aih-page.dark-mode-transition *::before,
 .aih-page.dark-mode-transition *::after {
-    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease !important;
+    transition: background-color var(--transition-slow), color var(--transition-slow), border-color var(--transition-slow), box-shadow var(--transition-slow) !important;
 }
 
 /* ============================================
@@ -3713,7 +3582,7 @@ body {
     left: 50%;
     transform: translateX(-50%) translateY(-60px);
     z-index: calc(var(--z-toast) - 1);
-    transition: transform 0.2s ease;
+    transition: transform var(--transition-fast);
     pointer-events: none;
 }
 
@@ -3937,10 +3806,10 @@ body {
     font-weight: 700;
     font-family: var(--font-display);
     letter-spacing: 0.5px;
-    background: rgba(255, 255, 255, 0.95);
+    background: var(--overlay-white-95);
     color: var(--color-accent);
     border-radius: 4px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    box-shadow: var(--shadow-badge);
     line-height: 1;
     z-index: var(--z-badge);
 }
@@ -4157,7 +4026,6 @@ body {
     height: 44px;
     padding: 0 10px;
     font-size: 16px;
-    box-sizing: border-box;
 }
 
 .aih-bid-form-single .aih-bid-btn {
@@ -4171,7 +4039,6 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    box-sizing: border-box;
 }
 
 /* Bid History Section */
@@ -4277,7 +4144,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.95);
+    background: var(--overlay-white-95);
     border: none;
     border-radius: 50%;
     cursor: pointer;
@@ -4289,8 +4156,8 @@ body {
     color: var(--color-primary);
     z-index: var(--z-badge);
     opacity: 1;
-    transition: background 0.2s ease, transform 0.2s ease;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    transition: background var(--transition-fast), transform var(--transition-fast);
+    box-shadow: var(--shadow-badge);
 }
 
 /* Adjust arrow position for better optical centering */
@@ -4331,14 +4198,14 @@ body {
     aspect-ratio: 1;
     flex-shrink: 0;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.5);
+    background: var(--overlay-white-50);
     cursor: pointer;
-    transition: background 0.2s ease, transform 0.2s ease;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    transition: background var(--transition-fast), transform var(--transition-fast);
+    box-shadow: 0 1px 3px var(--overlay-black-20);
 }
 
 .aih-image-dot:hover {
-    background: rgba(255, 255, 255, 0.8);
+    background: var(--overlay-white-80);
 }
 
 .aih-image-dot.active {
@@ -4361,7 +4228,6 @@ body {
     background: rgba(0, 0, 0, 0.98);
     z-index: var(--z-lightbox);
     overflow: hidden;
-    box-sizing: border-box;
 }
 
 .aih-lightbox.active {
@@ -4383,7 +4249,7 @@ html.aih-lightbox-open body {
     right: 20px;
     font-size: 40px;
     color: #fff;
-    background: rgba(0, 0, 0, 0.5);
+    background: var(--overlay-black-50);
     border: none;
     cursor: pointer;
     z-index: calc(var(--z-lightbox) + 1);
@@ -4393,7 +4259,7 @@ html.aih-lightbox-open body {
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    transition: background 0.2s ease, transform 0.2s ease;
+    transition: background var(--transition-fast), transform var(--transition-fast);
 }
 
 .aih-lightbox-close:hover {
@@ -4458,7 +4324,7 @@ html.aih-lightbox-open body {
     cursor: pointer;
     align-items: center;
     justify-content: center;
-    transition: background 0.2s ease, transform 0.2s ease, color 0.2s ease;
+    transition: background var(--transition-fast), transform var(--transition-fast), color var(--transition-fast);
     z-index: var(--z-lightbox);
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
 }
@@ -4501,14 +4367,14 @@ html.aih-lightbox-open body {
     min-width: 10px;
     min-height: 10px;
     border-radius: 50%;
-    background: rgba(0, 0, 0, 0.5);
+    background: var(--overlay-black-50);
     border: 1px solid rgba(255, 255, 255, 0.2);
     cursor: pointer;
-    transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+    transition: background var(--transition-fast), transform var(--transition-fast), border-color var(--transition-fast);
 }
 
 .aih-lightbox-dot:hover {
-    background: rgba(0, 0, 0, 0.7);
+    background: var(--overlay-black-70);
     border-color: rgba(255, 255, 255, 0.4);
 }
 
@@ -4531,17 +4397,14 @@ html.aih-lightbox-open body {
     color: var(--color-muted);
 }
 
+/* Placeholder overrides — base .aih-placeholder-id/.aih-placeholder-text inherited */
 .aih-single-placeholder .aih-placeholder-id {
-    font-family: var(--font-display);
     font-size: 48px;
-    font-weight: 600;
-    color: var(--color-accent);
     margin-bottom: 16px;
 }
 
 .aih-single-placeholder .aih-placeholder-text {
     font-size: 16px;
-    text-transform: uppercase;
     letter-spacing: 1.5px;
 }
 
@@ -4811,36 +4674,15 @@ html.aih-lightbox-open body {
 }
 
 /* --- Single Item Dark Mode --- */
-.aih-page.dark-mode .aih-img-nav {
-    background: rgba(30, 30, 30, 0.95);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-}
+/* Image nav, dots, and art-id badge auto-adapt via overlay variables */
 
 .aih-page.dark-mode .aih-img-nav:hover {
-    background: var(--color-accent);
-    color: #121212;
-}
-
-.aih-page.dark-mode .aih-image-dot {
-    background: rgba(232, 230, 227, 0.3);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.4);
-}
-
-.aih-page.dark-mode .aih-image-dot:hover {
-    background: rgba(232, 230, 227, 0.6);
-}
-
-.aih-page.dark-mode .aih-image-dot.active {
-    background: var(--color-primary);
+    color: var(--color-bg);
 }
 
 .aih-page.dark-mode .aih-upcoming-notice {
     background: var(--color-surface);
     color: var(--color-secondary);
-}
-
-.aih-page.dark-mode .aih-art-id-badge-single {
-    background: rgba(30, 30, 30, 0.95);
 }
 
 
@@ -4885,10 +4727,10 @@ html.aih-lightbox-open body {
     font-weight: 700;
     font-family: var(--font-display);
     letter-spacing: 0.5px;
-    background: rgba(255, 255, 255, 0.95);
+    background: var(--overlay-white-95);
     color: var(--color-accent);
     border-radius: 3px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+    box-shadow: 0 1px 4px var(--overlay-black-15);
     line-height: 1;
     z-index: 2;
 }
@@ -5291,7 +5133,7 @@ html.aih-lightbox-open body {
 }
 
 .aih-status-paid { background: var(--color-success-bg); color: var(--color-success); }
-.aih-status-pending { background: #fff3e0; color: #e65100; }
+.aih-status-pending { background: var(--color-status-pending-bg); color: var(--color-status-pending); }
 
 .aih-order-details p {
     font-size: 14px;
@@ -5307,12 +5149,12 @@ html.aih-lightbox-open body {
 /* Clickable Order Cards */
 .aih-order-clickable {
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all var(--transition-fast);
 }
 
 .aih-order-clickable:hover {
     border-color: var(--color-accent);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    box-shadow: var(--shadow-md);
 }
 
 .aih-order-view-link {
@@ -5347,7 +5189,7 @@ html.aih-lightbox-open body {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0,0,0,0.5);
+    background: var(--overlay-black-50);
 }
 
 .aih-modal-content {
@@ -5360,7 +5202,7 @@ html.aih-lightbox-open body {
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    box-shadow: var(--shadow-lg);
 }
 
 .aih-modal-header {
@@ -5422,8 +5264,8 @@ html.aih-lightbox-open body {
 }
 
 .aih-pickup-badge {
-    background: #e3f2fd;
-    color: #1565c0;
+    background: var(--color-pickup-bg);
+    color: var(--color-pickup);
     font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
@@ -5481,7 +5323,7 @@ html.aih-lightbox-open body {
     font-size: 10px;
     font-weight: 700;
     font-family: var(--font-display);
-    background: rgba(255, 255, 255, 0.95);
+    background: var(--overlay-white-95);
     color: var(--color-accent);
     border-radius: 2px;
     line-height: 1;
@@ -5590,40 +5432,8 @@ html.aih-lightbox-open body {
 
 /* --- Shared Order/Modal/Checkout Dark Mode --- */
 
-.aih-page.dark-mode .aih-checkout-item-details h4,
-.aih-page.dark-mode .aih-checkout-summary h3,
-.aih-page.dark-mode .aih-summary-row,
-.aih-page.dark-mode .aih-summary-total,
-.aih-page.dark-mode .aih-order-header strong,
-.aih-page.dark-mode .aih-order-details p,
-.aih-page.dark-mode .aih-checkout-item-price strong,
-.aih-page.dark-mode .aih-order-total-row,
-.aih-page.dark-mode .aih-order-total-final,
-.aih-page.dark-mode .aih-order-item-info h5,
-.aih-page.dark-mode .aih-order-items-list h4,
-.aih-page.dark-mode .aih-modal-header h3 {
-    color: var(--color-primary);
-}
-
-.aih-page.dark-mode .aih-status-paid {
-    background: rgba(95, 168, 112, 0.15);
-    color: #5fa870;
-}
-
-.aih-page.dark-mode .aih-status-pending {
-    background: rgba(255, 152, 0, 0.15);
-    color: #ffb74d;
-}
-
-.aih-page.dark-mode .aih-pickup-badge {
-    background: rgba(66, 165, 245, 0.15);
-    color: #64b5f6;
-}
-
-.aih-page.dark-mode .aih-order-totals {
-    background: var(--color-bg-alt);
-}
-
+/* Colors, status badges, and art-id badges auto-adapt via CSS variables.
+   Payment status dark mode overrides remain for unique dark mode colors. */
 .aih-page.dark-mode .aih-payment-success {
     background: rgba(95, 168, 112, 0.15);
     border-color: rgba(95, 168, 112, 0.3);
@@ -5642,116 +5452,30 @@ html.aih-lightbox-open body {
     color: #ef9a9a;
 }
 
-.aih-page.dark-mode .aih-order-item-price {
-    color: var(--color-primary);
-}
-
-.aih-page.dark-mode .aih-checkout-item-image .aih-art-id-badge {
-    background: rgba(30, 30, 30, 0.9);
-    color: var(--color-accent);
-}
-
 
 /* ==========================================================================
    MY BIDS PAGE
    ========================================================================== */
 
-/* Ensure card image displays properly */
-.aih-mybids-page .aih-card-image {
-    position: relative;
-    aspect-ratio: 1/1;
-    overflow: hidden;
-    background: var(--color-bg-alt);
-}
+/* Card image, art-id badge, and status badge inherit from base rules */
 
-.aih-mybids-page .aih-card-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center;
-}
-
-.aih-mybids-page .aih-card-image a {
-    display: block;
-    width: 100%;
-    height: 100%;
-}
-
-/* Art ID badge - match gallery exactly */
-.aih-mybids-page .aih-art-id-badge {
-    position: absolute;
-    bottom: 10px;
-    left: 10px;
-    padding: 5px 8px;
-    font-size: clamp(14px, 4vw, 18px);
-    font-weight: 700;
-    font-family: var(--font-display);
-    letter-spacing: 0.5px;
-    background: rgba(255, 255, 255, 0.95);
-    color: var(--color-accent);
-    border-radius: 4px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-    line-height: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    z-index: var(--z-badge);
-}
-
-/* Status badge - match gallery exactly */
-.aih-mybids-page .aih-badge {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    padding: 5px 10px;
-    font-size: 10px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    border-radius: 2px;
-}
-
-/* Card body and details */
+/* Card overrides — only properties that differ from base .aih-card-* rules */
 .aih-mybids-page .aih-card-body {
     padding: 12px 14px;
-    flex: 1;
-    min-width: 0;
 }
 
 .aih-mybids-page .aih-card-title {
-    font-family: var(--font-display);
     font-size: 16px;
-    font-weight: 500;
     line-height: 1.3;
     margin-bottom: 4px;
-    /* Ellipsis for long titles - 2 lines max */
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.aih-mybids-page .aih-card-title a {
-    color: var(--color-primary);
-    text-decoration: none;
 }
 
 .aih-mybids-page .aih-card-artist {
     font-size: 12px;
-    color: var(--color-muted);
-    /* Ellipsis for long artist names - 1 line */
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
-/* Card footer */
 .aih-mybids-page .aih-card-footer {
     padding: 12px 14px 14px;
-    border-top: 1px solid var(--color-border);
-    background: var(--color-bg);
     margin-top: auto;
 }
 
@@ -5810,31 +5534,29 @@ html.aih-lightbox-open body {
     }
 
     .aih-mybids-page .aih-bid-form {
-        display: flex !important;
-        flex-direction: row !important;
-        gap: 4px !important;
-        width: calc(100% + 24px) !important;
-        margin-left: -12px !important;
-        margin-right: -12px !important;
-        padding-left: 12px !important;
-        padding-right: 12px !important;
-        box-sizing: border-box !important;
+        display: flex;
+        flex-direction: row;
+        gap: 4px;
+        width: calc(100% + 24px);
+        margin-left: -12px;
+        margin-right: -12px;
+        padding-left: 12px;
+        padding-right: 12px;
     }
 
     .aih-mybids-page .aih-bid-input {
-        flex: 1 !important;
-        min-width: 0 !important;
-        padding: 6px 8px !important;
-        font-size: 14px !important;
-        box-sizing: border-box !important;
+        flex: 1;
+        min-width: 0;
+        padding: 6px 8px;
+        font-size: 14px;
     }
 
     .aih-mybids-page .aih-bid-btn {
-        flex-shrink: 0 !important;
-        width: 32px !important;
-        padding: 6px 2px !important;
-        font-size: 10px !important;
-        letter-spacing: 0 !important;
+        flex-shrink: 0;
+        width: 32px;
+        padding: 6px 2px;
+        font-size: 10px;
+        letter-spacing: 0;
     }
 
     /* Art ID badge mobile - match gallery styles */
@@ -5873,10 +5595,7 @@ html.aih-lightbox-open body {
    MY WINS PAGE
    ========================================================================== */
 
-.aih-mywins-page .aih-main {
-    max-width: 100% !important;
-    width: 100% !important;
-}
+/* .aih-mywins-page .aih-main consolidated into shared rule above */
 
 .aih-wins-grid {
     display: grid;
@@ -5890,11 +5609,11 @@ html.aih-lightbox-open body {
     border: 1px solid var(--color-border);
     display: flex;
     flex-direction: column;
-    transition: all 0.2s ease;
+    transition: all var(--transition-fast);
 }
 
 .aih-win-card:hover {
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    box-shadow: var(--shadow-md);
 }
 
 .aih-win-image {
@@ -5917,49 +5636,30 @@ html.aih-lightbox-open body {
     height: 100%;
 }
 
-.aih-win-image .aih-art-id-badge {
-    position: absolute;
-    bottom: 10px;
-    left: 10px;
-    padding: 5px 8px;
-    font-size: clamp(14px, 4vw, 18px);
-    font-weight: 700;
-    font-family: var(--font-display);
-    letter-spacing: 0.5px;
-    background: rgba(255, 255, 255, 0.95);
-    color: var(--color-accent);
-    border-radius: 4px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-    line-height: 1;
-    z-index: var(--z-badge);
-}
+/* Art ID badge inherits from base .aih-art-id-badge */
 
-.aih-badge-owned {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    padding: 5px 10px;
-    font-size: 10px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    border-radius: 2px;
-    background: var(--color-accent);
-    color: white;
-}
-
+/* .aih-badge-owned and .aih-badge-pickup share base badge positioning */
+.aih-badge-owned,
 .aih-badge-pickup {
     position: absolute;
     top: 10px;
-    right: 10px;
     padding: 5px 10px;
     font-size: 10px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 1px;
     border-radius: 2px;
-    background: var(--color-success);
     color: white;
+}
+
+.aih-badge-owned {
+    left: 10px;
+    background: var(--color-accent);
+}
+
+.aih-badge-pickup {
+    right: 10px;
+    background: var(--color-success);
 }
 
 .aih-win-body {
@@ -6177,19 +5877,13 @@ html.aih-lightbox-open body {
     background: var(--color-bg-alt);
 }
 
+/* Placeholder overrides — base .aih-placeholder-id/.aih-placeholder-text inherited */
 .aih-winner-card .aih-placeholder-id {
-    font-family: var(--font-display);
     font-size: 24px;
-    font-weight: 600;
-    color: var(--color-accent);
-    margin-bottom: 6px;
 }
 
 .aih-winner-card .aih-placeholder-text {
     font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: var(--color-muted);
 }
 
 /* Fix descender cutoff on card text */
@@ -6219,7 +5913,7 @@ html.aih-lightbox-open body {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.4);
+    background: var(--overlay-black-40);
     z-index: var(--z-modal);
 }
 
@@ -6237,7 +5931,7 @@ html.aih-lightbox-open body {
     background: var(--color-surface);
     z-index: var(--z-lightbox);
     transform: translateX(100%);
-    transition: transform 0.3s ease;
+    transition: transform var(--transition-slow);
     display: flex;
     flex-direction: column;
     box-shadow: var(--shadow-lg);
@@ -6410,6 +6104,21 @@ html.aih-lightbox-open body {
         --color-scrollbar-hover: #777;
         --color-success-bg: rgba(95, 168, 112, 0.15);
         --color-error-bg: rgba(216, 108, 111, 0.15);
+        --color-badge-upcoming: #c9a46c;
+        --color-status-pending: #ffb74d;
+        --color-status-pending-bg: rgba(230, 81, 0, 0.15);
+        --color-pickup-bg: rgba(66, 165, 245, 0.15);
+        --color-pickup: #64b5f6;
+        --overlay-white-95: rgba(30, 30, 30, 0.95);
+        --overlay-white-90: rgba(30, 30, 30, 0.9);
+        --overlay-white-80: rgba(30, 30, 30, 0.8);
+        --overlay-white-50: rgba(232, 230, 227, 0.3);
+        --overlay-black-70: rgba(0, 0, 0, 0.7);
+        --overlay-black-50: rgba(0, 0, 0, 0.5);
+        --overlay-black-40: rgba(0, 0, 0, 0.4);
+        --overlay-black-20: rgba(0, 0, 0, 0.4);
+        --overlay-black-15: rgba(0, 0, 0, 0.4);
+        --shadow-badge: 0 2px 8px rgba(0,0,0,0.4);
     }
 }
 
