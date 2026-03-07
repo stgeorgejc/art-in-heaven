@@ -406,40 +406,42 @@ class StatusTest extends TestCase
         $this->assertSame('draft', $result);
     }
 
-    public function testCalculateAutoStatusDraftBecomesActiveWhenStartPast(): void
+    public function testCalculateAutoStatusDraftAlwaysRespectedRegardlessOfTimes(): void
     {
+        // Draft is an explicit admin override — always respected, even when
+        // times change or the auction window is currently open
         $result = AIH_Status::calculate_auto_status(
             $this->pastDate(), $this->futureDate(), 'draft', true
         );
-        $this->assertSame('active', $result);
+        $this->assertSame('draft', $result);
+    }
+
+    public function testCalculateAutoStatusDraftRespectedWithFutureStart(): void
+    {
+        // Draft stays draft even with future start and times changed
+        $result = AIH_Status::calculate_auto_status(
+            $this->futureDate('+6 months'), $this->futureDate('+1 year'), 'draft', true
+        );
+        $this->assertSame('draft', $result);
+    }
+
+    public function testCalculateAutoStatusDraftRespectedWithPastEnd(): void
+    {
+        // Draft stays draft even when end has passed and times changed
+        $result = AIH_Status::calculate_auto_status(
+            $this->pastDate('-2 years'), $this->pastDate(), 'draft', true
+        );
+        $this->assertSame('draft', $result);
     }
 
     public function testCalculateAutoStatusFutureStartReturnsActive(): void
     {
-        // Future start should return 'active' (not 'draft') — gallery query
-        // filters by auction_start, and get_status_sql() shows 'scheduled'
+        // Future start with 'active' requested returns 'active' —
+        // gallery query filters by auction_start, get_status_sql() shows 'scheduled'
         $result = AIH_Status::calculate_auto_status(
             $this->futureDate('+6 months'), $this->futureDate('+1 year'), 'active', true
         );
         $this->assertSame('active', $result);
-    }
-
-    public function testCalculateAutoStatusDraftRequestedFutureStartReturnsActive(): void
-    {
-        // Even if 'draft' is requested, when times changed and start is future,
-        // auto-status returns 'active' (draft is only for explicit admin override)
-        $result = AIH_Status::calculate_auto_status(
-            $this->futureDate('+6 months'), $this->futureDate('+1 year'), 'draft', true
-        );
-        $this->assertSame('active', $result);
-    }
-
-    public function testCalculateAutoStatusDraftBecomesEndedWhenEndPast(): void
-    {
-        $result = AIH_Status::calculate_auto_status(
-            $this->pastDate('-2 years'), $this->pastDate(), 'draft', true
-        );
-        $this->assertSame('ended', $result);
     }
 
     public function testCalculateAutoStatusActiveStaysActive(): void

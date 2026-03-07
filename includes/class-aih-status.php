@@ -472,10 +472,11 @@ class AIH_Status {
             ));
         }
 
-        // If requesting draft and times didn't change, respect it (manual draft override)
-        // But if times changed, let the time-based logic below decide the correct status
-        if ($requested_status === self::STATUS_DRAFT && !$times_changed) {
-            if (defined('WP_DEBUG') && WP_DEBUG) { error_log('AIH_Status: Returning DRAFT (requested, times unchanged)'); }
+        // Draft is always an explicit admin override — respect it regardless of time changes.
+        // The gallery query and get_status_sql() handle visibility for scheduled items;
+        // draft should only be removed by explicit admin action, not auto-recalculation.
+        if ($requested_status === self::STATUS_DRAFT) {
+            if (defined('WP_DEBUG') && WP_DEBUG) { error_log('AIH_Status: Returning DRAFT (explicit admin override)'); }
             return self::STATUS_DRAFT;
         }
 

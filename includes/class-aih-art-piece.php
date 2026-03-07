@@ -348,7 +348,7 @@ class AIH_Art_Piece {
                 WHEN auction_end IS NOT NULL AND auction_end <= %s THEN 'ended'
                 WHEN status = 'ended' AND (auction_end IS NULL OR auction_end > %s) AND (auction_start IS NULL OR auction_start <= %s) THEN 'active'
                 WHEN status = 'ended' THEN 'ended'
-                WHEN auction_start IS NOT NULL AND auction_start > %s THEN 'scheduled'
+                WHEN auction_start IS NOT NULL AND auction_start > %s THEN 'upcoming'
                 ELSE 'active'
              END as computed_status
              FROM {$this->table} WHERE art_id = %s",
@@ -724,15 +724,16 @@ class AIH_Art_Piece {
         $placeholders = implode(',', array_fill(0, count($ids), '%d'));
         $now = current_time('mysql');
 
-        // Update the start time
+        // Update the start time — status stays unchanged.
+        // Gallery query filters by auction_start, and get_status_sql() computes
+        // 'scheduled'/'upcoming' for display. Draft is only set by explicit admin action.
         $result = $wpdb->query($wpdb->prepare("UPDATE {$this->table} SET auction_start = %s WHERE id IN ($placeholders)", array_merge(array($new_start_time), $ids)));
 
-        // If start time is in the future, move active pieces to draft
-        if ($new_start_time > $now) {
-            $wpdb->query($wpdb->prepare(
-                "UPDATE {$this->table} SET status = 'draft' WHERE status = 'active' AND id IN ($placeholders)",
-                $ids
-            ));
+        // Fire update action for each piece
+        if ($result !== false && $result > 0) {
+            foreach ($ids as $id) {
+                do_action('aih_art_updated', $id, array('auction_start' => $new_start_time));
+            }
         }
 
         return $result;
@@ -750,10 +751,9 @@ class AIH_Art_Piece {
         if (empty($ids)) {
             return false;
         }
-        if (!class_exists('AIH_Status') || !AIH_Status::is_valid_status($new_status)) {
+        if (!AIH_Status::is_valid_status($new_status)) {
             return false;
         }
-        $ids = array_map('intval', $ids);
         $placeholders = implode(',', array_fill(0, count($ids), '%d'));
 
         $result = $wpdb->query($wpdb->prepare(
