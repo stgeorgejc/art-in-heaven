@@ -67,6 +67,15 @@ class ArtPieceTest extends TestCase
             {
                 return addcslashes($text, '_%\\');
             }
+
+            /** @var int|false */
+            public int|false $query_return = 0;
+
+            public function query(string $sql = ''): int|false
+            {
+                $this->queries[] = $sql;
+                return $this->query_return;
+            }
         };
         $GLOBALS['wpdb'] = $this->wpdb;
 
@@ -237,5 +246,41 @@ class ArtPieceTest extends TestCase
 
         $this->assertNotNull($result);
         $this->assertSame(42, $result->id);
+    }
+
+    // ── bulk_update_status() ──
+
+    public function testBulkUpdateStatusRejectEmptyIds(): void
+    {
+        $model = new AIH_Art_Piece();
+        $this->assertFalse($model->bulk_update_status(array(), 'active'));
+    }
+
+    public function testBulkUpdateStatusRejectInvalidStatus(): void
+    {
+        $model = new AIH_Art_Piece();
+        $this->assertFalse($model->bulk_update_status(array(1, 2), 'bogus'));
+    }
+
+    public function testBulkUpdateStatusExecutesQuery(): void
+    {
+        $this->wpdb->query_return = 3;
+
+        $model = new AIH_Art_Piece();
+        $result = $model->bulk_update_status(array(1, 2, 3), 'active');
+
+        $this->assertSame(3, $result);
+        $sql = end($this->wpdb->queries);
+        $this->assertStringContainsString("SET status", $sql);
+    }
+
+    public function testBulkUpdateStatusReturnsZeroWhenNoRowsAffected(): void
+    {
+        $this->wpdb->query_return = 0;
+
+        $model = new AIH_Art_Piece();
+        $result = $model->bulk_update_status(array(999), 'ended');
+
+        $this->assertSame(0, $result);
     }
 }

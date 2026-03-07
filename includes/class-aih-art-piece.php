@@ -722,11 +722,10 @@ class AIH_Art_Piece {
         if (empty($ids)) return false;
         $ids = array_map('intval', $ids);
         $placeholders = implode(',', array_fill(0, count($ids), '%d'));
-        $now = current_time('mysql');
 
         // Update the start time — status stays unchanged.
         // Gallery query filters by auction_start, and get_status_sql() computes
-        // 'scheduled'/'upcoming' for display. Draft is only set by explicit admin action.
+        // 'upcoming' for display. Draft is only set by explicit admin action.
         $result = $wpdb->query($wpdb->prepare("UPDATE {$this->table} SET auction_start = %s WHERE id IN ($placeholders)", array_merge(array($new_start_time), $ids)));
 
         // Fire update action for each piece

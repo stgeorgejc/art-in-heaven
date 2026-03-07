@@ -263,8 +263,8 @@ class StatusTest extends TestCase
 
     public function testComputeStatusActiveButNotStarted(): void
     {
-        // compute_status still returns 'draft' for display when active + not started
-        // (this is the computed/display status, not the DB status)
+        // Active + future start returns 'upcoming' — consistent with
+        // get_status_sql(), templates, and place_bid() checks
         $piece = (object) [
             'id' => 1,
             'status' => 'active',
@@ -272,7 +272,7 @@ class StatusTest extends TestCase
             'auction_end' => $this->futureDate('+1 year'),
         ];
         $result = AIH_Status::compute_status($piece);
-        $this->assertSame('draft', $result['status']);
+        $this->assertSame('upcoming', $result['status']);
         $this->assertFalse($result['can_bid']);
     }
 
@@ -437,7 +437,7 @@ class StatusTest extends TestCase
     public function testCalculateAutoStatusFutureStartReturnsActive(): void
     {
         // Future start with 'active' requested returns 'active' —
-        // gallery query filters by auction_start, get_status_sql() shows 'scheduled'
+        // gallery query filters by auction_start, get_status_sql() shows 'upcoming'
         $result = AIH_Status::calculate_auto_status(
             $this->futureDate('+6 months'), $this->futureDate('+1 year'), 'active', true
         );
