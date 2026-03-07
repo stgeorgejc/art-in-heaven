@@ -371,7 +371,12 @@ $art_pieces = $art_model->get_all_with_stats($filter_args);
                         
                         <td class="aih-col-image" data-label="">
                             <?php if ($image_url): ?>
-                                <img src="<?php echo esc_url($image_url); ?>" class="aih-thumb" alt="">
+                                <?php echo AIH_Template_Helper::picture_tag(
+                                    $image_url,
+                                    '',
+                                    '80px',
+                                    array('class' => 'aih-thumb')
+                                ); ?>
                             <?php else: ?>
                                 <span class="aih-no-image"><?php _e('No img', 'art-in-heaven'); ?></span>
                             <?php endif; ?>
