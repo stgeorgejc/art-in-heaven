@@ -217,7 +217,7 @@ jQuery(function($) {
         }, function(r) {
             var $card = $grid.find('.aih-qr-card[data-art-id="' + escapeAttr(item.art_id) + '"]');
             if (r.success) {
-                $card.find('.aih-qr-spinner').replaceWith('<img src="' + r.data.qr + '" alt="QR">');
+                $card.find('.aih-qr-spinner').replaceWith('<img src="' + r.data.qr + '" alt="QR code for ' + escapeAttr(item.art_id) + '">');
             } else {
                 $card.find('.aih-qr-spinner').text('<?php echo esc_js(__('Error', 'art-in-heaven')); ?>');
             }
@@ -225,7 +225,10 @@ jQuery(function($) {
             $status.text('<?php echo esc_js(__('Generating QR codes...', 'art-in-heaven')); ?> ' + generated + '/' + items.length);
             generateNext(index + 1);
         }).fail(function() {
+            var $card = $grid.find('.aih-qr-card[data-art-id="' + escapeAttr(item.art_id) + '"]');
+            $card.find('.aih-qr-spinner').text('<?php echo esc_js(__('Error', 'art-in-heaven')); ?>');
             generated++;
+            $status.text('<?php echo esc_js(__('Generating QR codes...', 'art-in-heaven')); ?> ' + generated + '/' + items.length);
             generateNext(index + 1);
         });
     }

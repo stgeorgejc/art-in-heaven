@@ -9,14 +9,14 @@
  * @since   1.1.0
  */
 
-if (!defined('ABSPATH')) {
-    exit;
-}
-
 use chillerlan\QRCode\QRCode;
 use chillerlan\QRCode\QROptions;
 use chillerlan\QRCode\Common\EccLevel;
 use chillerlan\QRCode\Output\QROutputInterface;
+
+if (!defined('ABSPATH')) {
+    exit;
+}
 
 class AIH_QR_Code {
 
@@ -206,7 +206,7 @@ class AIH_QR_Code {
             IMAGETYPE_PNG  => imagecreatefrompng($path),
             IMAGETYPE_JPEG => imagecreatefromjpeg($path),
             IMAGETYPE_GIF  => imagecreatefromgif($path),
-            IMAGETYPE_WEBP => imagecreatefromwebp($path),
+            IMAGETYPE_WEBP => function_exists('imagecreatefromwebp') ? imagecreatefromwebp($path) : false,
             default        => false,
         };
     }
