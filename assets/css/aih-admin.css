@@ -1627,16 +1627,24 @@ button.aih-action-btn .dashicons {
         flex-direction: column;
     }
     
-    /* Nav tabs: scrollable */
+    /* Nav tabs: scrollable with smaller padding */
     .aih-admin-wrap .nav-tab-wrapper {
         flex-wrap: nowrap;
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
         padding-bottom: var(--aih-space-sm);
+        scrollbar-width: thin;
     }
-    
+
     .aih-admin-wrap .nav-tab {
         flex-shrink: 0;
+        padding: var(--aih-space-xs) var(--aih-space-sm);
+        font-size: var(--aih-font-xs);
+    }
+
+    /* Dashboard: override WP fixed table layout on mobile */
+    .aih-dashboard-section .wp-list-table.fixed {
+        table-layout: auto;
     }
     
     /* Modal actions: stack */
@@ -1681,6 +1689,66 @@ button.aih-action-btn .dashicons {
     .aih-admin-wrap .aih-search-form input[type="search"] {
         min-width: 100%;
         width: 100%;
+    }
+
+    /* Dashboard: WP tables need auto layout on mobile */
+    .aih-dashboard-section .wp-list-table.fixed {
+        table-layout: auto;
+        min-width: 500px;
+    }
+
+    /* Payment Summary: ensure value column is visible */
+    .aih-dashboard-section .widefat {
+        table-layout: auto;
+    }
+
+    .aih-dashboard-section .widefat td:last-child {
+        text-align: right;
+        white-space: nowrap;
+    }
+
+    /* Analytics All Art Pieces table: hide less critical columns on mobile */
+    /* Hide: ID (2), With Bids (6), Bid Rate (7), Time Since Last Bid (8) */
+    .aih-stats-table th:nth-child(2),
+    .aih-stats-table td:nth-child(2),
+    .aih-stats-table th:nth-child(6),
+    .aih-stats-table td:nth-child(6),
+    .aih-stats-table th:nth-child(7),
+    .aih-stats-table td:nth-child(7),
+    .aih-stats-table th:nth-child(8),
+    .aih-stats-table td:nth-child(8) {
+        display: none;
+    }
+
+    .aih-stats-table {
+        table-layout: auto;
+    }
+
+    /* Analytics Tier table: hide less critical columns on mobile */
+    /* Hide: Art ID (2), With Bids (6), Bid Rate (7), Status (10) */
+    .aih-tier-table th:nth-child(2),
+    .aih-tier-table td:nth-child(2),
+    .aih-tier-table th:nth-child(6),
+    .aih-tier-table td:nth-child(6),
+    .aih-tier-table th:nth-child(7),
+    .aih-tier-table td:nth-child(7),
+    .aih-tier-table th:nth-child(10),
+    .aih-tier-table td:nth-child(10) {
+        display: none;
+    }
+
+    .aih-tier-table {
+        table-layout: auto;
+    }
+
+    /* Bids table: auto layout after columns hidden by inline styles */
+    .aih-bids-table {
+        table-layout: auto;
+    }
+
+    /* Winners cards: tighter label width */
+    .aih-admin-table tbody td::before {
+        min-width: 70px;
     }
 
     /* ========================================
