@@ -2158,6 +2158,7 @@ body.filter-open {
 html {
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
+    overflow-x: hidden;
 }
 
 /* Improve font rendering on all devices */
@@ -4600,6 +4601,12 @@ html.aih-lightbox-open body {
         padding: 16px;
     }
 
+    .aih-single-image > img,
+    .aih-single-image > picture > img {
+        width: 100%;
+        max-height: 60vh;
+    }
+
     .aih-single-image .aih-fav-btn {
         top: 20px;
         right: 20px;
@@ -4734,6 +4741,7 @@ html.aih-lightbox-open body {
 
     .aih-single-image > img,
     .aih-single-image > picture > img {
+        width: auto;
         max-height: 50vh;
     }
 
@@ -5744,6 +5752,7 @@ html.aih-lightbox-open body {
     padding: 12px 14px 14px;
     border-top: 1px solid var(--color-border);
     background: var(--color-bg);
+    margin-top: auto;
 }
 
 .aih-mybids-page .aih-bid-form {
