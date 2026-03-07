@@ -41,7 +41,12 @@ if (!defined('ABSPATH')) {
                             <tr>
                                 <td>
                                     <?php if ($thumb): ?>
-                                        <img src="<?php echo esc_url($thumb); ?>" class="aih-thumb" alt="">
+                                        <?php echo AIH_Template_Helper::picture_tag(
+                                            $thumb,
+                                            '',
+                                            '80px',
+                                            array('class' => 'aih-thumb')
+                                        ); ?>
                                     <?php endif; ?>
                                 </td>
                                 <td>
