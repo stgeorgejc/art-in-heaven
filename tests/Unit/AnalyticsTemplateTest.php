@@ -8,7 +8,8 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * Verifies the analytics template uses CSS classes for layout
- * instead of inline flex/min-width styles that cause overflow.
+ * instead of inline flex/min-width styles that cause overflow,
+ * and that the Revenue tab and 5-minute timeline are present.
  */
 class AnalyticsTemplateTest extends TestCase
 {
@@ -58,5 +59,113 @@ class AnalyticsTemplateTest extends TestCase
             $this->template,
             'Top revenue chart must truncate long Y-axis labels'
         );
+    }
+
+    // ========== Revenue Tab ==========
+
+    public function testRevenueTabExists(): void
+    {
+        $this->assertStringContainsString(
+            "'revenue'",
+            $this->template,
+            'Analytics template must define a revenue tab key'
+        );
+    }
+
+    public function testRevenueTabIsConditionalOnFinancialPermission(): void
+    {
+        $this->assertMatchesRegularExpression(
+            '/can_view_financial.*revenue/s',
+            $this->template,
+            'Revenue tab must be gated behind can_view_financial()'
+        );
+    }
+
+    public function testRevenueTabContainsProjectedRevenue(): void
+    {
+        $this->assertStringContainsString(
+            'projected_revenue',
+            $this->template,
+            'Revenue tab must show projected revenue for active items'
+        );
+    }
+
+    public function testRevenueTabContainsAvgOrderValue(): void
+    {
+        $this->assertStringContainsString(
+            'avg_order_value',
+            $this->template,
+            'Revenue tab must show average order value'
+        );
+    }
+
+    public function testRevenueTabContainsCollectionRate(): void
+    {
+        $this->assertStringContainsString(
+            'collection_rate',
+            $this->template,
+            'Revenue tab must show collection rate'
+        );
+    }
+
+    public function testRevenueTabContainsPaymentMethodChart(): void
+    {
+        $this->assertStringContainsString(
+            'aih-revenue-method-chart',
+            $this->template,
+            'Revenue tab must include a payment method chart canvas'
+        );
+    }
+
+    public function testRevenueTabContainsRevenueByPieceTable(): void
+    {
+        $this->assertStringContainsString(
+            'revenue_by_piece',
+            $this->template,
+            'Revenue tab must include revenue-by-piece data'
+        );
+    }
+
+    public function testRevenueTabShowsUpliftPercentage(): void
+    {
+        $this->assertStringContainsString(
+            'avg_uplift',
+            $this->template,
+            'Revenue tab must calculate uplift from starting bid'
+        );
+    }
+
+    // ========== Timeline Granularity ==========
+
+    public function testTimelineUsesIntervalDataVariable(): void
+    {
+        $this->assertStringContainsString(
+            'bids_by_interval',
+            $this->template,
+            'Timeline data processing must use interval-based variable name'
+        );
+    }
+
+    public function testTimelineFormatsLabelsAsShortTime(): void
+    {
+        $this->assertStringContainsString(
+            "->format( 'g:i A' )",
+            $this->template,
+            'Timeline labels must be formatted as short times (e.g. 2:15 PM)'
+        );
+    }
+
+    // ========== Safe Defaults ==========
+
+    public function testRevenueVariablesHaveSafeDefaults(): void
+    {
+        $vars = ['revenue_by_method', 'revenue_by_piece', 'collection_rate', 'avg_order_value', 'projected_revenue'];
+        foreach ($vars as $var) {
+            $this->assertStringContainsString(
+                "! isset( \$$var )",
+                $this->template,
+                "Revenue variable \$$var must have a safe default check"
+            );
+        }
     }
 }

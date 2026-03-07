@@ -42,6 +42,21 @@ if ( ! isset( $bid_distribution ) ) {
 if ( ! isset( $top_by_revenue ) ) {
 	$top_by_revenue = array();
 }
+if ( ! isset( $revenue_by_method ) ) {
+	$revenue_by_method = array();
+}
+if ( ! isset( $revenue_by_piece ) ) {
+	$revenue_by_piece = array();
+}
+if ( ! isset( $collection_rate ) ) {
+	$collection_rate = new stdClass();
+}
+if ( ! isset( $avg_order_value ) ) {
+	$avg_order_value = 0.0;
+}
+if ( ! isset( $projected_revenue ) ) {
+	$projected_revenue = 0.0;
+}
 
 // Ensure stats has all required properties.
 $stats->total_pieces        = isset( $stats->total_pieces ) ? $stats->total_pieces : 0;
@@ -161,6 +176,12 @@ $tabs = array(
 	'notifications' => __( 'Notifications', 'art-in-heaven' ),
 	'export'        => __( 'Export', 'art-in-heaven' ),
 );
+if ( AIH_Roles::can_view_financial() ) {
+	// Insert Revenue tab after Overview.
+	$tabs = array_slice( $tabs, 0, 1, true )
+		+ array( 'revenue' => __( 'Revenue', 'art-in-heaven' ) )
+		+ array_slice( $tabs, 1, null, true );
+}
 $active_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'overview';
 if ( ! isset( $tabs[ $active_tab ] ) ) {
 	$active_tab = 'overview';
@@ -183,24 +204,26 @@ $rev_vs_starting = $stats->total_starting_value > 0
 	: 0;
 
 // Build timeline data arrays for Chart.js (needed on Overview tab).
+// Data comes in 15-minute intervals; format labels as short times (e.g. "2:15 PM").
 $timeline_hours   = array();
 $timeline_push    = array();
 $timeline_organic = array();
-$bids_by_hour     = isset( $engagement_metrics['bids_by_hour'] ) ? $engagement_metrics['bids_by_hour'] : array();
-$hour_data        = array();
-foreach ( $bids_by_hour as $row ) {
-	if ( ! isset( $hour_data[ $row->hour_bucket ] ) ) {
-		$hour_data[ $row->hour_bucket ] = array( 'push' => 0, 'organic' => 0 );
+$bids_by_interval = isset( $engagement_metrics['bids_by_hour'] ) ? $engagement_metrics['bids_by_hour'] : array();
+$interval_data    = array();
+foreach ( $bids_by_interval as $row ) {
+	if ( ! isset( $interval_data[ $row->hour_bucket ] ) ) {
+		$interval_data[ $row->hour_bucket ] = array( 'push' => 0, 'organic' => 0 );
 	}
 	if ( $row->source === 'push' ) {
-		$hour_data[ $row->hour_bucket ]['push'] = (int) $row->cnt;
+		$interval_data[ $row->hour_bucket ]['push'] = (int) $row->cnt;
 	} else {
-		$hour_data[ $row->hour_bucket ]['organic'] += (int) $row->cnt;
+		$interval_data[ $row->hour_bucket ]['organic'] += (int) $row->cnt;
 	}
 }
-ksort( $hour_data );
-foreach ( $hour_data as $hour => $counts ) {
-	$timeline_hours[]   = $hour;
+ksort( $interval_data );
+foreach ( $interval_data as $bucket => $counts ) {
+	$dt = DateTime::createFromFormat( 'Y-m-d H:i', $bucket, wp_timezone() );
+	$timeline_hours[]   = $dt ? $dt->format( 'g:i A' ) : $bucket;
 	$timeline_push[]    = $counts['push'];
 	$timeline_organic[] = $counts['organic'];
 }
@@ -379,6 +402,182 @@ foreach ( $notif_types as $row ) {
 		</div>
 		<?php endif; ?>
 	</div>
+
+	<?php elseif ( $active_tab === 'revenue' ) : ?>
+	<!-- ========== REVENUE TAB ========== -->
+	<h2>
+		<?php _e( 'Revenue & Payments', 'art-in-heaven' ); ?>
+		<a href="<?php echo esc_url( admin_url( 'admin.php?page=art-in-heaven-orders' ) ); ?>" class="page-title-action"><?php _e( 'View Orders', 'art-in-heaven' ); ?></a>
+	</h2>
+
+	<!-- Revenue Hero Cards -->
+	<?php
+	$total_revenue   = floatval( $payment_stats->total_collected ) + floatval( $payment_stats->total_pending );
+	$collection_pct  = isset( $collection_rate->total_items ) && $collection_rate->total_items > 0
+		? round( ( $collection_rate->paid_items / $collection_rate->total_items ) * 100 )
+		: 0;
+
+	AIH_Admin::open_stat_grid();
+	AIH_Admin::render_stat_card( array(
+		'value'   => '$' . number_format( $total_revenue, 2 ),
+		'label'   => __( 'Total Revenue', 'art-in-heaven' ),
+		'variant' => 'money',
+	) );
+	AIH_Admin::render_stat_card( array(
+		'value'   => '$' . number_format( floatval( $payment_stats->total_collected ), 2 ),
+		'label'   => __( 'Collected', 'art-in-heaven' ),
+		'variant' => 'money',
+		'link'    => admin_url( 'admin.php?page=art-in-heaven-orders&tab=paid' ),
+	) );
+	AIH_Admin::render_stat_card( array(
+		'value'   => '$' . number_format( floatval( $payment_stats->total_pending ), 2 ),
+		'label'   => __( 'Pending', 'art-in-heaven' ),
+		'variant' => 'nobids',
+		'link'    => admin_url( 'admin.php?page=art-in-heaven-orders&tab=pending' ),
+	) );
+	AIH_Admin::render_stat_card( array(
+		'value'   => '$' . number_format( $projected_revenue, 2 ),
+		'label'   => __( 'Projected (Active)', 'art-in-heaven' ),
+		'sublabel' => __( 'sum of current highest bids', 'art-in-heaven' ),
+	) );
+	AIH_Admin::close_stat_grid();
+	?>
+
+	<?php
+	AIH_Admin::open_stat_grid();
+	AIH_Admin::render_stat_card( array(
+		'value' => '$' . number_format( $avg_order_value, 2 ),
+		'label' => __( 'Avg Order Value', 'art-in-heaven' ),
+	) );
+	AIH_Admin::render_stat_card( array(
+		'value'   => $collection_pct . '%',
+		'label'   => __( 'Collection Rate', 'art-in-heaven' ),
+		'sublabel' => sprintf(
+			/* translators: 1: paid items, 2: total items */
+			__( '%1$d of %2$d items paid', 'art-in-heaven' ),
+			isset( $collection_rate->paid_items ) ? $collection_rate->paid_items : 0,
+			isset( $collection_rate->total_items ) ? $collection_rate->total_items : 0
+		),
+		'variant' => $collection_pct >= 80 ? 'active' : ( $collection_pct >= 50 ? 'bids' : 'nobids' ),
+	) );
+	AIH_Admin::render_stat_card( array(
+		'value' => number_format( intval( $payment_stats->paid_orders ) ),
+		'label' => __( 'Paid Orders', 'art-in-heaven' ),
+	) );
+	AIH_Admin::render_stat_card( array(
+		'value'   => number_format( intval( $payment_stats->pending_orders ) ),
+		'label'   => __( 'Pending Orders', 'art-in-heaven' ),
+		'variant' => intval( $payment_stats->pending_orders ) > 0 ? 'nobids' : '',
+	) );
+	AIH_Admin::close_stat_grid();
+	?>
+
+	<!-- Revenue by Payment Method -->
+	<?php if ( ! empty( $revenue_by_method ) ) : ?>
+	<div class="aih-chart-row">
+		<div class="postbox" style="max-width: 500px;">
+			<h2 class="hndle"><span><?php _e( 'Revenue by Payment Method', 'art-in-heaven' ); ?></span></h2>
+			<div class="inside">
+				<div style="position: relative; height: 260px;">
+					<canvas id="aih-revenue-method-chart"></canvas>
+				</div>
+			</div>
+		</div>
+		<div class="postbox" style="flex: 1;">
+			<h2 class="hndle"><span><?php _e( 'Payment Method Breakdown', 'art-in-heaven' ); ?></span></h2>
+			<div class="inside">
+				<table class="widefat">
+					<thead>
+						<tr>
+							<th><?php _e( 'Method', 'art-in-heaven' ); ?></th>
+							<th><?php _e( 'Orders', 'art-in-heaven' ); ?></th>
+							<th><?php _e( 'Amount', 'art-in-heaven' ); ?></th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php foreach ( $revenue_by_method as $method ) : ?>
+						<tr>
+							<td><strong><?php echo esc_html( ucfirst( $method->payment_method ?: __( 'Unknown', 'art-in-heaven' ) ) ); ?></strong></td>
+							<td><?php echo intval( $method->order_count ); ?></td>
+							<td>$<?php echo number_format( floatval( $method->method_total ), 2 ); ?></td>
+						</tr>
+						<?php endforeach; ?>
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+	<?php endif; ?>
+
+	<!-- Revenue by Art Piece -->
+	<?php if ( ! empty( $revenue_by_piece ) ) : ?>
+	<div class="aih-report-section" style="margin-top: 24px;">
+		<h2><?php _e( 'Sold Art Pieces', 'art-in-heaven' ); ?></h2>
+		<p class="description">
+			<?php
+			$total_uplift = 0;
+			$uplift_count = 0;
+			foreach ( $revenue_by_piece as $rp ) {
+				if ( floatval( $rp->starting_bid ) > 0 ) {
+					$total_uplift += ( floatval( $rp->sold_price ) - floatval( $rp->starting_bid ) ) / floatval( $rp->starting_bid ) * 100;
+					$uplift_count++;
+				}
+			}
+			$avg_uplift = $uplift_count > 0 ? round( $total_uplift / $uplift_count ) : 0;
+			printf(
+				/* translators: 1: count of sold pieces, 2: average uplift percentage */
+				__( '%1$d pieces sold. Average uplift from starting bid: %2$d%%', 'art-in-heaven' ),
+				count( $revenue_by_piece ),
+				$avg_uplift
+			);
+			?>
+		</p>
+		<div class="aih-table-wrap">
+		<table class="wp-list-table widefat fixed striped">
+			<thead>
+				<tr>
+					<th><?php _e( 'Art Piece', 'art-in-heaven' ); ?></th>
+					<th style="width: 100px;"><?php _e( 'Art ID', 'art-in-heaven' ); ?></th>
+					<th style="width: 120px;"><?php _e( 'Starting Bid', 'art-in-heaven' ); ?></th>
+					<th style="width: 120px;"><?php _e( 'Sold Price', 'art-in-heaven' ); ?></th>
+					<th style="width: 100px;"><?php _e( 'Uplift', 'art-in-heaven' ); ?></th>
+					<th style="width: 100px;"><?php _e( 'Payment', 'art-in-heaven' ); ?></th>
+				</tr>
+			</thead>
+			<tbody>
+				<?php foreach ( $revenue_by_piece as $rp ) :
+					$start  = floatval( $rp->starting_bid );
+					$sold   = floatval( $rp->sold_price );
+					$uplift = $start > 0 ? round( ( $sold - $start ) / $start * 100 ) : 0;
+				?>
+				<tr>
+					<td><?php echo esc_html( $rp->title ); ?></td>
+					<td><code><?php echo esc_html( $rp->art_id ); ?></code></td>
+					<td>$<?php echo number_format( $start, 2 ); ?></td>
+					<td><strong>$<?php echo number_format( $sold, 2 ); ?></strong></td>
+					<td>
+						<?php if ( $uplift > 0 ) : ?>
+							<span style="color: #065f46; font-weight: 600;">+<?php echo $uplift; ?>%</span>
+						<?php elseif ( $uplift === 0 ) : ?>
+							<span style="color: #6b7280;">0%</span>
+						<?php else : ?>
+							<span style="color: #991b1b;"><?php echo $uplift; ?>%</span>
+						<?php endif; ?>
+					</td>
+					<td>
+						<?php if ( $rp->payment_status === 'paid' ) : ?>
+							<span class="aih-status-badge active"><?php _e( 'Paid', 'art-in-heaven' ); ?></span>
+						<?php else : ?>
+							<span class="aih-status-badge draft"><?php _e( 'Pending', 'art-in-heaven' ); ?></span>
+						<?php endif; ?>
+					</td>
+				</tr>
+				<?php endforeach; ?>
+			</tbody>
+		</table>
+		</div>
+	</div>
+	<?php endif; ?>
 
 	<?php elseif ( $active_tab === 'art-pieces' ) : ?>
 	<!-- ========== ART PIECES TAB ========== -->
@@ -1289,6 +1488,49 @@ jQuery(document).ready(function($) {
 		lightGold:  'rgba(184, 149, 107, 0.2)'
 	};
 
+	// -- Revenue tab: Payment Method doughnut --
+	var revenueMethodCanvas = document.getElementById('aih-revenue-method-chart');
+	if (revenueMethodCanvas) {
+		<?php
+		$method_labels = array();
+		$method_values = array();
+		$method_colors = array( '#059669', '#2563eb', '#d97706', '#8b5cf6', '#ec4899', '#6b7280' );
+		if ( ! empty( $revenue_by_method ) ) {
+			foreach ( $revenue_by_method as $i => $m ) {
+				$method_labels[] = ucfirst( $m->payment_method ?: __( 'Unknown', 'art-in-heaven' ) );
+				$method_values[] = floatval( $m->method_total );
+			}
+		}
+		?>
+		new Chart(revenueMethodCanvas, {
+			type: 'doughnut',
+			data: {
+				labels: <?php echo wp_json_encode( $method_labels ); ?>,
+				datasets: [{
+					data: <?php echo wp_json_encode( $method_values ); ?>,
+					backgroundColor: <?php echo wp_json_encode( array_slice( $method_colors, 0, count( $method_labels ) ) ); ?>
+				}]
+			},
+			options: {
+				responsive: true,
+				maintainAspectRatio: false,
+				plugins: {
+					legend: { position: 'bottom' },
+					tooltip: {
+						callbacks: {
+							label: function(ctx) {
+								var val = ctx.parsed;
+								var total = ctx.dataset.data.reduce(function(a, b) { return a + b; }, 0);
+								var pct = total > 0 ? Math.round(val / total * 100) : 0;
+								return ctx.label + ': $' + val.toLocaleString(undefined, {minimumFractionDigits: 2}) + ' (' + pct + '%)';
+							}
+						}
+					}
+				}
+			}
+		});
+	}
+
 	// -- Overview tab: Inventory Health (horizontal stacked bar) --
 	var inventoryCanvas = document.getElementById('aih-inventory-chart');
 	if (inventoryCanvas) {
@@ -1368,7 +1610,7 @@ jQuery(document).ready(function($) {
 				maintainAspectRatio: false,
 				plugins: { legend: { position: 'bottom' } },
 				scales: {
-					x: { ticks: { maxTicksLimit: 12 } },
+					x: { ticks: { maxTicksLimit: 24, maxRotation: 45, minRotation: 0 } },
 					y: { beginAtZero: true, ticks: { precision: 0 } }
 				}
 			}

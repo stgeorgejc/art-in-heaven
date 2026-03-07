@@ -767,6 +767,75 @@ class AIH_Admin {
              LIMIT 10"
         );
 
+        // Revenue tab data (only queried for financial users).
+        $revenue_by_method  = array();
+        $revenue_by_piece   = array();
+        $collection_rate    = new stdClass();
+        $avg_order_value    = 0.0;
+        $projected_revenue  = 0.0;
+
+        if ( AIH_Roles::can_view_financial() ) {
+            $orders_table      = AIH_Database::get_table('orders');
+            $order_items_table = AIH_Database::get_table('order_items');
+
+            // Revenue by payment method.
+            $revenue_by_method = $wpdb->get_results(
+                "SELECT payment_method,
+                        COUNT(*) AS order_count,
+                        SUM(total) AS method_total
+                 FROM $orders_table
+                 WHERE payment_status = 'paid'
+                 GROUP BY payment_method
+                 ORDER BY method_total DESC"
+            );
+
+            // Revenue by art piece (actual order data, not bid proxy).
+            $revenue_by_piece = $wpdb->get_results(
+                "SELECT a.title, a.art_id, a.starting_bid,
+                        oi.price AS sold_price,
+                        o.payment_status
+                 FROM $order_items_table oi
+                 JOIN $orders_table o ON oi.order_id = o.id
+                 JOIN $art_table a ON oi.art_piece_id = a.id
+                 ORDER BY oi.price DESC"
+            );
+
+            // Collection rate: paid vs total won items.
+            $collection_rate = $wpdb->get_row(
+                "SELECT
+                    COUNT(*) AS total_items,
+                    SUM(CASE WHEN o.payment_status = 'paid' THEN 1 ELSE 0 END) AS paid_items,
+                    SUM(CASE WHEN o.payment_status = 'pending' THEN 1 ELSE 0 END) AS pending_items
+                 FROM $order_items_table oi
+                 JOIN $orders_table o ON oi.order_id = o.id"
+            );
+            if ( ! $collection_rate ) {
+                $collection_rate = new stdClass();
+            }
+            $collection_rate->total_items   = isset( $collection_rate->total_items ) ? (int) $collection_rate->total_items : 0;
+            $collection_rate->paid_items    = isset( $collection_rate->paid_items ) ? (int) $collection_rate->paid_items : 0;
+            $collection_rate->pending_items = isset( $collection_rate->pending_items ) ? (int) $collection_rate->pending_items : 0;
+
+            // Average order value (paid orders only).
+            $avg_order_value = (float) $wpdb->get_var(
+                "SELECT AVG(total) FROM $orders_table WHERE payment_status = 'paid' AND total > 0"
+            );
+
+            // Projected revenue: sum of highest bids on active items that haven't ended yet.
+            $projected_revenue = (float) $wpdb->get_var(
+                "SELECT COALESCE(SUM(max_bid), 0)
+                 FROM (
+                     SELECT MAX(b.bid_amount) AS max_bid
+                     FROM $bids_table b
+                     JOIN $art_table a ON b.art_piece_id = a.id
+                     WHERE a.status = 'active'
+                       AND a.auction_end > NOW()
+                       AND (b.bid_status = 'valid' OR b.bid_status IS NULL)
+                     GROUP BY b.art_piece_id
+                 ) active_bids"
+            );
+        }
+
         include AIH_PLUGIN_DIR . 'admin/views/analytics.php';
     }
 
@@ -894,9 +963,12 @@ class AIH_Admin {
             ) sub"
         );
 
-        // Bidding timeline: bids per hour
+        // Bidding timeline: bids per 5-minute interval
         $bids_by_hour = $wpdb->get_results(
-            "SELECT DATE_FORMAT(created_at, '%Y-%m-%d %H:00') AS hour_bucket,
+            "SELECT DATE_FORMAT(
+                        DATE_SUB(created_at, INTERVAL MOD(MINUTE(created_at), 5) MINUTE),
+                        '%Y-%m-%d %H:%i'
+                    ) AS hour_bucket,
                     COUNT(*) AS cnt,
                     COALESCE(JSON_UNQUOTE(JSON_EXTRACT(details, '$.bid_source')), 'organic') AS source
              FROM `{$audit_table}`
