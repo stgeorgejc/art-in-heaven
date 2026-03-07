@@ -1166,12 +1166,14 @@ jQuery(document).ready(function($) {
             title: title
         }, function(r) {
             if (r.success) {
-                $('#aih-qr-preview').html('<img src="' + r.data.qr + '" style="max-width:300px;width:100%;" alt="QR">');
+                $('#aih-qr-preview').html('<img src="' + r.data.qr + '" style="max-width:300px;width:100%;" alt="QR code for ' + escapeAttr(artId) + '">');
                 $('#aih-qr-url').text(r.data.url);
                 $('#aih-qr-download').attr('href', r.data.qr);
             } else {
                 $('#aih-qr-preview').html('<p class="notice notice-error" style="padding:10px;">' + escapeHtml(r.data.message) + '</p>');
             }
+        }).fail(function() {
+            $('#aih-qr-preview').html('<p class="notice notice-error" style="padding:10px;">An error occurred while generating the QR code. Please try again.</p>');
         });
     });
 
