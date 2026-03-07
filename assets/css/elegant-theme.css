@@ -2839,6 +2839,9 @@ body {
 }
 
 /* Carousel arrows/dots and art-id badges auto-adapt via overlay variables */
+.aih-page.dark-mode .aih-carousel-arrow:hover {
+    color: var(--color-bg);
+}
 
 /* Bid history winning item */
 .aih-page.dark-mode .aih-bid-history-item.winning {
