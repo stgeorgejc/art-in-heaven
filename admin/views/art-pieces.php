@@ -145,6 +145,9 @@ $art_pieces = $art_model->get_all_with_stats($filter_args);
                 <button type="button" class="button" id="aih-bulk-hide-end-btn" disabled>
                     <?php _e('Hide Timer', 'art-in-heaven'); ?>
                 </button>
+                <button type="button" class="button" id="aih-bulk-qr-btn" disabled>
+                    <?php _e('Print QR Codes', 'art-in-heaven'); ?>
+                </button>
                 <button type="button" class="button aih-btn-error" id="aih-bulk-delete-btn" disabled>
                     <?php _e('Delete', 'art-in-heaven'); ?>
                 </button>
@@ -249,6 +252,21 @@ $art_pieces = $art_model->get_all_with_stats($filter_args);
                 <div class="aih-modal-actions">
                     <button type="button" class="button button-primary" id="aih-import-done"><?php _e('Done', 'art-in-heaven'); ?></button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Single QR Code Modal -->
+    <div id="aih-qr-modal" class="aih-modal" style="display:none;">
+        <div class="aih-modal-content" style="max-width:400px;">
+            <span class="aih-modal-close">&times;</span>
+            <h2 id="aih-qr-modal-title"></h2>
+            <div id="aih-qr-preview" style="text-align:center;padding:20px 0;">
+                <span class="spinner is-active" style="float:none;"></span>
+            </div>
+            <p id="aih-qr-url" style="text-align:center;font-size:12px;color:#666;word-break:break-all;"></p>
+            <div class="aih-modal-actions" style="text-align:center;">
+                <a id="aih-qr-download" class="button button-primary" download><?php _e('Download PNG', 'art-in-heaven'); ?></a>
             </div>
         </div>
     </div>
@@ -447,6 +465,9 @@ $art_pieces = $art_model->get_all_with_stats($filter_args);
                                         data-visible="<?php echo $end_visible ? '1' : '0'; ?>"
                                         title="<?php echo $end_visible ? esc_attr__('Hide end time', 'art-in-heaven') : esc_attr__('Show end time', 'art-in-heaven'); ?>">
                                     <span class="dashicons <?php echo $end_visible ? 'dashicons-visibility' : 'dashicons-hidden'; ?>"></span>
+                                </button>
+                                <button type="button" class="button button-small aih-action-btn aih-qr-code-btn" data-art-id="<?php echo esc_attr($piece->art_id); ?>" data-title="<?php echo esc_attr($piece->title); ?>" title="<?php esc_attr_e('QR Code', 'art-in-heaven'); ?>">
+                                    <span class="dashicons dashicons-screenoptions"></span>
                                 </button>
                                 <button type="button" class="button button-small aih-action-btn aih-delete-art" data-id="<?php echo esc_attr($piece->id); ?>" title="<?php esc_attr_e('Delete', 'art-in-heaven'); ?>">
                                     <span class="dashicons dashicons-trash"></span>
@@ -819,7 +840,7 @@ jQuery(document).ready(function($) {
     function updateSelectedCount() {
         var count = $('.aih-art-checkbox:checked').length;
         $('#aih-selected-num').text(count);
-        $('#aih-bulk-time-btn, #aih-bulk-start-btn, #aih-bulk-show-end-btn, #aih-bulk-hide-end-btn, #aih-bulk-delete-btn').prop('disabled', count === 0);
+        $('#aih-bulk-time-btn, #aih-bulk-start-btn, #aih-bulk-show-end-btn, #aih-bulk-hide-end-btn, #aih-bulk-delete-btn, #aih-bulk-qr-btn').prop('disabled', count === 0);
     }
     
     // ========== MODALS ==========
@@ -1123,6 +1144,56 @@ jQuery(document).ready(function($) {
         if (importHadChanges) {
             location.reload();
         }
+    });
+
+    // ========== QR CODE ==========
+
+    // Single QR code button
+    $('.aih-qr-code-btn').on('click', function() {
+        var artId = $(this).data('art-id');
+        var title = $(this).data('title');
+        var $modal = $('#aih-qr-modal');
+        $('#aih-qr-modal-title').text(artId + ' — ' + title);
+        $('#aih-qr-preview').html('<span class="spinner is-active" style="float:none;"></span>');
+        $('#aih-qr-url').text('');
+        $('#aih-qr-download').attr('href', '#').attr('download', 'qr-' + artId + '.png');
+        $modal.fadeIn(200);
+
+        $.post(ajaxurl, {
+            action: 'aih_admin_generate_qr',
+            nonce: aihAdmin.nonce,
+            art_id: artId,
+            title: title
+        }, function(r) {
+            if (r.success) {
+                $('#aih-qr-preview').html('<img src="' + r.data.qr + '" style="max-width:300px;width:100%;" alt="QR">');
+                $('#aih-qr-url').text(r.data.url);
+                $('#aih-qr-download').attr('href', r.data.qr);
+            } else {
+                $('#aih-qr-preview').html('<p class="notice notice-error" style="padding:10px;">' + escapeHtml(r.data.message) + '</p>');
+            }
+        });
+    });
+
+    $('#aih-qr-modal .aih-modal-close').on('click', function() {
+        $('#aih-qr-modal').fadeOut(200);
+    });
+
+    // Bulk QR print — opens print page in new tab
+    $('#aih-bulk-qr-btn').on('click', function() {
+        var selected = [];
+        $('.aih-art-checkbox:checked').each(function() {
+            var $row = $(this).closest('tr');
+            selected.push({
+                art_id: $row.find('.aih-editable[data-field="art_id"]').data('value'),
+                title: $row.find('.aih-editable[data-field="title"]').data('value')
+            });
+        });
+        if (!selected.length) return;
+
+        // Store in sessionStorage for the print page to pick up
+        sessionStorage.setItem('aih_qr_print_items', JSON.stringify(selected));
+        window.open(ajaxurl.replace('admin-ajax.php', 'admin.php') + '?page=art-in-heaven-qr-print', '_blank');
     });
 });
 </script>
