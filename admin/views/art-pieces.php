@@ -145,7 +145,7 @@ $art_pieces = $art_model->get_all_with_stats($filter_args);
                 <button type="button" class="button" id="aih-bulk-hide-end-btn" disabled>
                     <?php _e('Hide Timer', 'art-in-heaven'); ?>
                 </button>
-                <button type="button" class="button" id="aih-bulk-delete-btn" disabled style="color: #d63638; border-color: #d63638;">
+                <button type="button" class="button aih-btn-error" id="aih-bulk-delete-btn" disabled>
                     <?php _e('Delete', 'art-in-heaven'); ?>
                 </button>
             </div>

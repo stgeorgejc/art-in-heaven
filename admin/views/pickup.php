@@ -109,7 +109,7 @@ if (!empty($order_ids)) {
 
 <div class="wrap aih-admin-wrap">
     <h1 class="wp-heading-inline">
-        <span class="dashicons dashicons-archive" style="font-size: 28px; margin-right: 10px;"></span>
+        <span class="dashicons dashicons-archive aih-heading-icon"></span>
         <?php _e('Pickup Management', 'art-in-heaven'); ?>
     </h1>
 
@@ -153,7 +153,7 @@ if (!empty($order_ids)) {
 
     <!-- Search Bar -->
     <div class="aih-pickup-search-bar">
-        <form method="get" class="aih-search-form" style="flex: 1;">
+        <form method="get" class="aih-search-form">
             <input type="hidden" name="page" value="art-in-heaven-pickup">
             <input type="hidden" name="tab" value="<?php echo esc_attr($current_tab); ?>">
             <input type="search" name="search" id="aih-pickup-search" value="<?php echo esc_attr($search); ?>" placeholder="<?php esc_attr_e('Search by name, email, or order #...', 'art-in-heaven'); ?>">
@@ -171,7 +171,7 @@ if (!empty($order_ids)) {
         </span>
     </div>
 
-    <div class="aih-panel" style="margin-top: 0; border-top: none; border-radius: 0 0 8px 8px;">
+    <div class="aih-panel aih-panel--bottom">
         <?php if (empty($orders)): ?>
             <div class="aih-empty-state">
                 <?php if ($current_tab === 'ready'): ?>
