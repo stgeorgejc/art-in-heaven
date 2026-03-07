@@ -485,6 +485,7 @@ jQuery(document).ready(function($) {
             var listWasEmpty = $list.find('.aih-image-item').length === 0;
             var maxRetries = 3;
             var total = attachments.length;
+            var processed = 0;
             var completed = 0;
             var failed = [];
 
@@ -495,16 +496,21 @@ jQuery(document).ready(function($) {
                 $('.aih-images-container').append($progress);
             }
 
-            function updateProgress(current, status, name) {
-                var pct = total > 0 ? Math.round((completed / total) * 100) : 0;
-                var html = '<div class="aih-progress-header">' +
-                    '<strong><?php echo esc_js(__('Uploading images...', 'art-in-heaven')); ?></strong> ' +
-                    completed + ' / ' + total +
-                    (failed.length ? ' <span class="aih-progress-failed">(' + failed.length + ' <?php echo esc_js(__('failed', 'art-in-heaven')); ?>)</span>' : '') +
-                '</div>' +
-                '<div class="aih-progress-bar-track"><div class="aih-progress-bar-fill" style="width:' + pct + '%"></div></div>' +
-                '<div class="aih-progress-status">' + status + '</div>';
-                $progress.html(html).show();
+            function updateProgress(status) {
+                var pct = total > 0 ? Math.round((processed / total) * 100) : 0;
+                var $header = $('<div class="aih-progress-header"></div>');
+                $header.append(
+                    $('<strong></strong>').text('<?php echo esc_js(__('Uploading images...', 'art-in-heaven')); ?> '),
+                    document.createTextNode(processed + ' / ' + total)
+                );
+                if (failed.length) {
+                    $header.append(' ', $('<span class="aih-progress-failed"></span>').text('(' + failed.length + ' <?php echo esc_js(__('failed', 'art-in-heaven')); ?>)'));
+                }
+                $progress.empty()
+                    .append($header)
+                    .append('<div class="aih-progress-bar-track"><div class="aih-progress-bar-fill" style="width:' + pct + '%"></div></div>')
+                    .append($('<div class="aih-progress-status"></div>').text(status))
+                    .show();
             }
 
             function finishUpload() {
@@ -535,6 +541,7 @@ jQuery(document).ready(function($) {
                         var retryAttachments = failed.map(function(f) { return f.attachment; });
                         failed = [];
                         total = retryAttachments.length;
+                        processed = 0;
                         completed = 0;
                         processQueue(retryAttachments, 0);
                     });
@@ -571,7 +578,7 @@ jQuery(document).ready(function($) {
                 function tryUpload() {
                     attempt++;
                     var attemptLabel = attempt > 1 ? ' (<?php echo esc_js(__('retry', 'art-in-heaven')); ?> ' + (attempt - 1) + '/' + maxRetries + ')' : '';
-                    updateProgress(index + 1, name + attemptLabel + '...', name);
+                    updateProgress(name + attemptLabel + '...');
 
                     $.ajax({
                         url: aihAdmin.ajaxurl,
@@ -586,6 +593,7 @@ jQuery(document).ready(function($) {
                         },
                         success: function(response) {
                             if (response.success) {
+                                processed++;
                                 completed++;
                                 addImageToList(response, setAsPrimary);
                                 if (setAsPrimary) listWasEmpty = false;
@@ -593,9 +601,10 @@ jQuery(document).ready(function($) {
                             } else {
                                 lastError = (response.data && response.data.message) || '<?php echo esc_js(__('Server returned an error', 'art-in-heaven')); ?>';
                                 if (attempt < maxRetries) {
-                                    updateProgress(index + 1, name + ' — ' + lastError + '. <?php echo esc_js(__('Retrying...', 'art-in-heaven')); ?>', name);
+                                    updateProgress(name + ' — ' + lastError + '. <?php echo esc_js(__('Retrying...', 'art-in-heaven')); ?>');
                                     setTimeout(tryUpload, 2000 * attempt);
                                 } else {
+                                    processed++;
                                     failed.push({ name: name, attachment: attachment, error: lastError });
                                     processQueue(queue, index + 1);
                                 }
@@ -616,9 +625,10 @@ jQuery(document).ready(function($) {
                                 lastError = '<?php echo esc_js(__('HTTP error', 'art-in-heaven')); ?> ' + xhr.status;
                             }
                             if (attempt < maxRetries) {
-                                updateProgress(index + 1, name + ' — ' + lastError + '. <?php echo esc_js(__('Retrying...', 'art-in-heaven')); ?>', name);
+                                updateProgress(name + ' — ' + lastError + '. <?php echo esc_js(__('Retrying...', 'art-in-heaven')); ?>');
                                 setTimeout(tryUpload, 2000 * attempt);
                             } else {
+                                processed++;
                                 failed.push({ name: name, attachment: attachment, error: lastError + ' (<?php echo esc_js(__('after', 'art-in-heaven')); ?> ' + maxRetries + ' <?php echo esc_js(__('attempts', 'art-in-heaven')); ?>)' });
                                 processQueue(queue, index + 1);
                             }
@@ -629,7 +639,7 @@ jQuery(document).ready(function($) {
                 tryUpload();
             }
 
-            updateProgress(0, '<?php echo esc_js(__('Starting...', 'art-in-heaven')); ?>', '');
+            updateProgress('<?php echo esc_js(__('Starting...', 'art-in-heaven')); ?>');
             processQueue(attachments, 0);
         }
 

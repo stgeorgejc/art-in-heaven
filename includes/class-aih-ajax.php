@@ -1928,12 +1928,14 @@ class AIH_Ajax {
         if (!$watermarked_url) {
             $watermarked_url = $image_url; // Fallback to original
             $watermark_failed = true;
-            error_log(sprintf(
-                '[AIH] admin_add_image: Watermark failed for "%s" (%s). Using original image. Memory: %s',
-                $file_name,
-                $file_size ? size_format($file_size) : 'unknown size',
-                size_format(memory_get_usage(true))
-            ));
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log(sprintf(
+                    '[AIH] admin_add_image: Watermark failed for "%s" (%s). Using original image. Memory: %s',
+                    $file_name,
+                    $file_size ? size_format($file_size) : 'unknown size',
+                    size_format(memory_get_usage(true))
+                ));
+            }
         }
 
         $images_handler = new AIH_Art_Images();
@@ -1964,10 +1966,9 @@ class AIH_Ajax {
                 $wpdb->last_error
             ));
             wp_send_json_error(array('message' => sprintf(
-                /* translators: 1: filename, 2: database error message */
-                __('Failed to save "%1$s" to database: %2$s', 'art-in-heaven'),
-                $file_name,
-                $wpdb->last_error ?: __('unknown error', 'art-in-heaven')
+                /* translators: %s: filename */
+                __('Failed to save "%s" to database. Please try again.', 'art-in-heaven'),
+                $file_name
             )));
         }
     }

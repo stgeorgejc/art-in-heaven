@@ -259,10 +259,16 @@ class BulkUploadTest extends TestCase
 
     public function testAdminAddImageReportsDbErrorDetail(): void
     {
+        // Client response must include filename but NOT raw DB errors (logged server-side only)
         $this->assertStringContainsString(
-            'Failed to save "%1$s" to database: %2$s',
+            'Failed to save "%s" to database. Please try again.',
             $this->ajaxSource,
-            'DB insert failure must include the filename and database error in the response'
+            'DB insert failure must include the filename in the client response'
+        );
+        $this->assertStringContainsString(
+            'DB insert failed',
+            $this->ajaxSource,
+            'DB error details must be logged server-side via error_log'
         );
     }
 
