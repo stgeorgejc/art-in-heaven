@@ -84,10 +84,9 @@ class AIH_Art_Piece {
         // Also handles NULL values: NULL auction_start = already started, NULL auction_end = never ends
         if (!empty($args['status'])) {
             if ($args['status'] === 'active') {
-                // Active = (status is active OR draft with passed start time) AND auction has started AND hasn't ended
-                $where[] = "((a.status = 'active' AND (a.auction_start IS NULL OR a.auction_start <= %s) AND (a.auction_end IS NULL OR a.auction_end > %s)) OR (a.status = 'draft' AND a.auction_start IS NOT NULL AND a.auction_start <= %s AND (a.auction_end IS NULL OR a.auction_end > %s)))";
-                $values[] = $now;
-                $values[] = $now;
+                // Active = status is active AND auction has started AND hasn't ended
+                // Draft items are never shown in the gallery — draft means hidden
+                $where[] = "(a.status = 'active' AND (a.auction_start IS NULL OR a.auction_start <= %s) AND (a.auction_end IS NULL OR a.auction_end > %s))";
                 $values[] = $now;
                 $values[] = $now;
             } elseif ($args['status'] === 'upcoming') {
@@ -261,10 +260,8 @@ class AIH_Art_Piece {
         
         if (!empty($args['status'])) {
             if ($args['status'] === 'active') {
-                // Match get_all() WHERE clause: handle NULL auction_start/auction_end
-                $where[] = "((status = 'active' AND (auction_start IS NULL OR auction_start <= %s) AND (auction_end IS NULL OR auction_end > %s)) OR (status = 'draft' AND auction_start IS NOT NULL AND auction_start <= %s AND (auction_end IS NULL OR auction_end > %s)))";
-                $values[] = $now;
-                $values[] = $now;
+                // Match get_all() WHERE clause: draft items are never counted as active
+                $where[] = "(status = 'active' AND (auction_start IS NULL OR auction_start <= %s) AND (auction_end IS NULL OR auction_end > %s))";
                 $values[] = $now;
                 $values[] = $now;
             } elseif ($args['status'] === 'ended') {
@@ -347,16 +344,15 @@ class AIH_Art_Piece {
              TIMESTAMPDIFF(SECOND, %s, auction_end) as seconds_remaining,
              TIMESTAMPDIFF(SECOND, %s, auction_start) as seconds_until_start,
              CASE
-                WHEN status = 'draft' AND auction_start IS NOT NULL AND auction_start <= %s AND (auction_end IS NULL OR auction_end > %s) THEN 'active'
                 WHEN status = 'draft' THEN 'draft'
                 WHEN auction_end IS NOT NULL AND auction_end <= %s THEN 'ended'
                 WHEN status = 'ended' AND (auction_end IS NULL OR auction_end > %s) AND (auction_start IS NULL OR auction_start <= %s) THEN 'active'
                 WHEN status = 'ended' THEN 'ended'
-                WHEN auction_start IS NOT NULL AND auction_start > %s THEN 'upcoming'
+                WHEN auction_start IS NOT NULL AND auction_start > %s THEN 'scheduled'
                 ELSE 'active'
              END as computed_status
              FROM {$this->table} WHERE art_id = %s",
-            $now, $now, $now, $now, $now, $now, $now, $now, $art_id_upper
+            $now, $now, $now, $now, $now, $now, $art_id_upper
         ));
     }
     
@@ -742,6 +738,38 @@ class AIH_Art_Piece {
         return $result;
     }
     
+    /**
+     * Bulk update status for multiple art pieces.
+     *
+     * @param array<int, int> $ids
+     * @param string          $new_status
+     * @return int|false Rows affected or false on failure.
+     */
+    public function bulk_update_status($ids, $new_status) {
+        global $wpdb;
+        if (empty($ids)) {
+            return false;
+        }
+        if (!class_exists('AIH_Status') || !AIH_Status::is_valid_status($new_status)) {
+            return false;
+        }
+        $ids = array_map('intval', $ids);
+        $placeholders = implode(',', array_fill(0, count($ids), '%d'));
+
+        $result = $wpdb->query($wpdb->prepare(
+            "UPDATE {$this->table} SET status = %s WHERE id IN ($placeholders)",
+            array_merge(array($new_status), $ids)
+        ));
+
+        if ($result !== false && $result > 0) {
+            foreach ($ids as $id) {
+                do_action('aih_art_updated', $id, array('status' => $new_status));
+            }
+        }
+
+        return $result;
+    }
+
     /**
      * Check if auction has ended
      * FIXED: Now properly checks auction_end time, not start time

@@ -133,6 +133,9 @@ $art_pieces = $art_model->get_all_with_stats($filter_args);
                 <option value="endtime-desc"><?php _e('Ending Last', 'art-in-heaven'); ?></option>
             </select>
             <div class="aih-bulk-actions">
+                <button type="button" class="button" id="aih-bulk-status-btn" disabled>
+                    <?php _e('Set Status', 'art-in-heaven'); ?>
+                </button>
                 <button type="button" class="button" id="aih-bulk-start-btn" disabled>
                     <?php _e('Set Start Time', 'art-in-heaven'); ?>
                 </button>
@@ -185,6 +188,26 @@ $art_pieces = $art_model->get_all_with_stats($filter_args);
             <div class="aih-modal-actions">
                 <button type="button" class="button button-primary" id="aih-apply-bulk-start"><?php _e('Apply', 'art-in-heaven'); ?></button>
                 <button type="button" class="button" id="aih-cancel-bulk-start"><?php _e('Cancel', 'art-in-heaven'); ?></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Status Modal -->
+    <div id="aih-bulk-status-modal" class="aih-modal" style="display:none;">
+        <div class="aih-modal-content">
+            <span class="aih-modal-close">&times;</span>
+            <h2><?php _e('Change Status', 'art-in-heaven'); ?></h2>
+            <div class="aih-form-row">
+                <label for="aih-bulk-status-select"><?php _e('New Status', 'art-in-heaven'); ?></label>
+                <select id="aih-bulk-status-select" class="aih-select-input">
+                    <option value="active"><?php _e('Active', 'art-in-heaven'); ?></option>
+                    <option value="draft"><?php _e('Draft (hidden from public)', 'art-in-heaven'); ?></option>
+                    <option value="ended"><?php _e('Ended (closed for bidding)', 'art-in-heaven'); ?></option>
+                </select>
+            </div>
+            <div class="aih-modal-actions">
+                <button type="button" class="button button-primary" id="aih-apply-bulk-status"><?php _e('Apply', 'art-in-heaven'); ?></button>
+                <button type="button" class="button" id="aih-cancel-bulk-status"><?php _e('Cancel', 'art-in-heaven'); ?></button>
             </div>
         </div>
     </div>
@@ -851,14 +874,15 @@ jQuery(document).ready(function($) {
     function updateSelectedCount() {
         var count = $('.aih-art-checkbox:checked').length;
         $('#aih-selected-num').text(count);
-        $('#aih-bulk-time-btn, #aih-bulk-start-btn, #aih-bulk-show-end-btn, #aih-bulk-hide-end-btn, #aih-bulk-delete-btn, #aih-bulk-qr-btn').prop('disabled', count === 0);
+        $('#aih-bulk-time-btn, #aih-bulk-start-btn, #aih-bulk-status-btn, #aih-bulk-show-end-btn, #aih-bulk-hide-end-btn, #aih-bulk-delete-btn, #aih-bulk-qr-btn').prop('disabled', count === 0);
     }
     
     // ========== MODALS ==========
     
     $('#aih-bulk-time-btn').on('click', function() { $('#aih-bulk-time-modal').fadeIn(200); });
     $('#aih-bulk-start-btn').on('click', function() { $('#aih-bulk-start-modal').fadeIn(200); });
-    $('.aih-modal-close, #aih-cancel-bulk-time, #aih-cancel-bulk-start').on('click', function() { $(this).closest('.aih-modal').fadeOut(200); });
+    $('#aih-bulk-status-btn').on('click', function() { $('#aih-bulk-status-modal').fadeIn(200); });
+    $('.aih-modal-close, #aih-cancel-bulk-time, #aih-cancel-bulk-start, #aih-cancel-bulk-status').on('click', function() { $(this).closest('.aih-modal').fadeOut(200); });
     
     $('#aih-apply-bulk-time').on('click', function() {
         var $btn = $(this);
@@ -908,6 +932,32 @@ jQuery(document).ready(function($) {
         });
     });
     
+    // ========== BULK STATUS ==========
+
+    $('#aih-apply-bulk-status').on('click', function() {
+        var $btn = $(this);
+        if ($btn.prop('disabled')) return;
+
+        var ids = $('.aih-art-checkbox:checked').map(function() { return $(this).val(); }).get();
+        var newStatus = $('#aih-bulk-status-select').val();
+        if (!newStatus) { aihModal.alert('Select a status.'); return; }
+
+        $btn.prop('disabled', true).text('<?php echo esc_js(__('Updating...', 'art-in-heaven')); ?>');
+
+        $.post(aihAdmin.ajaxurl, { action: 'aih_admin_bulk_update_status', nonce: aihAdmin.nonce, ids: ids, new_status: newStatus }, function(r) {
+            if (r.success) {
+                $('#aih-bulk-status-modal').hide();
+                aihModal.alert(r.data.message).then(function() { location.reload(); });
+            } else {
+                aihModal.alert(r.data ? r.data.message : 'Error');
+                $btn.prop('disabled', false).text('<?php echo esc_js(__('Apply', 'art-in-heaven')); ?>');
+            }
+        }).fail(function() {
+            aihModal.alert('Request failed');
+            $btn.prop('disabled', false).text('<?php echo esc_js(__('Apply', 'art-in-heaven')); ?>');
+        });
+    });
+
     // ========== BULK VISIBILITY ==========
     
     $('#aih-bulk-show-end-btn').on('click', async function() {

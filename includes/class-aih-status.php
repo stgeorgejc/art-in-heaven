@@ -492,9 +492,12 @@ class AIH_Status {
             return self::STATUS_ENDED;
         }
 
+        // Future start: return 'active' — the gallery query filters by auction_start,
+        // and get_status_sql() will compute 'scheduled' for display purposes.
+        // Draft should only be set by explicit admin action, not automatically.
         if ($start !== null && $start > $now) {
-            if (defined('WP_DEBUG') && WP_DEBUG) { error_log('AIH_Status: Returning DRAFT (start > now)'); }
-            return self::STATUS_DRAFT;
+            if (defined('WP_DEBUG') && WP_DEBUG) { error_log('AIH_Status: Returning ACTIVE (start > now, scheduled)'); }
+            return self::STATUS_ACTIVE;
         }
 
         if (defined('WP_DEBUG') && WP_DEBUG) { error_log('AIH_Status: Returning ACTIVE (default)'); }

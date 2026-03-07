@@ -68,6 +68,7 @@ class AIH_Ajax {
         add_action('wp_ajax_aih_admin_delete_art', array($this, 'admin_delete_art'));
         add_action('wp_ajax_aih_admin_bulk_update_times', array($this, 'admin_bulk_update_times'));
         add_action('wp_ajax_aih_admin_bulk_update_start_times', array($this, 'admin_bulk_update_start_times'));
+        add_action('wp_ajax_aih_admin_bulk_update_status', array($this, 'admin_bulk_update_status'));
         add_action('wp_ajax_aih_admin_bulk_show_end_time', array($this, 'admin_bulk_show_end_time'));
         add_action('wp_ajax_aih_admin_toggle_end_time', array($this, 'admin_toggle_end_time'));
         add_action('wp_ajax_aih_admin_inline_edit', array($this, 'admin_inline_edit'));
@@ -760,13 +761,34 @@ class AIH_Ajax {
     }
     
     /** @return void */
+    public function admin_bulk_update_status() {
+        check_ajax_referer('aih_admin_nonce', 'nonce');
+        if (!AIH_Roles::can_manage_art()) {
+            wp_send_json_error(array('message' => __('Permission denied.', 'art-in-heaven')));
+        }
+        $ids = array_map('intval', $_POST['ids'] ?? array());
+        $new_status = sanitize_text_field($_POST['new_status'] ?? '');
+        if (empty($ids) || empty($new_status)) {
+            wp_send_json_error(array('message' => __('Missing data.', 'art-in-heaven')));
+        }
+        if (!AIH_Status::is_valid_status($new_status)) {
+            wp_send_json_error(array('message' => __('Invalid status.', 'art-in-heaven')));
+        }
+        $result = (new AIH_Art_Piece())->bulk_update_status($ids, $new_status);
+        if ($result === false) {
+            wp_send_json_error(array('message' => __('Update failed.', 'art-in-heaven')));
+        }
+        wp_send_json_success(array('message' => $result . ' items updated.'));
+    }
+
+    /** @return void */
     public function admin_bulk_show_end_time() {
         check_ajax_referer('aih_admin_nonce', 'nonce');
         if (!AIH_Roles::can_manage_art()) wp_send_json_error(array('message' => __('Permission denied.', 'art-in-heaven')));
         $ids = array_map('intval', $_POST['ids'] ?? array());
         $show = isset($_POST['show']) && $_POST['show'] == '1' ? 1 : 0;
         if (empty($ids)) wp_send_json_error(array('message' => __('No items selected.', 'art-in-heaven')));
-        
+
         global $wpdb;
         $table = AIH_Database::get_table('art_pieces');
 
