@@ -26,7 +26,6 @@ class AnalyticsTemplateTest extends TestCase
 
     public function testNoInlineFlexDisplayOnChartContainers(): void
     {
-        // Chart containers should use .aih-chart-row class, not inline flex
         $this->assertDoesNotMatchRegularExpression(
             '/style="[^"]*display:\s*flex;[^"]*flex-wrap:\s*wrap[^"]*"/',
             $this->template,
@@ -45,7 +44,6 @@ class AnalyticsTemplateTest extends TestCase
 
     public function testNoInlineMinWidthOnPostboxes(): void
     {
-        // Postboxes should not have inline min-width that causes overflow
         $this->assertDoesNotMatchRegularExpression(
             '/<div\s+class="postbox"[^>]*style="[^"]*min-width:\s*\d+px/',
             $this->template,
@@ -55,7 +53,6 @@ class AnalyticsTemplateTest extends TestCase
 
     public function testTopRevenueChartHasYAxisTickConfig(): void
     {
-        // The top revenue chart should configure Y-axis ticks for label truncation
         $this->assertStringContainsString(
             'substring(0,',
             $this->template,

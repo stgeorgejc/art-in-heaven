@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace ArtInHeaven\Tests\Unit;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Verifies the admin CSS maintains correct structure for layout,
- * padding, overflow, and responsive behavior.
+ * padding, overflow, responsive behavior, and variable usage.
  */
 class AdminCssStructureTest extends TestCase
 {
@@ -91,7 +92,6 @@ class AdminCssStructureTest extends TestCase
 
     public function testMobileChartRowStacksVertically(): void
     {
-        // Find the 768px mobile breakpoint block
         preg_match(
             '/@media\s+screen\s+and\s*\(max-width:\s*768px\)\s*\{(.*?)^\}/ms',
             $this->css,
@@ -109,11 +109,152 @@ class AdminCssStructureTest extends TestCase
 
     public function testGlobalTableMinWidthExists(): void
     {
-        // The global min-width: 600px rule should still exist for data tables
         $this->assertMatchesRegularExpression(
             '/\.aih-admin-wrap\s+table\s*\{[^}]*min-width:\s*600px/s',
             $this->css,
             'Global table min-width: 600px rule must exist for data tables'
+        );
+    }
+
+    // ── Badge color variables ──
+
+    #[DataProvider('badgeColorVariableProvider')]
+    public function testBadgeColorVariablesDefined(string $variable): void
+    {
+        $this->assertStringContainsString(
+            $variable,
+            $this->css,
+            "CSS variable $variable must be defined in :root"
+        );
+    }
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function badgeColorVariableProvider(): array
+    {
+        return [
+            'success-bg'   => ['--aih-badge-success-bg'],
+            'success-text' => ['--aih-badge-success-text'],
+            'warning-bg'   => ['--aih-badge-warning-bg'],
+            'warning-text' => ['--aih-badge-warning-text'],
+            'error-bg'     => ['--aih-badge-error-bg'],
+            'error-text'   => ['--aih-badge-error-text'],
+            'info-bg'      => ['--aih-badge-info-bg'],
+            'info-text'    => ['--aih-badge-info-text'],
+            'neutral-bg'   => ['--aih-badge-neutral-bg'],
+            'neutral-text' => ['--aih-badge-neutral-text'],
+            'muted-bg'     => ['--aih-badge-muted-bg'],
+            'muted-text'   => ['--aih-badge-muted-text'],
+        ];
+    }
+
+    public function testStatusBadgesUseVariablesNotHardcoded(): void
+    {
+        // Extract all .aih-status-badge.* rules
+        preg_match_all(
+            '/\.aih-status-badge\.\w+[^{]*\{([^}]*)\}/s',
+            $this->css,
+            $matches
+        );
+        $this->assertNotEmpty($matches[1], 'Status badge rules must exist');
+
+        foreach ($matches[1] as $ruleBody) {
+            // Skip rules that don't set background (base rule, etc.)
+            if (strpos($ruleBody, 'background:') === false) {
+                continue;
+            }
+            $this->assertStringContainsString(
+                'var(--aih-badge-',
+                $ruleBody,
+                "Status badge colors must use CSS variables, found: $ruleBody"
+            );
+        }
+    }
+
+    public function testSimpleBadgesUseVariablesNotHardcoded(): void
+    {
+        $badgeClasses = ['aih-badge-success', 'aih-badge-warning', 'aih-badge-error', 'aih-badge-info', 'aih-badge-secondary'];
+        foreach ($badgeClasses as $class) {
+            preg_match(
+                '/\.' . preg_quote($class, '/') . '\s*\{([^}]*)\}/s',
+                $this->css,
+                $m
+            );
+            $this->assertNotEmpty($m, ".$class rule must exist");
+            $this->assertStringContainsString(
+                'var(--aih-badge-',
+                $m[1],
+                ".$class must use CSS variables for colors"
+            );
+        }
+    }
+
+    // ── Non-existent variable guard ──
+
+    public function testNoNonExistentColorPrimaryVariable(): void
+    {
+        $this->assertStringNotContainsString(
+            '--aih-color-primary',
+            $this->css,
+            'CSS must not reference non-existent --aih-color-primary variable'
+        );
+    }
+
+    // ── Progress bar variables ──
+
+    public function testProgressBarUsesVariables(): void
+    {
+        $this->assertStringContainsString(
+            '--aih-progress-track',
+            $this->css,
+            'Progress bar track color must use a CSS variable'
+        );
+    }
+
+    public function testImportStatBgUsesVariable(): void
+    {
+        preg_match(
+            '/\.aih-import-stat\s*\{([^}]*)\}/s',
+            $this->css,
+            $m
+        );
+        $this->assertNotEmpty($m, '.aih-import-stat rule must exist');
+        $this->assertStringContainsString(
+            'var(--aih-import-stat-bg)',
+            $m[1],
+            'Import stat background must use CSS variable'
+        );
+    }
+
+    // ── Panel modifier ──
+
+    public function testPanelBottomModifierExists(): void
+    {
+        $this->assertMatchesRegularExpression(
+            '/\.aih-panel--bottom\s*\{[^}]*border-top:\s*none/s',
+            $this->css,
+            '.aih-panel--bottom modifier must exist with border-top: none'
+        );
+    }
+
+    // ── Utility classes ──
+
+    public function testHeadingIconClassExists(): void
+    {
+        $this->assertMatchesRegularExpression(
+            '/\.aih-heading-icon\s*\{[^}]*font-size:/s',
+            $this->css,
+            '.aih-heading-icon utility class must exist'
+        );
+    }
+
+    public function testBtnErrorClassExists(): void
+    {
+        $this->assertMatchesRegularExpression(
+            '/\.aih-btn-error\s*\{[^}]*color:\s*var\(--aih-error\)/s',
+            $this->css,
+            '.aih-btn-error class must exist with error color'
         );
     }
 }

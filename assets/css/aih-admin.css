@@ -73,6 +73,25 @@
     
     /* Touch target minimum */
     --aih-touch-target: 44px;
+
+    /* Badge / status color pairs (background + text) */
+    --aih-badge-success-bg: #d1fae5;
+    --aih-badge-success-text: #065f46;
+    --aih-badge-warning-bg: #fef3c7;
+    --aih-badge-warning-text: #92400e;
+    --aih-badge-error-bg: #fee2e2;
+    --aih-badge-error-text: #991b1b;
+    --aih-badge-info-bg: #dbeafe;
+    --aih-badge-info-text: #1e40af;
+    --aih-badge-neutral-bg: #f3f4f6;
+    --aih-badge-neutral-text: #1c1c1c;
+    --aih-badge-muted-bg: #f3f4f6;
+    --aih-badge-muted-text: #8a8a8a;
+
+    /* Progress bar / import UI */
+    --aih-progress-track: #e5e7eb;
+    --aih-import-stat-bg: #f0f0f1;
+    --aih-wp-muted: #646970;
 }
 
 /* ============================================
@@ -80,6 +99,21 @@
    ============================================ */
 .aih-hidden {
     display: none;
+}
+
+/* Heading icon — larger dashicon inline with heading text */
+.aih-heading-icon {
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+    margin-right: var(--aih-space-sm);
+    vertical-align: middle;
+}
+
+/* Error-styled button (e.g., bulk delete) */
+.aih-btn-error {
+    color: var(--aih-error);
+    border-color: var(--aih-error);
 }
 
 /* ============================================
@@ -312,7 +346,7 @@ button.aih-action-btn .dashicons {
 }
 
 .aih-action-btn.aih-delete-art:hover {
-    background: #fee2e2 !important;
+    background: var(--aih-badge-error-bg) !important;
     border-color: var(--aih-error) !important;
     color: var(--aih-error) !important;
 }
@@ -326,7 +360,7 @@ button.aih-action-btn .dashicons {
 
 /* Toggle End Time Button */
 .aih-toggle-end-time.is-visible {
-    background: #d1fae5 !important;
+    background: var(--aih-badge-success-bg) !important;
     border-color: var(--aih-success) !important;
     color: var(--aih-success) !important;
 }
@@ -336,6 +370,7 @@ button.aih-action-btn .dashicons {
    ============================================ */
 .aih-admin-wrap .aih-search-form {
     display: flex;
+    flex: 1;
     gap: 8px;
     align-items: center;
 }
@@ -959,21 +994,26 @@ button.aih-action-btn .dashicons {
     letter-spacing: 0.3px;
 }
 
-.aih-status-badge.active { background: #d1fae5; color: #065f46; }
-.aih-status-badge.upcoming { background: #dbeafe; color: #1e40af; }
-.aih-status-badge.draft { background: #f3f4f6; color: #1c1c1c; }
-.aih-status-badge.ended { background: #f3f4f6; color: #8a8a8a; }
-.aih-status-badge.sold { background: #fef3c7; color: #92400e; }
-.aih-status-badge.not_sold { background: #fee2e2; color: #991b1b; }
-.aih-status-badge.paid { background: #d1fae5; color: #065f46; }
-.aih-status-badge.pending { background: #fef3c7; color: #92400e; }
-.aih-status-badge.success { background: #d1fae5; color: #065f46; }
-.aih-status-badge.processing { background: #dbeafe; color: #1e40af; }
-.aih-status-badge.failed { background: #fee2e2; color: #991b1b; }
-.aih-status-badge.winning { background: #d1fae5; color: #065f46; }
-.aih-status-badge.outbid { background: #fef3c7; color: #92400e; }
-.aih-status-badge.refunded { background: #f3f4f6; color: #8a8a8a; }
-.aih-status-badge.picked_up { background: #dbeafe; color: #1e40af; }
+.aih-status-badge.active,
+.aih-status-badge.paid,
+.aih-status-badge.success,
+.aih-status-badge.winning { background: var(--aih-badge-success-bg); color: var(--aih-badge-success-text); }
+
+.aih-status-badge.upcoming,
+.aih-status-badge.processing,
+.aih-status-badge.picked_up { background: var(--aih-badge-info-bg); color: var(--aih-badge-info-text); }
+
+.aih-status-badge.sold,
+.aih-status-badge.pending,
+.aih-status-badge.outbid { background: var(--aih-badge-warning-bg); color: var(--aih-badge-warning-text); }
+
+.aih-status-badge.not_sold,
+.aih-status-badge.failed { background: var(--aih-badge-error-bg); color: var(--aih-badge-error-text); }
+
+.aih-status-badge.draft { background: var(--aih-badge-neutral-bg); color: var(--aih-badge-neutral-text); }
+
+.aih-status-badge.ended,
+.aih-status-badge.refunded { background: var(--aih-badge-muted-bg); color: var(--aih-badge-muted-text); }
 
 /* Simple badges */
 .aih-badge {
@@ -985,11 +1025,11 @@ button.aih-action-btn .dashicons {
     text-transform: uppercase;
     letter-spacing: 0.3px;
 }
-.aih-badge-success { background: #d1fae5; color: #065f46; }
-.aih-badge-warning { background: #fef3c7; color: #92400e; }
-.aih-badge-error { background: #fee2e2; color: #991b1b; }
-.aih-badge-info { background: #dbeafe; color: #1e40af; }
-.aih-badge-secondary { background: #f3f4f6; color: #1c1c1c; }
+.aih-badge-success { background: var(--aih-badge-success-bg); color: var(--aih-badge-success-text); }
+.aih-badge-warning { background: var(--aih-badge-warning-bg); color: var(--aih-badge-warning-text); }
+.aih-badge-error { background: var(--aih-badge-error-bg); color: var(--aih-badge-error-text); }
+.aih-badge-info { background: var(--aih-badge-info-bg); color: var(--aih-badge-info-text); }
+.aih-badge-secondary { background: var(--aih-badge-neutral-bg); color: var(--aih-badge-neutral-text); }
 .aih-badge-lg { font-size: 14px; padding: 8px 16px; }
 .aih-badge-lg .dashicons { margin-right: 5px; }
 
@@ -1002,13 +1042,13 @@ button.aih-action-btn .dashicons {
     border-radius: var(--aih-radius-sm);
 }
 
-.aih-bid-count.has-bids { background: #d1fae5; color: #065f46; }
-.aih-bid-count.no-bids { background: #f3f4f6; color: #8a8a8a; }
+.aih-bid-count.has-bids { background: var(--aih-badge-success-bg); color: var(--aih-badge-success-text); }
+.aih-bid-count.no-bids { background: var(--aih-badge-muted-bg); color: var(--aih-badge-muted-text); }
 
 /* Bidder status pills (compose on .aih-badge) */
-.aih-status-pill.has-bid { background: #d1fae5; color: #065f46; }
-.aih-status-pill.logged-in { background: #dbeafe; color: #1e40af; }
-.aih-status-pill.not-active { background: #f3f4f6; color: #8a8a8a; }
+.aih-status-pill.has-bid { background: var(--aih-badge-success-bg); color: var(--aih-badge-success-text); }
+.aih-status-pill.logged-in { background: var(--aih-badge-info-bg); color: var(--aih-badge-info-text); }
+.aih-status-pill.not-active { background: var(--aih-badge-muted-bg); color: var(--aih-badge-muted-text); }
 
 /* Bid count badge (bidders table) */
 .aih-bid-badge {
@@ -1017,8 +1057,8 @@ button.aih-action-btn .dashicons {
     font-size: var(--aih-font-xs);
     font-weight: 600;
     border-radius: var(--aih-radius-sm);
-    background: #d1fae5;
-    color: #065f46;
+    background: var(--aih-badge-success-bg);
+    color: var(--aih-badge-success-text);
 }
 
 
@@ -1029,8 +1069,8 @@ button.aih-action-btn .dashicons {
     font-size: 12px;
     font-weight: 600;
 }
-.aih-mode-badge.sandbox { background: #fef3c7; color: #92400e; }
-.aih-mode-badge.production { background: #d1fae5; color: #065f46; }
+.aih-mode-badge.sandbox { background: var(--aih-badge-warning-bg); color: var(--aih-badge-warning-text); }
+.aih-mode-badge.production { background: var(--aih-badge-success-bg); color: var(--aih-badge-success-text); }
 
 /* Art info grid (art-stats) */
 .aih-art-info-grid {
@@ -1231,6 +1271,13 @@ button.aih-action-btn .dashicons {
 .aih-card h3 {
     font-size: var(--aih-font-md);
     margin-bottom: var(--aih-space-sm);
+}
+
+/* Panel that attaches to element above (no top border/margin, bottom radius only) */
+.aih-panel--bottom {
+    margin-top: 0;
+    border-top: none;
+    border-radius: 0 0 var(--aih-radius) var(--aih-radius);
 }
 
 /* ============================================
@@ -2111,12 +2158,12 @@ button.aih-action-btn .dashicons {
     border: 2px dashed #c3c4c7;
     border-radius: var(--aih-radius-md);
     cursor: pointer;
-    color: #646970;
+    color: var(--aih-wp-muted);
     transition: border-color 0.2s, background-color 0.2s;
 }
 
 .aih-import-file-label:hover {
-    border-color: var(--aih-color-primary, #b8956b);
+    border-color: var(--aih-accent);
     background: #f9f6f3;
 }
 
@@ -2159,7 +2206,7 @@ button.aih-action-btn .dashicons {
 .aih-import-progress-bar {
     width: 100%;
     height: 20px;
-    background: #e5e7eb;
+    background: var(--aih-progress-track);
     border-radius: 10px;
     overflow: hidden;
     margin-bottom: var(--aih-space-sm);
@@ -2167,14 +2214,14 @@ button.aih-action-btn .dashicons {
 
 .aih-import-progress-fill {
     height: 100%;
-    background: var(--aih-color-primary, #b8956b);
+    background: var(--aih-accent);
     border-radius: 10px;
     transition: width 0.3s ease;
 }
 
 .aih-import-progress-text {
     text-align: center;
-    color: #646970;
+    color: var(--aih-wp-muted);
     font-style: italic;
 }
 
@@ -2189,7 +2236,7 @@ button.aih-action-btn .dashicons {
 .aih-import-stat {
     text-align: center;
     padding: var(--aih-space-sm);
-    background: #f0f0f1;
+    background: var(--aih-import-stat-bg);
     border-radius: var(--aih-radius-md);
 }
 
@@ -2203,7 +2250,7 @@ button.aih-action-btn .dashicons {
 .aih-import-stat-label {
     display: block;
     font-size: 12px;
-    color: #646970;
+    color: var(--aih-wp-muted);
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
@@ -2217,7 +2264,7 @@ button.aih-action-btn .dashicons {
 .aih-import-rows-list {
     max-height: 300px;
     overflow-y: auto;
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--aih-progress-track);
     border-radius: var(--aih-radius-md);
 }
 
@@ -2226,7 +2273,7 @@ button.aih-action-btn .dashicons {
     align-items: center;
     gap: var(--aih-space-sm);
     padding: var(--aih-space-xs) var(--aih-space-sm);
-    border-bottom: 1px solid #f0f0f1;
+    border-bottom: 1px solid var(--aih-import-stat-bg);
     font-size: 13px;
 }
 
@@ -2255,7 +2302,7 @@ button.aih-action-btn .dashicons {
 
 .aih-import-row-msg {
     flex: 1;
-    color: #646970;
+    color: var(--aih-wp-muted);
 }
 
 .aih-import-row-created { background: #f0fdf4; }
