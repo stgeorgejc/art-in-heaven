@@ -54,10 +54,10 @@ class AIH_Admin {
         // Main menu - accessible to anyone with any AIH capability
         $menu_cap = AIH_Roles::get_menu_capability();
 
-        // Pickup-only users land directly on the pickup page
+        // Operations / pickup-only users land directly on the pickup page
         $default_slug = 'art-in-heaven';
         $default_render = array($this, 'render_dashboard');
-        if (AIH_Roles::can_manage_pickup() && !AIH_Roles::can_manage_art() && !AIH_Roles::can_manage_auction()) {
+        if (!AIH_Roles::can_manage_art() && !AIH_Roles::can_manage_auction()) {
             $default_slug = 'art-in-heaven-pickup';
             $default_render = array($this, 'render_pickup');
             $menu_cap = AIH_Roles::CAP_MANAGE_PICKUP;
