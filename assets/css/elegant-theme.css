@@ -28,10 +28,10 @@
     --color-status-pending-bg: #fff3e0;
     --color-pickup-bg: #e3f2fd;
     --color-pickup: #1565c0;
-    --overlay-white-95: rgba(255, 255, 255, 0.95);
-    --overlay-white-90: rgba(255, 255, 255, 0.9);
-    --overlay-white-80: rgba(255, 255, 255, 0.8);
-    --overlay-white-50: rgba(255, 255, 255, 0.5);
+    --overlay-surface-95: rgba(255, 255, 255, 0.95);
+    --overlay-surface-90: rgba(255, 255, 255, 0.9);
+    --overlay-surface-80: rgba(255, 255, 255, 0.8);
+    --overlay-surface-50: rgba(255, 255, 255, 0.5);
     --overlay-black-70: rgba(0, 0, 0, 0.7);
     --overlay-black-50: rgba(0, 0, 0, 0.5);
     --overlay-black-40: rgba(0, 0, 0, 0.4);
@@ -89,20 +89,21 @@
     --color-scrollbar-hover: #777;
     --color-success-bg: rgba(95, 168, 112, 0.15);
     --color-error-bg: rgba(216, 108, 111, 0.15);
+    --color-badge-paid: #42a5f5;
     --color-badge-upcoming: #c9a46c;
     --color-status-pending: #ffb74d;
     --color-status-pending-bg: rgba(230, 81, 0, 0.15);
     --color-pickup-bg: rgba(66, 165, 245, 0.15);
     --color-pickup: #64b5f6;
-    --overlay-white-95: rgba(30, 30, 30, 0.95);
-    --overlay-white-90: rgba(30, 30, 30, 0.9);
-    --overlay-white-80: rgba(30, 30, 30, 0.8);
-    --overlay-white-50: rgba(232, 230, 227, 0.3);
+    --overlay-surface-95: rgba(30, 30, 30, 0.95);
+    --overlay-surface-90: rgba(30, 30, 30, 0.9);
+    --overlay-surface-80: rgba(30, 30, 30, 0.8);
+    --overlay-surface-50: rgba(232, 230, 227, 0.3);
     --overlay-black-70: rgba(0, 0, 0, 0.7);
     --overlay-black-50: rgba(0, 0, 0, 0.5);
     --overlay-black-40: rgba(0, 0, 0, 0.4);
-    --overlay-black-20: rgba(0, 0, 0, 0.4);
-    --overlay-black-15: rgba(0, 0, 0, 0.4);
+    --overlay-black-20: rgba(0, 0, 0, 0.3);
+    --overlay-black-15: rgba(0, 0, 0, 0.25);
     --shadow-badge: 0 2px 8px rgba(0,0,0,0.4);
 }
 
@@ -1028,7 +1029,7 @@ body.filter-open {
     font-weight: 700;
     font-family: var(--font-display);
     letter-spacing: 0.5px;
-    background: var(--overlay-white-95);
+    background: var(--overlay-surface-95);
     color: var(--color-accent);
     border-radius: 4px;
     box-shadow: var(--shadow-badge);
@@ -1904,7 +1905,7 @@ body.filter-open {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--overlay-white-90);
+    background: var(--overlay-surface-90);
     border: none;
     border-radius: 50%;
     cursor: pointer;
@@ -1944,14 +1945,14 @@ body.filter-open {
     width: 7px;
     height: 7px;
     border-radius: 50%;
-    background: var(--overlay-white-50);
+    background: var(--overlay-surface-50);
     cursor: pointer;
     transition: background var(--transition-fast), transform var(--transition-fast);
     box-shadow: 0 1px 2px var(--overlay-black-20);
 }
 
 .aih-carousel-dot:hover {
-    background: var(--overlay-white-80);
+    background: var(--overlay-surface-80);
 }
 
 .aih-carousel-dot.active {
@@ -2066,7 +2067,7 @@ body.filter-open {
     padding-right: 4px;
 }
 
-/* Gallery and My Bids page .aih-main consolidated into shared rule above */
+/* Gallery, Single, Checkout, My Bids, and My Wins .aih-main consolidated into shared rule above */
 
 /* ============================================
    SCROLL TO TOP BUTTON
@@ -2150,13 +2151,13 @@ body.filter-open {
 html {
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
-    overflow-x: hidden;
 }
 
 /* Improve font rendering on all devices */
 body {
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    overflow-x: hidden;
 }
 
 /* ============================================
@@ -3806,7 +3807,7 @@ body {
     font-weight: 700;
     font-family: var(--font-display);
     letter-spacing: 0.5px;
-    background: var(--overlay-white-95);
+    background: var(--overlay-surface-95);
     color: var(--color-accent);
     border-radius: 4px;
     box-shadow: var(--shadow-badge);
@@ -4144,7 +4145,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--overlay-white-95);
+    background: var(--overlay-surface-95);
     border: none;
     border-radius: 50%;
     cursor: pointer;
@@ -4198,14 +4199,14 @@ body {
     aspect-ratio: 1;
     flex-shrink: 0;
     border-radius: 50%;
-    background: var(--overlay-white-50);
+    background: var(--overlay-surface-50);
     cursor: pointer;
     transition: background var(--transition-fast), transform var(--transition-fast);
     box-shadow: 0 1px 3px var(--overlay-black-20);
 }
 
 .aih-image-dot:hover {
-    background: var(--overlay-white-80);
+    background: var(--overlay-surface-80);
 }
 
 .aih-image-dot.active {
@@ -4727,7 +4728,7 @@ html.aih-lightbox-open body {
     font-weight: 700;
     font-family: var(--font-display);
     letter-spacing: 0.5px;
-    background: var(--overlay-white-95);
+    background: var(--overlay-surface-95);
     color: var(--color-accent);
     border-radius: 3px;
     box-shadow: 0 1px 4px var(--overlay-black-15);
@@ -5202,7 +5203,7 @@ html.aih-lightbox-open body {
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    box-shadow: var(--shadow-lg);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
 }
 
 .aih-modal-header {
@@ -5323,7 +5324,7 @@ html.aih-lightbox-open body {
     font-size: 10px;
     font-weight: 700;
     font-family: var(--font-display);
-    background: var(--overlay-white-95);
+    background: var(--overlay-surface-95);
     color: var(--color-accent);
     border-radius: 2px;
     line-height: 1;
@@ -5595,7 +5596,7 @@ html.aih-lightbox-open body {
    MY WINS PAGE
    ========================================================================== */
 
-/* .aih-mywins-page .aih-main consolidated into shared rule above */
+/* .aih-mywins-page .aih-main consolidated into shared full-width rule above */
 
 .aih-wins-grid {
     display: grid;
@@ -6104,20 +6105,21 @@ html.aih-lightbox-open body {
         --color-scrollbar-hover: #777;
         --color-success-bg: rgba(95, 168, 112, 0.15);
         --color-error-bg: rgba(216, 108, 111, 0.15);
+        --color-badge-paid: #42a5f5;
         --color-badge-upcoming: #c9a46c;
         --color-status-pending: #ffb74d;
         --color-status-pending-bg: rgba(230, 81, 0, 0.15);
         --color-pickup-bg: rgba(66, 165, 245, 0.15);
         --color-pickup: #64b5f6;
-        --overlay-white-95: rgba(30, 30, 30, 0.95);
-        --overlay-white-90: rgba(30, 30, 30, 0.9);
-        --overlay-white-80: rgba(30, 30, 30, 0.8);
-        --overlay-white-50: rgba(232, 230, 227, 0.3);
+        --overlay-surface-95: rgba(30, 30, 30, 0.95);
+        --overlay-surface-90: rgba(30, 30, 30, 0.9);
+        --overlay-surface-80: rgba(30, 30, 30, 0.8);
+        --overlay-surface-50: rgba(232, 230, 227, 0.3);
         --overlay-black-70: rgba(0, 0, 0, 0.7);
         --overlay-black-50: rgba(0, 0, 0, 0.5);
         --overlay-black-40: rgba(0, 0, 0, 0.4);
-        --overlay-black-20: rgba(0, 0, 0, 0.4);
-        --overlay-black-15: rgba(0, 0, 0, 0.4);
+        --overlay-black-20: rgba(0, 0, 0, 0.3);
+        --overlay-black-15: rgba(0, 0, 0, 0.25);
         --shadow-badge: 0 2px 8px rgba(0,0,0,0.4);
     }
 }
