@@ -35,14 +35,17 @@ class AIH_Roles {
     /** @var array<int, string> Legacy roles to clean up */
     private static $legacy_roles = array(
         'sa_super_admin',
-        'sa_art_manager', 
+        'sa_art_manager',
         'silent_auction_admin',
         'auction_manager',
         'sa_admin',
         'aih_admin',
         'aih_pickup_manager',
     );
-    
+
+    /** @var string Bump this key when adding new legacy roles so cleanup re-runs */
+    private static $legacy_cleanup_key = 'aih_legacy_roles_cleaned_v2';
+
     /**
      * @return self
      */
@@ -52,31 +55,52 @@ class AIH_Roles {
         }
         return self::$instance;
     }
-    
+
     private function __construct() {
         // Add capabilities to admin on init
         add_action('admin_init', array($this, 'ensure_admin_caps'));
-        
-        // One-time cleanup of legacy roles (v0.9.91)
+
+        // One-time cleanup of legacy roles (bumped key triggers re-run)
         add_action('admin_init', array($this, 'cleanup_legacy_roles'));
     }
-    
+
     /**
      * Clean up any legacy roles from previous versions
      *
      * @return void
      */
     public function cleanup_legacy_roles() {
-        // Only run once
-        if (get_option('aih_legacy_roles_cleaned', false)) {
+        if (get_option(self::$legacy_cleanup_key, false)) {
             return;
         }
-        
+
+        // Migrate users from removed roles to their replacements
+        self::migrate_legacy_role_users();
+
         foreach (self::$legacy_roles as $legacy_role) {
             remove_role($legacy_role);
         }
-        
-        update_option('aih_legacy_roles_cleaned', true);
+
+        update_option(self::$legacy_cleanup_key, true);
+    }
+
+    /**
+     * Migrate users from removed roles to their replacement roles
+     *
+     * @return void
+     */
+    private static function migrate_legacy_role_users() {
+        $migration_map = array(
+            'aih_pickup_manager' => self::ROLE_OPERATIONS,
+        );
+
+        foreach ($migration_map as $old_role => $new_role) {
+            $users = get_users(array('role' => $old_role));
+            foreach ($users as $user) {
+                $user->remove_role($old_role);
+                $user->add_role($new_role);
+            }
+        }
     }
     
     /**
@@ -149,7 +173,7 @@ class AIH_Roles {
         );
 
         // Mark legacy cleanup as done
-        update_option('aih_legacy_roles_cleaned', true);
+        update_option(self::$legacy_cleanup_key, true);
     }
     
     /**
@@ -181,7 +205,8 @@ class AIH_Roles {
             $admin->remove_cap(self::CAP_MANAGE_PICKUP);
         }
         
-        // Clean up option
+        // Clean up options (current + any old keys)
+        delete_option(self::$legacy_cleanup_key);
         delete_option('aih_legacy_roles_cleaned');
     }
     
@@ -192,8 +217,26 @@ class AIH_Roles {
      */
     public function ensure_admin_caps() {
         $admin = get_role('administrator');
-        if ($admin && (!$admin->has_cap(self::CAP_MANAGE_AUCTION) || !$admin->has_cap(self::CAP_MANAGE_BIDDERS))) {
-            self::install();
+        if (!$admin) {
+            return;
+        }
+
+        $required = array(
+            self::CAP_MANAGE_AUCTION,
+            self::CAP_MANAGE_ART,
+            self::CAP_VIEW_BIDS,
+            self::CAP_VIEW_FINANCIAL,
+            self::CAP_MANAGE_BIDDERS,
+            self::CAP_MANAGE_SETTINGS,
+            self::CAP_VIEW_REPORTS,
+            self::CAP_MANAGE_PICKUP,
+        );
+
+        foreach ($required as $cap) {
+            if (!$admin->has_cap($cap)) {
+                self::install();
+                return;
+            }
         }
     }
     

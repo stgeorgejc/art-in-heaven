@@ -248,12 +248,14 @@ foreach ( $notif_types as $row ) {
 		'variant'  => 'bids',
 		'link'     => admin_url( 'admin.php?page=art-in-heaven-analytics&tab=art-pieces' ),
 	) );
-	AIH_Admin::render_stat_card( array(
-		'value'   => '$' . number_format( $total_revenue, 2 ),
-		'label'   => __( 'Total Revenue', 'art-in-heaven' ),
-		'variant' => 'money',
-		'link'    => admin_url( 'admin.php?page=art-in-heaven-orders' ),
-	) );
+	if ( AIH_Roles::can_view_financial() ) {
+		AIH_Admin::render_stat_card( array(
+			'value'   => '$' . number_format( $total_revenue, 2 ),
+			'label'   => __( 'Total Revenue', 'art-in-heaven' ),
+			'variant' => 'money',
+			'link'    => admin_url( 'admin.php?page=art-in-heaven-orders' ),
+		) );
+	}
 	AIH_Admin::render_stat_card( array(
 		'value' => number_format( intval( $stats->unique_bidders ) ),
 		'label' => __( 'Unique Bidders', 'art-in-heaven' ),
@@ -275,11 +277,13 @@ foreach ( $notif_types as $row ) {
 		'value' => esc_html( $avg_bids_per_piece ),
 		'label' => __( 'Avg Bids / Piece', 'art-in-heaven' ),
 	) );
-	AIH_Admin::render_stat_card( array(
-		'value'    => $rev_vs_starting . '%',
-		'label'    => __( 'Revenue vs Starting', 'art-in-heaven' ),
-		'sublabel' => __( 'of asking price', 'art-in-heaven' ),
-	) );
+	if ( AIH_Roles::can_view_financial() ) {
+		AIH_Admin::render_stat_card( array(
+			'value'    => $rev_vs_starting . '%',
+			'label'    => __( 'Revenue vs Starting', 'art-in-heaven' ),
+			'sublabel' => __( 'of asking price', 'art-in-heaven' ),
+		) );
+	}
 	AIH_Admin::render_stat_card( array(
 		'value' => number_format( $single_bid_count ),
 		'label' => __( 'Single-Bid Pieces', 'art-in-heaven' ),
@@ -326,6 +330,7 @@ foreach ( $notif_types as $row ) {
 		</div>
 	</div>
 
+	<?php if ( AIH_Roles::can_view_financial() ) : ?>
 	<!-- Top 10 by Revenue -->
 	<?php if ( ! empty( $top_by_revenue ) ) : ?>
 	<div class="postbox" style="margin-top: 24px;">
@@ -337,8 +342,9 @@ foreach ( $notif_types as $row ) {
 		</div>
 	</div>
 	<?php endif; ?>
+	<?php endif; ?>
 
-	<!-- Payment Summary Tables -->
+	<!-- Summary Tables -->
 	<div class="aih-report-sections">
 		<div class="aih-report-section">
 			<h2>
@@ -351,10 +357,13 @@ foreach ( $notif_types as $row ) {
 				<tr><th><?php _e( 'Ended Pieces', 'art-in-heaven' ); ?></th><td><?php echo intval( $stats->ended_count ); ?></td></tr>
 				<tr><th><?php _e( 'Pieces with Bids', 'art-in-heaven' ); ?></th><td><?php echo intval( $stats->pieces_with_bids ); ?></td></tr>
 				<tr><th><?php _e( 'Total Starting Value', 'art-in-heaven' ); ?></th><td>$<?php echo number_format( floatval( $stats->total_starting_value ), 2 ); ?></td></tr>
+				<?php if ( AIH_Roles::can_view_bids() ) : ?>
 				<tr><th><?php _e( 'Highest Bid', 'art-in-heaven' ); ?></th><td>$<?php echo number_format( floatval( $stats->highest_bid ), 2 ); ?></td></tr>
 				<tr><th><?php _e( 'Average Bid', 'art-in-heaven' ); ?></th><td>$<?php echo number_format( floatval( $stats->average_bid ), 2 ); ?></td></tr>
+				<?php endif; ?>
 			</table>
 		</div>
+		<?php if ( AIH_Roles::can_view_financial() ) : ?>
 		<div class="aih-report-section">
 			<h2>
 				<?php _e( 'Payment Statistics', 'art-in-heaven' ); ?>
@@ -368,6 +377,7 @@ foreach ( $notif_types as $row ) {
 				<tr><th><?php _e( 'Total Pending', 'art-in-heaven' ); ?></th><td>$<?php echo number_format( floatval( $payment_stats->total_pending ), 2 ); ?></td></tr>
 			</table>
 		</div>
+		<?php endif; ?>
 	</div>
 
 	<?php elseif ( $active_tab === 'art-pieces' ) : ?>
