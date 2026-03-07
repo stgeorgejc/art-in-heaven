@@ -200,7 +200,7 @@ class RolesTest extends TestCase
     }
 
     #[DataProvider('capabilityMethodProvider')]
-    public function testCapabilityMethodFallsBackToManageAuction(string $method, string $cap): void
+    public function testCapabilityMethodFallsBackToManageAuction(string $method, string $_cap): void
     {
         Functions\expect('current_user_can')
             ->andReturnUsing(function (string $c): bool {
@@ -216,14 +216,18 @@ class RolesTest extends TestCase
      */
     public static function capabilityMethodProvider(): array
     {
+        if (!class_exists('AIH_Roles')) {
+            require_once __DIR__ . '/../../includes/class-aih-roles.php';
+        }
+
         return array(
-            'can_manage_art'     => array('can_manage_art', 'aih_manage_art'),
-            'can_view_bids'      => array('can_view_bids', 'aih_view_bids'),
-            'can_view_financial' => array('can_view_financial', 'aih_view_financial'),
-            'can_manage_bidders' => array('can_manage_bidders', 'aih_manage_bidders'),
-            'can_manage_settings'=> array('can_manage_settings', 'aih_manage_settings'),
-            'can_view_reports'   => array('can_view_reports', 'aih_view_reports'),
-            'can_manage_pickup'  => array('can_manage_pickup', 'aih_manage_pickup'),
+            'can_manage_art'     => array('can_manage_art', AIH_Roles::CAP_MANAGE_ART),
+            'can_view_bids'      => array('can_view_bids', AIH_Roles::CAP_VIEW_BIDS),
+            'can_view_financial' => array('can_view_financial', AIH_Roles::CAP_VIEW_FINANCIAL),
+            'can_manage_bidders' => array('can_manage_bidders', AIH_Roles::CAP_MANAGE_BIDDERS),
+            'can_manage_settings'=> array('can_manage_settings', AIH_Roles::CAP_MANAGE_SETTINGS),
+            'can_view_reports'   => array('can_view_reports', AIH_Roles::CAP_VIEW_REPORTS),
+            'can_manage_pickup'  => array('can_manage_pickup', AIH_Roles::CAP_MANAGE_PICKUP),
         );
     }
 
@@ -442,9 +446,6 @@ class RolesTest extends TestCase
 
     public function testEnsureAdminCapsChecksAllEightCaps(): void
     {
-        /** @var array<int, string> $capsChecked */
-        $capsChecked = [];
-
         $adminRole = new class {
             /** @var array<int, string> */
             public array $checked = [];
