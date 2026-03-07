@@ -502,6 +502,31 @@ button.aih-action-btn .dashicons {
 }
 
 /* ============================================
+   POSTBOX CARDS (Chart panels on Analytics)
+   ============================================ */
+.aih-admin-wrap .postbox .hndle {
+    padding: var(--aih-space-sm) var(--aih-space-md);
+}
+
+.aih-admin-wrap .postbox .inside {
+    padding: var(--aih-space-md);
+}
+
+/* Flex layout for side-by-side chart panels */
+.aih-chart-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--aih-space-lg);
+    margin-top: var(--aih-space-lg);
+}
+
+.aih-chart-row .postbox {
+    flex: 1;
+    min-width: 280px;
+    margin: 0;
+}
+
+/* ============================================
    DASHBOARD - Using Grid
    ============================================ */
 .aih-dashboard-grid {
@@ -524,6 +549,10 @@ button.aih-action-btn .dashicons {
     margin-bottom: var(--aih-space-md);
     padding-bottom: var(--aih-space-sm);
     border-bottom: 1px solid var(--aih-border);
+}
+
+.aih-dashboard-section table.widefat {
+    min-width: auto;
 }
 
 /* Quick Links */
@@ -1229,6 +1258,7 @@ button.aih-action-btn .dashicons {
 
 .aih-report-section table {
     width: 100%;
+    min-width: auto;
     font-size: var(--aih-font-base);
 }
 
@@ -1668,6 +1698,16 @@ button.aih-action-btn .dashicons {
     .aih-bidder-stats,
     .aih-dashboard-stats {
         grid-template-columns: 1fr;
+    }
+
+    /* Chart rows: stack on mobile */
+    .aih-chart-row {
+        flex-direction: column;
+    }
+
+    .aih-chart-row .postbox {
+        min-width: 0;
+        max-width: none;
     }
     
     .aih-stat-card {
