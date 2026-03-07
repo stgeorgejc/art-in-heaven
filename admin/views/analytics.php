@@ -1518,8 +1518,9 @@ jQuery(document).ready(function($) {
 					x: { beginAtZero: true, ticks: { callback: function(v) { return '$' + v.toLocaleString(); } } },
 					y: {
 						ticks: {
-							callback: function(value, index) {
-								var label = topRevData[index] ? topRevData[index].label : '';
+							callback: function(value) {
+								var label = (this && typeof this.getLabelForValue === 'function') ? this.getLabelForValue(value) : '';
+								label = label || '';
 								return label.length > 30 ? label.substring(0, 30) + '…' : label;
 							},
 							font: { size: 11 }

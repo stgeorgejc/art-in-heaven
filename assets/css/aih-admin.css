@@ -586,7 +586,7 @@ button.aih-action-btn .dashicons {
     border-bottom: 1px solid var(--aih-border);
 }
 
-.aih-dashboard-section table.widefat {
+.aih-dashboard-section table.widefat:not(.wp-list-table) {
     min-width: auto;
 }
 

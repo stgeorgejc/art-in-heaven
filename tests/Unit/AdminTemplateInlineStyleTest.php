@@ -12,13 +12,19 @@ use PHPUnit\Framework\TestCase;
  */
 class AdminTemplateInlineStyleTest extends TestCase
 {
+    private function readTemplate(string $relativePath): string
+    {
+        $path = AIH_PLUGIN_DIR . $relativePath;
+        $this->assertFileExists($path);
+        $contents = file_get_contents($path);
+        $this->assertNotFalse($contents, "Failed to read $relativePath");
+        return $contents;
+    }
+
     public function testArtPiecesDeleteButtonUsesCssClass(): void
     {
-        $path = AIH_PLUGIN_DIR . 'admin/views/art-pieces.php';
-        $this->assertFileExists($path);
-        $template = (string) file_get_contents($path);
+        $template = $this->readTemplate('admin/views/art-pieces.php');
 
-        // Bulk delete button should use .aih-btn-error, not inline color
         $this->assertDoesNotMatchRegularExpression(
             '/id="aih-bulk-delete-btn"[^>]*style="[^"]*color:\s*#d63638/',
             $template,
@@ -33,11 +39,8 @@ class AdminTemplateInlineStyleTest extends TestCase
 
     public function testPickupHeadingIconUsesCssClass(): void
     {
-        $path = AIH_PLUGIN_DIR . 'admin/views/pickup.php';
-        $this->assertFileExists($path);
-        $template = (string) file_get_contents($path);
+        $template = $this->readTemplate('admin/views/pickup.php');
 
-        // Heading icon should use .aih-heading-icon, not inline font-size
         $this->assertDoesNotMatchRegularExpression(
             '/dashicons-archive[^>]*style="[^"]*font-size:\s*28px/',
             $template,
@@ -52,11 +55,8 @@ class AdminTemplateInlineStyleTest extends TestCase
 
     public function testPickupPanelUsesBottomModifier(): void
     {
-        $path = AIH_PLUGIN_DIR . 'admin/views/pickup.php';
-        $this->assertFileExists($path);
-        $template = (string) file_get_contents($path);
+        $template = $this->readTemplate('admin/views/pickup.php');
 
-        // Panel should use .aih-panel--bottom, not inline border-radius
         $this->assertDoesNotMatchRegularExpression(
             '/class="aih-panel"[^>]*style="[^"]*border-radius:\s*0\s+0/',
             $template,
@@ -71,9 +71,7 @@ class AdminTemplateInlineStyleTest extends TestCase
 
     public function testPickupSearchFormNoInlineFlex(): void
     {
-        $path = AIH_PLUGIN_DIR . 'admin/views/pickup.php';
-        $this->assertFileExists($path);
-        $template = (string) file_get_contents($path);
+        $template = $this->readTemplate('admin/views/pickup.php');
 
         $this->assertDoesNotMatchRegularExpression(
             '/class="aih-search-form"[^>]*style="[^"]*flex:\s*1/',

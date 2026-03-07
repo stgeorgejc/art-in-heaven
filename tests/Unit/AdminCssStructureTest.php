@@ -59,9 +59,9 @@ class AdminCssStructureTest extends TestCase
     public function testDashboardSectionWidefatHasMinWidthAuto(): void
     {
         $this->assertMatchesRegularExpression(
-            '/\.aih-dashboard-section\s+table\.widefat\s*\{[^}]*min-width:\s*auto/s',
+            '/\.aih-dashboard-section\s+table\.widefat:not\(\.wp-list-table\)\s*\{[^}]*min-width:\s*auto/s',
             $this->css,
-            'Dashboard section widefat tables must have min-width: auto to prevent overflow'
+            'Dashboard section widefat (non-wp-list-table) tables must have min-width: auto'
         );
     }
 
@@ -98,10 +98,10 @@ class AdminCssStructureTest extends TestCase
             $mediaBlock
         );
         $this->assertNotEmpty($mediaBlock, '768px max-width media query must exist');
-        $this->assertStringContainsString(
-            'flex-direction: column',
+        $this->assertMatchesRegularExpression(
+            '/\.aih-chart-row\s*\{[^}]*flex-direction:\s*column/s',
             $mediaBlock[1],
-            'Chart row must stack vertically on mobile'
+            'Chart row must stack vertically on mobile via flex-direction: column within its rule'
         );
     }
 
