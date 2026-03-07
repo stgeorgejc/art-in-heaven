@@ -487,8 +487,8 @@ class AIH_Pushpay_API {
             $order_numbers_by_token = array();
             foreach ($payments as $payment) {
                 $search_fields = array(
-                    isset($payment['payerNote']) ? $payment['payerNote'] : '',
-                    isset($payment['paymentMethodDetails']['reference']) ? $payment['paymentMethodDetails']['reference'] : '',
+                    isset($payment['notes']) ? $payment['notes'] : '',
+                    isset($payment['sourceReference']) ? $payment['sourceReference'] : '',
                 );
                 foreach ($search_fields as $field) {
                     if (preg_match('/\bAIH-[A-Z0-9]{8}\b/', strtoupper($field), $matches)) {
@@ -521,8 +521,8 @@ class AIH_Pushpay_API {
                     'payer_name' => isset($payment['payer']['fullName']) ? $payment['payer']['fullName'] : (isset($payment['payer']['firstName']) ? trim($payment['payer']['firstName'] . ' ' . ($payment['payer']['lastName'] ?? '')) : ''),
                     'payer_email' => isset($payment['payer']['emailAddress']) ? $payment['payer']['emailAddress'] : '',
                     'fund' => isset($payment['fund']['name']) ? $payment['fund']['name'] : '',
-                    'reference' => isset($payment['paymentMethodDetails']['reference']) ? $payment['paymentMethodDetails']['reference'] : '',
-                    'notes' => isset($payment['payerNote']) ? $payment['payerNote'] : '',
+                    'reference' => isset($payment['sourceReference']) ? $payment['sourceReference'] : '',
+                    'notes' => isset($payment['notes']) ? $payment['notes'] : '',
                     'payment_date' => wp_date('Y-m-d H:i:s', strtotime($payment['createdOn'])),
                     'raw_data' => json_encode($payment),
                     'synced_at' => current_time('mysql')
