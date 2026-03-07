@@ -1552,13 +1552,18 @@ class AIH_Ajax {
      * @return string The direct download URL.
      */
     private function preprocess_image_url($url) {
+        // Google Drive: reject folder links — they can't be downloaded as images
+        if (preg_match('#drive\.google\.com/(drive/)?.*folders/#', $url)) {
+            return $url; // Pass through; import_image_from_url will fail with a clear MIME error
+        }
         // Google Drive: drive.google.com/file/d/{ID}/view... → direct download
+        // Uses confirm=t to bypass virus scan warning on large files
         if (preg_match('#drive\.google\.com/file/d/([a-zA-Z0-9_-]+)#', $url, $matches)) {
-            return 'https://drive.google.com/uc?export=download&id=' . $matches[1];
+            return 'https://drive.google.com/uc?export=download&confirm=t&id=' . $matches[1];
         }
         // Google Drive: drive.google.com/open?id={ID}
         if (preg_match('#drive\.google\.com/open\?id=([a-zA-Z0-9_-]+)#', $url, $matches)) {
-            return 'https://drive.google.com/uc?export=download&id=' . $matches[1];
+            return 'https://drive.google.com/uc?export=download&confirm=t&id=' . $matches[1];
         }
 
         // Dropbox: replace dl=0 with dl=1 for direct download
