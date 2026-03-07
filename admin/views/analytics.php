@@ -298,9 +298,9 @@ foreach ( $notif_types as $row ) {
 	?>
 
 	<!-- Charts -->
-	<div style="display: flex; flex-wrap: wrap; gap: 24px; margin-top: 24px;">
+	<div class="aih-chart-row">
 		<!-- Inventory Health -->
-		<div class="postbox" style="flex: 1; min-width: 400px; margin: 0;">
+		<div class="postbox">
 			<h2 class="hndle"><span><?php _e( 'Inventory Health', 'art-in-heaven' ); ?></span></h2>
 			<div class="inside">
 				<div style="position: relative; height: 80px;">
@@ -310,7 +310,7 @@ foreach ( $notif_types as $row ) {
 		</div>
 
 		<!-- Bid Attribution -->
-		<div class="postbox" style="flex: 1; min-width: 300px; max-width: 500px; margin: 0;">
+		<div class="postbox" style="max-width: 500px;">
 			<h2 class="hndle"><span><?php _e( 'Bid Attribution', 'art-in-heaven' ); ?></span></h2>
 			<div class="inside">
 				<div style="position: relative; height: 260px;">
@@ -701,8 +701,8 @@ foreach ( $notif_types as $row ) {
 
 	<!-- Conversion Funnel -->
 	<?php if ( isset( $registrant_counts ) && $registrant_counts->total > 0 ) : ?>
-	<div style="display: flex; flex-wrap: wrap; gap: 24px; margin-top: 16px;">
-		<div class="postbox" style="flex: 1; min-width: 400px; max-width: 700px; margin: 0;">
+	<div class="aih-chart-row">
+		<div class="postbox" style="max-width: 700px;">
 			<h2 class="hndle"><span><?php _e( 'Conversion Funnel', 'art-in-heaven' ); ?></span></h2>
 			<div class="inside">
 				<div style="position: relative; height: 260px;">
@@ -717,8 +717,8 @@ foreach ( $notif_types as $row ) {
 	<p class="description"><?php _e( 'Compares engagement patterns between push-enabled and non-push bidders.', 'art-in-heaven' ); ?></p>
 
 	<!-- Comparison Chart -->
-	<div style="display: flex; flex-wrap: wrap; gap: 24px; margin-top: 16px;">
-		<div class="postbox" style="flex: 1; min-width: 300px; max-width: 600px; margin: 0;">
+	<div class="aih-chart-row">
+		<div class="postbox" style="max-width: 600px;">
 			<h2 class="hndle"><span><?php _e( 'Push vs Non-Push Comparison', 'art-in-heaven' ); ?></span></h2>
 			<div class="inside">
 				<div style="position: relative; height: 260px;">
@@ -937,8 +937,8 @@ foreach ( $notif_types as $row ) {
 	?>
 
 	<!-- Notification Charts -->
-	<div style="display: flex; flex-wrap: wrap; gap: 24px; margin-top: 24px;">
-		<div class="postbox" style="flex: 1; min-width: 300px; max-width: 600px; margin: 0;">
+	<div class="aih-chart-row">
+		<div class="postbox" style="max-width: 600px;">
 			<h2 class="hndle"><span><?php _e( 'Delivery Funnel', 'art-in-heaven' ); ?></span></h2>
 			<div class="inside">
 				<div style="position: relative; height: 260px;">
@@ -946,7 +946,7 @@ foreach ( $notif_types as $row ) {
 				</div>
 			</div>
 		</div>
-		<div class="postbox" style="flex: 1; min-width: 300px; max-width: 600px; margin: 0;">
+		<div class="postbox" style="max-width: 600px;">
 			<h2 class="hndle"><span><?php _e( 'By Notification Type', 'art-in-heaven' ); ?></span></h2>
 			<div class="inside">
 				<div style="position: relative; height: 260px;">
@@ -1502,6 +1502,7 @@ jQuery(document).ready(function($) {
 				indexAxis: 'y',
 				responsive: true,
 				maintainAspectRatio: false,
+				layout: { padding: { left: 8 } },
 				plugins: {
 					legend: { display: false },
 					tooltip: {
@@ -1514,7 +1515,17 @@ jQuery(document).ready(function($) {
 					}
 				},
 				scales: {
-					x: { beginAtZero: true, ticks: { callback: function(v) { return '$' + v.toLocaleString(); } } }
+					x: { beginAtZero: true, ticks: { callback: function(v) { return '$' + v.toLocaleString(); } } },
+					y: {
+						ticks: {
+							callback: function(value) {
+								var label = (this && typeof this.getLabelForValue === 'function') ? this.getLabelForValue(value) : '';
+								label = label || '';
+								return label.length > 30 ? label.substring(0, 30) + '…' : label;
+							},
+							font: { size: 11 }
+						}
+					}
 				}
 			}
 		});
