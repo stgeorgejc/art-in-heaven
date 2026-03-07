@@ -27,6 +27,12 @@ class TemplateHelperTest extends TestCase
             '__' => function ($text) {
                 return $text;
             },
+            'esc_url' => function ($url) {
+                return $url;
+            },
+            'esc_attr' => function ($text) {
+                return htmlspecialchars((string) $text, ENT_QUOTES, 'UTF-8');
+            },
         ]);
     }
 
@@ -223,6 +229,55 @@ class TemplateHelperTest extends TestCase
         $this->assertTrue($data['auction_ended']);
         // When watermarked_url is empty, falls back to image_url
         $this->assertSame('https://example.com/img.jpg', $data['image_url']);
+    }
+
+    // ── picture_tag() ──
+
+    public function testPictureTagEmptyUrlReturnsEmptyString(): void
+    {
+        $this->assertSame('', AIH_Template_Helper::picture_tag(''));
+    }
+
+    public function testPictureTagNonWatermarkedUrlReturnsFallbackImg(): void
+    {
+        // Non-watermarked URL has no responsive variants, so picture_tag falls back to <img>
+        $html = AIH_Template_Helper::picture_tag(
+            'https://example.com/uploads/art/image.jpg',
+            'Test Alt',
+            '80px',
+            array('class' => 'aih-thumb')
+        );
+
+        $this->assertStringContainsString('<img', $html);
+        $this->assertStringContainsString('src="https://example.com/uploads/art/image.jpg"', $html);
+        $this->assertStringContainsString('alt="Test Alt"', $html);
+        $this->assertStringContainsString('class="aih-thumb"', $html);
+        $this->assertStringContainsString('loading="lazy"', $html);
+        $this->assertStringNotContainsString('<picture>', $html);
+    }
+
+    public function testPictureTagEagerLoadingAttribute(): void
+    {
+        $html = AIH_Template_Helper::picture_tag(
+            'https://example.com/image.jpg',
+            '',
+            '100vw',
+            array(),
+            'eager',
+            'high'
+        );
+
+        $this->assertStringContainsString('loading="eager"', $html);
+        $this->assertStringContainsString('fetchpriority="high"', $html);
+    }
+
+    public function testPictureTagDefaultSizesAttribute(): void
+    {
+        // When no sizes specified, defaults to '100vw'
+        $html = AIH_Template_Helper::picture_tag('https://example.com/image.jpg');
+
+        $this->assertStringContainsString('<img', $html);
+        $this->assertStringContainsString('src="https://example.com/image.jpg"', $html);
     }
 
     public function testFormatArtPieceWithTimeString(): void

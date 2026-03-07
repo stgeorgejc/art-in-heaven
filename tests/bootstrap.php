@@ -36,6 +36,7 @@ define('AIH_TEST_CODE_PREFIX', 'AIHTEST');
 // Load plugin source files under test
 require_once __DIR__ . '/../includes/class-aih-security.php';
 require_once __DIR__ . '/../includes/class-aih-status.php';
+require_once __DIR__ . '/../includes/class-aih-image-optimizer.php';
 require_once __DIR__ . '/../includes/class-aih-template-helper.php';
 
 // Additional classes for Bid, Checkout, and Favorites testing.
