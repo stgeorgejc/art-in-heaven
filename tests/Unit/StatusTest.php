@@ -263,6 +263,8 @@ class StatusTest extends TestCase
 
     public function testComputeStatusActiveButNotStarted(): void
     {
+        // Active + future start returns 'upcoming' — consistent with
+        // get_status_sql(), templates, and place_bid() checks
         $piece = (object) [
             'id' => 1,
             'status' => 'active',
@@ -270,7 +272,7 @@ class StatusTest extends TestCase
             'auction_end' => $this->futureDate('+1 year'),
         ];
         $result = AIH_Status::compute_status($piece);
-        $this->assertSame('draft', $result['status']); // upcoming = draft
+        $this->assertSame('upcoming', $result['status']);
         $this->assertFalse($result['can_bid']);
     }
 
@@ -304,6 +306,21 @@ class StatusTest extends TestCase
     {
         $result = AIH_Status::compute_status(null);
         $this->assertSame('invalid', $result['status']);
+        $this->assertFalse($result['can_bid']);
+    }
+
+    public function testComputeStatusDraftNeverPromotedToActive(): void
+    {
+        // Draft items should always stay draft in compute_status,
+        // even when the auction window is currently open
+        $piece = (object) [
+            'id' => 1,
+            'status' => 'draft',
+            'auction_start' => $this->pastDate(),
+            'auction_end' => $this->futureDate(),
+        ];
+        $result = AIH_Status::compute_status($piece);
+        $this->assertSame('draft', $result['status']);
         $this->assertFalse($result['can_bid']);
     }
 
@@ -389,28 +406,42 @@ class StatusTest extends TestCase
         $this->assertSame('draft', $result);
     }
 
-    public function testCalculateAutoStatusDraftBecomesActiveWhenStartPast(): void
+    public function testCalculateAutoStatusDraftAlwaysRespectedRegardlessOfTimes(): void
     {
+        // Draft is an explicit admin override — always respected, even when
+        // times change or the auction window is currently open
         $result = AIH_Status::calculate_auto_status(
             $this->pastDate(), $this->futureDate(), 'draft', true
         );
-        $this->assertSame('active', $result);
+        $this->assertSame('draft', $result);
     }
 
-    public function testCalculateAutoStatusDraftStaysDraftWhenStartFuture(): void
+    public function testCalculateAutoStatusDraftRespectedWithFutureStart(): void
     {
+        // Draft stays draft even with future start and times changed
         $result = AIH_Status::calculate_auto_status(
             $this->futureDate('+6 months'), $this->futureDate('+1 year'), 'draft', true
         );
         $this->assertSame('draft', $result);
     }
 
-    public function testCalculateAutoStatusDraftBecomesEndedWhenEndPast(): void
+    public function testCalculateAutoStatusDraftRespectedWithPastEnd(): void
     {
+        // Draft stays draft even when end has passed and times changed
         $result = AIH_Status::calculate_auto_status(
             $this->pastDate('-2 years'), $this->pastDate(), 'draft', true
         );
-        $this->assertSame('ended', $result);
+        $this->assertSame('draft', $result);
+    }
+
+    public function testCalculateAutoStatusFutureStartReturnsActive(): void
+    {
+        // Future start with 'active' requested returns 'active' —
+        // gallery query filters by auction_start, get_status_sql() shows 'upcoming'
+        $result = AIH_Status::calculate_auto_status(
+            $this->futureDate('+6 months'), $this->futureDate('+1 year'), 'active', true
+        );
+        $this->assertSame('active', $result);
     }
 
     public function testCalculateAutoStatusActiveStaysActive(): void

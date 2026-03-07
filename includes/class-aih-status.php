@@ -48,7 +48,7 @@ class AIH_Status {
             WHEN {$alias}.status = 'ended' AND {$alias}.auction_end IS NOT NULL AND {$alias}.auction_end > {$now_placeholder} AND ({$alias}.auction_start IS NULL OR {$alias}.auction_start <= {$now_placeholder}) THEN 'active'
             WHEN {$alias}.status = 'ended' THEN 'ended'
             WHEN {$alias}.status = 'active' AND {$alias}.auction_end IS NOT NULL AND {$alias}.auction_end <= {$now_placeholder} THEN 'ended'
-            WHEN {$alias}.status = 'active' AND {$alias}.auction_start IS NOT NULL AND {$alias}.auction_start > {$now_placeholder} THEN 'scheduled'
+            WHEN {$alias}.status = 'active' AND {$alias}.auction_start IS NOT NULL AND {$alias}.auction_start > {$now_placeholder} THEN 'upcoming'
             WHEN {$alias}.status = 'active' THEN 'active'
             ELSE {$alias}.status
         END";
@@ -236,9 +236,7 @@ class AIH_Status {
         }
         
         if ($art_piece->status === self::STATUS_ACTIVE) {
-            if ($start !== null && $start > $now) {
-                $warnings[] = 'Status is "active" but start time is in the future';
-            }
+            // Active + future start is valid (displayed as 'upcoming', filtered by gallery query)
             if ($end !== null && $end <= $now) {
                 $warnings[] = 'Status is "active" but end time has passed';
             }
@@ -385,7 +383,7 @@ class AIH_Status {
                 $result['reason'] = 'Auction end time has passed';
                 $result['can_bid'] = false;
             } elseif ($start > $now) {
-                $result['status'] = self::STATUS_DRAFT;
+                $result['status'] = 'upcoming';
                 $result['display_status'] = 'Upcoming (not started)';
                 $result['reason'] = 'Auction start time has not arrived';
                 $result['can_bid'] = false;
@@ -472,10 +470,11 @@ class AIH_Status {
             ));
         }
 
-        // If requesting draft and times didn't change, respect it (manual draft override)
-        // But if times changed, let the time-based logic below decide the correct status
-        if ($requested_status === self::STATUS_DRAFT && !$times_changed) {
-            if (defined('WP_DEBUG') && WP_DEBUG) { error_log('AIH_Status: Returning DRAFT (requested, times unchanged)'); }
+        // Draft is always an explicit admin override — respect it regardless of time changes.
+        // The gallery query and get_status_sql() handle visibility for scheduled items;
+        // draft should only be removed by explicit admin action, not auto-recalculation.
+        if ($requested_status === self::STATUS_DRAFT) {
+            if (defined('WP_DEBUG') && WP_DEBUG) { error_log('AIH_Status: Returning DRAFT (explicit admin override)'); }
             return self::STATUS_DRAFT;
         }
 
@@ -492,9 +491,12 @@ class AIH_Status {
             return self::STATUS_ENDED;
         }
 
+        // Future start: return 'active' — the gallery query filters by auction_start,
+        // and get_status_sql() will compute 'upcoming' for display purposes.
+        // Draft should only be set by explicit admin action, not automatically.
         if ($start !== null && $start > $now) {
-            if (defined('WP_DEBUG') && WP_DEBUG) { error_log('AIH_Status: Returning DRAFT (start > now)'); }
-            return self::STATUS_DRAFT;
+            if (defined('WP_DEBUG') && WP_DEBUG) { error_log('AIH_Status: Returning ACTIVE (start > now, scheduled)'); }
+            return self::STATUS_ACTIVE;
         }
 
         if (defined('WP_DEBUG') && WP_DEBUG) { error_log('AIH_Status: Returning ACTIVE (default)'); }
