@@ -475,54 +475,177 @@ jQuery(document).ready(function($) {
             });
         });
         
-        mediaUploader.on('select', function() {
-            var attachments = mediaUploader.state().get('selection').toJSON();
+        /**
+         * Sequential bulk upload with retry and progress tracking.
+         * Processes one image at a time to avoid overwhelming the server.
+         */
+        function aihBulkUpload(attachments) {
             var $list = $('#aih-images-list');
             var $noImages = $('#aih-no-images');
-            
-            // Check if list is empty BEFORE any uploads (for primary determination)
             var listWasEmpty = $list.find('.aih-image-item').length === 0;
-            var uploadCount = 0;
-            
-            attachments.forEach(function(attachment, index) {
-                // Only mark as primary if list was empty and this is the first image
-                var setAsPrimary = listWasEmpty && index === 0;
-                
-                // Add image via AJAX
-                $.ajax({
-                    url: aihAdmin.ajaxurl,
-                    type: 'POST',
-                    data: {
-                        action: 'aih_admin_add_image',
-                        nonce: aihAdmin.nonce,
-                        art_piece_id: artPieceId,
-                        image_id: attachment.id,
-                        is_primary: setAsPrimary ? '1' : '0'
-                    },
-                    success: function(response) {
-                        uploadCount++;
-                        if (response.success) {
-                            var html = '<div class="aih-image-item" data-id="' + response.data.image_record_id + '">' +
-                                '<img src="' + response.data.watermarked_url + '" alt="">' +
-                                '<div class="aih-image-actions">' +
-                                    '<button type="button" class="aih-set-primary ' + (setAsPrimary ? 'is-primary' : '') + '" data-id="' + response.data.image_record_id + '" title="<?php echo esc_js(__('Set as primary', 'art-in-heaven')); ?>">★</button>' +
-                                    '<button type="button" class="aih-remove-image" data-id="' + response.data.image_record_id + '" title="<?php echo esc_js(__('Remove image', 'art-in-heaven')); ?>">×</button>' +
-                                '</div>' +
-                                (setAsPrimary ? '<span class="aih-primary-badge"><?php echo esc_js(__('Primary', 'art-in-heaven')); ?></span>' : '') +
-                            '</div>';
-                            $list.append(html);
-                            $list.show();
-                            $noImages.hide();
-                        } else {
-                            aihModal.alert(response.data.message || 'Error adding image');
+            var maxRetries = 3;
+            var total = attachments.length;
+            var processed = 0;
+            var completed = 0;
+            var failed = [];
+
+            // Show progress UI
+            var $progress = $('#aih-upload-progress');
+            if (!$progress.length) {
+                $progress = $('<div id="aih-upload-progress" class="aih-upload-progress"></div>');
+                $('.aih-images-container').append($progress);
+            }
+
+            function updateProgress(status) {
+                var pct = total > 0 ? Math.round((processed / total) * 100) : 0;
+                var $header = $('<div class="aih-progress-header"></div>');
+                $header.append(
+                    $('<strong></strong>').text('<?php echo esc_js(__('Uploading images...', 'art-in-heaven')); ?> '),
+                    document.createTextNode(processed + ' / ' + total)
+                );
+                if (failed.length) {
+                    $header.append(' ', $('<span class="aih-progress-failed"></span>').text('(' + failed.length + ' <?php echo esc_js(__('failed', 'art-in-heaven')); ?>)'));
+                }
+                $progress.empty()
+                    .append($header)
+                    .append('<div class="aih-progress-bar-track"><div class="aih-progress-bar-fill" style="width:' + pct + '%"></div></div>')
+                    .append($('<div class="aih-progress-status"></div>').text(status))
+                    .show();
+            }
+
+            function finishUpload() {
+                if (failed.length === 0) {
+                    $progress.html(
+                        '<div class="aih-progress-header aih-progress-done">' +
+                        '<?php echo esc_js(__('All', 'art-in-heaven')); ?> ' + total + ' <?php echo esc_js(__('images uploaded successfully.', 'art-in-heaven')); ?>' +
+                        '</div>'
+                    );
+                    setTimeout(function() { $progress.fadeOut(400); }, 3000);
+                } else {
+                    var failedRows = failed.map(function(f) {
+                        return '<tr><td><strong>' + $('<span>').text(f.name).html() + '</strong></td>' +
+                            '<td class="aih-progress-failed">' + $('<span>').text(f.error).html() + '</td></tr>';
+                    }).join('');
+                    $progress.html(
+                        '<div class="aih-progress-header">' +
+                        completed + ' / ' + total + ' <?php echo esc_js(__('images uploaded.', 'art-in-heaven')); ?> ' +
+                        '<span class="aih-progress-failed">' + failed.length + ' <?php echo esc_js(__('failed.', 'art-in-heaven')); ?></span>' +
+                        '</div>' +
+                        '<table class="aih-failed-table"><thead><tr>' +
+                        '<th><?php echo esc_js(__('Image', 'art-in-heaven')); ?></th>' +
+                        '<th><?php echo esc_js(__('Error', 'art-in-heaven')); ?></th>' +
+                        '</tr></thead><tbody>' + failedRows + '</tbody></table>' +
+                        '<button type="button" class="button aih-retry-failed-btn"><?php echo esc_js(__('Retry Failed', 'art-in-heaven')); ?></button>'
+                    );
+                    $progress.find('.aih-retry-failed-btn').on('click', function() {
+                        var retryAttachments = failed.map(function(f) { return f.attachment; });
+                        failed = [];
+                        total = retryAttachments.length;
+                        processed = 0;
+                        completed = 0;
+                        processQueue(retryAttachments, 0);
+                    });
+                }
+            }
+
+            function addImageToList(response, setAsPrimary) {
+                var html = '<div class="aih-image-item" data-id="' + response.data.image_record_id + '">' +
+                    '<img src="' + response.data.watermarked_url + '" alt="">' +
+                    '<div class="aih-image-actions">' +
+                        '<button type="button" class="aih-set-primary ' + (setAsPrimary ? 'is-primary' : '') + '" data-id="' + response.data.image_record_id + '" title="<?php echo esc_js(__('Set as primary', 'art-in-heaven')); ?>">★</button>' +
+                        '<button type="button" class="aih-remove-image" data-id="' + response.data.image_record_id + '" title="<?php echo esc_js(__('Remove image', 'art-in-heaven')); ?>">×</button>' +
+                    '</div>' +
+                    (setAsPrimary ? '<span class="aih-primary-badge"><?php echo esc_js(__('Primary', 'art-in-heaven')); ?></span>' : '') +
+                '</div>';
+                $list.append(html);
+                $list.show();
+                $noImages.hide();
+            }
+
+            function processQueue(queue, index) {
+                if (index >= queue.length) {
+                    finishUpload();
+                    return;
+                }
+
+                var attachment = queue[index];
+                var setAsPrimary = listWasEmpty && completed === 0 && failed.length === 0;
+                var attempt = 0;
+                var name = attachment.filename || attachment.title || ('Image ' + (index + 1));
+
+                var lastError = '';
+
+                function tryUpload() {
+                    attempt++;
+                    var attemptLabel = attempt > 1 ? ' (<?php echo esc_js(__('retry', 'art-in-heaven')); ?> ' + (attempt - 1) + '/' + maxRetries + ')' : '';
+                    updateProgress(name + attemptLabel + '...');
+
+                    $.ajax({
+                        url: aihAdmin.ajaxurl,
+                        type: 'POST',
+                        timeout: 120000,
+                        data: {
+                            action: 'aih_admin_add_image',
+                            nonce: aihAdmin.nonce,
+                            art_piece_id: artPieceId,
+                            image_id: attachment.id,
+                            is_primary: setAsPrimary ? '1' : '0'
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                processed++;
+                                completed++;
+                                addImageToList(response, setAsPrimary);
+                                if (setAsPrimary) listWasEmpty = false;
+                                processQueue(queue, index + 1);
+                            } else {
+                                lastError = (response.data && response.data.message) || '<?php echo esc_js(__('Server returned an error', 'art-in-heaven')); ?>';
+                                if (attempt < maxRetries) {
+                                    updateProgress(name + ' — ' + lastError + '. <?php echo esc_js(__('Retrying...', 'art-in-heaven')); ?>');
+                                    setTimeout(tryUpload, 2000 * attempt);
+                                } else {
+                                    processed++;
+                                    failed.push({ name: name, attachment: attachment, error: lastError });
+                                    processQueue(queue, index + 1);
+                                }
+                            }
+                        },
+                        error: function(xhr, status) {
+                            if (status === 'timeout') {
+                                lastError = '<?php echo esc_js(__('Request timed out (server took too long)', 'art-in-heaven')); ?>';
+                            } else if (xhr.status === 0) {
+                                lastError = '<?php echo esc_js(__('Connection lost — check your network', 'art-in-heaven')); ?>';
+                            } else if (xhr.status === 413) {
+                                lastError = '<?php echo esc_js(__('File too large — server rejected the upload', 'art-in-heaven')); ?>';
+                            } else if (xhr.status === 500) {
+                                lastError = '<?php echo esc_js(__('Server error (500) — possible memory or timeout limit', 'art-in-heaven')); ?>';
+                            } else if (xhr.status === 502 || xhr.status === 504) {
+                                lastError = '<?php echo esc_js(__('Gateway timeout — server took too long to respond', 'art-in-heaven')); ?>';
+                            } else {
+                                lastError = '<?php echo esc_js(__('HTTP error', 'art-in-heaven')); ?> ' + xhr.status;
+                            }
+                            if (attempt < maxRetries) {
+                                updateProgress(name + ' — ' + lastError + '. <?php echo esc_js(__('Retrying...', 'art-in-heaven')); ?>');
+                                setTimeout(tryUpload, 2000 * attempt);
+                            } else {
+                                processed++;
+                                failed.push({ name: name, attachment: attachment, error: lastError + ' (<?php echo esc_js(__('after', 'art-in-heaven')); ?> ' + maxRetries + ' <?php echo esc_js(__('attempts', 'art-in-heaven')); ?>)' });
+                                processQueue(queue, index + 1);
+                            }
                         }
-                    },
-                    error: function(xhr, status, error) {
-                        uploadCount++;
-                        aihModal.alert('Error: ' + error);
-                    }
-                });
-            });
+                    });
+                }
+
+                tryUpload();
+            }
+
+            updateProgress('<?php echo esc_js(__('Starting...', 'art-in-heaven')); ?>');
+            processQueue(attachments, 0);
+        }
+
+        mediaUploader.on('select', function() {
+            var attachments = mediaUploader.state().get('selection').toJSON();
+            aihBulkUpload(attachments);
         });
 
         mediaUploader.open();
