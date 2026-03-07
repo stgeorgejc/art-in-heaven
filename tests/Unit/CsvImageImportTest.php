@@ -67,14 +67,35 @@ class CsvImageImportTest extends TestCase
     {
         $url = 'https://drive.google.com/file/d/15WchEp3cMaYcTLL0ZFoTfzmAe52ayhvs/view?usp=drive_link';
         $result = $this->preprocessMethod->invoke($this->ajax, $url);
-        $this->assertSame('https://drive.google.com/uc?export=download&id=15WchEp3cMaYcTLL0ZFoTfzmAe52ayhvs', $result);
+        $this->assertSame('https://drive.google.com/uc?export=download&confirm=t&id=15WchEp3cMaYcTLL0ZFoTfzmAe52ayhvs', $result);
+    }
+
+    public function testGoogleDriveFileLinkWithoutView(): void
+    {
+        $url = 'https://drive.google.com/file/d/10-pDf9sm8doIRDKhzZh6kkJONYZ7E87q';
+        $result = $this->preprocessMethod->invoke($this->ajax, $url);
+        $this->assertSame('https://drive.google.com/uc?export=download&confirm=t&id=10-pDf9sm8doIRDKhzZh6kkJONYZ7E87q', $result);
     }
 
     public function testGoogleDriveOpenLink(): void
     {
         $url = 'https://drive.google.com/open?id=ABC123_def';
         $result = $this->preprocessMethod->invoke($this->ajax, $url);
-        $this->assertSame('https://drive.google.com/uc?export=download&id=ABC123_def', $result);
+        $this->assertSame('https://drive.google.com/uc?export=download&confirm=t&id=ABC123_def', $result);
+    }
+
+    public function testGoogleDriveFolderLinkPassesThrough(): void
+    {
+        $url = 'https://drive.google.com/drive/u/1/folders/1jpzy5eZx-ZOe3aKyEKy21Hts-n2iH0jC';
+        $result = $this->preprocessMethod->invoke($this->ajax, $url);
+        $this->assertSame($url, $result, 'Folder links should pass through unchanged — they are not downloadable images');
+    }
+
+    public function testGoogleDriveFolderShortLinkPassesThrough(): void
+    {
+        $url = 'https://drive.google.com/drive/folders/1jpzy5eZx-ZOe3aKyEKy21Hts-n2iH0jC';
+        $result = $this->preprocessMethod->invoke($this->ajax, $url);
+        $this->assertSame($url, $result, 'Folder links without /u/N/ prefix should also pass through');
     }
 
     public function testDropboxDl0AsFirstParam(): void
