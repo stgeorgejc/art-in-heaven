@@ -740,7 +740,13 @@ jQuery(document).ready(function($) {
         if (!text) return '';
         return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
-    
+
+    function escapeAttr(str) {
+        return (str || '').replace(/[&"'<>]/g, function(c) {
+            return {'&':'&amp;','"':'&quot;',"'":'&#39;','<':'&lt;','>':'&gt;'}[c];
+        });
+    }
+
     // ========== CLIENT-SIDE FILTER (artist/tier dropdowns) ==========
 
     function applyFilters() {
