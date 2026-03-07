@@ -48,3 +48,4 @@ require_once __DIR__ . '/../includes/class-aih-favorites.php';
 require_once __DIR__ . '/../includes/class-aih-art-piece.php';
 require_once __DIR__ . '/../includes/class-aih-push.php';
 require_once __DIR__ . '/../includes/class-aih-pushpay.php';
+require_once __DIR__ . '/../includes/class-aih-qr-code.php';

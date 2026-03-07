@@ -141,6 +141,7 @@ class Art_In_Heaven {
         require_once AIH_PLUGIN_DIR . 'includes/class-aih-bid.php';
         require_once AIH_PLUGIN_DIR . 'includes/class-aih-favorites.php';
         require_once AIH_PLUGIN_DIR . 'includes/class-aih-watermark.php';
+        require_once AIH_PLUGIN_DIR . 'includes/class-aih-qr-code.php';
         require_once AIH_PLUGIN_DIR . 'includes/class-aih-image-optimizer.php';
         require_once AIH_PLUGIN_DIR . 'includes/class-aih-checkout.php';
         require_once AIH_PLUGIN_DIR . 'includes/class-aih-pushpay.php';

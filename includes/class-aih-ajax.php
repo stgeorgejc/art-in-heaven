@@ -108,6 +108,9 @@ class AIH_Ajax {
         // Image upload flag (to disable intermediate sizes)
         add_action('wp_ajax_aih_set_upload_flag', array($this, 'set_upload_flag'));
 
+        // QR Codes
+        add_action('wp_ajax_aih_admin_generate_qr', array($this, 'admin_generate_qr'));
+
         // Log Viewer
         add_action('wp_ajax_aih_admin_get_logs',   array($this, 'admin_get_logs'));
         add_action('wp_ajax_aih_admin_clear_logs', array($this, 'admin_clear_logs'));
@@ -2983,5 +2986,33 @@ class AIH_Ajax {
         wp_cache_set($cache_key, $result, 'aih_poll', 3);
 
         wp_send_json_success($result);
+    }
+
+    /**
+     * Generate a QR code for a single art piece (returns base64 data URI).
+     *
+     * @return void
+     */
+    public function admin_generate_qr(): void {
+        check_ajax_referer('aih_admin_nonce', 'nonce');
+        if (!AIH_Roles::can_manage_art()) {
+            wp_send_json_error(array('message' => __('Permission denied.', 'art-in-heaven')));
+        }
+
+        $art_id = sanitize_text_field($_POST['art_id'] ?? '');
+        if (empty($art_id)) {
+            wp_send_json_error(array('message' => __('Missing art ID.', 'art-in-heaven')));
+        }
+
+        $data_uri = AIH_QR_Code::generate_data_uri($art_id);
+        if ($data_uri === false) {
+            wp_send_json_error(array('message' => __('Failed to generate QR code.', 'art-in-heaven')));
+        }
+
+        wp_send_json_success(array(
+            'qr'    => $data_uri,
+            'url'   => AIH_QR_Code::get_art_url($art_id),
+            'title' => sanitize_text_field($_POST['title'] ?? $art_id),
+        ));
     }
 }

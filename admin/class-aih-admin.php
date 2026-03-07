@@ -247,8 +247,18 @@ class AIH_Admin {
                 array($this, 'render_logs')
             );
         }
+
+        // QR Code print page (hidden — no menu item, accessed via bulk action)
+        add_submenu_page(
+            'options.php',
+            __('Print QR Codes', 'art-in-heaven'),
+            __('Print QR Codes', 'art-in-heaven'),
+            AIH_Roles::CAP_MANAGE_ART,
+            'art-in-heaven-qr-print',
+            array($this, 'render_qr_print')
+        );
     }
-    
+
     /**
      * @return void
      */
@@ -999,6 +1009,18 @@ class AIH_Admin {
             wp_die(__('You do not have permission to access this page.', 'art-in-heaven'));
         }
         include AIH_PLUGIN_DIR . 'admin/views/logs.php';
+    }
+
+    /**
+     * Render the QR code print page (opened in new tab from bulk action).
+     *
+     * @return void
+     */
+    public function render_qr_print(): void {
+        if (!AIH_Roles::can_manage_art()) {
+            wp_die(__('You do not have permission to access this page.', 'art-in-heaven'));
+        }
+        include AIH_PLUGIN_DIR . 'admin/views/qr-print.php';
     }
 
     /**
