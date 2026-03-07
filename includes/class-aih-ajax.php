@@ -1879,9 +1879,29 @@ class AIH_Ajax {
         
         $image_url = wp_get_attachment_url($image_id);
         if (!$image_url) {
-            wp_send_json_error(array('message' => __('Invalid image attachment.', 'art-in-heaven')));
+            wp_send_json_error(array('message' => sprintf(
+                /* translators: %d: attachment ID */
+                __('Invalid image attachment (ID: %d). It may have been deleted from the media library.', 'art-in-heaven'),
+                $image_id
+            )));
         }
-        
+
+        // Log file info for debugging bulk uploads
+        $file_path = get_attached_file($image_id);
+        $file_size = $file_path && file_exists($file_path) ? filesize($file_path) : 0;
+        $file_name = $file_path ? basename($file_path) : 'unknown';
+
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log(sprintf(
+                '[AIH] admin_add_image: Processing "%s" (%s) for art piece %d. Memory: %s/%s',
+                $file_name,
+                $file_size ? size_format($file_size) : 'unknown size',
+                $art_piece_id,
+                size_format(memory_get_usage(true)),
+                ini_get('memory_limit')
+            ));
+        }
+
         // Check if table exists, if not create it
         global $wpdb;
         $table = AIH_Database::get_table('art_images');
@@ -1895,30 +1915,55 @@ class AIH_Ajax {
                 wp_send_json_error(array('message' => __('Database table not found. Please go to Settings and click "Recreate Tables".', 'art-in-heaven')));
             }
         }
-        
+
         // Process watermark
         $watermark = new AIH_Watermark();
         $watermarked_url = $watermark->process_upload($image_id);
+        $watermark_failed = false;
         if (!$watermarked_url) {
             $watermarked_url = $image_url; // Fallback to original
+            $watermark_failed = true;
+            error_log(sprintf(
+                '[AIH] admin_add_image: Watermark failed for "%s" (%s). Using original image. Memory: %s',
+                $file_name,
+                $file_size ? size_format($file_size) : 'unknown size',
+                size_format(memory_get_usage(true))
+            ));
         }
-        
+
         $images_handler = new AIH_Art_Images();
         $is_primary = isset($_POST['is_primary']) && $_POST['is_primary'] === '1';
-        
+
         $result = $images_handler->add_image($art_piece_id, $image_id, $image_url, $watermarked_url, $is_primary);
-        
+
         if ($result) {
-            wp_send_json_success(array(
+            $response = array(
                 'message' => 'Image added successfully.',
                 'image_record_id' => $result,
                 'image_url' => $image_url,
-                'watermarked_url' => $watermarked_url
-            ));
+                'watermarked_url' => $watermarked_url,
+            );
+            if ($watermark_failed) {
+                $response['warning'] = sprintf(
+                    /* translators: %s: file size */
+                    __('Watermark could not be applied (file size: %s). The original image was used instead.', 'art-in-heaven'),
+                    $file_size ? size_format($file_size) : __('unknown', 'art-in-heaven')
+                );
+            }
+            wp_send_json_success($response);
         } else {
-            global $wpdb;
-            error_log('[AIH] admin_add_image DB error: ' . $wpdb->last_error);
-            wp_send_json_error(array('message' => __('Failed to add image. Please try again.', 'art-in-heaven')));
+            error_log(sprintf(
+                '[AIH] admin_add_image: DB insert failed for "%s" on art piece %d. DB error: %s',
+                $file_name,
+                $art_piece_id,
+                $wpdb->last_error
+            ));
+            wp_send_json_error(array('message' => sprintf(
+                /* translators: 1: filename, 2: database error message */
+                __('Failed to save "%1$s" to database: %2$s', 'art-in-heaven'),
+                $file_name,
+                $wpdb->last_error ?: __('unknown error', 'art-in-heaven')
+            )));
         }
     }
     
