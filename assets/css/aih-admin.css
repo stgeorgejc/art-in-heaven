@@ -1746,11 +1746,6 @@ button.aih-action-btn .dashicons {
         table-layout: auto;
     }
 
-    /* Winners cards: tighter label width */
-    .aih-admin-table tbody td::before {
-        min-width: 70px;
-    }
-
     /* ========================================
        TABLE SCROLLING ON MOBILE
        ======================================== */
