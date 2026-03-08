@@ -2973,6 +2973,19 @@ class AIH_Ajax {
 
         $bidder_id = $auth->get_current_bidder_id() ?? '';
 
+        // Rate throttle: max 12 poll-status requests per 60 seconds per IP.
+        // Returns last cached result when throttled instead of hitting the DB.
+        $poll_ip = AIH_Security::get_client_ip();
+        $throttle_key = 'aih_poll_throttle_' . md5($poll_ip . '_' . $bidder_id);
+        if (!AIH_Security::check_rate_limit('poll_status_' . $poll_ip, 12, 60)) {
+            // Serve stale-but-valid cached response when throttled
+            $stale = get_transient($throttle_key);
+            if ($stale !== false) {
+                wp_send_json_success($stale);
+            }
+            // No cached response available — let it through as a grace request
+        }
+
         $ids = isset($_POST['art_piece_ids']) ? array_map('intval', (array) $_POST['art_piece_ids']) : array();
         $ids = array_filter($ids);
         if (empty($ids)) {
@@ -2983,58 +2996,77 @@ class AIH_Ajax {
         $ids = array_slice($ids, 0, 200);
         sort($ids);
 
-        // Check cache first (3 second TTL per bidder + ID set)
-        $cache_key = 'poll_' . md5($bidder_id . '_' . implode(',', $ids));
-        $cached = wp_cache_get($cache_key, 'aih_poll');
-        if ($cached !== false) {
-            wp_send_json_success($cached);
-        }
+        // Two-layer cache strategy:
+        // 1. Global cache (shared across all bidders): art piece status + has_bids
+        //    Uses transients so it persists across requests even without Redis.
+        // 2. Bidder-specific data (is_winning, has_bid): lightweight indexed query.
+        //    Only runs when global cache hits (avoids the expensive dual-JOIN).
 
         global $wpdb;
         $now = current_time('mysql');
         $art_table = AIH_Database::get_table('art_pieces');
         $bids_table = AIH_Database::get_table('bids');
 
-        // Single consolidated query with dual LEFT JOIN:
-        // - b: all valid bids (for MAX bid_amount)
-        // - b2: bidder-specific valid bids (for is_winning / has_bid, uses art_bidder_status index)
+        $global_cache_key = 'aih_poll_global_' . md5(implode(',', $ids));
+        $global_data = get_transient($global_cache_key);
+
+        if ($global_data === false) {
+            // Global query: art piece status + whether any bids exist (no bidder-specific data)
+            $placeholders = implode(',', array_fill(0, count($ids), '%d'));
+            $global_rows = $wpdb->get_results($wpdb->prepare(
+                "SELECT
+                    ap.id, ap.status, ap.auction_end, ap.title,
+                    MAX(b.bid_amount) AS highest
+                 FROM $art_table ap
+                 LEFT JOIN $bids_table b
+                    ON ap.id = b.art_piece_id
+                    AND (b.bid_status = 'valid' OR b.bid_status IS NULL)
+                 WHERE ap.id IN ($placeholders)
+                 GROUP BY ap.id, ap.status, ap.auction_end, ap.title",
+                ...$ids
+            ), OBJECT_K);
+
+            $global_data = array();
+            foreach ($ids as $id) {
+                $row = isset($global_rows[$id]) ? $global_rows[$id] : null;
+                $highest = $row ? floatval($row->highest) : 0;
+                $status = 'active';
+                if ($row) {
+                    if ($row->status === 'ended' || (!empty($row->auction_end) && $row->auction_end <= $now)) {
+                        $status = 'ended';
+                    }
+                }
+                $global_data[$id] = array(
+                    'has_bids' => $highest > 0,
+                    'status'   => $status,
+                    'title'    => $row ? $row->title : '',
+                );
+            }
+
+            // Cache for 5 seconds — shared across all bidders
+            set_transient($global_cache_key, $global_data, 5);
+        }
+
+        // Bidder-specific query: is_winning + has_bid (lightweight, uses index)
         $placeholders = implode(',', array_fill(0, count($ids), '%d'));
-        $rows = $wpdb->get_results($wpdb->prepare(
-            "SELECT
-                ap.id, ap.status, ap.auction_end, ap.title,
-                MAX(b.bid_amount) AS highest,
-                MAX(COALESCE(b2.is_winning, 0)) AS is_winning,
-                CASE WHEN COUNT(b2.id) > 0 THEN 1 ELSE 0 END AS has_bid
-             FROM $art_table ap
-             LEFT JOIN $bids_table b
-                ON ap.id = b.art_piece_id
-                AND (b.bid_status = 'valid' OR b.bid_status IS NULL)
-             LEFT JOIN $bids_table b2
-                ON ap.id = b2.art_piece_id
-                AND b2.bidder_id = %s
-                AND b2.bid_status = 'valid'
-             WHERE ap.id IN ($placeholders)
-             GROUP BY ap.id, ap.status, ap.auction_end, ap.title",
+        $bidder_rows = $wpdb->get_results($wpdb->prepare(
+            "SELECT art_piece_id, MAX(is_winning) AS is_winning, COUNT(*) AS bid_count
+             FROM $bids_table
+             WHERE bidder_id = %s AND bid_status = 'valid' AND art_piece_id IN ($placeholders)
+             GROUP BY art_piece_id",
             ...array_merge(array($bidder_id), $ids)
         ), OBJECT_K);
 
         $items = array();
         foreach ($ids as $id) {
-            $row = isset($rows[$id]) ? $rows[$id] : null;
-            $highest = $row ? floatval($row->highest) : 0;
-
-            $status = 'active';
-            if ($row) {
-                if ($row->status === 'ended' || (!empty($row->auction_end) && $row->auction_end <= $now)) {
-                    $status = 'ended';
-                }
-            }
+            $global = isset($global_data[$id]) ? $global_data[$id] : null;
+            $bidder = isset($bidder_rows[$id]) ? $bidder_rows[$id] : null;
 
             $items[$id] = array(
-                'is_winning' => $row ? (bool) $row->is_winning : false,
-                'has_bids'   => $highest > 0,
-                'status'     => $status,
-                'has_bid'    => $row ? (bool) $row->has_bid : false,
+                'is_winning' => $bidder ? (bool) $bidder->is_winning : false,
+                'has_bids'   => $global ? $global['has_bids'] : false,
+                'status'     => $global ? $global['status'] : 'active',
+                'has_bid'    => $bidder ? ($bidder->bid_count > 0) : false,
             );
         }
 
@@ -3064,8 +3096,8 @@ class AIH_Ajax {
 
             // Winner notification (private, per-bidder)
             if ($item['is_winning'] && !AIH_Push::was_winner_notified($bidder_id, $id)) {
-                $row = isset($rows[$id]) ? $rows[$id] : null;
-                $title = $row ? $row->title : 'Art Piece #' . $id;
+                $global_item = isset($global_data[$id]) ? $global_data[$id] : null;
+                $title = ($global_item && !empty($global_item['title'])) ? $global_item['title'] : 'Art Piece #' . $id;
                 AIH_Push::mark_winner_notified($bidder_id, $id);
                 $push->handle_winner_event($bidder_id, $id, $title);
 
@@ -3089,8 +3121,42 @@ class AIH_Ajax {
             'cart_count'  => 0,
         );
 
-        // Cache for 3 seconds
-        wp_cache_set($cache_key, $result, 'aih_poll', 3);
+        // Piggyback outbid/winner events onto the response to eliminate
+        // the separate check_outbid polling endpoint (halves poll traffic).
+        // Events are bidder-specific and consumed (deleted), so they are
+        // added after caching the shared poll result.
+        $outbid_events = AIH_Push::consume_outbid_events($bidder_id);
+        $winner_events = AIH_Push::consume_winner_events($bidder_id);
+        foreach ($winner_events as &$evt) {
+            $evt['type'] = 'winner';
+        }
+        unset($evt);
+
+        $events = array_merge($outbid_events, $winner_events);
+        if (!empty($events)) {
+            // Resolve art piece URLs for outbid events
+            foreach ($events as &$evt) {
+                if (($evt['type'] ?? 'outbid') !== 'outbid') {
+                    continue;
+                }
+                if (!empty($evt['catalog_art_id'])) {
+                    $evt['url'] = AIH_Template_Helper::get_art_url($evt['catalog_art_id']);
+                } elseif (!empty($evt['art_piece_id'])) {
+                    $art_id = $wpdb->get_var($wpdb->prepare(
+                        "SELECT art_id FROM `{$art_table}` WHERE id = %d",
+                        intval($evt['art_piece_id'])
+                    ));
+                    if ($art_id) {
+                        $evt['url'] = AIH_Template_Helper::get_art_url($art_id);
+                    }
+                }
+            }
+            unset($evt);
+            $result['events'] = $events;
+        }
+
+        // Save result for throttle fallback (10s TTL, per-IP per-bidder)
+        set_transient($throttle_key, $result, 10);
 
         wp_send_json_success($result);
     }

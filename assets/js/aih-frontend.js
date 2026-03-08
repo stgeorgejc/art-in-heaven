@@ -516,9 +516,9 @@
                     var remaining = times[i] - (Date.now() + (opts.timeOffset || 0));
                     if (remaining > 0 && remaining < soonest) soonest = remaining;
                 }
-                if (soonest < 60000) return 2000;
-                if (soonest < 300000) return 5000;
-                if (soonest < 3600000) return 10000;
+                if (soonest < 60000) return 10000;      // < 1 min: every 10s
+                if (soonest < 300000) return 15000;    // < 5 min: every 15s
+                if (soonest < 3600000) return 20000;   // < 1 hour: every 20s
             }
             return 30000;
         }
@@ -555,14 +555,19 @@
                 if (!r.success || !r.data || !r.data.items) return;
                 if (typeof opts.shouldSkip === 'function' && opts.shouldSkip()) return;
                 opts.onUpdate(r.data.items);
+                // Process piggybacked outbid/winner events
+                if (r.data.events && window.AIHPush) {
+                    window.AIHPush.processEvents(r.data.events);
+                }
             });
         }
 
         function start() {
             if (pollTimer) clearTimeout(pollTimer);
-            // Use slower interval when SSE is connected (background safety net)
-            var interval = document.hidden ? 60000 :
-                           (window.aihSSEConnected ? 60000 : getSmartInterval());
+            // Skip polling when SSE is connected — SSE events trigger
+            // immediate aihPollStatus() calls, so scheduled polls are redundant.
+            if (window.aihSSEConnected) return;
+            var interval = document.hidden ? 60000 : getSmartInterval();
             pollTimer = setTimeout(function() {
                 poll();
                 start();
