@@ -353,10 +353,15 @@ class AIH_Mercure {
         ));
 
         if (!empty($outbid_bidder)) {
-            $title = $wpdb->get_var($wpdb->prepare(
-                "SELECT title FROM `{$art_table}` WHERE id = %d",
+            /** @var object{title: string, art_id: string}|null $art_row */
+            $art_row = $wpdb->get_row($wpdb->prepare(
+                "SELECT title, art_id FROM `{$art_table}` WHERE id = %d",
                 $art_piece_id
             ));
+            $title          = $art_row ? $art_row->title : '';
+            $catalog_art_id = $art_row ? $art_row->art_id : '';
+
+            $url = $catalog_art_id ? AIH_Template_Helper::get_art_url($catalog_art_id) : '';
 
             $this->publish(
                 $prefix . '/bidder/' . $outbid_bidder,
@@ -364,6 +369,7 @@ class AIH_Mercure {
                     'type'         => 'outbid',
                     'art_piece_id' => intval($art_piece_id),
                     'title'        => $title ?: 'Art Piece #' . $art_piece_id,
+                    'url'          => $url,
                 ),
                 true // Private topic
             );

@@ -211,7 +211,7 @@
         showAlertFromSSE: function(type, data) {
             var title = data.title || 'an item';
             if (typeof window.showAlert === 'function') {
-                window.showAlert(type, data.art_piece_id, title);
+                window.showAlert(type, data.art_piece_id, title, data.url || '');
             } else if (typeof window.showToast === 'function') {
                 if (type === 'winner') {
                     window.showToast('You won "' + title + '"! Head to checkout.', 'success');

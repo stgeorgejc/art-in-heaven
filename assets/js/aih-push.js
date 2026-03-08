@@ -660,7 +660,7 @@ window.addEventListener('beforeinstallprompt', function(e) {
 
                         console.log('[AIH] ' + evtType + ' via POLLING:', evt.title, '(art #' + evt.art_piece_id + ')');
                         if (typeof window.showAlert === 'function') {
-                            window.showAlert(evtType, evt.art_piece_id, evt.title);
+                            window.showAlert(evtType, evt.art_piece_id, evt.title, evt.url || '');
                         } else if (typeof window.showToast === 'function') {
                             if (evtType === 'winner') {
                                 window.showToast('You won "' + evt.title + '"! Head to checkout.', 'success');
