@@ -177,6 +177,7 @@ $tabs = array(
 	'art-pieces'    => __( 'Art Pieces', 'art-in-heaven' ),
 	'bidders'       => __( 'Bidders', 'art-in-heaven' ),
 	'notifications' => __( 'Notifications', 'art-in-heaven' ),
+	'server-load'   => __( 'Server Load', 'art-in-heaven' ),
 	'export'        => __( 'Export', 'art-in-heaven' ),
 );
 if ( AIH_Roles::can_view_financial() ) {
@@ -1395,6 +1396,189 @@ foreach ( $notif_types as $row ) {
 	</table>
 	</div>
 
+	<?php elseif ( $active_tab === 'server-load' ) : ?>
+	<!-- ========== SERVER LOAD TAB ========== -->
+	<?php
+	// Extract server load data from engagement metrics.
+	$sl_by_segment    = isset( $engagement_metrics['server_load_by_segment'] ) ? $engagement_metrics['server_load_by_segment'] : array();
+	$sl_conn_types    = isset( $engagement_metrics['server_load_connection_types'] ) ? $engagement_metrics['server_load_connection_types'] : array();
+	$sl_rate          = isset( $engagement_metrics['server_load_rate'] ) ? $engagement_metrics['server_load_rate'] : array();
+
+	// Compute totals from segments.
+	$sl_total_polls      = 0;
+	$sl_push_polls       = 0;
+	$sl_nonpush_polls    = 0;
+	$sl_push_bidders     = 0;
+	$sl_nonpush_bidders  = 0;
+	foreach ( $sl_by_segment as $seg ) {
+		$polls   = (int) $seg->total_polls;
+		$bidders = (int) $seg->unique_bidders;
+		$sl_total_polls += $polls;
+		if ( $seg->has_push === '1' || $seg->has_push === 'true' ) {
+			$sl_push_polls   += $polls;
+			$sl_push_bidders += $bidders;
+		} else {
+			$sl_nonpush_polls   += $polls;
+			$sl_nonpush_bidders += $bidders;
+		}
+	}
+
+	// Compute avg polls/min from rate data.
+	$sl_push_rate    = 0.0;
+	$sl_nonpush_rate = 0.0;
+	foreach ( $sl_rate as $r ) {
+		$minutes = max( (int) $r->active_minutes, 1 );
+		$bidders = max( (int) $r->unique_bidders, 1 );
+		$avg     = round( (int) $r->total_polls / $minutes / $bidders, 1 );
+		if ( $r->has_push === '1' || $r->has_push === 'true' ) {
+			$sl_push_rate = $avg;
+		} else {
+			$sl_nonpush_rate = $avg;
+		}
+	}
+
+	// Connection type counts.
+	$sl_conn_data = array();
+	foreach ( $sl_conn_types as $ct ) {
+		$sl_conn_data[ $ct->conn_type ] = array(
+			'bidders' => (int) $ct->unique_bidders,
+			'polls'   => (int) $ct->total_polls,
+		);
+	}
+	$sl_realtime_bidders = isset( $sl_conn_data['realtime'] ) ? $sl_conn_data['realtime']['bidders'] : 0;
+	$sl_polling_bidders  = isset( $sl_conn_data['polling'] ) ? $sl_conn_data['polling']['bidders'] : 0;
+
+	// Load reduction estimate.
+	$sl_nonpush_load_pct = ( $sl_push_bidders + $sl_nonpush_bidders ) > 0
+		? round( $sl_nonpush_polls / max( $sl_total_polls, 1 ) * 100 )
+		: 0;
+	?>
+
+	<h2><?php _e( 'Server Load Analytics', 'art-in-heaven' ); ?></h2>
+	<p class="description"><?php _e( 'Polling request volume segmented by push notification adoption. Users without push enabled generate continuous polling load.', 'art-in-heaven' ); ?></p>
+
+	<?php
+	AIH_Admin::open_stat_grid();
+	AIH_Admin::render_stat_card( array(
+		'value' => number_format( $sl_total_polls ),
+		'label' => __( 'Total Poll Requests', 'art-in-heaven' ),
+	) );
+	AIH_Admin::render_stat_card( array(
+		'value' => number_format( $sl_nonpush_rate, 1 ),
+		'label' => __( 'Polls/Min (No Push)', 'art-in-heaven' ),
+	) );
+	AIH_Admin::render_stat_card( array(
+		'value' => number_format( $sl_push_rate, 1 ),
+		'label' => __( 'Polls/Min (Push)', 'art-in-heaven' ),
+	) );
+	AIH_Admin::render_stat_card( array(
+		'value' => $sl_realtime_bidders . ' / ' . ( $sl_realtime_bidders + $sl_polling_bidders ),
+		'label' => __( 'SSE Connected', 'art-in-heaven' ),
+	) );
+	AIH_Admin::close_stat_grid();
+	?>
+
+	<!-- Polling Volume Timeline Chart -->
+	<div class="aih-chart-row">
+		<div class="postbox" style="max-width: 900px;">
+			<h2 class="hndle"><span><?php _e( 'Polling Volume Over Time', 'art-in-heaven' ); ?></span></h2>
+			<div class="inside">
+				<div style="position: relative; height: 300px;">
+					<canvas id="aih-server-load-timeline-chart"></canvas>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Connection Type & Segment Charts -->
+	<div class="aih-chart-row">
+		<div class="postbox" style="max-width: 400px;">
+			<h2 class="hndle"><span><?php _e( 'Connection Type Distribution', 'art-in-heaven' ); ?></span></h2>
+			<div class="inside">
+				<div style="position: relative; height: 260px;">
+					<canvas id="aih-conn-type-chart"></canvas>
+				</div>
+			</div>
+		</div>
+		<div class="postbox" style="max-width: 400px;">
+			<h2 class="hndle"><span><?php _e( 'Poll Load by Push Adoption', 'art-in-heaven' ); ?></span></h2>
+			<div class="inside">
+				<div style="position: relative; height: 260px;">
+					<canvas id="aih-push-segment-chart"></canvas>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Cost Per Segment Table -->
+	<h2 style="margin-top: 30px;"><?php _e( 'Cost Per User Segment', 'art-in-heaven' ); ?></h2>
+	<div class="aih-table-wrap">
+	<table class="wp-list-table widefat fixed striped" style="max-width: 800px;">
+		<thead>
+			<tr>
+				<th><?php _e( 'Segment', 'art-in-heaven' ); ?></th>
+				<th><?php _e( 'Unique Users', 'art-in-heaven' ); ?></th>
+				<th><?php _e( 'Total Polls', 'art-in-heaven' ); ?></th>
+				<th><?php _e( 'Avg Polls/Min/User', 'art-in-heaven' ); ?></th>
+				<th><?php _e( '% of Load', 'art-in-heaven' ); ?></th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td><strong style="color: #a63d40;"><?php _e( 'No Push', 'art-in-heaven' ); ?></strong></td>
+				<td><?php echo intval( $sl_nonpush_bidders ); ?></td>
+				<td><?php echo number_format( $sl_nonpush_polls ); ?></td>
+				<td><?php echo number_format( $sl_nonpush_rate, 1 ); ?></td>
+				<td>
+					<div style="display: flex; align-items: center; gap: 8px;">
+						<div style="flex: 1; max-width: 80px; height: 8px; background: #e5e7eb; border-radius: 4px; overflow: hidden;">
+							<div style="width: <?php echo esc_attr( $sl_nonpush_load_pct ); ?>%; height: 100%; background: #a63d40;"></div>
+						</div>
+						<span><?php echo intval( $sl_nonpush_load_pct ); ?>%</span>
+					</div>
+				</td>
+			</tr>
+			<tr>
+				<td><strong style="color: #4a7c59;"><?php _e( 'Push Enabled', 'art-in-heaven' ); ?></strong></td>
+				<td><?php echo intval( $sl_push_bidders ); ?></td>
+				<td><?php echo number_format( $sl_push_polls ); ?></td>
+				<td><?php echo number_format( $sl_push_rate, 1 ); ?></td>
+				<td>
+					<?php
+					$sl_push_load_pct = $sl_total_polls > 0
+						? round( $sl_push_polls / $sl_total_polls * 100 )
+						: 0;
+					?>
+					<div style="display: flex; align-items: center; gap: 8px;">
+						<div style="flex: 1; max-width: 80px; height: 8px; background: #e5e7eb; border-radius: 4px; overflow: hidden;">
+							<div style="width: <?php echo esc_attr( $sl_push_load_pct ); ?>%; height: 100%; background: #4a7c59;"></div>
+						</div>
+						<span><?php echo intval( $sl_push_load_pct ); ?>%</span>
+					</div>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+	</div>
+
+	<?php if ( $sl_total_polls > 0 && $sl_nonpush_rate > 0 && $sl_push_rate > 0 ) : ?>
+	<!-- Key Takeaway -->
+	<div class="notice notice-info" style="margin-top: 20px; max-width: 800px;">
+		<p>
+			<strong><?php _e( 'Key Insight:', 'art-in-heaven' ); ?></strong>
+			<?php
+			$rate_ratio = $sl_nonpush_rate > 0 ? round( $sl_nonpush_rate / max( $sl_push_rate, 0.1 ), 1 ) : 0;
+			printf(
+				/* translators: 1: rate multiplier, 2: percentage of load from non-push users */
+				__( 'Users without push enabled generate %1$s&times; more polling requests per minute. Non-push users account for %2$s%% of total server polling load.', 'art-in-heaven' ),
+				'<strong>' . esc_html( (string) $rate_ratio ) . '</strong>',
+				'<strong>' . esc_html( (string) $sl_nonpush_load_pct ) . '</strong>'
+			);
+			?>
+		</p>
+	</div>
+	<?php endif; ?>
+
 	<?php elseif ( $active_tab === 'export' ) : ?>
 	<!-- ========== EXPORT TAB ========== -->
 
@@ -1980,6 +2164,169 @@ jQuery(document).ready(function($) {
 					}
 				},
 				scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+			}
+		});
+	}
+
+	// ── Server Load tab charts ──
+	var slTimelineCanvas = document.getElementById('aih-server-load-timeline-chart');
+	if (slTimelineCanvas) {
+		var slTimelineRaw = <?php
+		$sl_timeline_data = array();
+		if ( isset( $engagement_metrics['server_load_timeline'] ) ) {
+			foreach ( $engagement_metrics['server_load_timeline'] as $row ) {
+				$bucket = $row->time_bucket;
+				if ( ! isset( $sl_timeline_data[ $bucket ] ) ) {
+					$sl_timeline_data[ $bucket ] = array( 'push' => 0, 'nopush' => 0 );
+				}
+				if ( $row->has_push === '1' || $row->has_push === 'true' ) {
+					$sl_timeline_data[ $bucket ]['push'] += (int) $row->total_polls;
+				} else {
+					$sl_timeline_data[ $bucket ]['nopush'] += (int) $row->total_polls;
+				}
+			}
+		}
+		$sl_labels  = array();
+		$sl_push_d  = array();
+		$sl_nopush_d = array();
+		foreach ( $sl_timeline_data as $bucket => $vals ) {
+			$dt = DateTime::createFromFormat( 'Y-m-d H:i', $bucket, wp_timezone() );
+			$sl_labels[]  = $dt instanceof DateTime ? wp_date( 'g:i A', $dt->getTimestamp() ) : $bucket;
+			$sl_push_d[]  = $vals['push'];
+			$sl_nopush_d[] = $vals['nopush'];
+		}
+		echo wp_json_encode( array(
+			'labels'  => $sl_labels,
+			'push'    => $sl_push_d,
+			'nopush'  => $sl_nopush_d,
+		) );
+		?>;
+		new Chart(slTimelineCanvas, {
+			type: 'line',
+			data: {
+				labels: slTimelineRaw.labels,
+				datasets: [
+					{
+						label: '<?php echo esc_js( __( 'No Push', 'art-in-heaven' ) ); ?>',
+						data: slTimelineRaw.nopush,
+						borderColor: '#a63d40',
+						backgroundColor: 'rgba(166, 61, 64, 0.1)',
+						fill: true,
+						tension: 0.3,
+						pointRadius: 2
+					},
+					{
+						label: '<?php echo esc_js( __( 'Push Enabled', 'art-in-heaven' ) ); ?>',
+						data: slTimelineRaw.push,
+						borderColor: '#4a7c59',
+						backgroundColor: 'rgba(74, 124, 89, 0.1)',
+						fill: true,
+						tension: 0.3,
+						pointRadius: 2
+					}
+				]
+			},
+			options: {
+				responsive: true,
+				maintainAspectRatio: false,
+				interaction: { mode: 'index', intersect: false },
+				plugins: {
+					tooltip: {
+						callbacks: {
+							label: function(ctx) {
+								return ctx.dataset.label + ': ' + ctx.raw.toLocaleString() + ' polls';
+							}
+						}
+					}
+				},
+				scales: {
+					x: { ticks: { maxTicksLimit: 12, font: { size: 11 } } },
+					y: { beginAtZero: true, title: { display: true, text: '<?php echo esc_js( __( 'Poll Requests', 'art-in-heaven' ) ); ?>' } }
+				}
+			}
+		});
+	}
+
+	var connTypeCanvas = document.getElementById('aih-conn-type-chart');
+	if (connTypeCanvas) {
+		var connData = <?php
+		$conn_labels = array();
+		$conn_values = array();
+		$conn_colors = array(
+			'realtime' => '#4a7c59',
+			'polling'  => '#b8956b',
+			'offline'  => '#a63d40',
+		);
+		$conn_color_list = array();
+		if ( isset( $engagement_metrics['server_load_connection_types'] ) ) {
+			foreach ( $engagement_metrics['server_load_connection_types'] as $ct ) {
+				$type_label = ucfirst( $ct->conn_type );
+				if ( $ct->conn_type === 'realtime' ) {
+					$type_label = __( 'SSE (Real-time)', 'art-in-heaven' );
+				}
+				$conn_labels[]     = $type_label;
+				$conn_values[]     = (int) $ct->total_polls;
+				$conn_color_list[] = isset( $conn_colors[ $ct->conn_type ] ) ? $conn_colors[ $ct->conn_type ] : '#999';
+			}
+		}
+		echo wp_json_encode( array(
+			'labels' => $conn_labels,
+			'values' => $conn_values,
+			'colors' => $conn_color_list,
+		) );
+		?>;
+		new Chart(connTypeCanvas, {
+			type: 'doughnut',
+			data: {
+				labels: connData.labels,
+				datasets: [{
+					data: connData.values,
+					backgroundColor: connData.colors
+				}]
+			},
+			options: {
+				responsive: true,
+				maintainAspectRatio: false,
+				plugins: {
+					tooltip: {
+						callbacks: {
+							label: function(ctx) {
+								var total = ctx.dataset.data.reduce(function(a, b) { return a + b; }, 0);
+								var pct = total > 0 ? Math.round(ctx.raw / total * 100) : 0;
+								return ctx.label + ': ' + ctx.raw.toLocaleString() + ' (' + pct + '%)';
+							}
+						}
+					}
+				}
+			}
+		});
+	}
+
+	var pushSegCanvas = document.getElementById('aih-push-segment-chart');
+	if (pushSegCanvas) {
+		new Chart(pushSegCanvas, {
+			type: 'doughnut',
+			data: {
+				labels: ['<?php echo esc_js( __( 'No Push', 'art-in-heaven' ) ); ?>', '<?php echo esc_js( __( 'Push Enabled', 'art-in-heaven' ) ); ?>'],
+				datasets: [{
+					data: [<?php echo intval( $sl_nonpush_polls ?? 0 ); ?>, <?php echo intval( $sl_push_polls ?? 0 ); ?>],
+					backgroundColor: ['#a63d40', '#4a7c59']
+				}]
+			},
+			options: {
+				responsive: true,
+				maintainAspectRatio: false,
+				plugins: {
+					tooltip: {
+						callbacks: {
+							label: function(ctx) {
+								var total = ctx.dataset.data.reduce(function(a, b) { return a + b; }, 0);
+								var pct = total > 0 ? Math.round(ctx.raw / total * 100) : 0;
+								return ctx.label + ': ' + ctx.raw.toLocaleString() + ' polls (' + pct + '%)';
+							}
+						}
+					}
+				}
 			}
 		});
 	}

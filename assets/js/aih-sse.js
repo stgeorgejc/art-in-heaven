@@ -26,6 +26,7 @@
         heartbeatTimer: null,
         heartbeatInterval: 30000,  // Check every 30s
         heartbeatTimeout: 90000,   // Reconnect if no message for 90s
+        totalReconnects: 0,        // Lifetime reconnect count for analytics
 
         /**
          * Initialize SSE connection (fetches Mercure auth cookie first)
@@ -244,6 +245,7 @@
          */
         updateConnectionStatus: function(status) {
             window.aihConnectionStatus = status;
+            window.aihSSEReconnects = this.totalReconnects;
             window.dispatchEvent(new CustomEvent('aih:connectionchange', { detail: { status: status } }));
         },
 
@@ -279,6 +281,7 @@
          */
         onDisconnect: function() {
             this.connected = false;
+            this.totalReconnects++;
             this.stopHeartbeat();
             this.enablePolling();
 

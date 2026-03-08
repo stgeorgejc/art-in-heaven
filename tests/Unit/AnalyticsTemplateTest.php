@@ -221,4 +221,69 @@ class AnalyticsTemplateTest extends TestCase
             'Template must contain pulse dot indicator'
         );
     }
+
+    // ========== Server Load Tab ==========
+
+    public function testServerLoadTabExists(): void
+    {
+        $this->assertStringContainsString(
+            "'server-load'",
+            $this->template,
+            'Analytics template must define a server-load tab key'
+        );
+    }
+
+    public function testServerLoadTabHasTimelineChart(): void
+    {
+        $this->assertStringContainsString(
+            'aih-server-load-timeline-chart',
+            $this->template,
+            'Server Load tab must include timeline chart canvas'
+        );
+    }
+
+    public function testServerLoadTabHasConnectionTypeChart(): void
+    {
+        $this->assertStringContainsString(
+            'aih-conn-type-chart',
+            $this->template,
+            'Server Load tab must include connection type chart canvas'
+        );
+    }
+
+    public function testServerLoadTabHasPushSegmentChart(): void
+    {
+        $this->assertStringContainsString(
+            'aih-push-segment-chart',
+            $this->template,
+            'Server Load tab must include push segment chart canvas'
+        );
+    }
+
+    public function testServerLoadTabUsesEngagementMetrics(): void
+    {
+        $this->assertStringContainsString(
+            'server_load_by_segment',
+            $this->template,
+            'Server Load tab must reference server_load_by_segment data'
+        );
+    }
+
+    public function testServerLoadTabShowsCostPerSegmentTable(): void
+    {
+        $this->assertStringContainsString(
+            'Polls/Min',
+            $this->template,
+            'Server Load tab must show polls per minute rate in cost table'
+        );
+    }
+
+    public function testServerLoadTabShowsKeyInsight(): void
+    {
+        $this->assertStringContainsString(
+            'Key Insight',
+            $this->template,
+            'Server Load tab must include key insight callout'
+        );
+    }
 }
