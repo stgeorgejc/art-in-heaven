@@ -2927,6 +2927,14 @@ class AIH_Ajax {
 
         $all_events = array_merge($outbid_events, $winner_events);
 
+        // Resolve art piece URLs server-side so the frontend doesn't need to guess
+        foreach ($all_events as &$evt) {
+            if (!empty($evt['catalog_art_id'])) {
+                $evt['url'] = AIH_Template_Helper::get_art_url($evt['catalog_art_id']);
+            }
+        }
+        unset($evt);
+
         wp_send_json_success($all_events);
     }
 

@@ -269,7 +269,7 @@ class AIH_Push {
         }
 
         // Record event immediately for polling fallback (no bid amount shown)
-        self::record_outbid_event($outbid_bidder, $art_piece_id, $title);
+        self::record_outbid_event($outbid_bidder, $art_piece_id, $title, $catalog_art_id);
 
         // Defer push notification sending to after HTTP response
         if (get_option('aih_push_enabled', 1)) {
@@ -385,13 +385,14 @@ class AIH_Push {
      * @param string $bidder_id
      * @param int    $art_piece_id
      * @param string $title
+     * @param string $catalog_art_id Catalog art ID for URL construction.
      * @return void
      */
     // Note: This read-modify-write pattern is non-atomic. Under high concurrency,
     // an outbid event can be lost if two events are recorded simultaneously.
     // SSE/push notifications are the primary channels; this is a polling fallback.
     // For production with 1000+ users, an external object cache (Redis) is recommended.
-    public static function record_outbid_event($bidder_id, $art_piece_id, $title) {
+    public static function record_outbid_event($bidder_id, $art_piece_id, $title, string $catalog_art_id = '') {
         $key    = 'aih_outbid_' . $bidder_id;
         $events = get_transient($key);
 
@@ -400,9 +401,10 @@ class AIH_Push {
         }
 
         $events[] = array(
-            'art_piece_id' => $art_piece_id,
-            'title'        => $title,
-            'time'         => time(),
+            'art_piece_id'   => $art_piece_id,
+            'title'          => $title,
+            'catalog_art_id' => $catalog_art_id,
+            'time'           => time(),
         );
 
         set_transient($key, $events, 30 * MINUTE_IN_SECONDS);

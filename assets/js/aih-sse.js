@@ -210,8 +210,11 @@
          */
         showAlertFromSSE: function(type, data) {
             var title = data.title || 'an item';
+            var url = data.catalog_art_id && aihAjax.artUrlBase
+                ? aihAjax.artUrlBase + data.catalog_art_id + '/'
+                : '';
             if (typeof window.showAlert === 'function') {
-                window.showAlert(type, data.art_piece_id, title);
+                window.showAlert(type, data.art_piece_id, title, url);
             } else if (typeof window.showToast === 'function') {
                 if (type === 'winner') {
                     window.showToast('You won "' + title + '"! Head to checkout.', 'success');
