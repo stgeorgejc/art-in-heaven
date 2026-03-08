@@ -2928,9 +2928,20 @@ class AIH_Ajax {
         $all_events = array_merge($outbid_events, $winner_events);
 
         // Resolve art piece URLs server-side so the frontend doesn't need to guess
+        global $wpdb;
+        $art_table = AIH_Database::get_table('art_pieces');
         foreach ($all_events as &$evt) {
             if (!empty($evt['catalog_art_id'])) {
                 $evt['url'] = AIH_Template_Helper::get_art_url($evt['catalog_art_id']);
+            } elseif (!empty($evt['art_piece_id'])) {
+                // Fallback for legacy events recorded without catalog_art_id
+                $art_id = $wpdb->get_var($wpdb->prepare(
+                    "SELECT art_id FROM `{$art_table}` WHERE id = %d",
+                    intval($evt['art_piece_id'])
+                ));
+                if ($art_id) {
+                    $evt['url'] = AIH_Template_Helper::get_art_url($art_id);
+                }
             }
         }
         unset($evt);

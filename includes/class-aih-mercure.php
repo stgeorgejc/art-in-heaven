@@ -361,13 +361,15 @@ class AIH_Mercure {
             $title          = $art_row ? $art_row->title : '';
             $catalog_art_id = $art_row ? $art_row->art_id : '';
 
+            $url = $catalog_art_id ? AIH_Template_Helper::get_art_url($catalog_art_id) : '';
+
             $this->publish(
                 $prefix . '/bidder/' . $outbid_bidder,
                 array(
-                    'type'           => 'outbid',
-                    'art_piece_id'   => intval($art_piece_id),
-                    'title'          => $title ?: 'Art Piece #' . $art_piece_id,
-                    'catalog_art_id' => $catalog_art_id,
+                    'type'         => 'outbid',
+                    'art_piece_id' => intval($art_piece_id),
+                    'title'        => $title ?: 'Art Piece #' . $art_piece_id,
+                    'url'          => $url,
                 ),
                 true // Private topic
             );

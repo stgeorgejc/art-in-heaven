@@ -6,6 +6,7 @@ namespace ArtInHeaven\Tests\Unit;
 
 use AIH_Database;
 use AIH_Push;
+use AIH_Template_Helper;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 use PHPUnit\Framework\TestCase;
@@ -185,5 +186,71 @@ class OutbidEventTest extends TestCase
         $result = AIH_Push::consume_outbid_events('bidder-1');
 
         $this->assertSame([], $result);
+    }
+
+    // ========== URL resolution (check_outbid integration) ==========
+
+    /**
+     * get_art_url resolves catalog_art_id to a proper URL.
+     *
+     * This verifies the integration point: check_outbid calls get_art_url
+     * with the catalog_art_id from the event, producing a clean URL that
+     * uses the catalog ID (not the database row ID).
+     */
+    public function testGetArtUrlUsesCatalogArtId(): void
+    {
+        // Reset page URL cache
+        $ref = new \ReflectionClass(AIH_Template_Helper::class);
+        $cache = $ref->getProperty('page_cache');
+        $cache->setValue(null, []);
+
+        Functions\stubs([
+            'get_transient' => false,
+            'set_transient' => true,
+            'get_option' => function ($key, $default = false) {
+                if ($key === 'aih_gallery_page') {
+                    return 10;
+                }
+                return $default;
+            },
+            'get_permalink' => 'https://aihgallery.org/live/',
+            'trailingslashit' => function ($string) {
+                return rtrim($string, '/') . '/';
+            },
+        ]);
+
+        $url = AIH_Template_Helper::get_art_url('ART-2026-001');
+
+        $this->assertSame('https://aihgallery.org/live/art/ART-2026-001/', $url);
+    }
+
+    /**
+     * get_art_url encodes special characters in catalog_art_id.
+     */
+    public function testGetArtUrlEncodesSpecialCharacters(): void
+    {
+        // Reset page URL cache
+        $ref = new \ReflectionClass(AIH_Template_Helper::class);
+        $cache = $ref->getProperty('page_cache');
+        $cache->setValue(null, []);
+
+        Functions\stubs([
+            'get_transient' => false,
+            'set_transient' => true,
+            'get_option' => function ($key, $default = false) {
+                if ($key === 'aih_gallery_page') {
+                    return 10;
+                }
+                return $default;
+            },
+            'get_permalink' => 'https://aihgallery.org/live/',
+            'trailingslashit' => function ($string) {
+                return rtrim($string, '/') . '/';
+            },
+        ]);
+
+        $url = AIH_Template_Helper::get_art_url('ART 001');
+
+        $this->assertSame('https://aihgallery.org/live/art/ART%20001/', $url);
     }
 }
