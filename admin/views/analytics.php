@@ -57,6 +57,9 @@ if ( ! isset( $avg_order_value ) ) {
 if ( ! isset( $projected_revenue ) ) {
 	$projected_revenue = 0.0;
 }
+if ( ! isset( $live_data ) ) {
+	$live_data = array();
+}
 
 // Ensure stats has all required properties.
 $stats->total_pieces        = isset( $stats->total_pieces ) ? $stats->total_pieces : 0;
@@ -204,20 +207,20 @@ $rev_vs_starting = $stats->total_starting_value > 0
 	: 0;
 
 // Build timeline data arrays for Chart.js (needed on Overview tab).
-// Data comes in 15-minute intervals; format labels as short times (e.g. "2:15 PM").
+// Data comes in 5-minute intervals; format labels as short times (e.g. "2:15 PM").
 $timeline_hours   = array();
 $timeline_push    = array();
 $timeline_organic = array();
-$bids_by_interval = isset( $engagement_metrics['bids_by_hour'] ) ? $engagement_metrics['bids_by_hour'] : array();
+$bids_by_interval = isset( $engagement_metrics['bids_by_interval'] ) ? $engagement_metrics['bids_by_interval'] : array();
 $interval_data    = array();
 foreach ( $bids_by_interval as $row ) {
-	if ( ! isset( $interval_data[ $row->hour_bucket ] ) ) {
-		$interval_data[ $row->hour_bucket ] = array( 'push' => 0, 'organic' => 0 );
+	if ( ! isset( $interval_data[ $row->time_bucket ] ) ) {
+		$interval_data[ $row->time_bucket ] = array( 'push' => 0, 'organic' => 0 );
 	}
 	if ( $row->source === 'push' ) {
-		$interval_data[ $row->hour_bucket ]['push'] = (int) $row->cnt;
+		$interval_data[ $row->time_bucket ]['push'] = (int) $row->cnt;
 	} else {
-		$interval_data[ $row->hour_bucket ]['organic'] += (int) $row->cnt;
+		$interval_data[ $row->time_bucket ]['organic'] += (int) $row->cnt;
 	}
 }
 ksort( $interval_data );
@@ -260,6 +263,20 @@ foreach ( $notif_types as $row ) {
 	<?php if ( $active_tab === 'overview' ) : ?>
 	<!-- ========== OVERVIEW TAB ========== -->
 
+	<!-- Needs Attention Alerts -->
+	<?php if ( ! empty( $live_data['alerts'] ) ) : ?>
+	<div class="aih-alerts-panel" id="aih-alerts-panel">
+		<?php foreach ( $live_data['alerts'] as $alert ) : ?>
+			<div class="notice notice-warning inline">
+				<p>
+					<strong><?php echo esc_html( $alert['title'] ); ?></strong>
+					<span class="aih-alert-count">(<?php echo intval( $alert['count'] ); ?>)</span>
+				</p>
+			</div>
+		<?php endforeach; ?>
+	</div>
+	<?php endif; ?>
+
 	<!-- Hero Stat Cards -->
 	<?php
 	AIH_Admin::open_stat_grid();
@@ -270,52 +287,105 @@ foreach ( $notif_types as $row ) {
 		'sublabel' => sprintf( __( '%1$d of %2$d pieces', 'art-in-heaven' ), intval( $stats->pieces_with_bids ), intval( $stats->total_pieces ) ),
 		'variant'  => 'bids',
 		'link'     => admin_url( 'admin.php?page=art-in-heaven-analytics&tab=art-pieces' ),
+		'stat_key' => 'sell-through',
 	) );
 	if ( AIH_Roles::can_view_financial() ) {
 		AIH_Admin::render_stat_card( array(
-			'value'   => '$' . number_format( $total_revenue, 2 ),
-			'label'   => __( 'Total Revenue', 'art-in-heaven' ),
-			'variant' => 'money',
-			'link'    => admin_url( 'admin.php?page=art-in-heaven-orders' ),
+			'value'    => '$' . number_format( $total_revenue, 2 ),
+			'label'    => __( 'Total Revenue', 'art-in-heaven' ),
+			'variant'  => 'money',
+			'link'     => admin_url( 'admin.php?page=art-in-heaven-orders' ),
+			'stat_key' => 'total-revenue',
 		) );
 	}
 	AIH_Admin::render_stat_card( array(
-		'value' => number_format( intval( $stats->unique_bidders ) ),
-		'label' => __( 'Unique Bidders', 'art-in-heaven' ),
-		'link'  => admin_url( 'admin.php?page=art-in-heaven-analytics&tab=bidders' ),
+		'value'    => number_format( intval( $stats->unique_bidders ) ),
+		'label'    => __( 'Unique Bidders', 'art-in-heaven' ),
+		'link'     => admin_url( 'admin.php?page=art-in-heaven-analytics&tab=bidders' ),
+		'stat_key' => 'unique-bidders',
 	) );
 	AIH_Admin::render_stat_card( array(
-		'value'   => number_format( intval( $stats->active_count ) ),
-		'label'   => __( 'Active Auctions', 'art-in-heaven' ),
-		'variant' => 'active',
-		'link'    => admin_url( 'admin.php?page=art-in-heaven-art&tab=active_bids' ),
+		'value'    => number_format( intval( $stats->active_count ) ),
+		'label'    => __( 'Active Auctions', 'art-in-heaven' ),
+		'variant'  => 'active',
+		'link'     => admin_url( 'admin.php?page=art-in-heaven-art&tab=active_bids' ),
+		'stat_key' => 'active-auctions',
 	) );
 	AIH_Admin::close_stat_grid();
 	?>
+
+	<!-- Auction Pulse -->
+	<?php
+	$pulse = isset( $live_data['pulse'] ) ? $live_data['pulse'] : array( 'bids_5m' => 0, 'bids_15m' => 0, 'bids_60m' => 0, 'status' => 'cooling' );
+	$pulse_label_map = array( 'hot' => __( 'Hot', 'art-in-heaven' ), 'warm' => __( 'Warm', 'art-in-heaven' ), 'cooling' => __( 'Cooling', 'art-in-heaven' ) );
+	?>
+	<div class="postbox aih-auction-pulse" id="aih-auction-pulse">
+		<h2 class="hndle">
+			<span><?php _e( 'Auction Pulse', 'art-in-heaven' ); ?></span>
+			<span class="aih-pulse-dot <?php echo esc_attr( $pulse['status'] ); ?>" title="<?php echo esc_attr( $pulse_label_map[ $pulse['status'] ] ?? '' ); ?>"></span>
+			<span class="aih-pulse-label"><?php echo esc_html( $pulse_label_map[ $pulse['status'] ] ?? '' ); ?></span>
+		</h2>
+		<div class="inside">
+			<?php
+			AIH_Admin::open_stat_grid();
+			AIH_Admin::render_stat_card( array(
+				'value'    => number_format( intval( $pulse['bids_5m'] ) ),
+				'label'    => __( 'Last 5 min', 'art-in-heaven' ),
+				'stat_key' => 'pulse-5m',
+			) );
+			AIH_Admin::render_stat_card( array(
+				'value'    => number_format( intval( $pulse['bids_15m'] ) ),
+				'label'    => __( 'Last 15 min', 'art-in-heaven' ),
+				'stat_key' => 'pulse-15m',
+			) );
+			AIH_Admin::render_stat_card( array(
+				'value'    => number_format( intval( $pulse['bids_60m'] ) ),
+				'label'    => __( 'Last 60 min', 'art-in-heaven' ),
+				'stat_key' => 'pulse-60m',
+			) );
+			AIH_Admin::close_stat_grid();
+			?>
+		</div>
+	</div>
 
 	<!-- Auction Health Cards -->
 	<?php
 	AIH_Admin::open_stat_grid();
 	AIH_Admin::render_stat_card( array(
-		'value' => esc_html( $avg_bids_per_piece ),
-		'label' => __( 'Avg Bids / Piece', 'art-in-heaven' ),
+		'value'    => esc_html( $avg_bids_per_piece ),
+		'label'    => __( 'Avg Bids / Piece', 'art-in-heaven' ),
+		'stat_key' => 'avg-bids',
 	) );
 	if ( AIH_Roles::can_view_financial() ) {
 		AIH_Admin::render_stat_card( array(
 			'value'    => $rev_vs_starting . '%',
 			'label'    => __( 'Revenue vs Starting', 'art-in-heaven' ),
 			'sublabel' => __( 'of asking price', 'art-in-heaven' ),
+			'stat_key' => 'rev-vs-starting',
 		) );
 	}
 	AIH_Admin::render_stat_card( array(
-		'value' => number_format( $single_bid_count ),
-		'label' => __( 'Single-Bid Pieces', 'art-in-heaven' ),
+		'value'    => number_format( $single_bid_count ),
+		'label'    => __( 'Single-Bid Pieces', 'art-in-heaven' ),
+		'stat_key' => 'single-bid',
 	) );
 	AIH_Admin::render_stat_card( array(
 		'value_html' => $last_bid_display,
 		'label'      => __( 'Last Bid', 'art-in-heaven' ),
 		'detail'     => $last_bid_time ? AIH_Status::format_db_date( $last_bid_time, 'M j, g:i a' ) : '',
 		'variant'    => 'last-bid',
+		'stat_key'   => 'last-bid',
+	) );
+	AIH_Admin::render_stat_card( array(
+		'value'    => ( isset( $live_data['overview']['repeat_bidder_rate'] ) ? intval( $live_data['overview']['repeat_bidder_rate'] ) : 0 ) . '%',
+		'label'    => __( 'Repeat Bidders', 'art-in-heaven' ),
+		'sublabel' => sprintf(
+			/* translators: 1: repeat bidders, 2: total bidders */
+			__( '%1$d of %2$d bidders', 'art-in-heaven' ),
+			isset( $live_data['overview']['repeat_bidders'] ) ? intval( $live_data['overview']['repeat_bidders'] ) : 0,
+			isset( $live_data['overview']['total_bidders'] ) ? intval( $live_data['overview']['total_bidders'] ) : 0
+		),
+		'stat_key' => 'repeat-bidders',
 	) );
 	AIH_Admin::close_stat_grid();
 	?>
@@ -365,6 +435,68 @@ foreach ( $notif_types as $row ) {
 		</div>
 	</div>
 	<?php endif; ?>
+	<?php endif; ?>
+
+	<!-- Countdown Urgency Board -->
+	<?php
+	$urgency_items = isset( $live_data['urgency'] ) ? $live_data['urgency'] : array();
+	if ( ! empty( $urgency_items ) ) :
+	?>
+	<div class="postbox aih-urgency-board" id="aih-urgency-board" style="margin-top: 24px;">
+		<h2 class="hndle"><span><?php _e( 'Ending Soon (< 2 hours)', 'art-in-heaven' ); ?></span></h2>
+		<div class="inside">
+			<table class="widefat striped">
+				<thead>
+					<tr>
+						<th><?php _e( 'Art ID', 'art-in-heaven' ); ?></th>
+						<th><?php _e( 'Title', 'art-in-heaven' ); ?></th>
+						<th><?php _e( 'Time Left', 'art-in-heaven' ); ?></th>
+						<th><?php _e( 'Bids', 'art-in-heaven' ); ?></th>
+					</tr>
+				</thead>
+				<tbody>
+					<?php foreach ( $urgency_items as $item ) :
+						$mins = (int) floor( $item['seconds_remaining'] / 60 );
+						$hrs  = (int) floor( $mins / 60 );
+						$rem  = $mins % 60;
+						$time_str = $hrs > 0 ? sprintf( '%dh %dm', $hrs, $rem ) : sprintf( '%dm', $mins );
+					?>
+					<tr class="<?php echo $item['total_bids'] === 0 ? 'aih-urgency-zero' : ''; ?>">
+						<td><?php echo esc_html( $item['art_id'] ); ?></td>
+						<td><?php echo esc_html( $item['title'] ); ?></td>
+						<td><?php echo esc_html( $time_str ); ?></td>
+						<td><?php echo intval( $item['total_bids'] ); ?></td>
+					</tr>
+					<?php endforeach; ?>
+				</tbody>
+			</table>
+		</div>
+	</div>
+	<?php endif; ?>
+
+	<!-- Live Bid Feed -->
+	<?php
+	$bid_feed_items = isset( $live_data['bid_feed'] ) ? $live_data['bid_feed'] : array();
+	if ( ! empty( $bid_feed_items ) ) :
+	?>
+	<div class="postbox aih-bid-feed" id="aih-bid-feed" style="margin-top: 24px;">
+		<h2 class="hndle"><span><?php _e( 'Live Bid Feed', 'art-in-heaven' ); ?></span></h2>
+		<div class="inside">
+			<ul class="aih-bid-feed-list">
+				<?php foreach ( $bid_feed_items as $entry ) : ?>
+				<li>
+					<span class="aih-feed-time"><?php echo esc_html( $entry['time_ago'] ); ?></span>
+					<span class="aih-feed-bidder"><?php echo esc_html( $entry['bidder_masked'] ); ?></span>
+					<?php _e( 'bid on', 'art-in-heaven' ); ?>
+					<strong><?php echo esc_html( $entry['piece_title'] ); ?></strong>
+					<?php if ( isset( $entry['amount'] ) ) : ?>
+						<span class="aih-feed-amount">$<?php echo esc_html( number_format( floatval( $entry['amount'] ), 2 ) ); ?></span>
+					<?php endif; ?>
+				</li>
+				<?php endforeach; ?>
+			</ul>
+		</div>
+	</div>
 	<?php endif; ?>
 
 	<!-- Summary Tables -->
