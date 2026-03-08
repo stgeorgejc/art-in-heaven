@@ -2964,45 +2964,73 @@ class AIH_Ajax {
      * @return void
      */
     private function log_sampled_poll($bidder_id) {
-        $counter_key = 'aih_poll_count_' . $bidder_id;
-        $count       = (int) get_transient($counter_key);
-        $count++;
+        if (empty($bidder_id)) {
+            return;
+        }
 
-        if ($count >= 10) {
-            // Flush: write one audit entry representing 10 poll requests.
-            $connection_type = isset($_POST['connection_type'])
-                ? sanitize_text_field($_POST['connection_type'])
-                : 'polling';
+        $using_ext_cache = function_exists('wp_using_ext_object_cache') && wp_using_ext_object_cache();
 
-            // Validate connection_type to known values.
-            $valid_types = array( 'polling', 'realtime', 'offline' );
-            if ( ! in_array( $connection_type, $valid_types, true ) ) {
-                $connection_type = 'polling';
+        if ($using_ext_cache) {
+            // With an external object cache, transients are in-memory and cheap to update.
+            $counter_key = 'aih_poll_count_' . $bidder_id;
+            $count       = (int) get_transient($counter_key);
+            $count++;
+
+            if ($count >= 10) {
+                $this->flush_poll_audit($bidder_id, $count);
+                delete_transient($counter_key);
+            } else {
+                // 15-minute TTL so typical sessions are captured before expiry.
+                set_transient($counter_key, $count, 900);
             }
 
-            // Check push subscription server-side (more reliable than client-reported value).
-            global $wpdb;
-            $push_table = AIH_Database::get_table('push_subscriptions');
-            $has_push   = (bool) $wpdb->get_var($wpdb->prepare(
-                "SELECT id FROM `{$push_table}` WHERE bidder_id = %s LIMIT 1",
-                $bidder_id
-            ));
-
-            AIH_Database::log_audit('poll_request', array(
-                'object_type' => 'poll',
-                'bidder_id'   => $bidder_id,
-                'details'     => array(
-                    'count'           => $count,
-                    'connection_type' => $connection_type,
-                    'has_push'        => $has_push,
-                ),
-            ));
-
-            delete_transient($counter_key);
-        } else {
-            // Increment counter (60s TTL so stale counters expire automatically).
-            set_transient($counter_key, $count, 60);
+            return;
         }
+
+        // No external object cache: use probabilistic sampling to avoid per-request DB writes.
+        // Approximate 1-in-10 sampling; each logged entry represents a single sampled request.
+        if (wp_rand(1, 10) !== 1) {
+            return;
+        }
+
+        $this->flush_poll_audit($bidder_id, 1);
+    }
+
+    /**
+     * Write a poll_request audit entry with connection metadata.
+     *
+     * @param string $bidder_id Bidder confirmation code.
+     * @param int    $count     Number of poll requests this entry represents.
+     * @return void
+     */
+    private function flush_poll_audit($bidder_id, $count) {
+        $connection_type = isset($_POST['connection_type'])
+            ? sanitize_text_field($_POST['connection_type'])
+            : 'polling';
+
+        // Validate connection_type to known values.
+        $valid_types = array( 'polling', 'realtime', 'offline' );
+        if ( ! in_array( $connection_type, $valid_types, true ) ) {
+            $connection_type = 'polling';
+        }
+
+        // Check push subscription server-side (more reliable than client-reported value).
+        global $wpdb;
+        $push_table = AIH_Database::get_table('push_subscriptions');
+        $has_push   = (bool) $wpdb->get_var($wpdb->prepare(
+            "SELECT id FROM `{$push_table}` WHERE bidder_id = %s LIMIT 1",
+            $bidder_id
+        ));
+
+        AIH_Database::log_audit('poll_request', array(
+            'object_type' => 'poll',
+            'bidder_id'   => $bidder_id,
+            'details'     => array(
+                'count'           => $count,
+                'connection_type' => $connection_type,
+                'has_push'        => $has_push,
+            ),
+        ));
     }
 
     /**
@@ -3025,10 +3053,6 @@ class AIH_Ajax {
 
         $bidder_id = $auth->get_current_bidder_id() ?? '';
 
-        // Sampled poll request logging for server load analytics.
-        // Increments a transient counter per bidder; every 10th poll writes one audit entry.
-        $this->log_sampled_poll($bidder_id);
-
         // Rate throttle: max 12 poll-status requests per 60 seconds per IP.
         // Returns last cached result when throttled instead of hitting the DB.
         $poll_ip = AIH_Security::get_client_ip();
@@ -3043,6 +3067,11 @@ class AIH_Ajax {
             }
             // No cached response available — let it through as a grace request
         }
+
+        // Sampled poll request logging for server load analytics.
+        // Only logs non-throttled requests to avoid transient I/O and DB lookups on cached responses.
+        // Increments a transient counter per bidder; every 10th poll writes one audit entry.
+        $this->log_sampled_poll($bidder_id);
 
         $ids = isset($_POST['art_piece_ids']) ? array_map('intval', (array) $_POST['art_piece_ids']) : array();
         $ids = array_filter($ids);

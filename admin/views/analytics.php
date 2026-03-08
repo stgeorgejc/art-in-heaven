@@ -1401,7 +1401,6 @@ foreach ( $notif_types as $row ) {
 	<?php
 	// Extract server load data from engagement metrics.
 	$sl_by_segment    = isset( $engagement_metrics['server_load_by_segment'] ) ? $engagement_metrics['server_load_by_segment'] : array();
-	$sl_timeline      = isset( $engagement_metrics['server_load_timeline'] ) ? $engagement_metrics['server_load_timeline'] : array();
 	$sl_conn_types    = isset( $engagement_metrics['server_load_connection_types'] ) ? $engagement_metrics['server_load_connection_types'] : array();
 	$sl_rate          = isset( $engagement_metrics['server_load_rate'] ) ? $engagement_metrics['server_load_rate'] : array();
 
@@ -1450,7 +1449,7 @@ foreach ( $notif_types as $row ) {
 	$sl_polling_bidders  = isset( $sl_conn_data['polling'] ) ? $sl_conn_data['polling']['bidders'] : 0;
 
 	// Load reduction estimate.
-	$sl_push_pct = ( $sl_push_bidders + $sl_nonpush_bidders ) > 0
+	$sl_nonpush_load_pct = ( $sl_push_bidders + $sl_nonpush_bidders ) > 0
 		? round( $sl_nonpush_polls / max( $sl_total_polls, 1 ) * 100 )
 		: 0;
 	?>
@@ -1533,9 +1532,9 @@ foreach ( $notif_types as $row ) {
 				<td>
 					<div style="display: flex; align-items: center; gap: 8px;">
 						<div style="flex: 1; max-width: 80px; height: 8px; background: #e5e7eb; border-radius: 4px; overflow: hidden;">
-							<div style="width: <?php echo esc_attr( $sl_push_pct ); ?>%; height: 100%; background: #a63d40;"></div>
+							<div style="width: <?php echo esc_attr( $sl_nonpush_load_pct ); ?>%; height: 100%; background: #a63d40;"></div>
 						</div>
-						<span><?php echo intval( $sl_push_pct ); ?>%</span>
+						<span><?php echo intval( $sl_nonpush_load_pct ); ?>%</span>
 					</div>
 				</td>
 			</tr>
@@ -1573,7 +1572,7 @@ foreach ( $notif_types as $row ) {
 				/* translators: 1: rate multiplier, 2: percentage of load from non-push users */
 				__( 'Users without push enabled generate %1$s&times; more polling requests per minute. Non-push users account for %2$s%% of total server polling load.', 'art-in-heaven' ),
 				'<strong>' . esc_html( (string) $rate_ratio ) . '</strong>',
-				'<strong>' . esc_html( (string) $sl_push_pct ) . '</strong>'
+				'<strong>' . esc_html( (string) $sl_nonpush_load_pct ) . '</strong>'
 			);
 			?>
 		</p>
@@ -2191,8 +2190,8 @@ jQuery(document).ready(function($) {
 		$sl_push_d  = array();
 		$sl_nopush_d = array();
 		foreach ( $sl_timeline_data as $bucket => $vals ) {
-			$ts = strtotime( $bucket );
-			$sl_labels[]  = $ts ? wp_date( 'g:i A', $ts ) : $bucket;
+			$dt = DateTime::createFromFormat( 'Y-m-d H:i', $bucket, wp_timezone() );
+			$sl_labels[]  = $dt instanceof DateTime ? wp_date( 'g:i A', $dt->getTimestamp() ) : $bucket;
 			$sl_push_d[]  = $vals['push'];
 			$sl_nopush_d[] = $vals['nopush'];
 		}
