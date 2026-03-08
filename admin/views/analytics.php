@@ -832,11 +832,7 @@ foreach ( $notif_types as $row ) {
 				<td><?php echo intval( $piece->unique_bidders ); ?></td>
 				<td><strong>$<?php echo number_format( floatval( $piece->current_bid ?: $piece->starting_bid ), 0 ); ?></strong></td>
 				<td>
-					<?php if ( ! empty( $piece->auction_end ) ) : ?>
-						<small><?php echo esc_html( date_i18n( 'M j, g:i A', strtotime( $piece->auction_end ) ) ); ?></small>
-					<?php else : ?>
-						<span style="color: #9ca3af;">&mdash;</span>
-					<?php endif; ?>
+					<small><?php echo esc_html( AIH_Status::format_db_date( $piece->auction_end, 'M j, g:i A' ) ); ?></small>
 				</td>
 				<td>
 					<?php if ( $piece->status === 'active' && $piece->seconds_remaining > 0 ) : ?>
