@@ -287,6 +287,12 @@
                 this.eventSource = null;
             }
 
+            // Clear any previously scheduled reconnect to prevent stacking
+            if (this.reconnectTimer) {
+                clearTimeout(this.reconnectTimer);
+                this.reconnectTimer = null;
+            }
+
             // Exponential backoff: 1s, 2s, 4s, 8s, 16s, 32s, 60s, 60s, ...
             // Never gives up — polling handles updates while SSE recovers
             var delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 60000);

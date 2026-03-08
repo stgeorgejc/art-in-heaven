@@ -2976,7 +2976,9 @@ class AIH_Ajax {
         // Rate throttle: max 12 poll-status requests per 60 seconds per IP.
         // Returns last cached result when throttled instead of hitting the DB.
         $poll_ip = AIH_Security::get_client_ip();
-        $throttle_key = 'aih_poll_throttle_' . md5($poll_ip . '_' . $bidder_id);
+        $raw_ids = isset($_POST['art_piece_ids']) ? (array) $_POST['art_piece_ids'] : array();
+        sort($raw_ids);
+        $throttle_key = 'aih_poll_throttle_' . md5($poll_ip . '_' . $bidder_id . '_' . implode(',', $raw_ids));
         if (!AIH_Security::check_rate_limit('poll_status_' . $poll_ip, 12, 60)) {
             // Serve stale-but-valid cached response when throttled
             $stale = get_transient($throttle_key);
@@ -2999,8 +3001,9 @@ class AIH_Ajax {
         // Two-layer cache strategy:
         // 1. Global cache (shared across all bidders): art piece status + has_bids
         //    Uses transients so it persists across requests even without Redis.
-        // 2. Bidder-specific data (is_winning, has_bid): lightweight indexed query.
-        //    Only runs when global cache hits (avoids the expensive dual-JOIN).
+        // 2. Bidder-specific data (is_winning, has_bid): lightweight indexed query
+        //    that runs per request but leverages the global cache to avoid
+        //    the more expensive dual-JOIN across art pieces and bids.
 
         global $wpdb;
         $now = current_time('mysql');
@@ -3123,8 +3126,9 @@ class AIH_Ajax {
 
         // Piggyback outbid/winner events onto the response to eliminate
         // the separate check_outbid polling endpoint (halves poll traffic).
-        // Events are bidder-specific and consumed (deleted), so they are
-        // added after caching the shared poll result.
+        // Events are bidder-specific and consumed (deleted), so they must be
+        // appended after shared cacheable data (global_data transient) to
+        // avoid caching per-bidder events in a shared layer.
         $outbid_events = AIH_Push::consume_outbid_events($bidder_id);
         $winner_events = AIH_Push::consume_winner_events($bidder_id);
         foreach ($winner_events as &$evt) {

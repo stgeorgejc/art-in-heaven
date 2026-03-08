@@ -526,6 +526,8 @@
         function poll() {
             if (!aihAjax.isLoggedIn) return;
             if (typeof opts.isEnded === 'function' && opts.isEnded()) return;
+            // Skip poll when SSE is connected — events trigger on-demand updates
+            if (window.aihSSEConnected) return;
 
             var ids = opts.getPieceIds();
             if (!ids || ids.length === 0) return;
