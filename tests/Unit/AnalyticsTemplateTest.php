@@ -52,6 +52,30 @@ class AnalyticsTemplateTest extends TestCase
         );
     }
 
+    public function testTierTableHasEndClosingTimeColumn(): void
+    {
+        $this->assertStringContainsString(
+            'data-sort="end_closing"',
+            $this->template,
+            'Tier statistics table must have a sortable End Closing Time column'
+        );
+
+        $this->assertStringContainsString(
+            'data-end_closing=',
+            $this->template,
+            'Tier table rows must include data-end_closing attribute for sorting'
+        );
+    }
+
+    public function testCsvExportIncludesEndClosingTime(): void
+    {
+        $this->assertStringContainsString(
+            "'End Closing Time'",
+            $this->template,
+            'CSV export header must include End Closing Time'
+        );
+    }
+
     public function testTopRevenueChartHasYAxisTickConfig(): void
     {
         $this->assertStringContainsString(

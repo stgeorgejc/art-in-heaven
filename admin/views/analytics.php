@@ -784,6 +784,7 @@ foreach ( $notif_types as $row ) {
 				<th class="sortable" data-sort="bid_rate" style="cursor:pointer; width: 90px;"><?php _e( 'Bid Rate', 'art-in-heaven' ); ?> <span class="aih-sort-icon">&#8693;</span></th>
 				<th class="sortable" data-sort="unique_bidders" style="cursor:pointer; width: 90px;"><?php _e( 'Bidders', 'art-in-heaven' ); ?> <span class="aih-sort-icon">&#8693;</span></th>
 				<th class="sortable" data-sort="current_bid" style="cursor:pointer; width: 100px;"><?php _e( 'Current Bid', 'art-in-heaven' ); ?> <span class="aih-sort-icon">&#8693;</span></th>
+				<th class="sortable" data-sort="end_closing" style="cursor:pointer; width: 140px;"><?php _e( 'End Closing Time', 'art-in-heaven' ); ?> <span class="aih-sort-icon">&#8693;</span></th>
 				<th style="width: 80px;"><?php _e( 'Status', 'art-in-heaven' ); ?></th>
 			</tr>
 		</thead>
@@ -799,7 +800,8 @@ foreach ( $notif_types as $row ) {
 				data-total_bids="<?php echo intval( $piece->total_bids ); ?>"
 				data-bid_rate="<?php echo esc_attr( $piece_bid_rate ); ?>"
 				data-unique_bidders="<?php echo intval( $piece->unique_bidders ); ?>"
-				data-current_bid="<?php echo floatval( $piece->current_bid ?: $piece->starting_bid ); ?>">
+				data-current_bid="<?php echo floatval( $piece->current_bid ?: $piece->starting_bid ); ?>"
+				data-end_closing="<?php echo esc_attr( $piece->auction_end ); ?>">
 				<td><strong style="color: #1c1c1c;"><?php echo esc_html( $tier ); ?></strong></td>
 				<td><code><?php echo esc_html( $piece->art_id ); ?></code></td>
 				<td>
@@ -829,6 +831,9 @@ foreach ( $notif_types as $row ) {
 				</td>
 				<td><?php echo intval( $piece->unique_bidders ); ?></td>
 				<td><strong>$<?php echo number_format( floatval( $piece->current_bid ?: $piece->starting_bid ), 0 ); ?></strong></td>
+				<td>
+					<small><?php echo esc_html( AIH_Status::format_db_date( $piece->auction_end, 'M j, g:i A' ) ); ?></small>
+				</td>
 				<td>
 					<?php if ( $piece->status === 'active' && $piece->seconds_remaining > 0 ) : ?>
 					<span class="aih-status-badge active"><?php _e( 'Active', 'art-in-heaven' ); ?></span>
@@ -1501,7 +1506,7 @@ jQuery(document).ready(function($) {
 		$rows.sort(function(a, b) {
 			var aVal = $(a).data(sortKey);
 			var bVal = $(b).data(sortKey);
-			if (sortKey === 'tier' || sortKey === 'art_id' || sortKey === 'title') {
+			if (sortKey === 'tier' || sortKey === 'art_id' || sortKey === 'title' || sortKey === 'end_closing') {
 				aVal = String(aVal || '').toLowerCase();
 				bVal = String(bVal || '').toLowerCase();
 				if (aVal < bVal) return currentSort.dir === 'asc' ? -1 : 1;
@@ -1519,7 +1524,7 @@ jQuery(document).ready(function($) {
 	// ===== CSV Export (Art Pieces tab) =====
 	$('#aih-export-csv').on('click', function() {
 		var data = [];
-		data.push(['Art ID', 'Title', 'Artist', 'Tier', 'Status', 'Unique Bidders', 'Total Bids', 'Current Bid']);
+		data.push(['Art ID', 'Title', 'Artist', 'Tier', 'Status', 'Unique Bidders', 'Total Bids', 'Current Bid', 'End Closing Time']);
 		$('#aih-tier-pivot tbody tr').each(function() {
 			var $row = $(this);
 			data.push([
@@ -1530,7 +1535,8 @@ jQuery(document).ready(function($) {
 				$row.find('.aih-status-badge').text().trim(),
 				$row.data('unique_bidders'),
 				$row.data('total_bids'),
-				$row.data('current_bid')
+				$row.data('current_bid'),
+				$row.data('end_closing') || ''
 			]);
 		});
 		var csv = data.map(function(row) {
