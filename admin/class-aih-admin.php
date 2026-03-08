@@ -685,17 +685,6 @@ class AIH_Admin {
     }
 
     /**
-     * Render the consolidated Analytics page (replaces reports + stats).
-     *
-     * @return void
-     */
-    /**
-     * Get live analytics data for AJAX polling.
-     *
-     * @param string $tab Active tab (overview, revenue, bidders, notifications).
-     * @return array<string, mixed>
-     */
-    /**
      * Get live analytics data for AJAX polling and page render.
      *
      * @param string $tab The active tab ('overview' or 'revenue').
@@ -748,7 +737,7 @@ class AIH_Admin {
         $single_bid_count = 0;
         /** @var stdClass $p */
         foreach ( $art_pieces as $p ) {
-            if ( $p->total_bids === 1 ) {
+            if ( (int) $p->total_bids === 1 ) {
                 $single_bid_count++;
             }
         }
@@ -1143,8 +1132,9 @@ class AIH_Admin {
             );
         }
 
-        // Live dashboard data (pulse, urgency, alerts, bid feed, repeat rate).
-        $live_data = $this->get_analytics_live_data('overview');
+        // Live dashboard data is populated via AJAX polling (get_analytics_live_data)
+        // to avoid re-running the same heavy queries on initial page render.
+        $live_data = array();
 
         include AIH_PLUGIN_DIR . 'admin/views/analytics.php';
     }

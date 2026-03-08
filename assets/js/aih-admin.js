@@ -331,7 +331,9 @@
                     updateStatCard('rev-vs-starting', o.rev_vs_starting + '%');
                 }
                 updateStatCard('single-bid', Number(o.single_bid_count).toLocaleString());
-                updateStatCard('last-bid', o.last_bid_display, o.last_bid_time || '');
+                updateStatCard('last-bid', o.last_bid_display);
+                // Update the .aih-stat-detail element (timestamp) which is separate from sublabel.
+                $('[data-stat="last-bid"]').find('.aih-stat-detail').text(o.last_bid_time || '');
                 updateStatCard('repeat-bidders', o.repeat_bidder_rate + '%',
                     o.repeat_bidders + ' of ' + o.total_bidders + ' bidders');
 
@@ -374,7 +376,7 @@
         }
     });
 
-    // Start polling.
-    schedulePoll();
+    // Immediate first poll to populate live widgets, then schedule recurring.
+    poll();
 
 })(jQuery);

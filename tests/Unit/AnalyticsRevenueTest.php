@@ -138,8 +138,10 @@ class AnalyticsRevenueTest extends TestCase
     public function testRevenueDefaultsSetBeforePermissionCheck(): void
     {
         // Safe defaults must be set before the permission check.
-        $defaultsPos = strpos($this->adminSource, '$revenue_by_method  = array()');
-        $this->assertNotFalse($defaultsPos, 'Revenue defaults must exist');
+        // Use regex to tolerate whitespace variations.
+        $matched = preg_match('/\$revenue_by_method\s*=\s*array\(\)/', $this->adminSource, $matches, PREG_OFFSET_CAPTURE);
+        $this->assertSame(1, $matched, 'Revenue defaults must exist');
+        $defaultsPos = $matches[0][1];
         // Find the can_view_financial() call that follows the defaults.
         $permCheckPos = strpos($this->adminSource, 'AIH_Roles::can_view_financial', $defaultsPos);
         $this->assertNotFalse($permCheckPos, 'Financial permission check must exist after defaults');
