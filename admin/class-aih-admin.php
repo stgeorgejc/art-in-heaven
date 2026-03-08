@@ -695,6 +695,12 @@ class AIH_Admin {
      * @param string $tab Active tab (overview, revenue, bidders, notifications).
      * @return array<string, mixed>
      */
+    /**
+     * Get live analytics data for AJAX polling and page render.
+     *
+     * @param string $tab The active tab ('overview' or 'revenue').
+     * @return array<string, mixed>
+     */
     public function get_analytics_live_data($tab = 'overview') {
         global $wpdb;
         $art_model  = new AIH_Art_Piece();
@@ -740,6 +746,7 @@ class AIH_Admin {
 
         // Single-bid pieces.
         $single_bid_count = 0;
+        /** @var stdClass $p */
         foreach ( $art_pieces as $p ) {
             if ( $p->total_bids === 1 ) {
                 $single_bid_count++;
@@ -788,7 +795,9 @@ class AIH_Admin {
         }
 
         // --- Urgency Board ---
+        /** @var list<array{id: int, title: string, art_id: string, seconds_remaining: int, total_bids: int}> $urgency_items */
         $urgency_items = array();
+        /** @var stdClass $p */
         foreach ( $art_pieces as $p ) {
             if ( $p->status === 'active' && $p->seconds_remaining > 0 && $p->seconds_remaining <= 7200 ) {
                 $urgency_items[] = array(
@@ -914,6 +923,7 @@ class AIH_Admin {
         $active_bids    = 0;
         $active_no_bids = 0;
         $unsold_count   = 0;
+        /** @var stdClass $p */
         foreach ( $art_pieces as $p ) {
             $is_ended = ( $p->seconds_remaining <= 0 && $p->status !== 'draft' );
             $has_bids = ( $p->total_bids > 0 );
@@ -981,6 +991,11 @@ class AIH_Admin {
         return $data;
     }
 
+    /**
+     * Render the analytics dashboard page.
+     *
+     * @return void
+     */
     public function render_analytics() {
         if (!AIH_Roles::can_view_reports()) {
             wp_die(__('You do not have permission to access this page.', 'art-in-heaven'));

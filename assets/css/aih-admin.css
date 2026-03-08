@@ -2454,3 +2454,113 @@ button.aih-action-btn .dashicons {
         display: none !important;
     }
 }
+
+/* ============================================
+   ANALYTICS LIVE WIDGETS
+   ============================================ */
+
+/* -- Alerts Panel -- */
+.aih-alerts-panel {
+    margin-bottom: 16px;
+}
+.aih-alerts-panel .notice {
+    margin: 0 0 8px;
+}
+.aih-alert-count {
+    font-weight: 600;
+    color: #9a6700;
+}
+
+/* -- Auction Pulse -- */
+.aih-auction-pulse .hndle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.aih-pulse-dot {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #6b7280;
+    flex-shrink: 0;
+}
+
+.aih-pulse-dot.hot {
+    background: #059669;
+    animation: aih-pulse-glow 1.5s ease-in-out infinite;
+}
+
+.aih-pulse-dot.warm {
+    background: #d97706;
+    animation: aih-pulse-glow 2.5s ease-in-out infinite;
+}
+
+.aih-pulse-dot.cooling {
+    background: #6b7280;
+}
+
+@keyframes aih-pulse-glow {
+    0%, 100% { box-shadow: 0 0 0 0 currentColor; opacity: 1; }
+    50% { box-shadow: 0 0 0 6px transparent; opacity: 0.7; }
+}
+
+.aih-pulse-label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* -- Urgency Board -- */
+.aih-urgency-board .widefat {
+    border-collapse: collapse;
+}
+
+tr.aih-urgency-zero {
+    background: #fef2f2 !important;
+}
+
+tr.aih-urgency-zero td {
+    color: #991b1b;
+    font-weight: 600;
+}
+
+/* -- Live Bid Feed -- */
+.aih-bid-feed-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.aih-bid-feed-list li {
+    padding: 8px 0;
+    border-bottom: 1px solid #e5e7eb;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.aih-bid-feed-list li:last-child {
+    border-bottom: none;
+}
+
+.aih-feed-time {
+    color: #6b7280;
+    font-size: 12px;
+    min-width: 70px;
+    display: inline-block;
+}
+
+.aih-feed-bidder {
+    font-family: monospace;
+    color: #374151;
+}
+
+.aih-feed-amount {
+    font-weight: 600;
+    color: #059669;
+    float: right;
+}

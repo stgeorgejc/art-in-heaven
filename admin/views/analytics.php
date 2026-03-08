@@ -1609,6 +1609,8 @@ jQuery(document).ready(function($) {
 	// ===== Chart.js Visualizations =====
 	if (typeof Chart === 'undefined') return;
 
+	window.aihCharts = {};
+
 	var chartColors = {
 		gold:       '#b8956b',
 		green:      '#4a7c59',
@@ -1666,7 +1668,7 @@ jQuery(document).ready(function($) {
 	// -- Overview tab: Inventory Health (horizontal stacked bar) --
 	var inventoryCanvas = document.getElementById('aih-inventory-chart');
 	if (inventoryCanvas) {
-		new Chart(inventoryCanvas, {
+		window.aihCharts.inventory = new Chart(inventoryCanvas, {
 			type: 'bar',
 			data: {
 				labels: ['<?php echo esc_js( __( 'Auction Inventory', 'art-in-heaven' ) ); ?>'],
@@ -1693,7 +1695,7 @@ jQuery(document).ready(function($) {
 	// -- Overview tab: Bid Attribution (doughnut) --
 	var attrCanvas = document.getElementById('aih-attribution-chart');
 	if (attrCanvas) {
-		new Chart(attrCanvas, {
+		window.aihCharts.attribution = new Chart(attrCanvas, {
 			type: 'doughnut',
 			data: {
 				labels: ['<?php echo esc_js( __( 'Push-Attributed', 'art-in-heaven' ) ); ?>', '<?php echo esc_js( __( 'Organic', 'art-in-heaven' ) ); ?>'],
@@ -1714,7 +1716,7 @@ jQuery(document).ready(function($) {
 	// -- Overview tab: Bidding Activity Timeline (line) --
 	var timelineCanvas = document.getElementById('aih-timeline-chart');
 	if (timelineCanvas) {
-		new Chart(timelineCanvas, {
+		window.aihCharts.timeline = new Chart(timelineCanvas, {
 			type: 'line',
 			data: {
 				labels: <?php echo wp_json_encode( $timeline_hours ); ?>,
@@ -1861,7 +1863,7 @@ jQuery(document).ready(function($) {
 				'bids'  => intval( $p->bid_count ),
 			);
 		}, $top_by_revenue ) ); ?>;
-		new Chart(topRevCanvas, {
+		window.aihCharts.topRevenue = new Chart(topRevCanvas, {
 			type: 'bar',
 			data: {
 				labels: topRevData.map(function(d) { return d.label; }),

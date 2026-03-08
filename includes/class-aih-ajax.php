@@ -87,6 +87,7 @@ class AIH_Ajax {
         add_action('wp_ajax_aih_admin_purge_data', array($this, 'admin_purge_data'));
         add_action('wp_ajax_aih_admin_regenerate_watermarks', array($this, 'admin_regenerate_watermarks'));
         add_action('wp_ajax_aih_admin_import_csv', array($this, 'admin_import_csv'));
+        add_action('wp_ajax_aih_admin_analytics_live', array($this, 'admin_analytics_live'));
 
         // Pushpay API
         add_action('wp_ajax_aih_admin_test_pushpay', array($this, 'admin_test_pushpay'));
@@ -1025,6 +1026,16 @@ class AIH_Ajax {
         check_ajax_referer('aih_admin_nonce', 'nonce');
         if (!AIH_Roles::can_manage_art()) wp_send_json_error(array('message' => __('Permission denied.', 'art-in-heaven')));
         wp_send_json_success((new AIH_Art_Piece())->get_all_with_stats());
+    }
+
+    /** @return void */
+    public function admin_analytics_live() {
+        check_ajax_referer('aih_admin_nonce', 'nonce');
+        if (!AIH_Roles::can_view_reports()) {
+            wp_send_json_error(array('message' => __('Permission denied.', 'art-in-heaven')));
+        }
+        $tab = sanitize_key($_POST['tab'] ?? 'overview');
+        wp_send_json_success(AIH_Admin::get_instance()->get_analytics_live_data($tab));
     }
 
     /** @return void */

@@ -168,4 +168,33 @@ class AnalyticsTemplateTest extends TestCase
             );
         }
     }
+
+    // ========== Live Widgets ==========
+
+    public function testLiveDataHasSafeDefault(): void
+    {
+        $this->assertStringContainsString(
+            '! isset( $live_data )',
+            $this->template,
+            'Template must have safe default for $live_data'
+        );
+    }
+
+    public function testTemplateContainsRepeatBidders(): void
+    {
+        $this->assertStringContainsString(
+            'repeat_bidder_rate',
+            $this->template,
+            'Template must display repeat bidder rate stat card'
+        );
+    }
+
+    public function testTemplateContainsPulseDot(): void
+    {
+        $this->assertStringContainsString(
+            'aih-pulse-dot',
+            $this->template,
+            'Template must contain pulse dot indicator'
+        );
+    }
 }
