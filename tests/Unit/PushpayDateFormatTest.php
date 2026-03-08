@@ -114,9 +114,9 @@ class PushpayDateFormatTest extends TestCase
     }
 
     /**
-     * Verify from parameter is null when no event date is set.
+     * Verify from falls back to $days_back when no event date is set.
      */
-    public function testSyncPaymentsOmitsFromWhenNoEventDate(): void
+    public function testSyncPaymentsFallsBackToDaysBackWhenNoEventDate(): void
     {
         Functions\stubs([
             'get_option' => function ($key, $default = false) {
@@ -148,16 +148,119 @@ class PushpayDateFormatTest extends TestCase
                 return ['items' => [], 'page' => 0, 'totalPages' => 1];
             });
 
+        // Use default $days_back = 30
         $pushpay->sync_payments();
 
         $this->assertNotNull($capturedParams, 'get_payments should have been called');
-        $this->assertArrayNotHasKey('from', $capturedParams, 'from should be omitted when no event date is set');
+
+        // from should now be present (falling back to 30 days ago)
+        $this->assertArrayHasKey('from', $capturedParams, 'from should use $days_back fallback when no event date');
+        $this->assertMatchesRegularExpression(
+            '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/',
+            $capturedParams['from'],
+            'from fallback must use UTC format with Z suffix'
+        );
+
+        // Verify the date is approximately 30 days ago (within 2 days tolerance for test timing)
+        $from_timestamp = strtotime($capturedParams['from']);
+        $expected_timestamp = strtotime('-30 days');
+        $this->assertEqualsWithDelta($expected_timestamp, $from_timestamp, 172800, 'from should be approximately 30 days ago');
 
         // 'to' should still be present in UTC format
         $this->assertMatchesRegularExpression(
             '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/',
             $capturedParams['to']
         );
+    }
+
+    /**
+     * Verify custom $days_back value is used when no event date is set.
+     */
+    public function testSyncPaymentsUsesCustomDaysBack(): void
+    {
+        Functions\stubs([
+            'get_option' => function ($key, $default = false) {
+                return match ($key) {
+                    'aih_auction_year'    => '2026',
+                    'aih_event_date'      => '',
+                    'aih_pushpay_fund'    => 'art-in-heaven',
+                    'aih_pushpay_sandbox' => 0,
+                    'aih_pushpay_client_id'          => 'test-id',
+                    'aih_pushpay_client_secret'      => 'test-secret',
+                    'aih_pushpay_organization_key'   => 'test-org',
+                    'aih_pushpay_merchant_key'       => 'test-merchant',
+                    'aih_pushpay_merchant_handle'    => 'test-handle',
+                    'aih_pushpay_fund'               => 'test-fund',
+                    default => $default,
+                };
+            },
+            'update_option' => true,
+        ]);
+
+        $capturedParams = null;
+
+        $pushpay = $this->createPartialMock(AIH_Pushpay_API::class, ['get_payments']);
+
+        $pushpay->expects($this->once())
+            ->method('get_payments')
+            ->willReturnCallback(function ($params) use (&$capturedParams) {
+                $capturedParams = $params;
+                return ['items' => [], 'page' => 0, 'totalPages' => 1];
+            });
+
+        // Use custom $days_back = 7
+        $pushpay->sync_payments(7);
+
+        $this->assertNotNull($capturedParams, 'get_payments should have been called');
+        $this->assertArrayHasKey('from', $capturedParams);
+
+        // Verify the date is approximately 7 days ago
+        $from_timestamp = strtotime($capturedParams['from']);
+        $expected_timestamp = strtotime('-7 days');
+        $this->assertEqualsWithDelta($expected_timestamp, $from_timestamp, 172800, 'from should be approximately 7 days ago');
+    }
+
+    /**
+     * Verify event_date takes priority over $days_back when both are available.
+     */
+    public function testSyncPaymentsEventDateTakesPriorityOverDaysBack(): void
+    {
+        Functions\stubs([
+            'get_option' => function ($key, $default = false) {
+                return match ($key) {
+                    'aih_auction_year'    => '2026',
+                    'aih_event_date'      => '2026-03-01',
+                    'aih_pushpay_fund'    => 'art-in-heaven',
+                    'aih_pushpay_sandbox' => 0,
+                    'aih_pushpay_client_id'          => 'test-id',
+                    'aih_pushpay_client_secret'      => 'test-secret',
+                    'aih_pushpay_organization_key'   => 'test-org',
+                    'aih_pushpay_merchant_key'       => 'test-merchant',
+                    'aih_pushpay_merchant_handle'    => 'test-handle',
+                    'aih_pushpay_fund'               => 'test-fund',
+                    default => $default,
+                };
+            },
+            'update_option' => true,
+        ]);
+
+        $capturedParams = null;
+
+        $pushpay = $this->createPartialMock(AIH_Pushpay_API::class, ['get_payments']);
+
+        $pushpay->expects($this->once())
+            ->method('get_payments')
+            ->willReturnCallback(function ($params) use (&$capturedParams) {
+                $capturedParams = $params;
+                return ['items' => [], 'page' => 0, 'totalPages' => 1];
+            });
+
+        // Pass $days_back = 7, but event_date is set — event_date should win
+        $pushpay->sync_payments(7);
+
+        $this->assertNotNull($capturedParams, 'get_payments should have been called');
+        $this->assertArrayHasKey('from', $capturedParams);
+        $this->assertSame('2026-03-01T00:00:00Z', $capturedParams['from'], 'event_date should take priority over $days_back');
     }
 
     private function createWpdb(): object

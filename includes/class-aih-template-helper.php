@@ -203,7 +203,7 @@ class AIH_Template_Helper {
             'artist' => $piece->artist,
             'medium' => $piece->medium,
             'starting_bid' => floatval($piece->starting_bid),
-            'current_bid' => floatval($piece->current_bid),
+            'current_bid' => floatval($piece->current_bid ?? 0),
             'image_url' => $piece->watermarked_url ?: $piece->image_url,
             'auction_end' => $piece->auction_end,
             'seconds_remaining' => $secs,
