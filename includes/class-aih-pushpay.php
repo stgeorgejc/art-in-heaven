@@ -382,9 +382,13 @@ class AIH_Pushpay_API {
         $transactions_table = AIH_Database::get_table('pushpay_transactions');
         $fund_name = get_option('aih_pushpay_fund', 'art-in-heaven');
 
-        // Use event start date if set, otherwise fetch all transactions
+        // Use event start date if set, otherwise fall back to $days_back window
         $event_date = get_option('aih_event_date', '');
-        $from = !empty($event_date) ? gmdate('Y-m-d\TH:i:s\Z', strtotime($event_date)) : null;
+        if (!empty($event_date)) {
+            $from = gmdate('Y-m-d\TH:i:s\Z', strtotime($event_date));
+        } else {
+            $from = gmdate('Y-m-d\TH:i:s\Z', time() - ($days_back * 86400));
+        }
         $to = gmdate('Y-m-d\TH:i:s\Z');
 
         // Clean up orphaned order references (orders that were deleted)

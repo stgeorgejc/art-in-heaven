@@ -505,7 +505,7 @@ class AIH_Security {
         $key = substr(hash('sha256', self::get_encryption_key()), 0, 32);
         $iv = openssl_random_pseudo_bytes(12); // GCM uses 12-byte IV
         $tag = '';
-        $encrypted = openssl_encrypt($value, 'AES-256-GCM', $key, OPENSSL_RAW_DATA, $iv, $tag);
+        $encrypted = openssl_encrypt($value, 'aes-256-gcm', $key, OPENSSL_RAW_DATA, $iv, $tag);
 
         if ($encrypted === false) {
             return $value;
@@ -518,7 +518,7 @@ class AIH_Security {
     /**
      * Decrypt a value from storage
      *
-     * Supports both AES-256-GCM (enc2: prefix) and legacy AES-256-CBC (enc: prefix).
+     * Supports both aes-256-gcm (enc2: prefix) and legacy AES-256-CBC (enc: prefix).
      *
      * @param string $value Encrypted value (base64 with 'enc:' or 'enc2:' prefix)
      * @return string Decrypted plaintext
@@ -534,7 +534,7 @@ class AIH_Security {
 
         $key = substr(hash('sha256', self::get_encryption_key()), 0, 32);
 
-        // AES-256-GCM (authenticated)
+        // aes-256-gcm (authenticated)
         if (strpos($value, 'enc2:') === 0) {
             $data = base64_decode(substr($value, 5));
             if ($data === false || strlen($data) < 29) { // 12 IV + 16 tag + 1 min ciphertext
@@ -543,7 +543,7 @@ class AIH_Security {
             $iv = substr($data, 0, 12);
             $tag = substr($data, 12, 16);
             $encrypted = substr($data, 28);
-            $decrypted = openssl_decrypt($encrypted, 'AES-256-GCM', $key, OPENSSL_RAW_DATA, $iv, $tag);
+            $decrypted = openssl_decrypt($encrypted, 'aes-256-gcm', $key, OPENSSL_RAW_DATA, $iv, $tag);
             return $decrypted !== false ? $decrypted : '';
         }
 
