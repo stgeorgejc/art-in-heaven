@@ -2927,10 +2927,14 @@ class AIH_Ajax {
 
         $all_events = array_merge($outbid_events, $winner_events);
 
-        // Resolve art piece URLs server-side so the frontend doesn't need to guess
+        // Resolve art piece URLs server-side for outbid events only.
+        // Winner events intentionally omit url so the frontend uses the checkout link.
         global $wpdb;
         $art_table = AIH_Database::get_table('art_pieces');
         foreach ($all_events as &$evt) {
+            if (($evt['type'] ?? 'outbid') !== 'outbid') {
+                continue;
+            }
             if (!empty($evt['catalog_art_id'])) {
                 $evt['url'] = AIH_Template_Helper::get_art_url($evt['catalog_art_id']);
             } elseif (!empty($evt['art_piece_id'])) {
