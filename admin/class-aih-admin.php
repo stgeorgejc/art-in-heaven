@@ -685,7 +685,314 @@ class AIH_Admin {
     }
 
     /**
-     * Render the consolidated Analytics page (replaces reports + stats).
+     * Get live analytics data for AJAX polling and page render.
+     *
+     * @param string $tab The active tab ('overview' or 'revenue').
+     * @return array<string, mixed>
+     */
+    public function get_analytics_live_data($tab = 'overview') {
+        global $wpdb;
+
+        // Short-lived cache to avoid heavy queries on every 30s poll.
+        $cache_key = 'aih_live_analytics_' . $tab;
+        /** @var array<string, mixed>|false $cached */
+        $cached = get_transient( $cache_key );
+        if ( is_array( $cached ) ) {
+            return $cached;
+        }
+
+        $art_model  = new AIH_Art_Piece();
+        $art_pieces = $art_model->get_all_with_stats();
+        $stats      = $art_model->get_reporting_stats();
+        if ( ! $stats ) {
+            $stats = new stdClass();
+        }
+
+        $checkout      = AIH_Checkout::get_instance();
+        $payment_stats = $checkout->get_payment_stats();
+        if ( ! $payment_stats ) {
+            $payment_stats = new stdClass();
+        }
+
+        $bid_model = new AIH_Bid();
+        $bid_stats = $bid_model->get_stats();
+        if ( ! $bid_stats ) {
+            $bid_stats = new stdClass();
+        }
+
+        $bids_table = AIH_Database::get_table('bids');
+        $art_table  = AIH_Database::get_table('art_pieces');
+
+        // Last bid time.
+        /** @var stdClass|null $last_bid_row */
+        $last_bid_row  = $wpdb->get_row( "SELECT bid_time FROM $bids_table ORDER BY bid_time DESC LIMIT 1" );
+        $last_bid_time = $last_bid_row ? $last_bid_row->bid_time : null;
+
+        // Computed stats.
+        $total_pieces      = isset( $stats->total_pieces ) ? (int) $stats->total_pieces : 0;
+        $pieces_with_bids  = isset( $stats->pieces_with_bids ) ? (int) $stats->pieces_with_bids : 0;
+        $sell_through      = $total_pieces > 0 ? round( ( $pieces_with_bids / $total_pieces ) * 100 ) : 0;
+        $total_collected   = isset( $payment_stats->total_collected ) ? floatval( $payment_stats->total_collected ) : 0;
+        $total_pending     = isset( $payment_stats->total_pending ) ? floatval( $payment_stats->total_pending ) : 0;
+        $total_revenue     = $total_collected + $total_pending;
+        $total_starting    = isset( $stats->total_starting_value ) ? floatval( $stats->total_starting_value ) : 0;
+        $total_bid_value   = isset( $bid_stats->total_bid_value ) ? floatval( $bid_stats->total_bid_value ) : 0;
+        $rev_vs_starting   = $total_starting > 0 ? round( ( $total_bid_value / $total_starting ) * 100 ) : 0;
+        $avg_bids          = $pieces_with_bids > 0
+            ? number_format( (int) ( $stats->total_bids ?? 0 ) / max( $pieces_with_bids, 1 ), 1 )
+            : '0.0';
+
+        // Single-bid pieces.
+        $single_bid_count = 0;
+        /** @var stdClass $p */
+        foreach ( $art_pieces as $p ) {
+            if ( (int) $p->total_bids === 1 ) {
+                $single_bid_count++;
+            }
+        }
+
+        // Last bid display.
+        $last_bid_display = '&#8212;';
+        if ( $last_bid_time ) {
+            $bid_dt    = new \DateTime( $last_bid_time, wp_timezone() );
+            $now_dt    = new \DateTime( 'now', wp_timezone() );
+            $time_diff = $now_dt->getTimestamp() - $bid_dt->getTimestamp();
+            if ( $time_diff < 60 ) {
+                $last_bid_display = __( 'Just now', 'art-in-heaven' );
+            } elseif ( $time_diff < 3600 ) {
+                $last_bid_display = sprintf( __( '%d min ago', 'art-in-heaven' ), floor( $time_diff / 60 ) );
+            } elseif ( $time_diff < 86400 ) {
+                $last_bid_display = sprintf( __( '%d hr ago', 'art-in-heaven' ), floor( $time_diff / 3600 ) );
+            } else {
+                $last_bid_display = sprintf( __( '%d days ago', 'art-in-heaven' ), floor( $time_diff / 86400 ) );
+            }
+        }
+
+        // --- Auction Pulse ---
+        $audit_table = AIH_Database::get_table( 'audit_log' );
+        /** @var stdClass $pulse_row */
+        $pulse_row = $wpdb->get_row(
+            "SELECT
+                SUM(CASE WHEN created_at >= DATE_SUB(NOW(), INTERVAL 5 MINUTE) THEN 1 ELSE 0 END) AS bids_5m,
+                SUM(CASE WHEN created_at >= DATE_SUB(NOW(), INTERVAL 15 MINUTE) THEN 1 ELSE 0 END) AS bids_15m,
+                SUM(CASE WHEN created_at >= DATE_SUB(NOW(), INTERVAL 60 MINUTE) THEN 1 ELSE 0 END) AS bids_60m
+             FROM `{$audit_table}`
+             WHERE event_type = 'bid_placed'
+               AND created_at >= DATE_SUB(NOW(), INTERVAL 60 MINUTE)"
+        );
+        $bids_5m  = $pulse_row ? (int) $pulse_row->bids_5m : 0;
+        $bids_15m = $pulse_row ? (int) $pulse_row->bids_15m : 0;
+        $bids_60m = $pulse_row ? (int) $pulse_row->bids_60m : 0;
+
+        if ( $bids_5m >= 3 ) {
+            $pulse_status = 'hot';
+        } elseif ( $bids_15m >= 3 ) {
+            $pulse_status = 'warm';
+        } else {
+            $pulse_status = 'cooling';
+        }
+
+        // --- Urgency Board ---
+        /** @var list<array{id: int, title: string, art_id: string, seconds_remaining: int, total_bids: int}> $urgency_items */
+        $urgency_items = array();
+        /** @var stdClass $p */
+        foreach ( $art_pieces as $p ) {
+            if ( $p->status === 'active' && $p->seconds_remaining > 0 && $p->seconds_remaining <= 7200 ) {
+                $urgency_items[] = array(
+                    'id'                => (int) $p->id,
+                    'title'             => $p->title,
+                    'art_id'            => $p->art_id,
+                    'seconds_remaining' => (int) $p->seconds_remaining,
+                    'total_bids'        => (int) $p->total_bids,
+                );
+            }
+        }
+        usort( $urgency_items, function ( $a, $b ) {
+            return $a['seconds_remaining'] - $b['seconds_remaining'];
+        } );
+        $urgency_items = array_slice( $urgency_items, 0, 10 );
+
+        // --- Needs Attention Alerts ---
+        $alerts = array();
+        $zero_bid_ending = array_filter( $urgency_items, function ( $item ) {
+            return $item['total_bids'] === 0;
+        } );
+        if ( ! empty( $zero_bid_ending ) ) {
+            $alerts[] = array(
+                'type'  => 'zero_bids_ending',
+                'title' => __( 'Active pieces ending soon with no bids', 'art-in-heaven' ),
+                'count' => count( $zero_bid_ending ),
+            );
+        }
+
+        $orders_table = AIH_Database::get_table( 'orders' );
+        $pending_stale = (int) $wpdb->get_var(
+            "SELECT COUNT(*) FROM $orders_table
+             WHERE payment_status = 'pending'
+               AND created_at < DATE_SUB(NOW(), INTERVAL 15 MINUTE)"
+        );
+        if ( $pending_stale > 0 ) {
+            $alerts[] = array(
+                'type'  => 'stale_pending',
+                'title' => __( 'Pending orders older than 15 minutes', 'art-in-heaven' ),
+                'count' => $pending_stale,
+            );
+        }
+
+        // --- Live Bid Feed ---
+        $can_view_financial = AIH_Roles::can_view_financial();
+        $amount_select      = $can_view_financial
+            ? "JSON_UNQUOTE(JSON_EXTRACT(al.details, '$.amount')) AS amount,"
+            : '';
+        /** @var list<stdClass> $bid_feed_rows */
+        $bid_feed_rows = $wpdb->get_results(
+            "SELECT
+                al.created_at,
+                CONCAT(LEFT(al.bidder_id, 2), '****') AS bidder_masked,
+                {$amount_select}
+                a.title AS piece_title
+             FROM `{$audit_table}` al
+             LEFT JOIN $art_table a ON JSON_UNQUOTE(JSON_EXTRACT(al.details, '$.art_piece_id')) = a.id
+             WHERE al.event_type = 'bid_placed'
+             ORDER BY al.created_at DESC
+             LIMIT 20"
+        );
+        $bid_feed = array();
+        $now_ts   = time();
+        foreach ( $bid_feed_rows as $row ) {
+            $entry_ts = strtotime( $row->created_at );
+            $diff     = $now_ts - $entry_ts;
+            if ( $diff < 60 ) {
+                $time_ago = __( 'Just now', 'art-in-heaven' );
+            } elseif ( $diff < 3600 ) {
+                $time_ago = sprintf( __( '%d min ago', 'art-in-heaven' ), floor( $diff / 60 ) );
+            } else {
+                $time_ago = sprintf( __( '%d hr ago', 'art-in-heaven' ), floor( $diff / 3600 ) );
+            }
+            $entry = array(
+                'time_ago'      => $time_ago,
+                'bidder_masked' => $row->bidder_masked,
+                'piece_title'   => $row->piece_title ?: __( 'Unknown', 'art-in-heaven' ),
+            );
+            if ( $can_view_financial && isset( $row->amount ) ) {
+                $entry['amount'] = $row->amount;
+            }
+            $bid_feed[] = $entry;
+        }
+
+        // --- Repeat Bidder Rate ---
+        $engagement_metrics = $this->get_engagement_metrics();
+        $bidder_data        = isset( $engagement_metrics['bidder_engagement'] ) ? $engagement_metrics['bidder_engagement'] : array();
+        $multi_piece        = 0;
+        foreach ( $bidder_data as $b ) {
+            if ( isset( $b->pieces_bid_on ) && (int) $b->pieces_bid_on >= 2 ) {
+                $multi_piece++;
+            }
+        }
+        $total_bidders       = count( $bidder_data );
+        $repeat_bidder_rate  = $total_bidders > 0 ? round( ( $multi_piece / $total_bidders ) * 100 ) : 0;
+
+        // --- Timeline chart data ---
+        $bids_by_interval = isset( $engagement_metrics['bids_by_interval'] ) ? $engagement_metrics['bids_by_interval'] : array();
+        $interval_data    = array();
+        foreach ( $bids_by_interval as $row ) {
+            if ( ! isset( $interval_data[ $row->time_bucket ] ) ) {
+                $interval_data[ $row->time_bucket ] = array( 'push' => 0, 'organic' => 0 );
+            }
+            if ( $row->source === 'push' ) {
+                $interval_data[ $row->time_bucket ]['push'] = (int) $row->cnt;
+            } else {
+                $interval_data[ $row->time_bucket ]['organic'] += (int) $row->cnt;
+            }
+        }
+        ksort( $interval_data );
+        $timeline_labels  = array();
+        $timeline_push    = array();
+        $timeline_organic = array();
+        foreach ( $interval_data as $bucket => $counts ) {
+            $dt                 = \DateTime::createFromFormat( 'Y-m-d H:i', $bucket, wp_timezone() );
+            $timeline_labels[]  = $dt ? $dt->format( 'g:i A' ) : $bucket;
+            $timeline_push[]    = $counts['push'];
+            $timeline_organic[] = $counts['organic'];
+        }
+
+        // --- Inventory chart data ---
+        $sold_count     = 0;
+        $active_bids    = 0;
+        $active_no_bids = 0;
+        $unsold_count   = 0;
+        /** @var stdClass $p */
+        foreach ( $art_pieces as $p ) {
+            $is_ended = ( $p->seconds_remaining <= 0 && $p->status !== 'draft' );
+            $has_bids = ( $p->total_bids > 0 );
+            if ( $is_ended && $has_bids ) {
+                $sold_count++;
+            } elseif ( ! $is_ended && $p->status === 'active' && $has_bids ) {
+                $active_bids++;
+            } elseif ( ! $is_ended && $p->status === 'active' && ! $has_bids ) {
+                $active_no_bids++;
+            } elseif ( $is_ended && ! $has_bids ) {
+                $unsold_count++;
+            }
+        }
+
+        // --- Build response ---
+        $data = array(
+            'overview' => array(
+                'sell_through'      => $sell_through,
+                'unique_bidders'    => isset( $stats->unique_bidders ) ? (int) $stats->unique_bidders : 0,
+                'active_auctions'   => isset( $stats->active_count ) ? (int) $stats->active_count : 0,
+                'avg_bids_per_piece' => $avg_bids,
+                'rev_vs_starting'   => $rev_vs_starting,
+                'single_bid_count'  => $single_bid_count,
+                'last_bid_display'  => $last_bid_display,
+                'last_bid_time'     => $last_bid_time ? AIH_Status::format_db_date( $last_bid_time, 'M j, g:i a' ) : '',
+                'pieces_with_bids'  => $pieces_with_bids,
+                'total_pieces'      => $total_pieces,
+                'total_bids'        => isset( $stats->total_bids ) ? (int) $stats->total_bids : 0,
+                'repeat_bidder_rate' => $repeat_bidder_rate,
+                'repeat_bidders'    => $multi_piece,
+                'total_bidders'     => $total_bidders,
+            ),
+            'pulse'    => array(
+                'bids_5m'  => $bids_5m,
+                'bids_15m' => $bids_15m,
+                'bids_60m' => $bids_60m,
+                'status'   => $pulse_status,
+            ),
+            'urgency'  => $urgency_items,
+            'alerts'   => $alerts,
+            'bid_feed' => $bid_feed,
+            'charts'   => array(
+                'timeline'  => array(
+                    'labels'  => $timeline_labels,
+                    'push'    => $timeline_push,
+                    'organic' => $timeline_organic,
+                ),
+                'inventory' => array(
+                    'sold'           => $sold_count,
+                    'active_bids'    => $active_bids,
+                    'active_no_bids' => $active_no_bids,
+                    'unsold'         => $unsold_count,
+                ),
+            ),
+        );
+
+        if ( $can_view_financial ) {
+            $data['overview']['total_revenue']    = $total_revenue;
+            $data['overview']['total_collected']   = $total_collected;
+            $data['overview']['total_pending']     = $total_pending;
+            $data['overview']['paid_orders']       = isset( $payment_stats->paid_orders ) ? (int) $payment_stats->paid_orders : 0;
+            $data['overview']['pending_orders']    = isset( $payment_stats->pending_orders ) ? (int) $payment_stats->pending_orders : 0;
+        }
+
+        set_transient( $cache_key, $data, 20 );
+
+        return $data;
+    }
+
+    /**
+     * Render the analytics dashboard page.
      *
      * @return void
      */
@@ -766,6 +1073,79 @@ class AIH_Admin {
              ORDER BY highest_bid DESC
              LIMIT 10"
         );
+
+        // Revenue tab data (only queried for financial users).
+        $revenue_by_method  = array();
+        $revenue_by_piece   = array();
+        $collection_rate    = new stdClass();
+        $avg_order_value    = 0.0;
+        $projected_revenue  = 0.0;
+
+        if ( AIH_Roles::can_view_financial() ) {
+            $orders_table      = AIH_Database::get_table('orders');
+            $order_items_table = AIH_Database::get_table('order_items');
+
+            // Revenue by payment method.
+            $revenue_by_method = $wpdb->get_results(
+                "SELECT payment_method,
+                        COUNT(*) AS order_count,
+                        SUM(total) AS method_total
+                 FROM $orders_table
+                 WHERE payment_status = 'paid'
+                 GROUP BY payment_method
+                 ORDER BY method_total DESC"
+            );
+
+            // Revenue by art piece (actual order data, not bid proxy).
+            $revenue_by_piece = $wpdb->get_results(
+                "SELECT a.title, a.art_id, a.starting_bid,
+                        oi.winning_bid AS sold_price,
+                        o.payment_status
+                 FROM $order_items_table oi
+                 JOIN $orders_table o ON oi.order_id = o.id
+                 JOIN $art_table a ON oi.art_piece_id = a.id
+                 ORDER BY oi.winning_bid DESC"
+            );
+
+            // Collection rate: paid vs total won items.
+            $collection_rate = $wpdb->get_row(
+                "SELECT
+                    COUNT(*) AS total_items,
+                    SUM(CASE WHEN o.payment_status = 'paid' THEN 1 ELSE 0 END) AS paid_items,
+                    SUM(CASE WHEN o.payment_status = 'pending' THEN 1 ELSE 0 END) AS pending_items
+                 FROM $order_items_table oi
+                 JOIN $orders_table o ON oi.order_id = o.id"
+            );
+            if ( ! $collection_rate ) {
+                $collection_rate = new stdClass();
+            }
+            $collection_rate->total_items   = isset( $collection_rate->total_items ) ? (int) $collection_rate->total_items : 0;
+            $collection_rate->paid_items    = isset( $collection_rate->paid_items ) ? (int) $collection_rate->paid_items : 0;
+            $collection_rate->pending_items = isset( $collection_rate->pending_items ) ? (int) $collection_rate->pending_items : 0;
+
+            // Average order value (paid orders only).
+            $avg_order_value = (float) $wpdb->get_var(
+                "SELECT AVG(total) FROM $orders_table WHERE payment_status = 'paid' AND total > 0"
+            );
+
+            // Projected revenue: sum of highest bids on active items that haven't ended yet.
+            $projected_revenue = (float) $wpdb->get_var(
+                "SELECT COALESCE(SUM(max_bid), 0)
+                 FROM (
+                     SELECT MAX(b.bid_amount) AS max_bid
+                     FROM $bids_table b
+                     JOIN $art_table a ON b.art_piece_id = a.id
+                     WHERE a.status = 'active'
+                       AND a.auction_end > NOW()
+                       AND (b.bid_status = 'valid' OR b.bid_status IS NULL)
+                     GROUP BY b.art_piece_id
+                 ) active_bids"
+            );
+        }
+
+        // Live dashboard data is populated via AJAX polling (get_analytics_live_data)
+        // to avoid re-running the same heavy queries on initial page render.
+        $live_data = array();
 
         include AIH_PLUGIN_DIR . 'admin/views/analytics.php';
     }
@@ -894,15 +1274,18 @@ class AIH_Admin {
             ) sub"
         );
 
-        // Bidding timeline: bids per hour
-        $bids_by_hour = $wpdb->get_results(
-            "SELECT DATE_FORMAT(created_at, '%Y-%m-%d %H:00') AS hour_bucket,
+        // Bidding timeline: bids per 5-minute interval
+        $bids_by_interval = $wpdb->get_results(
+            "SELECT DATE_FORMAT(
+                        DATE_SUB(created_at, INTERVAL MOD(MINUTE(created_at), 5) MINUTE),
+                        '%Y-%m-%d %H:%i'
+                    ) AS time_bucket,
                     COUNT(*) AS cnt,
                     COALESCE(JSON_UNQUOTE(JSON_EXTRACT(details, '$.bid_source')), 'organic') AS source
              FROM `{$audit_table}`
              WHERE event_type = 'bid_placed'
-             GROUP BY hour_bucket, source
-             ORDER BY hour_bucket"
+             GROUP BY time_bucket, source
+             ORDER BY time_bucket"
         );
 
         // Push permission source breakdown
@@ -954,7 +1337,7 @@ class AIH_Admin {
             'nonpush_bidder_breadth'=> $nonpush_bidder_breadth ? round((float) $nonpush_bidder_breadth, 1) : 0,
             'push_bidder_depth'     => $push_bidder_depth ? round((float) $push_bidder_depth, 1) : 0,
             'nonpush_bidder_depth'  => $nonpush_bidder_depth ? round((float) $nonpush_bidder_depth, 1) : 0,
-            'bids_by_hour'          => $bids_by_hour,
+            'bids_by_interval'      => $bids_by_interval,
             'permission_sources'    => $permission_sources,
             'bidder_engagement'     => $bidder_engagement,
             'notif_types'           => $notif_types,
@@ -1063,7 +1446,8 @@ class AIH_Admin {
      *     icon_bg?: string,
      *     variant?: string,
      *     layout?: string,
-     *     link?: string
+     *     link?: string,
+     *     stat_key?: string
      * } $args Card configuration.
      * @return void
      */
@@ -1080,6 +1464,7 @@ class AIH_Admin {
             'variant'    => '',
             'layout'     => 'vertical',
             'link'       => '',
+            'stat_key'   => '',
         );
         $args = wp_parse_args($args, $defaults);
 
@@ -1114,7 +1499,8 @@ class AIH_Admin {
             echo '<a href="' . esc_url($args['link']) . '" class="aih-stat-card-link">';
         }
 
-        echo '<div class="' . esc_attr(implode(' ', $classes)) . '">';
+        $stat_attr = $args['stat_key'] !== '' ? ' data-stat="' . esc_attr($args['stat_key']) . '"' : '';
+        echo '<div class="' . esc_attr(implode(' ', $classes)) . '"' . $stat_attr . '>';
 
         // Horizontal layout: icon first, then content wrapper
         if ($args['layout'] === 'horizontal' && $args['icon'] !== '') {
