@@ -269,7 +269,17 @@
                  + '<td>' + parseInt(item.total_bids, 10) + '</td>'
                  + '</tr>';
         });
-        $board.find('tbody').html(rows);
+        if ($board.length) {
+            $board.find('tbody').html(rows);
+        } else {
+            // Create the widget on first poll when it wasn't server-rendered.
+            var html = '<div class="postbox aih-urgency-board" id="aih-urgency-board" style="margin-top: 24px;">'
+                     + '<h2 class="hndle"><span>Ending Soon (&lt; 2 hours)</span></h2>'
+                     + '<div class="inside"><table class="widefat striped">'
+                     + '<thead><tr><th>Art ID</th><th>Title</th><th>Time Left</th><th>Bids</th></tr></thead>'
+                     + '<tbody>' + rows + '</tbody></table></div></div>';
+            $('.aih-report-sections').before(html);
+        }
     }
 
     /**
@@ -293,7 +303,21 @@
             }
             items += '</li>';
         });
-        $feed.find('.aih-bid-feed-list').html(items);
+        if ($feed.length) {
+            $feed.find('.aih-bid-feed-list').html(items);
+        } else {
+            // Create the widget on first poll when it wasn't server-rendered.
+            var html = '<div class="postbox aih-bid-feed" id="aih-bid-feed" style="margin-top: 24px;">'
+                     + '<h2 class="hndle"><span>Live Bid Feed</span></h2>'
+                     + '<div class="inside"><ul class="aih-bid-feed-list">' + items + '</ul></div></div>';
+            // Insert before summary tables, or after urgency board if it exists.
+            var $urgency = $('#aih-urgency-board');
+            if ($urgency.length) {
+                $urgency.after(html);
+            } else {
+                $('.aih-report-sections').before(html);
+            }
+        }
     }
 
     /**
