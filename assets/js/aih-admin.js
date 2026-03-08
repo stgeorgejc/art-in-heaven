@@ -375,7 +375,9 @@
             },
             complete: function() {
                 isPolling = false;
-                schedulePoll();
+                if (!document.hidden) {
+                    schedulePoll();
+                }
             }
         });
     }

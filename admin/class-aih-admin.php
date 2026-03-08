@@ -692,6 +692,15 @@ class AIH_Admin {
      */
     public function get_analytics_live_data($tab = 'overview') {
         global $wpdb;
+
+        // Short-lived cache to avoid heavy queries on every 30s poll.
+        $cache_key = 'aih_live_analytics_' . $tab;
+        /** @var array<string, mixed>|false $cached */
+        $cached = get_transient( $cache_key );
+        if ( is_array( $cached ) ) {
+            return $cached;
+        }
+
         $art_model  = new AIH_Art_Piece();
         $art_pieces = $art_model->get_all_with_stats();
         $stats      = $art_model->get_reporting_stats();
@@ -976,6 +985,8 @@ class AIH_Admin {
             $data['overview']['paid_orders']       = isset( $payment_stats->paid_orders ) ? (int) $payment_stats->paid_orders : 0;
             $data['overview']['pending_orders']    = isset( $payment_stats->pending_orders ) ? (int) $payment_stats->pending_orders : 0;
         }
+
+        set_transient( $cache_key, $data, 20 );
 
         return $data;
     }

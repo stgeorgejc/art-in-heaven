@@ -145,9 +145,9 @@ class AnalyticsRevenueTest extends TestCase
         // Find the can_view_financial() call that follows the defaults.
         $permCheckPos = strpos($this->adminSource, 'AIH_Roles::can_view_financial', $defaultsPos);
         $this->assertNotFalse($permCheckPos, 'Financial permission check must exist after defaults');
-        $this->assertLessThan(
-            $permCheckPos,
+        $this->assertGreaterThan(
             $defaultsPos,
+            $permCheckPos,
             'Revenue defaults must be set before the permission check'
         );
     }
