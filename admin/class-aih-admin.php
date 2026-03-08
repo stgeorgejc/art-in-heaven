@@ -1328,19 +1328,73 @@ class AIH_Admin {
              GROUP BY notif_type, event_type"
         );
 
+        // ── Server Load Analytics ──
+        // Total poll requests by push-enabled vs non-push segment.
+        $server_load_by_segment = $wpdb->get_results(
+            "SELECT
+                COALESCE(JSON_UNQUOTE(JSON_EXTRACT(details, '$.has_push')), '0') AS has_push,
+                SUM(CAST(JSON_UNQUOTE(JSON_EXTRACT(details, '$.count')) AS UNSIGNED)) AS total_polls,
+                COUNT(DISTINCT bidder_id) AS unique_bidders
+             FROM `{$audit_table}`
+             WHERE event_type = 'poll_request'
+             GROUP BY has_push"
+        );
+
+        // Poll requests over time in 5-minute buckets, segmented by push status.
+        $server_load_timeline = $wpdb->get_results(
+            "SELECT
+                DATE_FORMAT(
+                    DATE_SUB(created_at, INTERVAL MOD(MINUTE(created_at), 5) MINUTE),
+                    '%Y-%m-%d %H:%i'
+                ) AS time_bucket,
+                COALESCE(JSON_UNQUOTE(JSON_EXTRACT(details, '$.has_push')), '0') AS has_push,
+                SUM(CAST(JSON_UNQUOTE(JSON_EXTRACT(details, '$.count')) AS UNSIGNED)) AS total_polls
+             FROM `{$audit_table}`
+             WHERE event_type = 'poll_request'
+             GROUP BY time_bucket, has_push
+             ORDER BY time_bucket"
+        );
+
+        // Connection type distribution (realtime vs polling vs offline).
+        $server_load_connection_types = $wpdb->get_results(
+            "SELECT
+                COALESCE(JSON_UNQUOTE(JSON_EXTRACT(details, '$.connection_type')), 'polling') AS conn_type,
+                COUNT(DISTINCT bidder_id) AS unique_bidders,
+                SUM(CAST(JSON_UNQUOTE(JSON_EXTRACT(details, '$.count')) AS UNSIGNED)) AS total_polls
+             FROM `{$audit_table}`
+             WHERE event_type = 'poll_request'
+             GROUP BY conn_type"
+        );
+
+        // Average poll rate per user segment (polls per active minute).
+        $server_load_rate = $wpdb->get_results(
+            "SELECT
+                COALESCE(JSON_UNQUOTE(JSON_EXTRACT(details, '$.has_push')), '0') AS has_push,
+                COUNT(DISTINCT bidder_id) AS unique_bidders,
+                SUM(CAST(JSON_UNQUOTE(JSON_EXTRACT(details, '$.count')) AS UNSIGNED)) AS total_polls,
+                TIMESTAMPDIFF(MINUTE, MIN(created_at), MAX(created_at)) AS active_minutes
+             FROM `{$audit_table}`
+             WHERE event_type = 'poll_request'
+             GROUP BY has_push"
+        );
+
         return array(
-            'funnel'                => $funnel,
-            'bid_attribution'       => $bid_attribution,
-            'push_bidders'          => $push_bidders,
-            'total_bidders'         => $total_bidders_with_bids,
-            'push_bidder_breadth'   => $push_bidder_breadth ? round((float) $push_bidder_breadth, 1) : 0,
-            'nonpush_bidder_breadth'=> $nonpush_bidder_breadth ? round((float) $nonpush_bidder_breadth, 1) : 0,
-            'push_bidder_depth'     => $push_bidder_depth ? round((float) $push_bidder_depth, 1) : 0,
-            'nonpush_bidder_depth'  => $nonpush_bidder_depth ? round((float) $nonpush_bidder_depth, 1) : 0,
-            'bids_by_interval'      => $bids_by_interval,
-            'permission_sources'    => $permission_sources,
-            'bidder_engagement'     => $bidder_engagement,
-            'notif_types'           => $notif_types,
+            'funnel'                       => $funnel,
+            'bid_attribution'              => $bid_attribution,
+            'push_bidders'                 => $push_bidders,
+            'total_bidders'                => $total_bidders_with_bids,
+            'push_bidder_breadth'          => $push_bidder_breadth ? round((float) $push_bidder_breadth, 1) : 0,
+            'nonpush_bidder_breadth'       => $nonpush_bidder_breadth ? round((float) $nonpush_bidder_breadth, 1) : 0,
+            'push_bidder_depth'            => $push_bidder_depth ? round((float) $push_bidder_depth, 1) : 0,
+            'nonpush_bidder_depth'         => $nonpush_bidder_depth ? round((float) $nonpush_bidder_depth, 1) : 0,
+            'bids_by_interval'             => $bids_by_interval,
+            'permission_sources'           => $permission_sources,
+            'bidder_engagement'            => $bidder_engagement,
+            'notif_types'                  => $notif_types,
+            'server_load_by_segment'       => $server_load_by_segment,
+            'server_load_timeline'         => $server_load_timeline,
+            'server_load_connection_types'  => $server_load_connection_types,
+            'server_load_rate'             => $server_load_rate,
         );
     }
 

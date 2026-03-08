@@ -2954,6 +2954,58 @@ class AIH_Ajax {
     }
 
     /**
+     * Log a sampled poll request to the audit log for server load analytics.
+     *
+     * Increments a lightweight transient counter per bidder. Every 10th request,
+     * flushes the count as a single audit log entry with connection metadata.
+     * This keeps audit log growth manageable while providing accurate load data.
+     *
+     * @param string $bidder_id Bidder confirmation code.
+     * @return void
+     */
+    private function log_sampled_poll($bidder_id) {
+        $counter_key = 'aih_poll_count_' . $bidder_id;
+        $count       = (int) get_transient($counter_key);
+        $count++;
+
+        if ($count >= 10) {
+            // Flush: write one audit entry representing 10 poll requests.
+            $connection_type = isset($_POST['connection_type'])
+                ? sanitize_text_field($_POST['connection_type'])
+                : 'polling';
+
+            // Validate connection_type to known values.
+            $valid_types = array( 'polling', 'realtime', 'offline' );
+            if ( ! in_array( $connection_type, $valid_types, true ) ) {
+                $connection_type = 'polling';
+            }
+
+            // Check push subscription server-side (more reliable than client-reported value).
+            global $wpdb;
+            $push_table = AIH_Database::get_table('push_subscriptions');
+            $has_push   = (bool) $wpdb->get_var($wpdb->prepare(
+                "SELECT id FROM `{$push_table}` WHERE bidder_id = %s LIMIT 1",
+                $bidder_id
+            ));
+
+            AIH_Database::log_audit('poll_request', array(
+                'object_type' => 'poll',
+                'bidder_id'   => $bidder_id,
+                'details'     => array(
+                    'count'           => $count,
+                    'connection_type' => $connection_type,
+                    'has_push'        => $has_push,
+                ),
+            ));
+
+            delete_transient($counter_key);
+        } else {
+            // Increment counter (60s TTL so stale counters expire automatically).
+            set_transient($counter_key, $count, 60);
+        }
+    }
+
+    /**
      * Lightweight polling endpoint for live bid status updates.
      * Returns winning status, min bid, has_bids flag, and auction status
      * for each requested art piece.
@@ -2972,6 +3024,10 @@ class AIH_Ajax {
         }
 
         $bidder_id = $auth->get_current_bidder_id() ?? '';
+
+        // Sampled poll request logging for server load analytics.
+        // Increments a transient counter per bidder; every 10th poll writes one audit entry.
+        $this->log_sampled_poll($bidder_id);
 
         // Rate throttle: max 12 poll-status requests per 60 seconds per IP.
         // Returns last cached result when throttled instead of hitting the DB.

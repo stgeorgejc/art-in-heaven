@@ -552,7 +552,9 @@
             aihPost('poll-status', {
                 action: 'aih_poll_status',
                 nonce: aihAjax.nonce,
-                art_piece_ids: ids
+                art_piece_ids: ids,
+                connection_type: window.aihConnectionStatus || 'polling',
+                has_push: (window.AIHPush && window.AIHPush.pushSubscribed) ? 1 : 0
             }, function(r) {
                 if (!r.success || !r.data || !r.data.items) return;
                 if (typeof opts.shouldSkip === 'function' && opts.shouldSkip()) return;
