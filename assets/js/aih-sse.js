@@ -21,7 +21,6 @@
         connected: false,
         reconnectTimer: null,
         reconnectAttempts: 0,
-        maxReconnectAttempts: 10,
         lastEventId: null,
         lastMessageTime: 0,
         heartbeatTimer: null,
@@ -288,15 +287,20 @@
                 this.eventSource = null;
             }
 
-            if (this.reconnectAttempts < this.maxReconnectAttempts) {
-                var delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
-                this.reconnectAttempts++;
-                var self = this;
-                this.reconnectTimer = setTimeout(function() {
-                    self.connect();
-                }, delay);
+            // Clear any previously scheduled reconnect to prevent stacking
+            if (this.reconnectTimer) {
+                clearTimeout(this.reconnectTimer);
+                this.reconnectTimer = null;
             }
-            // After max attempts, polling stays as permanent fallback
+
+            // Exponential backoff: 1s, 2s, 4s, 8s, 16s, 32s, 60s, 60s, ...
+            // Never gives up — polling handles updates while SSE recovers
+            var delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 60000);
+            this.reconnectAttempts++;
+            var self = this;
+            this.reconnectTimer = setTimeout(function() {
+                self.connect();
+            }, delay);
         },
 
         /**
@@ -327,19 +331,34 @@
         AIHSSE.destroy();
     });
 
-    // Pause SSE on tab hidden, resume on visible
+    // Manage SSE on tab visibility changes
+    // Keep connection alive when hidden (idle SSE is cheap), only close after 5 min
+    var hiddenTimer = null;
     document.addEventListener('visibilitychange', function() {
         if (document.hidden) {
-            // Close connection to free resources while tab hidden
-            if (AIHSSE.eventSource) {
-                AIHSSE.eventSource.close();
-                AIHSSE.eventSource = null;
-                AIHSSE.connected = false;
-                AIHSSE.enablePolling();
-            }
+            // Pause heartbeat checks while hidden (avoids false timeout reconnects)
+            AIHSSE.stopHeartbeat();
+            // Close SSE only after 5 minutes hidden to free server resources
+            hiddenTimer = setTimeout(function() {
+                if (AIHSSE.eventSource) {
+                    AIHSSE.eventSource.close();
+                    AIHSSE.eventSource = null;
+                    AIHSSE.connected = false;
+                    AIHSSE.enablePolling();
+                }
+            }, 300000);
         } else {
-            // Reconnect when tab becomes visible
-            if (!AIHSSE.connected && !AIHSSE.eventSource) {
+            // Tab visible again — cancel pending close
+            if (hiddenTimer) {
+                clearTimeout(hiddenTimer);
+                hiddenTimer = null;
+            }
+            // Resume heartbeat if still connected
+            if (AIHSSE.connected && AIHSSE.eventSource) {
+                AIHSSE.lastMessageTime = Date.now();
+                AIHSSE.startHeartbeat();
+            } else if (!AIHSSE.connected && !AIHSSE.eventSource) {
+                // Reconnect if SSE was closed (either by 5min timer or prior disconnect)
                 AIHSSE.reconnectAttempts = 0;
                 AIHSSE.connect();
             }

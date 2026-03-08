@@ -615,66 +615,37 @@ window.addEventListener('beforeinstallprompt', function(e) {
          * Smart polling interval based on soonest-ending auction.
          * Polls more frequently as auctions near their end.
          */
-        getSmartInterval: function() {
-            var soonest = Infinity;
-            $('.aih-card[data-end]').each(function() {
-                var $c = $(this);
-                if ($c.hasClass('ended') || $c.hasClass('won') || $c.hasClass('paid')) return;
-                var endMs = new Date($c.attr('data-end').replace(/-/g, '/')).getTime();
-                var remaining = endMs - Date.now();
-                if (remaining > 0 && remaining < soonest) soonest = remaining;
-            });
-
-            // Also check single-item page timer
-            var $single = $('.aih-time-remaining-single[data-end]');
-            if ($single.length) {
-                var endMs = new Date($single.attr('data-end').replace(/-/g, '/')).getTime();
-                var remaining = endMs - Date.now();
-                if (remaining > 0 && remaining < soonest) soonest = remaining;
-            }
-
-            if (soonest < 60000) return 2000;       // < 1 min: every 2s
-            if (soonest < 300000) return 5000;       // < 5 min: every 5s
-            if (soonest < 3600000) return 10000;     // < 1 hour: every 10s
-            return 30000;                             // > 1 hour: every 30s
-        },
+        /** @deprecated Polling intervals now handled by aih-frontend.js poll_status */
+        getSmartInterval: function() { return 30000; },
 
         /**
-         * Polling fallback: check for outbid events using smart intervals
+         * Process outbid/winner events from poll_status response.
+         * Events are piggybacked onto poll_status to eliminate separate AJAX calls.
+         *
+         * @param {Array} events Array of event objects from poll_status response
          */
-        pollOutbid: function() {
-            console.log('[AIH] Polling for outbid events' + (window.aihSSEConnected ? ' (background check)' : ' (fallback)'));
+        processEvents: function(events) {
+            if (!events || !events.length) return;
             var self = this;
-            aihPost('check-outbid', {
-                action: 'aih_check_outbid',
-                nonce:  aihAjax.nonce
-            }, function(response) {
-                if (response.success && response.data && response.data.length > 0) {
-                    for (var i = 0; i < response.data.length; i++) {
-                        var evt = response.data[i];
-                        // Dedup: skip events already shown this session
-                        var evtType = evt.type || 'outbid';
-                        var eventKey = evtType + '_' + evt.art_piece_id + '_' + evt.time;
-                        if (self.shownEvents[eventKey]) continue;
-                        self.shownEvents[eventKey] = true;
+            for (var i = 0; i < events.length; i++) {
+                var evt = events[i];
+                // Dedup: skip events already shown this session
+                var evtType = evt.type || 'outbid';
+                var eventKey = evtType + '_' + evt.art_piece_id + '_' + evt.time;
+                if (self.shownEvents[eventKey]) continue;
+                self.shownEvents[eventKey] = true;
 
-                        console.log('[AIH] ' + evtType + ' via POLLING:', evt.title, '(art #' + evt.art_piece_id + ')');
-                        if (typeof window.showAlert === 'function') {
-                            window.showAlert(evtType, evt.art_piece_id, evt.title, evt.url || '');
-                        } else if (typeof window.showToast === 'function') {
-                            if (evtType === 'winner') {
-                                window.showToast('You won "' + evt.title + '"! Head to checkout.', 'success');
-                            } else {
-                                window.showToast('You\'ve been outbid on "' + evt.title + '"!', 'error');
-                            }
-                        }
-                    }
-                    // Trigger immediate status poll to update badges
-                    if (typeof window.aihPollStatus === 'function') {
-                        window.aihPollStatus();
+                console.log('[AIH] ' + evtType + ' via poll_status:', evt.title, '(art #' + evt.art_piece_id + ')');
+                if (typeof window.showAlert === 'function') {
+                    window.showAlert(evtType, evt.art_piece_id, evt.title, evt.url || '');
+                } else if (typeof window.showToast === 'function') {
+                    if (evtType === 'winner') {
+                        window.showToast('You won "' + evt.title + '"! Head to checkout.', 'success');
+                    } else {
+                        window.showToast('You\'ve been outbid on "' + evt.title + '"!', 'error');
                     }
                 }
-            });
+            }
         },
 
         unregisterServiceWorker: function() {
@@ -689,24 +660,13 @@ window.addEventListener('beforeinstallprompt', function(e) {
             }
         },
 
-        startPolling: function() {
-            if (this.pollTimer) clearTimeout(this.pollTimer);
-            var self = this;
-            // Use slower interval when SSE is connected (background safety net)
-            var interval = document.hidden ? 60000 :
-                           (window.aihSSEConnected ? 60000 : this.getSmartInterval());
-            this.pollTimer = setTimeout(function() {
-                self.pollOutbid();
-                self.startPolling();
-            }, interval);
-        },
-
-        stopPolling: function() {
-            if (this.pollTimer) {
-                clearTimeout(this.pollTimer);
-                this.pollTimer = null;
-            }
-        },
+        /**
+         * Start/stop polling are no-ops now — outbid events are piggybacked
+         * onto poll_status responses (handled by aih-frontend.js).
+         * Methods kept for backward compatibility with callers.
+         */
+        startPolling: function() {},
+        stopPolling: function() {},
 
         /**
          * Convert a base64-URL string to a Uint8Array for applicationServerKey
@@ -728,19 +688,8 @@ window.addEventListener('beforeinstallprompt', function(e) {
         AIHPush.init();
     });
 
-    // Pause/resume polling on tab visibility change
-    document.addEventListener('visibilitychange', function() {
-        if (document.hidden) {
-            AIHPush.stopPolling();
-            AIHPush.pollTimer = setTimeout(function() {
-                AIHPush.pollOutbid();
-            }, 60000);
-        } else {
-            AIHPush.stopPolling();
-            AIHPush.pollOutbid();
-            AIHPush.startPolling();
-        }
-    });
+    // Outbid event polling is now handled via poll_status (aih-frontend.js).
+    // No separate visibility handler needed here.
 
     // Offline/online detection — dispatch connection status changes
     window.addEventListener('offline', function() {
